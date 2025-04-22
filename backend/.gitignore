@@ -1,0 +1,35 @@
+# 백엔드 관련 ignore
+/backend/.gradle/
+/backend/build/
+/backend/.idea/
+/backend/logs/
+/backend/*.log
+/backend/.DS_Store
+
+# 프론트엔드 관련 ignore
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.vite/
+/frontend/.vite-temp/
+/frontend/.DS_Store
+/frontend/.env
+
+.idea
+
+# OS 관련 파일
+.DS_Store
+Thumbs.db
+
+/infra/env/.env.*
+/infra/env/other/**
+package.json
+package-lock.json
+node_modules
+
+# AI 관련 ignore
+/ai/venv/
+/ai/tests/
+/ai/__pycache__/
+/ai/**/*.pyc
+/ai/**/*.ipynb_checkpoints
+.pyc
