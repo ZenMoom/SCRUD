@@ -7,15 +7,15 @@ COPY ./build.gradle .
 COPY ./settings.gradle .
 COPY ./generated ./generated
 
-FROM gradle:jdk21-alpine AS project-build
+FROM gradle:jdk21-alpine AS example-build
 WORKDIR /app
 COPY --from=base /app /app
 
-WORKDIR /app/project-module
+WORKDIR /app/ExampleService
 
-COPY ./project-module/gradlew .
-COPY ./project-module/build.gradle .
-COPY ./project-module/gradle gradle
+COPY ./ExampleService/gradlew .
+COPY ./ExampleService/build.gradle .
+COPY ./ExampleService/gradle gradle
 
 # gradlew에 실행 권한 부여
 RUN chmod +x ./gradlew
@@ -23,17 +23,17 @@ RUN chmod +x ./gradlew
 # Cache dependencies
 RUN ./gradlew dependencies --no-daemon || return 0
 
-COPY ./project-module/src src
+COPY ./ExampleService/src src
 
 RUN gradle build --no-daemon -x test
 
 # 런타임 스테이지
 FROM eclipse-temurin:21-jdk-alpine AS development
-WORKDIR /app/project-module
+WORKDIR /app/ExampleService
 
 # 빌드 스테이지에서 생성된 JAR 파일 복사
 # 일반적인 스프링 부트 프로젝트의 JAR 경로 (프로젝트에 맞게 조정 필요)
-COPY --from=project-build /app/project-module/build/libs/*.jar scurd.jar
+COPY --from=example-build /app/ExampleService/build/libs/*.jar scurd.jar
 
 # 컨테이너 실행 시 사용할 포트 설정 (스프링 기본 포트: 8080)
 EXPOSE 8080
