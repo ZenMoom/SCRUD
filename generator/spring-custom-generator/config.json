@@ -1,0 +1,19 @@
+{
+  "useSpringBoot3": "true",
+  "useJakartaEe" : "true",
+  "interfaceOnly" : "true",
+  "useTags" : "true",
+  "skipDefaultInterface" : "true",
+  "dateLibrary": "java8-localdatetime",
+  "useBeanValidation" : "true",
+  "serializableModel" : "true",
+  "hideGenerationTimestamp": "true",
+  "reactive": "false",
+  "generatedConstructorWithRequiredArgs": "false",
+  "generateBuilders": "false",
+  "basePackage" : "com.barcoder.scrud",
+  "configPackage" : "com.barcoder.scrud.config",
+  "modelPackage": "com.barcoder.scrud.model",
+  "apiPackage": "com.barcoder.scrud.api",
+  "invokerPackage": "com.barcoder.scrud.apis"
+}

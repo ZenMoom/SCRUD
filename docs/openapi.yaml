@@ -1,0 +1,81 @@
+openapi: 3.0.0
+
+info:
+  title: Example API
+  description: 예시 API
+  version: 1.0.0
+  contact:
+    name: 예시 문서입니다.
+servers:
+  - url: http://localhost:8080
+    description: 개발용 로컬 서버
+  - url: http://localhost:8081
+    description: 개발용 목 서버
+
+tags:
+  - name: Example
+    description: 예시 관련 API
+  
+paths:
+  /api/examples/{exampleId}:
+    get:
+      tags:
+        - Example
+      operationId: getExampleById
+      summary: '특정 ID의 예시를 조회합니다.'
+      description: '주어진 ID에 해당하는 예시를 조회합니다. 상세 예시 입니다.'
+      parameters:
+        - $ref: './components/schemas/example-schema.yaml#/ExampleId'
+      responses:
+        '200':
+          $ref: './components/responses/example-response.yaml#/ExampleResponse'
+        '404':
+          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+    post:
+      tags:
+        - Example
+      operationId: updateExampleById
+      summary: 특정 ID의 예시를 업데이트합니다.
+      description: 주어진 ID에 해당하는 예시를 업데이트합니다. 상세 예시 입니다.
+      parameters:
+        - $ref: './components/schemas/example-schema.yaml#/ExampleId'
+      requestBody:
+        $ref: './components/requests/example-request.yaml#/ExampleRequest'
+      responses:
+        '200':
+          $ref: './components/responses/example-response.yaml#/ExampleResponse'
+        '404':
+          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+
+  /api/examples:
+    get:
+      tags:
+        - Example
+      operationId: getExamplesWithPagination
+      x-spring-paginated: true
+      summary: '예시 목록을 페이지네이션하여 조회합니다.'
+      description: '예시 목록을 페이지 번호와 페이지 크기를 이용하여 페이지네이션하여 조회합니다.'
+      parameters:
+        - $ref: './components/schemas/page-schema.yaml#/Page'
+        - $ref: './components/schemas/page-schema.yaml#/Size'
+
+      responses:
+        '200':
+          $ref: './components/responses/example-response.yaml#/ExamplePageResponse'
+        '404':
+          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+
+    post:
+      tags:
+        - Example
+      operationId: createExampleOne
+      summary: 예시를 하나 생성합니다.
+      description: 예시를 하나 생성합니다. 상세 예시 입니다.
+      requestBody:
+        $ref: './components/requests/example-request.yaml#/ExampleRequest'
+      responses:
+        '200':
+          $ref: './components/responses/example-response.yaml#/ExampleResponse'
+        '404':
+          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+

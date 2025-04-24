@@ -1,0 +1,73 @@
+
+ExampleDtoCase1:
+  summary: '기본 예시 데이터'
+  value:
+    exampleEnum: 'ONE'
+    exampleString: '안녕하세요, 첫 번째 예시입니다.'
+    exampleInteger: 42
+    exampleBoolean: true
+    exampleArray: ['사과', '바나나', '오렌지']
+    exampleObject:
+      nestedProperty: '첫 번째 중첩 데이터'
+    exampleDate: '2025-04-25'
+
+ExampleDtoCase2:
+  summary: '대체 예시 데이터'
+  value:
+    exampleEnum: 'THREE'
+    exampleString: '반갑습니다, 두 번째 예시입니다.'
+    exampleInteger: 99
+    exampleBoolean: false
+    exampleArray: ['자바', '파이썬', '자바스크립트', '코틀린']
+    exampleObject:
+      nestedProperty: '두 번째 중첩 데이터'
+    exampleDate: '2025-05-10'
+
+ExamplePageDtoCase1:
+  summary: '페이지 정보 예시 데이터'
+  value:
+    listSize: 4
+    isFirstPage: false
+    isLastPage: false
+    totalPages: 15
+    totalElements: 59
+    content:
+      - exampleEnum: 'THREE'
+        exampleString: '반갑습니다, 두 번째 예시입니다.'
+        exampleInteger: 99
+        exampleBoolean: false
+        exampleArray: ['자바', '파이썬', '자바스크립트', '코틀린']
+        exampleObject:
+          nestedProperty: '두 번째 중첩 데이터'
+        exampleDate: '2025-05-10'
+      - exampleEnum: 'ONE'
+        exampleString: '안녕하세요, 첫 번째 항목입니다.'
+        exampleInteger: 42
+        exampleBoolean: true
+        exampleArray: ['스프링', 'NodeJS', 'React', 'Vue']
+        exampleObject:
+          nestedProperty: '첫 번째 중첩 데이터'
+        exampleDate: '2025-04-15'
+      - exampleEnum: 'TWO'
+        exampleString: '세 번째 데이터 항목입니다.'
+        exampleInteger: 123
+        exampleBoolean: false
+        exampleArray: ['C#', 'Go', 'Rust', 'PHP']
+        exampleObject:
+          nestedProperty: '세 번째 중첩 데이터'
+        exampleDate: '2025-06-20'
+      - exampleEnum: 'FOUR'
+        exampleString: '네 번째이자 마지막 항목입니다.'
+        exampleInteger: 777
+        exampleBoolean: true
+        exampleArray: ['Swift', 'Kotlin', 'Flutter', 'React Native']
+        exampleObject:
+          nestedProperty: '네 번째 중첩 데이터'
+        exampleDate: '2025-07-05'
+
+ExampleCreateDtoCase1:
+  summary: '생성 예시'
+  value:
+    exampleEnum: 'THREE'
+    exampleString: '반갑습니다.'
+    exampleInteger: 11

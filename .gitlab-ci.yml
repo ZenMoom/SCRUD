@@ -1,0 +1,263 @@
+stages:
+  - prepare
+  - test
+  - build
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HUB_USERNAME: $DOCKER_HUB_USERNAME
+  DOCKER_HUB_PASSWORD: $DOCKER_HUB_PASSWORD
+  DOCKER_REGISTRY: docker.io
+  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
+  SERVER_HOST: j12e107.p.ssafy.io
+  PEM_FILE: J12E107T.pem
+  PROJECT_NAME: s12p21e107
+  # next.js 환경 설정
+  NEXT_PUBLIC_API_BASE_URL: $NEXT_PUBLIC_API_BASE_URL
+  NEXT_PUBLIC_ENV_MODE: $NEXT_PUBLIC_ENV_MODE
+  NEXT_PUBLIC_API_OAUTH_URL: $NEXT_PUBLIC_API_OAUTH_URL
+  
+# Common configuration for Docker services
+.docker:
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  variables:
+    PLATFORM: linux/amd64
+
+# Generate OpenAPI code for both frontend and backend
+prepare_job:
+  extends: .docker
+  stage: prepare  # 이 부분이 중요합니다 - prepare 스테이지에 속함을 명시
+  before_script:
+    - ls -al
+  script:
+    - docker-compose up --build
+
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      allow_failure: false
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      allow_failure: false
+  tags:
+    - cicd
+# Test backend
+test_backend:
+  extends: .docker
+  stage: test
+  needs: ["prepare_job"]
+  before_script:
+    - ls -la ./backend/generated
+  script:
+    - docker buildx build -t ${PROJECT_NAME}-spring-test --target test --no-cache -f ./infra/dockerfiles/backend.Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 .
+    - docker run --rm ${PROJECT_NAME}-spring-test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - backend/**/*
+        - infra/dockerfiles/backend.Dockerfile
+      when: on_success
+      allow_failure: false
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  tags:
+    - cicd
+
+# Test frontend
+test_frontend:
+  extends: .docker
+  stage: test
+  needs: ["prepare_job"]
+  before_script:
+    - ls -la ./frontend/generated
+  script:
+    - docker buildx build -t ${PROJECT_NAME}-next-test --target test -f ./infra/dockerfiles/frontend.Dockerfile --build-arg PLATFORM=linux/amd64 --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} --build-arg NEXT_PUBLIC_ENV_MODE=${NEXT_PUBLIC_ENV_MODE} --build-arg NEXT_PUBLIC_API_OAUTH_URL=${NEXT_PUBLIC_API_OAUTH_URL} --platform linux/amd64 .
+    - docker run --rm ${PROJECT_NAME}-next-test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - frontend/**/*
+        - infra/dockerfiles/frontend.Dockerfile
+      when: on_success
+      allow_failure: false
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  tags:
+    - cicd
+
+# Build and push backend image
+build_backend:
+  extends: .docker
+  stage: build
+  needs:
+    - job: test_backend
+      optional: true
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  before_script:
+    - ls -la ./backend/generated
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+  script:
+    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target production -f ./infra/dockerfiles/backend.Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 .
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - backend/**/*
+        - infra/dockerfiles/backend.Dockerfile
+      when: on_success
+      allow_failure: false
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - backend/**/*
+        - infra/dockerfiles/backend.Dockerfile
+      when: on_success
+      allow_failure: false
+  tags:
+    - cicd
+
+# Build and push frontend image
+build_frontend:
+  extends: .docker
+  stage: build
+  needs:
+    - job: test_frontend
+      optional: true
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  before_script:
+    - ls -la ./frontend/generated
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+  script:
+    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target production -f ./infra/dockerfiles/frontend.Dockerfile --build-arg PLATFORM=linux/amd64 --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} --build-arg NEXT_PUBLIC_ENV_MODE=${NEXT_PUBLIC_ENV_MODE} --build-arg NEXT_PUBLIC_API_OAUTH_URL=${NEXT_PUBLIC_API_OAUTH_URL} --platform linux/amd64 .
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - frontend/**/*
+        - infra/dockerfiles/frontend.Dockerfile
+      when: on_success
+      allow_failure: false
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - frontend/**/*
+        - infra/dockerfiles/frontend.Dockerfile
+      when: on_success
+      allow_failure: false
+  tags:
+    - cicd
+
+# FastAPI 빌드 작업
+build_fastapi:
+  extends: .docker
+  stage: build
+  before_script:
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+  script:
+    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-fastapi:latest --target production -f ./infra/dockerfiles/ai.Dockerfile --build-arg PLATFORM=linux/amd64 --build-arg STAGE=production --platform linux/amd64 .
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-fastapi:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - ai/**/*
+        - infra/dockerfiles/ai.Dockerfile
+      when: on_success
+      allow_failure: false
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - ai/**/*
+        - infra/dockerfiles/ai.Dockerfile
+      when: on_success
+      allow_failure: false
+  tags:
+    - cicd
+
+# Celery Worker 빌드 작업
+build_celery_worker:
+  extends: .docker
+  stage: build
+  before_script:
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+  script:
+    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-celery:latest --target production -f ./infra/dockerfiles/ai.Dockerfile --build-arg PLATFORM=linux/amd64 --build-arg STAGE=production --platform linux/amd64 .
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-celery:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - ai/**/*
+        - infra/dockerfiles/ai.Dockerfile
+      when: on_success
+      allow_failure: false
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - ai/**/*
+        - infra/dockerfiles/ai.Dockerfile
+      when: on_success
+      allow_failure: false
+  tags:
+    - cicd
+
+# Deploy to production server
+deploy:
+  stage: deploy
+  needs:
+    - job: build_frontend
+      optional: true
+    - job: build_backend
+      optional: true
+    - job: build_fastapi
+      optional: true
+    - job: build_celery_worker
+      optional: true
+
+
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" > $PEM_FILE
+    - chmod 400 $PEM_FILE
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SERVER_HOST >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "Deploying to $SERVER_HOST..."
+    - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "mkdir -p /home/ubuntu/${PROJECT_NAME}"
+    - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "mkdir -p /home/ubuntu/${PROJECT_NAME}/infra/env"
+    - scp -i $PEM_FILE docker-compose.prod.yaml ubuntu@$SERVER_HOST:/home/ubuntu/${PROJECT_NAME}/
+    # ubuntu 사용자를 docker 그룹에 추가하는 명령을 실행
+    - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "sudo usermod -aG docker ubuntu && newgrp docker"
+    - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "
+      cd /home/ubuntu/${PROJECT_NAME} &&
+      echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin &&
+      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-spring:latest &&      
+      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-next:latest &&
+      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-fastapi:latest &&
+      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-celery:latest &&
+      docker-compose -f docker-compose.prod.yaml down &&
+      docker-compose -f docker-compose.prod.yaml up -d &&
+      docker-compose -f ./nginx/docker-compose.yaml down &&
+      docker-compose -f ./nginx/docker-compose.yaml up -d"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: on_success
+      allow_failure: false
+  tags:
+    - cicd

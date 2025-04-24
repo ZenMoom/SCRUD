@@ -1,1 +1,3 @@
-rootProject.name = 'codex'
+rootProject.name = 'scrud'
+include ':ExampleService'
+include ':generated'

@@ -1,0 +1,22 @@
+NotFoundException:
+  description: "요청한 리소스를 찾을 수 없습니다."
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: "../schemas/exception-schema.yaml#/ProblemDetail"
+          - type: object
+            properties:
+              code:
+                type: string
+              isSuccess:
+                type: boolean
+      example:
+        type: "http://localhost:8080/api"
+        title: "요청한 리소스를 찾을 수 없습니다."
+        status: 404
+        detail: "ID가 '12345'인 상품을 데이터베이스에서 찾을 수 없습니다."
+        instance: "/products/12345"
+        properties:
+          code: 'PRODUCT4001'
+          isSuccess: 'false'

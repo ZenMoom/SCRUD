@@ -1,0 +1,21 @@
+ProblemDetail:
+  type: object
+  properties:
+    type:
+      type: string
+      format: uri
+      description: "문제 유형을 식별하는 URI"
+    title:
+      type: string
+      required: true
+      description: "문제에 대한 간단한 제목"
+    status:
+      type: integer
+      description: "HTTP 상태 코드"
+    detail:
+      type: string
+      description: "문제에 대한 자세한 설명"
+    instance:
+      type: string
+      format: uri
+      description: "문제가 발생한 특정 URI"

@@ -1,0 +1,8 @@
+{
+  "inputs": [
+    {
+      "inputFile": "./example-api.yaml"
+    }
+  ],
+  "output": "./output/openapi.yaml"
+}
