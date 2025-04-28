@@ -34,7 +34,7 @@ prepare_job:
   before_script:
     - ls -al
   script:
-    - docker-compose up --build
+    - docker-compose -f ./infra/docker/docker-compose.yaml --project-directory . up api-compiler spring-generator axios-generator --build
 
   artifacts:
     paths:
