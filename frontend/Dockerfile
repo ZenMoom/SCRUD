@@ -19,7 +19,7 @@ COPY . .
 RUN npm run build;
 
 # Production image, copy all the files and run next
-FROM base AS production
+FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

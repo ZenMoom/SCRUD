@@ -28,7 +28,7 @@ COPY ./ExampleService/src src
 RUN gradle build --no-daemon -x test
 
 # 런타임 스테이지
-FROM eclipse-temurin:21-jdk-alpine AS development
+FROM eclipse-temurin:21-jdk-alpine AS runner
 WORKDIR /app/ExampleService
 
 # 빌드 스테이지에서 생성된 JAR 파일 복사
