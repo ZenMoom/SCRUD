@@ -143,7 +143,7 @@ deploy:
       docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-spring:latest &&      
       docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-next:latest &&
       docker-compose -f docker-compose.prod.yaml down &&
-      docker-compose -f docker-compose.prod.yaml up -d
+      docker-compose -f docker-compose.prod.yaml up -d"
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
       when: on_success
