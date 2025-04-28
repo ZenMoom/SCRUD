@@ -1,0 +1,79 @@
+# 스프링,
+name: compose-utils
+services:
+  api-compiler:
+    build:
+      context: . # 도커 파일 실행은 프로젝트 루트
+      dockerfile: ./generator/Dockerfile # 루트에서부터 Dockerfile을 찾는다.
+    volumes:
+      - ./docs/output:/openapi/output # docker compose 파일에서부터 루트로 이동한뒤 docs를 찾기
+    command:
+      - "generate"
+      - "-i"
+      - "./openapi.yaml"
+      - "-g"
+      - "openapi-yaml"
+      - "-o"
+      - "/openapi/output"
+    restart: "no"
+
+  spring-generator:
+    build:
+      context: . # 도커 파일 실행은 프로젝트 루트
+      dockerfile: ./generator/Dockerfile # 루트에서부터 Dockerfile을 찾는다.
+    volumes:
+      - ./docs/output/openapi:/openapi/input
+      - ./backend/generated:/backend
+    command:
+      - "generate"
+      - "-i"
+      - "./input/openapi.yaml"
+      - "-g"
+      - "spring"
+      - "-o"
+      - "/backend"
+      - "-t"
+      - "spring-custom-generator/custom-codegen"
+      - "-c"
+      - "spring-custom-generator/config.json"
+    depends_on:
+      api-compiler:
+        condition: service_completed_successfully
+    restart: "no"
+
+  axios-generator:
+    build:
+      context: . # 도커 파일 실행은 프로젝트 루트
+      dockerfile: ./generator/Dockerfile # 루트에서부터 Dockerfile을 찾는다.
+    volumes:
+      - ./docs/output/openapi:/openapi/input
+      - ./frontend/generated:/frontend
+    command:
+      - "generate"
+      - "-i"
+      - "./input/openapi.yaml"
+      - "-g"
+      - "typescript-axios"
+      - "-o"
+      - "/frontend"
+      - "-t"
+      - "axios-custom-generator/custom-codegen"
+      - "-c"
+      - "axios-custom-generator/config.json"
+    restart: "no"
+    depends_on:
+      api-compiler:
+        condition: service_completed_successfully
+
+  mock:
+    platform: linux/amd64
+    image: stoplight/prism:4
+    volumes:
+      - ./docs/output/openapi:/tmp:ro
+    ports:
+      - "8081:4010"
+    command: "mock -h 0.0.0.0 /tmp/openapi.yaml"
+    
+    depends_on:
+      api-compiler:
+        condition: service_completed_successfully

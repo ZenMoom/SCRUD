@@ -1,0 +1,24 @@
+
+services:
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: scrud
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - scrud-network
+
+networks:
+  scrud-network:
+    external: true
+
+volumes:
+  mysql_data:
+    driver: local

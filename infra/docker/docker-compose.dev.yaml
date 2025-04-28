@@ -1,0 +1,18 @@
+services:
+  example-service:
+    platform: linux/amd64
+    restart: unless-stopped
+    build:
+      context: ./backend  # 도커 파일 실행은 프로젝트 루트
+      dockerfile: ./ExampleService/Dockerfile # 루트에서부터 Dockerfile을 찾는다/
+      target: development
+    env_file:
+      - ./infra/env/.env.development
+    ports:
+      - "8080:8080"
+    networks:
+      - scrud-network
+
+networks:
+  scrud-network:
+    external: true
