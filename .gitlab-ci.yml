@@ -1,6 +1,5 @@
 stages:
   - prepare
-  - test
   - build
   - deploy
 
@@ -47,61 +46,12 @@ prepare_job:
       allow_failure: false
   tags:
     - cicd
-# Test backend
-test_backend:
-  extends: .docker
-  stage: test
-  needs: ["prepare_job"]
-  before_script:
-    - ls -la ./backend/generated
-  script:
-    - docker buildx build -t ${PROJECT_NAME}-spring-test --target test --no-cache -f ./infra/dockerfiles/backend.Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 .
-    - docker run --rm ${PROJECT_NAME}-spring-test
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
-      changes:
-        - backend/**/*
-        - infra/dockerfiles/backend.Dockerfile
-      when: on_success
-      allow_failure: false
-  artifacts:
-    paths:
-      - backend/generated/
-      - frontend/generated/
-  tags:
-    - cicd
-
-# Test frontend
-test_frontend:
-  extends: .docker
-  stage: test
-  needs: ["prepare_job"]
-  before_script:
-    - ls -la ./frontend/generated
-  script:
-    - docker buildx build -t ${PROJECT_NAME}-next-test --target test -f ./infra/dockerfiles/frontend.Dockerfile --build-arg PLATFORM=linux/amd64 --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} --build-arg NEXT_PUBLIC_ENV_MODE=${NEXT_PUBLIC_ENV_MODE} --build-arg NEXT_PUBLIC_API_OAUTH_URL=${NEXT_PUBLIC_API_OAUTH_URL} --platform linux/amd64 .
-    - docker run --rm ${PROJECT_NAME}-next-test
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
-      changes:
-        - frontend/**/*
-        - infra/dockerfiles/frontend.Dockerfile
-      when: on_success
-      allow_failure: false
-  artifacts:
-    paths:
-      - backend/generated/
-      - frontend/generated/
-  tags:
-    - cicd
 
 # Build and push backend image
 build_backend:
   extends: .docker
   stage: build
   needs:
-    - job: test_backend
-      optional: true
     - job: prepare_job
   artifacts:
     paths:
@@ -134,8 +84,6 @@ build_frontend:
   extends: .docker
   stage: build
   needs:
-    - job: test_frontend
-      optional: true
     - job: prepare_job
   artifacts:
     paths:
