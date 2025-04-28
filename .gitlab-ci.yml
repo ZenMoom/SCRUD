@@ -13,6 +13,7 @@ variables:
   SERVER_HOST: k12e105.p.ssafy.io
   PEM_FILE: K12E105T.pem
   PROJECT_NAME: scrud
+  CACHE_PATH: /cache_cicd/${CI_PROJECT_PATH}
 
 # Common configuration for Docker services
 .docker:
@@ -49,6 +50,10 @@ build_backend:
   stage: build
   needs:
     - job: prepare_job
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-backend-cache
+    paths:
+      - ${CACHE_PATH}/backend
   artifacts:
     paths:
       - backend/generated/
@@ -57,7 +62,17 @@ build_backend:
     - ls -la ./backend/generated
     - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
-    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner -f ./backend/ExampleService/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./backend
+    # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner -f ./backend/ExampleService/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./backend
+    - |
+      docker buildx build -f ./backend/ExampleService/Dockerfile \
+      --target runner \
+      --platform=linux/amd64 \
+      --build-arg PLATFORM=linux/amd64 \
+      --tag ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest \
+      --cache-from=type=local,src=${CACHE_PATH}/backend \
+      --cache-to=type=local,dest=${CACHE_PATH}/backend,mode=max \
+      --push ./backend
+
     - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
@@ -79,6 +94,11 @@ build_frontend:
   stage: build
   needs:
     - job: prepare_job
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-frontend-cache
+    paths:
+      - ${CACHE_PATH}/frontend
+
   artifacts:
     paths:
       - backend/generated/
@@ -87,7 +107,17 @@ build_frontend:
     - ls -la ./frontend/generated
     - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
-    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./frontend
+    # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./frontend
+    - |
+      docker buildx build -f ./frontend/Dockerfile \
+      --target runner \
+      --platform=linux/amd64 \
+      --build-arg PLATFORM=linux/amd64 \
+      --tag ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest \
+      --cache-from=type=local,src=${CACHE_PATH}/frontend \
+      --cache-to=type=local,dest=${CACHE_PATH}/frontend,mode=max \
+      --push ./frontend
+
     - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
