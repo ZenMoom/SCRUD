@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 alpine:latest AS base
+FROM alpine:latest AS base
 WORKDIR /app
 
 COPY ./gradlew .
@@ -7,7 +7,7 @@ COPY ./build.gradle .
 COPY ./settings.gradle .
 COPY ./generated ./generated
 
-FROM --platform=linux/amd64 gradle:jdk21-alpine AS example-build
+FROM gradle:jdk21-alpine AS example-build
 WORKDIR /app
 COPY --from=base /app /app
 
@@ -28,7 +28,7 @@ COPY ./ExampleService/src src
 RUN gradle build --no-daemon -x test
 
 # 런타임 스테이지
-FROM --platform=linux/amd64 eclipse-temurin:21-jdk-alpine AS runner
+FROM eclipse-temurin:21-jdk-alpine AS runner
 WORKDIR /app/ExampleService
 
 # 빌드 스테이지에서 생성된 JAR 파일 복사

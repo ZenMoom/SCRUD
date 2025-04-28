@@ -66,10 +66,10 @@ build_backend:
     # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner -f ./backend/ExampleService/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./backend
     - |
       docker buildx build -f ./backend/ExampleService/Dockerfile \
+      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest \
       --target runner \
       --platform=linux/amd64 \
       --build-arg PLATFORM=linux/amd64 \
-      --tag ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest \
       --cache-from=type=local,src=${CACHE_PATH}/backend \
       --cache-to=type=local,dest=${CACHE_PATH}/backend,mode=max \
       --push ./backend
@@ -112,10 +112,10 @@ build_frontend:
     # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./frontend
     - |
       docker buildx build -f ./frontend/Dockerfile \
+      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest \
       --target runner \
       --platform=linux/amd64 \
       --build-arg PLATFORM=linux/amd64 \
-      --tag ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest \
       --cache-from=type=local,src=${CACHE_PATH}/frontend \
       --cache-to=type=local,dest=${CACHE_PATH}/frontend,mode=max \
       --push ./frontend
