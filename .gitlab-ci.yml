@@ -59,6 +59,7 @@ build_backend:
       - backend/generated/
       - frontend/generated/
   before_script:
+    - docker buildx create --use
     - ls -la ./backend/generated
     - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
@@ -105,6 +106,7 @@ build_frontend:
       - frontend/generated/
   before_script:
     - ls -la ./frontend/generated
+    - docker buildx create --use
     - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
     # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./frontend
