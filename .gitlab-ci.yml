@@ -135,7 +135,6 @@ deploy:
     - echo "Deploying to $SERVER_HOST..."
     - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "mkdir -p /home/ubuntu/${PROJECT_NAME}"
     - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "mkdir -p /home/ubuntu/${PROJECT_NAME}/infra/env"
-    - scp -i $PEM_FILE docker-compose.prod.yaml ubuntu@$SERVER_HOST:/home/ubuntu/${PROJECT_NAME}/
     # ubuntu 사용자를 docker 그룹에 추가하는 명령을 실행
     - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "sudo usermod -aG docker ubuntu && newgrp docker"
     - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "
