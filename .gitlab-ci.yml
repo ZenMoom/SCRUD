@@ -61,7 +61,7 @@ build_backend:
     - ls -la ./backend/generated
     - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
-    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target production -f ./infra/dockerfiles/backend.Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 .
+    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target development -f ./backend/ExampleService/Dockerfile --build-arg PLATFORM=linux/amd64 ./backend
     - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
@@ -93,7 +93,7 @@ build_frontend:
     - ls -la ./frontend/generated
     - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
-    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target production -f ./infra/dockerfiles/frontend.Dockerfile --build-arg PLATFORM=linux/amd64 --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} --build-arg NEXT_PUBLIC_ENV_MODE=${NEXT_PUBLIC_ENV_MODE} --build-arg NEXT_PUBLIC_API_OAUTH_URL=${NEXT_PUBLIC_API_OAUTH_URL} --platform linux/amd64 .
+    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} --build-arg NEXT_PUBLIC_ENV_MODE=${NEXT_PUBLIC_ENV_MODE} --build-arg NEXT_PUBLIC_API_OAUTH_URL=${NEXT_PUBLIC_API_OAUTH_URL} --platform linux/amd64 .
     - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
