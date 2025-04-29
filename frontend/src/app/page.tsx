@@ -1,37 +1,28 @@
 "use client";
-import { useState } from 'react';
-import { ExampleApi } from "@generated/api";
-import { Configuration } from "@generated/configuration";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { ExamplePageDto } from "@generated/model/example-page-dto";
 
-export default function Home () {
+export default function Home() {
   const [data, setData] = useState<ExamplePageDto | null>(null);
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const envMode = process.env.NEXT_PUBLIC_ENV_MODE;
-  console.log('apiUrl', apiUrl);
-  console.log('envMode', envMode);
-
-  const config = new Configuration({
-    basePath: apiUrl,
-  });
-  const exampleApi = new ExampleApi(config);
+  const [envMode, setEnvMode] = useState<string>("");
+  const helloWorld = process.env.NEXT_PUBLIC_HELLO_WORLD;
 
   const handleClick = async () => {
-
-    const response = await exampleApi.getExamplesWithPagination({
-      page: 1,
-      size: 5
-    });
-    const jsonData = await response.data;
-    setData(jsonData);
-
+    const response = await axios.get("/api/examples");
+    setData(response.data);
+    console.log("jsonData", response.data);
   };
 
+  useEffect(() => {
+    axios.get("/api/env-mode").then((res) => setEnvMode(res.data));
+  }, []);
 
   return (
     <div>
       <h1>예시 데이터 가져오기</h1>
+      <h3>실행 환경: {envMode}</h3>
+      <p>{helloWorld}</p>
       <button onClick={handleClick}>데이터 가져오기</button>
 
       {data && (
@@ -42,4 +33,4 @@ export default function Home () {
       )}
     </div>
   );
-};
+}

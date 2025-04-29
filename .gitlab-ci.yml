@@ -13,11 +13,8 @@ variables:
   SERVER_HOST: k12e105.p.ssafy.io
   PEM_FILE: K12E105T.pem
   PROJECT_NAME: scrud
-  # next.js 환경 설정
-  NEXT_PUBLIC_API_BASE_URL: $NEXT_PUBLIC_API_BASE_URL
-  NEXT_PUBLIC_ENV_MODE: $NEXT_PUBLIC_ENV_MODE
-  NEXT_PUBLIC_API_OAUTH_URL: $NEXT_PUBLIC_API_OAUTH_URL
-  
+  CACHE_PATH: /cache_cicd/${CI_PROJECT_PATH}
+
 # Common configuration for Docker services
 .docker:
   image: docker:20.10.16
@@ -29,7 +26,7 @@ variables:
 # Generate OpenAPI code for both frontend and backend
 prepare_job:
   extends: .docker
-  stage: prepare  # 이 부분이 중요합니다 - prepare 스테이지에 속함을 명시
+  stage: prepare
   before_script:
     - ls -al
   script:
@@ -53,27 +50,38 @@ build_backend:
   stage: build
   needs:
     - job: prepare_job
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-backend-cache
+    paths:
+      - ${CACHE_PATH}/backend
   artifacts:
     paths:
       - backend/generated/
       - frontend/generated/
   before_script:
-    - ls -la ./backend/generated
+    - docker buildx create --use
+    - mkdir -p ${CACHE_PATH}/backend
     - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
-    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target development -f ./backend/ExampleService/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./backend
-    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
+    # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner -f ./backend/ExampleService/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./backend
+    - |
+      docker buildx build -f ./backend/ExampleService/Dockerfile \
+      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest \
+      --target runner \
+      --platform=linux/amd64 \
+      --build-arg PLATFORM=linux/amd64 \
+      --cache-from=type=local,src=${CACHE_PATH}/backend \
+      --cache-to=type=local,dest=${CACHE_PATH}/backend,mode=max \
+      --push ./backend
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
       changes:
         - backend/**/*
-        - infra/dockerfiles/backend.Dockerfile
       when: on_success
       allow_failure: false
     - if: '$CI_COMMIT_BRANCH == "develop"'
       changes:
         - backend/**/*
-        - infra/dockerfiles/backend.Dockerfile
       when: on_success
       allow_failure: false
   tags:
@@ -85,32 +93,43 @@ build_frontend:
   stage: build
   needs:
     - job: prepare_job
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-frontend-cache
+    paths:
+      - ${CACHE_PATH}/frontend
+
   artifacts:
     paths:
       - backend/generated/
       - frontend/generated/
   before_script:
-    - ls -la ./frontend/generated
+    - mkdir -p ${CACHE_PATH}/frontend
+    - docker buildx create --use
     - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
-    - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} --build-arg NEXT_PUBLIC_ENV_MODE=${NEXT_PUBLIC_ENV_MODE} --build-arg NEXT_PUBLIC_API_OAUTH_URL=${NEXT_PUBLIC_API_OAUTH_URL} --platform linux/amd64 ./frontend
-    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest
+    # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./frontend
+    - |
+      docker buildx build -f ./frontend/Dockerfile \
+      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest \
+      --target runner \
+      --platform=linux/amd64 \
+      --build-arg PLATFORM=linux/amd64 \
+      --cache-from=type=local,src=${CACHE_PATH}/frontend \
+      --cache-to=type=local,dest=${CACHE_PATH}/frontend,mode=max \
+      --push ./frontend
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
       changes:
         - frontend/**/*
-        - infra/dockerfiles/frontend.Dockerfile
       when: on_success
       allow_failure: false
     - if: '$CI_COMMIT_BRANCH == "develop"'
       changes:
         - frontend/**/*
-        - infra/dockerfiles/frontend.Dockerfile
       when: on_success
       allow_failure: false
   tags:
     - cicd
-
 
 # Deploy to production server
 deploy:
@@ -140,10 +159,11 @@ deploy:
     - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "
       cd /home/ubuntu/${PROJECT_NAME} &&
       echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin &&
-      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-spring:latest &&      
+      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-spring:latest &&
       docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-next:latest &&
       docker-compose -f docker-compose.prod.yaml down &&
       docker-compose -f docker-compose.prod.yaml up -d"
+
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
       when: on_success
