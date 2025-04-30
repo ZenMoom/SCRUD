@@ -1,14 +1,15 @@
-package com.barcoder.scrud.controller;
+package com.barcoder.scrud.domain.example.controller;
+
 
 import com.barcoder.scrud.api.ExampleApi;
 import com.barcoder.scrud.model.ExampleDto;
-import com.barcoder.scrud.model.ExampleDto.ExampleEnumEnum;
 import com.barcoder.scrud.model.ExamplePageDto;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -16,7 +17,7 @@ public class ExampleController implements ExampleApi {
 
     private ExampleDto create() {
         return ExampleDto.builder()
-                .exampleEnum(ExampleEnumEnum.ONE)
+                .exampleEnum(ExampleDto.ExampleEnumEnum.ONE)
                 .exampleString("테스트")
                 .exampleInteger(111)
                 .build();
