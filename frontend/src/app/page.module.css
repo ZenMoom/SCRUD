@@ -1,168 +1,85 @@
-.page {
-  --gray-rgb: 0, 0, 0;
-  --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
-  --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
+.container {
+  max-width: 90rem; /* 1400px을 rem으로 변환 (1rem = 16px 기준) */
+  margin: 2rem auto;
+  padding: 2rem 5%; /* 퍼센트 단위로 좌우 패딩 지정 */
+}
 
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
+.pageTitle {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  color: #333;
+}
 
+.projectGrid {
   display: grid;
-  grid-template-rows: 20px 1fr 20px;
-  align-items: center;
-  justify-items: center;
-  min-height: 100svh;
-  padding: 80px;
-  gap: 64px;
-  font-family: var(--font-geist-sans);
+  /* minmax의 첫 번째 값을 rem으로 변환 */
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
+/* 화면 크기에 따른 반응형 그리드 조정 - em 단위 사용 */
+@media (min-width: 87.5em) {
+  /* 1400px/16px = 87.5em */
+  .projectGrid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
-.main {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  grid-row-start: 2;
+@media (max-width: 87.4375em) and (min-width: 62em) {
+  /* 1399px/16px = 87.4375em, 992px/16px = 62em */
+  .projectGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-.main ol {
-  font-family: var(--font-geist-mono);
-  padding-left: 0;
-  margin: 0;
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: -0.01em;
-  list-style-position: inside;
+@media (max-width: 61.9375em) and (min-width: 40em) {
+  /* 991px/16px = 61.9375em, 640px/16px = 40em */
+  .projectGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.main li:not(:last-of-type) {
-  margin-bottom: 8px;
+@media (max-width: 39.9375em) {
+  /* 639px/16px = 39.9375em */
+  .projectGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding: 1.5rem 1rem; /* 상하 패딩과 좌우 패딩 분리 */
+  }
 }
 
-.main code {
-  font-family: inherit;
-  background: var(--gray-alpha-100);
-  padding: 2px 4px;
-  border-radius: 4px;
+/* 개발자 테스트 섹션 */
+.devSection {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background-color: #f5f5f5;
+  border-radius: 0.5rem;
+  border-left: 0.25rem solid #3b82f6;
+}
+
+.devSectionTitle {
+  font-size: 1.2rem;
   font-weight: 600;
+  margin-bottom: 1rem;
+  color: #333;
 }
 
-.ctas {
-  display: flex;
-  gap: 16px;
-}
-
-.ctas a {
-  appearance: none;
-  border-radius: 128px;
-  height: 48px;
-  padding: 0 20px;
-  border: none;
-  border: 1px solid transparent;
-  transition:
-    background 0.2s,
-    color 0.2s,
-    border-color 0.2s;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  line-height: 20px;
+.button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.25rem;
   font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-a.primary {
-  background: var(--foreground);
-  color: var(--background);
-  gap: 8px;
-}
-
-a.secondary {
-  border-color: var(--gray-alpha-200);
-  min-width: 158px;
-}
-
-.footer {
-  grid-row-start: 3;
-  display: flex;
-  gap: 24px;
-}
-
-.footer a {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.footer img {
-  flex-shrink: 0;
-}
-
-/* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
-  a.primary:hover {
-    background: var(--button-primary-hover);
-    border-color: transparent;
-  }
-
-  a.secondary:hover {
-    background: var(--button-secondary-hover);
-    border-color: transparent;
-  }
-
-  .footer a:hover {
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
-}
-
-@media (max-width: 600px) {
-  .page {
-    padding: 32px;
-    padding-bottom: 80px;
-  }
-
-  .main {
-    align-items: center;
-  }
-
-  .main ol {
-    text-align: center;
-  }
-
-  .ctas {
-    flex-direction: column;
-  }
-
-  .ctas a {
-    font-size: 14px;
-    height: 40px;
-    padding: 0 16px;
-  }
-
-  a.secondary {
-    min-width: auto;
-  }
-
-  .footer {
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
-  }
+.button:hover {
+  background-color: #2563eb;
 }

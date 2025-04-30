@@ -1,36 +1,65 @@
-"use client";
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { ExamplePageDto } from "@generated/model/example-page-dto";
+"use client"
+import Link from "next/link"
+import { useState } from "react"
+import styles from "./page.module.css"
+import { ProjectCard, NewProjectCard, Project } from "./components/project-card"
 
 export default function Home() {
-  const [data, setData] = useState<ExamplePageDto | null>(null);
-  const [envMode, setEnvMode] = useState<string>("");
-  const helloWorld = process.env.NEXT_PUBLIC_HELLO_WORLD;
+  // 예시 프로젝트 데이터
+  const [projects, setProjects] = useState<Project[]>([
+    {
+      id: "1",
+      title: "프로젝트 제목",
+      description: "프로젝트 개요가 들어가는 부분입니다. 이며 4줄 이하의 내용만 보기에 나타납니다. 이후는 말줄임표(...)로 표작됩니다. 크기는 20자 이하로 제한됩니다.",
+      createdAt: "20xx.xx.xx",
+    },
+    {
+      id: "2",
+      title: "프로젝트 제목",
+      description: "프로젝트 개요가 들어가는 부분입니다. 이며 4줄 이하의 내용만 보기에 나타납니다. 이후는 말줄임표(...)로 표작됩니다. 크기는 20자 이하로 제한됩니다.",
+      createdAt: "20xx.xx.xx",
+    },
+    {
+      id: "3",
+      title: "프로젝트 제목",
+      description: "프로젝트 개요가 들어가는 부분입니다. 이며 4줄 이하의 내용만 보기에 나타납니다. 이후는 말줄임표(...)로 표작됩니다. 크기는 20자 이하로 제한됩니다.",
+      createdAt: "20xx.xx.xx",
+    },
+    {
+      id: "4",
+      title: "프로젝트 제목",
+      description: "프로젝트 개요가 들어가는 부분입니다. 이며 4줄 이하의 내용만 보기에 나타납니다. 이후는 말줄임표(...)로 표작됩니다. 크기는 20자 이하로 제한됩니다.",
+      createdAt: "20xx.xx.xx",
+    },
+  ])
 
-  const handleClick = async () => {
-    const response = await axios.get("/api/examples");
-    setData(response.data);
-    console.log("jsonData", response.data);
-  };
-
-  useEffect(() => {
-    axios.get("/api/env-mode").then((res) => setEnvMode(res.data));
-  }, []);
+  // 새 프로젝트 생성 함수
+  const createNewProject = () => {
+    console.log("새 프로젝트 생성")
+    // 실제로는 API 호출 등을 통해 새 프로젝트를 생성하고 목록에 추가하는 로직 구현
+  }
 
   return (
-    <div>
-      <h1>예시 데이터 가져오기</h1>
-      <h3>실행 환경: {envMode}</h3>
-      <p>{helloWorld}</p>
-      <button onClick={handleClick}>데이터 가져오기</button>
+    <div className={styles.container}>
+      <h1 className={styles.pageTitle}>바코드 님의 프로젝트</h1>
 
-      {data && (
-        <div>
-          <h2>API 응답:</h2>
-          <pre>{JSON.stringify(data, null, 2)}</pre>
-        </div>
-      )}
+      <div className={styles.projectGrid}>
+        {/* 프로젝트 카드 컴포넌트 사용 */}
+        {projects.map((project) => (
+          <ProjectCard key={project.id} project={project} />
+        ))}
+
+        {/* 새 프로젝트 추가 카드 컴포넌트 사용 */}
+        <NewProjectCard onClick={createNewProject} />
+      </div>
+
+      {/* 테스트 페이지 링크 - 개발 중에만 사용, 필요하지 않으면 제거 */}
+      <div className={styles.devSection}>
+        <h2 className={styles.devSectionTitle}>개발자 테스트 섹션</h2>
+        <Link href="/test" className={styles.button}>
+          API 테스트 페이지
+        </Link>
+      </div>
     </div>
-  );
+  )
 }
