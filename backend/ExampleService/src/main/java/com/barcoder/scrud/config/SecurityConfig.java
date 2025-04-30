@@ -32,8 +32,8 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authorizationManager -> authorizationManager
                 // 인증, 인가가 필요없는 url 허용
-                .requestMatchers(toRequestMatcher(securityProperties.getRequestMatchers())).permitAll())
-
+                .requestMatchers(toRequestMatcher(securityProperties.getRequestMatchers())).permitAll()
+                .anyRequest().authenticated())
             // OAuth 관련
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo
