@@ -1,4 +1,4 @@
-package com.barcoder.scrud.domain.member.service;
+package com.barcoder.scrud.domain.user.application.service;
 
 import org.springframework.stereotype.Service;
 

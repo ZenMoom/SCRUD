@@ -1,6 +1,6 @@
 package com.barcoder.scrud.domain.oauth;
 
-import com.barcoder.scrud.domain.member.model.entity.User;
+import com.barcoder.scrud.domain.user.model.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

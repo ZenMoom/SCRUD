@@ -1,8 +1,8 @@
 package com.barcoder.scrud.util;
 
 import com.barcoder.scrud.base.status.ErrorStatus;
-import com.barcoder.scrud.domain.member.model.entity.User;
-import com.barcoder.scrud.domain.member.repository.UserRepository;
+import com.barcoder.scrud.domain.user.model.entity.User;
+import com.barcoder.scrud.domain.user.repository.UserRepository;
 import com.barcoder.scrud.domain.oauth.UserPrincipal;
 import com.barcoder.scrud.exception.ExceptionHandler;
 import jakarta.servlet.FilterChain;

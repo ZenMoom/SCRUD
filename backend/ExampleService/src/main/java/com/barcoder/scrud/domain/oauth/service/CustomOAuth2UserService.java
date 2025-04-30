@@ -3,13 +3,13 @@ package com.barcoder.scrud.domain.oauth.service;
 import com.barcoder.scrud.base.status.ErrorStatus;
 import com.barcoder.scrud.domain.github.model.entity.GithubAccount;
 import com.barcoder.scrud.domain.github.repository.GithubAccountRepository;
-import com.barcoder.scrud.domain.member.model.entity.User;
-import com.barcoder.scrud.domain.member.repository.UserRepository;
 import com.barcoder.scrud.domain.oauth.UserPrincipal;
 import com.barcoder.scrud.domain.oauth.provider.GithubOAuth2UserInfo;
 import com.barcoder.scrud.domain.oauth.provider.GoogleOAuth2UserInfo;
+import com.barcoder.scrud.domain.user.application.assembler.UserAssembler;
+import com.barcoder.scrud.domain.user.model.entity.User;
+import com.barcoder.scrud.domain.user.repository.UserRepository;
 import com.barcoder.scrud.exception.ExceptionHandler;
-import com.barcoder.scrud.util.GenerateRandomNickname;
 import com.barcoder.scrud.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +43,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final SecurityUtil securityUtil;
     private final UserRepository userRepository;
+    private final UserAssembler userAssembler;
     private final GithubAccountRepository githubAccountRepository;
 
     @Override
@@ -148,11 +149,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     // 4. 사용자 정보 저장
     private User register(GoogleOAuth2UserInfo oAuth2UserInfo) {
         log.info("register: {}", oAuth2UserInfo);
-        String username = oAuth2UserInfo.getEmail();
-        String profileUrl = oAuth2UserInfo.getImageUrl();
-        String nickname = GenerateRandomNickname.generateRandomNickname();
 
-        User user = new User(username, profileUrl, nickname);
+        User user = userAssembler.assemble(oAuth2UserInfo);
         return userRepository.save(user);
     }
 

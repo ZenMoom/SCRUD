@@ -1,15 +1,11 @@
 package com.barcoder.scrud.domain.github.model.entity;
 
-import com.barcoder.scrud.domain.member.model.entity.User;
+import com.barcoder.scrud.domain.user.model.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.util.StringUtils;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -20,8 +16,8 @@ import java.util.UUID;
 public class GithubAccount {
     @Id
     @Column(name="github_account_id")
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID githubAccountId;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long githubAccountId;
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)

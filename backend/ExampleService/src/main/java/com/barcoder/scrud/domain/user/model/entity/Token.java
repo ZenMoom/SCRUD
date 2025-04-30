@@ -1,4 +1,4 @@
-package com.barcoder.scrud.domain.member.model.entity;
+package com.barcoder.scrud.domain.user.model.entity;
 
 import lombok.*;
 

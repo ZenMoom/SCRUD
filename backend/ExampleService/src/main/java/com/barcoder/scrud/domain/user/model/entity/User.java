@@ -1,30 +1,30 @@
-package com.barcoder.scrud.domain.member.model.entity;
+package com.barcoder.scrud.domain.user.model.entity;
 
 import com.barcoder.scrud.base.BaseEntity;
 import com.barcoder.scrud.domain.github.model.entity.GithubAccount;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
 @Entity
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(name = "Users")
 public class User extends BaseEntity {
     @Id
+    @JdbcTypeCode(SqlTypes.CHAR)
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "user_id")
     private UUID userId;
 
-    @Column(name = "username", unique = true, nullable = false)
     // "Google OAuth 로 받아온 이메일이 로그인 아이디"
+    @Column(name = "username", unique = true, nullable = false)
     @Comment("사용자 로그인 아이디")
     private String username;
 
@@ -53,9 +53,5 @@ public class User extends BaseEntity {
 
     public void updateGithubConnection(boolean isConnected) {
         this.isGithubConnected = isConnected;
-    }
-
-    public void updateUserId(UUID userId) {
-        this.userId = userId;
     }
 }

@@ -1,8 +1,8 @@
 package com.barcoder.scrud.util;
 
 import com.barcoder.scrud.base.status.ErrorStatus;
-import com.barcoder.scrud.domain.member.model.entity.Token;
-import com.barcoder.scrud.domain.member.model.entity.User;
+import com.barcoder.scrud.domain.user.model.entity.Token;
+import com.barcoder.scrud.domain.user.model.entity.User;
 import com.barcoder.scrud.exception.ExceptionHandler;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;

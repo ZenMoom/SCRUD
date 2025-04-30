@@ -1,4 +1,4 @@
-package com.barcoder.scrud.domain.member.controller;
+package com.barcoder.scrud.domain.user.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 

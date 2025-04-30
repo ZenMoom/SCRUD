@@ -1,7 +1,6 @@
-package com.barcoder.scrud.domain.member.repository;
+package com.barcoder.scrud.domain.user.repository;
 
-import com.barcoder.scrud.domain.member.model.entity.User;
-import com.barcoder.scrud.util.JWTUtil;
+import com.barcoder.scrud.domain.user.model.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
