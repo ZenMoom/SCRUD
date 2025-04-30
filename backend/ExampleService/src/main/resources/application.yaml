@@ -11,14 +11,14 @@ spring:
           google:
             client-id: ${GOOGLE_ID}
             client-secret: ${GOOGLE_SECRET}
-            redirect-uri: ${REDIRECT_URI}/oauth2/code/google
+            redirect-uri: ${SPRING_REDIRECT_URI}/oauth2/code/google
             scope:
               - profile
               - email
           github:
             client-id: ${GITHUB_ID}
             client-secret: ${GITHUB_SECRET}
-            redirect-uri: ${REDIRECT_URI}/oauth2/code/github
+            redirect-uri: ${SPRING_REDIRECT_URI}/oauth2/code/github
             scope:
               - read:user
               - user:email
@@ -37,10 +37,10 @@ spring:
       hibernate:
         jdbc:
           time_zone: Asia/Seoul
-        format_sql: ${JPA_SHOW_SQL}
+        format_sql: ${SPRING_JPA_SHOW_SQL}
         dialect: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO}
+      ddl-auto: ${SPRING_JPA_DDL_AUTO}
     defer-datasource-initialization: true
 
   datasource:
@@ -71,18 +71,27 @@ spring:
       max-request-size: 200MB
 
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
+  secret-key: ${SPRING_JWT_SECRET_KEY}
   access-token:
-    expiretime: ${JWT_ACCESS_TOKEN_EXPIRE_TIME}
+    expiretime: ${SPRING_JWT_ACCESS_TOKEN_EXPIRE_TIME}
 
 oauth2:
-  redirectUri: ${REDIRECT_URI}
-  frontRedirectUri: ${FRONT_REDIRECT_URI}
+  redirectUri: ${SPRING_REDIRECT_URI}
+  frontRedirectUri: ${SPRING_FRONT_REDIRECT_URI}
 
 # GitHub API Setting
 github:
   api:
     base-url: https://api.github.com
+
+# 인증, 인가가 필요없는 api 경로와 method
+security:
+  all:
+    # endpoint:method 구조를 가짐
+    # method는 , 으로 구분하여 추가
+    requestMatchers:
+      # test
+      # - /api/v1/tests:GET, POST
 
 #  datasource:
 #    url: jdbc:h2:mem:testdb   # ???? DB
