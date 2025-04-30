@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useMemo } from "react"
-import styles from "./project-card.module.css"
 
 // 프로젝트 타입 정의
 export interface Project {
@@ -16,7 +15,7 @@ interface ProjectCardProps {
   project: Project
 }
 
-// 파스텔 배경색 배열
+// 더 진한 파스텔 배경색 배열
 const pastelColors = [
   "#CCE5FF", // 더 진한 파랑
   "#CCFFF1", // 더 진한 민트
@@ -39,10 +38,14 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   }, [project.id])
 
   return (
-    <Link href={`/project/${project.id}`} className={styles.projectCard} style={{ backgroundColor }}>
-      <h2 className={styles.projectTitle}>{project.title}</h2>
-      <p className={styles.projectDescription}>{project.description}</p>
-      <div className={styles.projectDate}>{project.createdAt}</div>
+    <Link
+      href={`/project/${project.id}`}
+      className="flex flex-col p-6 h-[200px] rounded-lg text-inherit no-underline shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+      style={{ backgroundColor }}
+    >
+      <h2 className="text-xl font-semibold mb-3 text-gray-800">{project.title}</h2>
+      <p className="text-sm leading-relaxed text-gray-600 flex-grow overflow-hidden line-clamp-2 mb-4">{project.description}</p>
+      <div className="text-xs text-gray-500 text-right">{project.createdAt}</div>
     </Link>
   )
 }
