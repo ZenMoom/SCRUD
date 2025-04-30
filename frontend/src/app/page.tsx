@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import styles from "./page.module.css"
-import { ProjectCard, NewProjectCard, Project } from "./components/project-card"
+import { ProjectCard, NewProjectCard, Project } from "../components/project-card"
 
 export default function Home() {
   // 예시 프로젝트 데이터
