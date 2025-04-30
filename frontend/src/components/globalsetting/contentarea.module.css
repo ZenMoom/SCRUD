@@ -1,0 +1,13 @@
+.contentArea {
+    flex: 1;
+    position: relative;
+    background-color: #f8f8f8;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.02);
+  }
+  
+  .scrollContainer {
+    height: 100%;
+    overflow-y: auto;
+    padding: 2rem 3rem;
+  }
+  

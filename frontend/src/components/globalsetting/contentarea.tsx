@@ -1,0 +1,179 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import FormItem from "./form"
+import InfoModal from "./infomodal"
+import styles from "./contentarea.module.css";
+
+interface ContentAreaProps {
+  settings: Record<string, string>
+  onSettingChange: (key: string, value: string) => void
+  refs: Record<string, React.RefObject<HTMLDivElement>>
+}
+
+export default function ContentArea({ settings, onSettingChange, refs }: ContentAreaProps) {
+  const [modalOpen, setModalOpen] = useState<string | null>(null)
+
+  const openModal = (key: string) => {
+    setModalOpen(key)
+  }
+
+  const closeModal = () => {
+    setModalOpen(null)
+  }
+
+  // 각 설정 항목에 대한 설명
+  const descriptions = {
+    title: "프로젝트의 이름을 입력하세요.",
+    description: "프로젝트에 대한 간략한 설명을 입력하세요.",
+    serverUrl: "서버의 URL을 입력하세요.",
+    requirementSpec: "요구사항 명세서 파일을 업로드하세요.",
+    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요.",
+    dependencyFile: "의존성 파일을 업로드하세요.",
+    utilityClass: "유틸리티 클래스 정보를 업로드하세요.",
+    errorCode: "에러 코드 정의 파일을 업로드하세요.",
+    securitySetting: "보안 설정에 관한 정보를 선택하세요.",
+    codeConvention: "코드 컨벤션 파일을 업로드하세요.",
+    architectureStructure: "아키텍처 구조를 선택하세요.",
+  }
+
+  // 각 설정 항목의 입력 타입
+  const inputTypes = {
+    title: "text",
+    description: "textarea",
+    serverUrl: "text",
+    requirementSpec: "file",
+    erd: "file",
+    dependencyFile: "file",
+    utilityClass: "file",
+    errorCode: "file",
+    securitySetting: "radio",
+    codeConvention: "file",
+    architectureStructure: "radio",
+  }
+
+  // 라디오 버튼 옵션
+  const radioOptions = {
+    securitySetting: [
+      { value: "jwt", label: "JWT" },
+      { value: "session", label: "세션" },
+    ],
+    architectureStructure: [
+      { value: "layered", label: "레이어드 아키텍처" },
+      { value: "clean", label: "클린 아키텍처" },
+      { value: "microservice", label: "마이크로서비스 아키텍처" },
+      { value: "event", label: "이벤트 드리븐 아키텍처" },
+    ],
+  }
+
+  return (
+    <div className={styles.contentArea}>
+      <div className={styles.scrollContainer}>
+        <FormItem
+          ref={refs.title}
+          title="프로젝트명"
+          type={inputTypes.title}
+          value={settings.title}
+          onChange={(value) => onSettingChange("title", value)}
+          onInfoClick={() => openModal("title")}
+        />
+
+        <FormItem
+          ref={refs.description}
+          title="프로젝트 설명"
+          type={inputTypes.description}
+          value={settings.description}
+          onChange={(value) => onSettingChange("description", value)}
+          onInfoClick={() => openModal("description")}
+        />
+
+        <FormItem
+          ref={refs.serverUrl}
+          title="Server URL"
+          type={inputTypes.serverUrl}
+          value={settings.serverUrl}
+          onChange={(value) => onSettingChange("serverUrl", value)}
+          onInfoClick={() => openModal("serverUrl")}
+        />
+
+        <FormItem
+          ref={refs.requirementSpec}
+          title="요구사항 명세서"
+          type={inputTypes.requirementSpec}
+          value={settings.requirementSpec}
+          onChange={(value) => onSettingChange("requirementSpec", value)}
+          onInfoClick={() => openModal("requirementSpec")}
+        />
+
+        <FormItem
+          ref={refs.erd}
+          title="ERD"
+          type={inputTypes.erd}
+          value={settings.erd}
+          onChange={(value) => onSettingChange("erd", value)}
+          onInfoClick={() => openModal("erd")}
+        />
+
+        <FormItem
+          ref={refs.dependencyFile}
+          title="의존성 파일"
+          type={inputTypes.dependencyFile}
+          value={settings.dependencyFile}
+          onChange={(value) => onSettingChange("dependencyFile", value)}
+          onInfoClick={() => openModal("dependencyFile")}
+        />
+
+        <FormItem
+          ref={refs.utilityClass}
+          title="유틸 클래스"
+          type={inputTypes.utilityClass}
+          value={settings.utilityClass}
+          onChange={(value) => onSettingChange("utilityClass", value)}
+          onInfoClick={() => openModal("utilityClass")}
+        />
+
+        <FormItem
+          ref={refs.errorCode}
+          title="에러 코드"
+          type={inputTypes.errorCode}
+          value={settings.errorCode}
+          onChange={(value) => onSettingChange("errorCode", value)}
+          onInfoClick={() => openModal("errorCode")}
+        />
+
+        <FormItem
+          ref={refs.securitySetting}
+          title="보안 설정"
+          type={inputTypes.securitySetting}
+          value={settings.securitySetting}
+          onChange={(value) => onSettingChange("securitySetting", value)}
+          onInfoClick={() => openModal("securitySetting")}
+          options={radioOptions.securitySetting}
+        />
+
+        <FormItem
+          ref={refs.codeConvention}
+          title="코드 컨벤션"
+          type={inputTypes.codeConvention}
+          value={settings.codeConvention}
+          onChange={(value) => onSettingChange("codeConvention", value)}
+          onInfoClick={() => openModal("codeConvention")}
+        />
+
+        <FormItem
+          ref={refs.architectureStructure}
+          title="아키텍처 구조"
+          type={inputTypes.architectureStructure}
+          value={settings.architectureStructure}
+          onChange={(value) => onSettingChange("architectureStructure", value)}
+          onInfoClick={() => openModal("architectureStructure")}
+          options={radioOptions.architectureStructure}
+        />
+      </div>
+
+      {modalOpen && <InfoModal title={modalOpen} description={descriptions[modalOpen]} onClose={closeModal} />}
+    </div>
+  )
+}
