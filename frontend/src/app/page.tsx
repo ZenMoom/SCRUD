@@ -6,7 +6,7 @@ import { ProjectCard, NewProjectCard, Project } from "./components/project-card"
 
 export default function Home() {
   // 예시 프로젝트 데이터
-  const [projects, setProjects] = useState<Project[]>([
+  const [projects] = useState<Project[]>([
     {
       id: "1",
       title: "프로젝트 제목",
