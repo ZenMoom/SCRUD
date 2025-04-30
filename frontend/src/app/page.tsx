@@ -1,8 +1,7 @@
 "use client"
 import Link from "next/link"
 import { useState } from "react"
-import styles from "./page.module.css"
-import { ProjectCard, NewProjectCard, Project } from "../components/project-card"
+import { ProjectCard, NewProjectCard, Project } from "@/components/project-card"
 
 export default function Home() {
   // 예시 프로젝트 데이터
@@ -40,10 +39,10 @@ export default function Home() {
   }
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.pageTitle}>바코드 님의 프로젝트</h1>
+    <div className="max-w-[90rem] mx-auto px-[5%] py-8">
+      <h1 className="text-4xl font-bold mb-10 text-gray-800">바코드 님의 프로젝트</h1>
 
-      <div className={styles.projectGrid}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {/* 프로젝트 카드 컴포넌트 사용 */}
         {projects.map((project) => (
           <ProjectCard key={project.id} project={project} />
@@ -54,9 +53,9 @@ export default function Home() {
       </div>
 
       {/* 테스트 페이지 링크 - 개발 중에만 사용, 필요하지 않으면 제거 */}
-      <div className={styles.devSection}>
-        <h2 className={styles.devSectionTitle}>개발자 테스트 섹션</h2>
-        <Link href="/test" className={styles.button}>
+      <div className="mt-12 p-6 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+        <h2 className="text-lg font-semibold mb-4 text-gray-700">개발자 테스트 섹션</h2>
+        <Link href="/test" className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
           API 테스트 페이지
         </Link>
       </div>
