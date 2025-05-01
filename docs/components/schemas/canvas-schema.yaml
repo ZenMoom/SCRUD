@@ -1,0 +1,428 @@
+#################### MODELS ####################
+
+MethodModelDto:
+  type: object
+  required:
+    - id
+    - name
+    - signature
+  properties:
+    id:
+      type: string
+      description: 메서드 ID
+    name:
+      type: string
+      description: 메서드 이름
+    signature:
+      type: string
+      description: 메서드 시그니처
+    body:
+      type: string
+      description: 메서드 본문
+    description:
+      type: string
+      description: 메서드 설명
+
+ConnectionModelDto:
+  type: object
+  required:
+    - id
+    - sourceId
+    - targetId
+    - type
+  properties:
+    id:
+      type: string
+      description: 연결 ID
+    sourceId:
+      type: string
+      description: 소스 메서드 ID
+    targetId:
+      type: string
+      description: 타겟 메서드 ID
+    type:
+      $ref: '#/MethodConnectionTypeEnumDto'
+
+
+
+
+DtoModelDto:
+  type: object
+  required:
+    - id
+    - name
+  properties:
+    id:
+      type: string
+      description: DTO ID
+    name:
+      type: string
+      description: DTO 이름
+    description:
+      type: string
+      description: DTO 설명
+    properties:
+      type: array
+      description: DTO 속성 목록
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+            description: 속성 이름
+          type:
+            type: string
+            description: 속성 타입
+          description:
+            type: string
+            description: 속성 설명
+          required:
+            type: boolean
+            description: 필수 여부
+
+MetadataModelDto:
+  type: object
+  required:
+    - version
+    - lastModified
+  properties:
+    version:
+      type: string
+      description: 버전 번호
+    lastModified:
+      type: string
+      format: date-time
+      description: 마지막 수정 일시
+    name:
+      type: string
+      description: API 이름
+    description:
+      type: string
+      description: API 설명
+
+SystemChatDto:
+  type: object
+  description: 사용자가 요청한 프롬프트를 수행한 응답 메시지
+  properties:
+    status:
+      $ref: '#/PromptResponseEnumDto'
+
+    versionInfo:
+      type: object
+      description: 버전 변경 정보 (상태가 MODIFIED 또는 MODIFIED_WITH_NEW_COMPONENTS인 경우)
+      properties:
+        newVersionId:
+          type: string
+          description: 새 버전 ID
+        description:
+          type: string
+          description: 버전 변경 설명
+    diagramData:
+      $ref: '#/DiagramModelDto'
+    error:
+      type: object
+      description: 오류 정보 (status가 ERROR인 경우)
+      properties:
+        code:
+          type: string
+          description: 오류 코드
+        message:
+          type: string
+          description: 오류 메시지
+
+ApiSummaryModelDto:
+  type: object
+  properties:
+    id:
+      type: integer
+      description: 'API의 고유 식별자'
+    name:
+      type: string
+      description: 'API의 이름'
+    status:
+      $ref: '#/ApiProcessStateEnumDto'
+    createdAt:
+      type: string
+      format: date-time
+      description: '생성 일시'
+    updatedAt:
+      type: string
+      format: date-time
+      description: '마지막 수정 일시'
+    description:
+      type: string
+      description: 'API에 대한 설명'
+
+UserChatModelDto:
+  type: object
+  description: 사용자 메시지 관련 데이터 (sender가 USER인 경우)
+  properties:
+    tag:
+      $ref: '#/MethodPromptTagEnumDto'
+    promptType:
+      $ref: '#/MethodPromptTargetEnumDto'
+    message:
+      type: string
+      description: 메시지 내용
+    targetMethods:
+      type: array
+      description: 프롬프트 대상 메서드 정보
+      items:
+        id:
+          type: string
+          description: 메서드 ID
+
+ChatModelDto:
+  type: object
+  required:
+    - id
+    - sender
+    - message
+    - createdAt
+  properties:
+    id:
+      type: string
+      description: 메시지 ID
+    createdAt:
+      type: string
+      format: date-time
+      description: 메시지 생성 시간
+    userData:
+      $ref: "#/UserChatModelDto"
+    systemData:
+      $ref: "#/SystemChatDto"
+
+DiagramModelDto:
+  type: object
+  required:
+    - components
+    - connections
+    - dto
+    - metadata
+  properties:
+    components:
+      type: array
+      description: 캔버스의 컴포넌트 데이터
+      items:
+        $ref: '#/ComponentModelDto'
+    connections:
+      type: array
+      description: 컴포넌트 간 연결 데이터
+      items:
+        $ref: '#/ConnectionModelDto'
+    dto:
+      type: array
+      description: DTO 데이터
+      items:
+        $ref: '#/DtoModelDto'
+    metadata:
+      $ref: '#/MetadataModelDto'
+
+ComponentModelDto:
+  type: object
+  required:
+    - id
+    - type
+    - name
+    - methods
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: 컴포넌트 ID
+    type:
+      $ref: '#/ComponentTypeEnumDto'
+    name:
+      type: string
+      description: 컴포넌트 이름
+    description:
+      type: string
+      description: 컴포넌트 설명
+    positionX:
+      type: number
+      description: X 좌표
+    positoryY:
+      type: number
+      description: Y 좌표
+    methods:
+      type: array
+      description: 컴포넌트에 속한 메서드 목록
+      items:
+        $ref: '#/MethodModelDto'
+
+#################### ENUMS ####################
+
+ApiProcessStateEnumDto:
+  type: string
+  description: API 처리 상태
+  enum: [AI_GENERATED, AI_VISUALIZED, USER_COMPLETED]
+
+MethodPromptTagEnumDto:
+  type: string
+  description: 프롬프트 태그
+  enum: [ EXPLAIN, REFACTORING, OPTIMIZE, DOCUMENT, TEST, SECURITY, CONVENTION, ANALYZE, IMPLEMENT ]
+
+MethodPromptTargetEnumDto:
+  type: string
+  description: 프롬프트 타입
+  enum: [ SIGNATURE, BODY ]
+
+PromptResponseEnumDto:
+  type: string
+  description: 프롬프트 처리 상태
+  enum: [ MODIFIED, UNCHANGED, EXPLANATION, MODIFIED_WITH_NEW_COMPONENTS, ERROR ]
+
+ComponentTypeEnumDto:
+  type: string
+  description: 컴포넌트 타입
+  enum: [ CLASS, INTERFACE ]
+
+MethodConnectionTypeEnumDto:
+  type: string
+  description: 연결 타입 (실선 또는 점선)
+  enum: [SOLID, DOTTED]
+
+#################### REQ/RES ####################
+
+SystemChatResponse:
+  type: object
+  required:
+    - id
+    - sender
+    - message
+    - createdAt
+  properties:
+    id:
+      type: string
+      description: 메시지 ID
+    createdAt:
+      type: string
+      format: date-time
+      description: 메시지 생성 시간
+    userData:
+      $ref: "#/ChatModelDto"
+    systemData:
+      $ref: "#/SystemChatDto"
+
+ComponentPositionUpdateRequest:
+  type: object
+  required:
+    - x
+    - y
+  properties:
+    x:
+      type: number
+      format: float
+      description: '컴포넌트의 X 좌표'
+    y:
+      type: number
+      format: float
+      description: '컴포넌트의 Y 좌표'
+
+SSEEventDto:
+  type: object
+  required:
+    - eventName
+    - data
+  properties:
+    eventName:
+      type: string
+      description: '이벤트 이름'
+    data:
+      type: object
+      description: '이벤트 데이터'
+
+ApiSummaryPageResponse:
+  allOf:
+    - type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/ApiSummaryModelDto'
+    - $ref: "./page-schema.yaml#/PageDto"
+
+UserChatRequest:
+  type: object
+  allOf:
+    - $ref: '#/UserChatModelDto'
+
+ChatHistoryResponse:
+  type: object
+  required:
+    - content
+  properties:
+    content:
+      type: array
+      description: 프롬프트 채팅 목록 (시간순 정렬)
+      items:
+        $ref: '#/SystemChatResponse'
+
+ComponentUpdatedResponse:
+  type: object
+  allOf:
+    - $ref: '#/ComponentModelDto'
+
+ApiProcessStateRequest:
+  type: object
+  properties:
+    status:
+      $ref: '#/ApiProcessStateEnumDto'
+
+ApiProcessStateUpdatedResponse:
+  type: object
+  properties:
+    status:
+      $ref: '#/ApiProcessStateEnumDto'
+
+#################### PARAMS ####################
+
+ComponentId:
+  name: componentId
+  in: path
+  required: true
+  description: '위치를 변경할 컴포넌트 ID'
+  schema:
+    type: integer
+ProjectId:
+  name: projectId
+  in: path
+  description: 프로젝트 ID
+  required: true
+  schema:
+    type: string
+ApiId:
+  name: apiId
+  in: path
+  description: API ID
+  required: true
+  schema:
+    type: string
+VersionId:
+  name: versionId
+  in: path
+  description: 버전 ID
+  required: true
+  schema:
+    type: string
+MethodId:
+  name: methodId
+  in: path
+  description: 메서드 ID
+  required: true
+  schema:
+    type: string
+PromptId:
+  name: promptId
+  in: path
+  description: 프롬프트 ID
+  required: true
+  schema:
+    type: string
+Incomplete:
+  name: exclude
+  in: query
+  description: 제외
+  required: false
+  schema:
+    type: string
