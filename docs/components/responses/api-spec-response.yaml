@@ -1,0 +1,22 @@
+ApiSpecResponse:
+  description: 단일 API 스펙 조회 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecWithFields'
+
+ApiSpecCreatedResponse:
+  description: API 스펙 생성 성공
+  content:
+    application/json:
+      schema:
+        type: integer
+        example: 101
+
+ApiSpecUpdateResponse:
+  description: API 스펙 수정 성공
+  content:
+    application/json:
+      schema:
+        type: boolean
+        example: true
