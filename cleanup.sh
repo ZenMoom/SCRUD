@@ -3,8 +3,8 @@ set -e
 
 # 파일 삭제 명령어
 echo "Deleting .java files in backend..."
-rm -rf ./backend/generated/src/main/java/com/varcode/scrud/api/*.java
-rm -rf ./backend/generated/src/main/java/com/varcode/scrud/model/*.java
+rm -rf ./backend/generated/src/main/java/com/barcoder/scrud/api/*.java
+rm -rf ./backend/generated/src/main/java/com/barcoder/scrud/model/*.java
 
 echo "Deleting .ts files in frontend..."
 rm -rf ./frontend/generated/*.ts
