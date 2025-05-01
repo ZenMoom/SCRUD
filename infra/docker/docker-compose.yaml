@@ -82,12 +82,15 @@ services:
     restart: always
     container_name: swagger-ui
     environment:
+      # 매개 변수 설명
+      # https://github.com/swagger-api/swagger-ui/blob/HEAD/docs/usage/configuration.md
       URL: /openapi.yaml
       DISPLAY_OPERATION_ID: true
       FILTER: true
       SHOW_EXTENSIONS: true
       SHOW_COMMON_EXTENSIONS: true
       PERSIST_AUTHORIZATION: true
+      DISPLAY_REQUEST_DURATION: true
     volumes:
       - ./docs/output/openapi/openapi.yaml:/usr/share/nginx/html/openapi.yaml
     ports:
