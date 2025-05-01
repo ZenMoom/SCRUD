@@ -23,7 +23,16 @@ tags:
     description: 도식화와 관련된 메서드
   - name: Chat
     description: 프롬프트 채팅 관련 API
-  
+
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT 인증 토큰을 사용합니다. 예: Bearer {token}"
+
 paths:
   /api/examples/{exampleId}:
     get:
@@ -93,41 +102,29 @@ paths:
         - Chat
       deprecated: true
       operationId: sendSSEEvent
+      security:
+        - bearerAuth: []
       summary: 'SSE 이벤트를 전송받습니다.'
       description: '연결된 특정 클라이언트 또는 모든 클라이언트에게 이벤트를 전송합니다.'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: './components/schemas/canvas-schema.yaml#/SSEEventDto'
       responses:
         '200':
           description: '이벤트 전송 성공'
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  sentCount:
-                    type: integer
-                    description: '이벤트가 전송된 클라이언트 수'
-                  message:
-                    type: string
+                $ref: './components/schemas/canvas-schema.yaml#/SSEEventDto'
         '400':
           description: '잘못된 요청'
         '401':
           description: '인증되지 않은 요청'
-      security:
-        - bearerAuth: [ ]
   /api/sse/connect:
     get:
       tags:
         - Chat
       operationId: connectSSE
       deprecated: true
+      security:
+        - bearerAuth: [ ]
       summary: 'SSE 연결을 설정합니다.'
       description: '서버와 클라이언트 간의 SSE 연결을 설정하여 실시간 이벤트 스트림을 수신할 수 있습니다.'
       responses:
@@ -140,10 +137,6 @@ paths:
                 description: '이벤트 스트림'
         '401':
           description: '인증되지 않은 요청'
-        '429':
-          description: '너무 많은 요청'
-      security:
-        - bearerAuth: [ ]
   /api/v1/projects/{projectId}/apis/{apiId}/components/{componentId}/position:
     put:
       tags:
@@ -161,6 +154,9 @@ paths:
           application/json:
             schema:
               $ref: './components/schemas/canvas-schema.yaml#/ComponentPositionUpdateRequest'
+            examples:
+              example1:
+                $ref: './components/examples/canvas-example.yaml#/ComponentPositionUpdateRequestExample'
       responses:
         '200':
           description: '컴포넌트 위치 업데이트 성공'
@@ -168,6 +164,9 @@ paths:
             application/json:
               schema:
                 $ref: './components/schemas/canvas-schema.yaml#/ComponentUpdatedResponse'
+              examples:
+                example1:
+                  $ref: './components/examples/canvas-example.yaml#/ComponentUpdatedResponseExample'
         '404':
           description: '컴포넌트를 찾을 수 없음'
           content:
@@ -193,6 +192,9 @@ paths:
             application/json:
               schema:
                 $ref: './components/schemas/canvas-schema.yaml#/ApiSummaryPageResponse'
+              examples:
+                example1:
+                  $ref: './components/examples/canvas-example.yaml#/ApiSummaryPageResponseExample'
   /api/v1/projects/{projectId}/apis/{apiId}/versions/{versionId}:
     get:
       tags:
@@ -210,7 +212,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './components/schemas/canvas-schema.yaml#/DiagramModelDto'
+                $ref: './components/schemas/canvas-schema.yaml#/DiagramResponse'
+              examples:
+                example1:
+                  $ref: './components/examples/canvas-example.yaml#/DiagramResponseExample'
         '404':
           $ref: './components/responses/exception-response.yaml#/NotFoundException'
   /api/v1/projects/{projectId}/apis/{apiId}/status:
@@ -230,6 +235,9 @@ paths:
           application/json:
             schema:
               $ref: './components/schemas/canvas-schema.yaml#/ApiProcessStateRequest'
+            examples:
+              example1:
+                $ref: './components/examples/canvas-example.yaml#/ApiProcessStateRequestExample'
       responses:
         '200':
           description: 프롬프트 처리 결과
@@ -237,6 +245,9 @@ paths:
             application/json:
               schema:
                 $ref: './components/schemas/canvas-schema.yaml#/ApiProcessStateUpdatedResponse'
+              examples:
+                example1:
+                  $ref: './components/examples/canvas-example.yaml#/ApiProcessStateUpdatedResponseExample'
   /api/v1/projects/{projectId}/apis/{apiId}/chats:
     get:
       tags:
@@ -254,6 +265,9 @@ paths:
             application/json:
               schema:
                 $ref: './components/schemas/canvas-schema.yaml#/ChatHistoryResponse'
+              examples:
+                example1:
+                  $ref: './components/examples/canvas-example.yaml#/ChatHistoryResponseExample'
         '404':
           $ref: './components/responses/exception-response.yaml#/NotFoundException'
 
@@ -272,6 +286,9 @@ paths:
           application/json:
             schema:
               $ref: './components/schemas/canvas-schema.yaml#/UserChatRequest'
+            examples:
+              example1:
+                $ref: './components/examples/canvas-example.yaml#/UserChatRequestExample'
       responses:
         '200':
           description: 프롬프트 처리 결과
@@ -279,6 +296,9 @@ paths:
             application/json:
               schema:
                 $ref: './components/schemas/canvas-schema.yaml#/SystemChatResponse'
+              examples:
+                example1:
+                  $ref: './components/examples/canvas-example.yaml#/SystemChatResponseExample'
         '404':
           $ref: './components/responses/exception-response.yaml#/NotFoundException'
 
