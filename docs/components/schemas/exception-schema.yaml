@@ -19,3 +19,13 @@ ProblemDetail:
       type: string
       format: uri
       description: "문제가 발생한 특정 URI"
+
+NotFoundException:
+  allOf:
+    - $ref: "#/ProblemDetail"
+    - type: object
+      properties:
+        code:
+          type: string
+        isSuccess:
+          type: boolean
