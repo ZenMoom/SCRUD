@@ -1,0 +1,94 @@
+RuleResponse:
+  type: object
+  properties:
+    rules:
+      type: array
+      items:
+        $ref: '#/RuleItem'
+    status:
+      type: string
+    version:
+      type: string
+    service_spec_version_id:
+      type: boolean
+
+  required:
+    - rules
+    - status
+    - version
+    - service_spec_version_id
+
+RuleItem:
+  type: object
+  properties:
+    field_name:
+      type: string
+    is_editable:
+      type: boolean
+    editable_sub_fields:
+      type: array
+      items:
+        type: string
+    parameter_rules:
+      type: array
+      items:
+        $ref: '#/ParameterRule'
+    request_rules:
+      type: array
+      items:
+        $ref: '#/RequestRule'
+    response_rules:
+      type: array
+      items:
+        $ref: '#/ResponseRule'
+
+ParameterRule:
+  type: object
+  properties:
+    in_type:
+      type: string
+    data_type:
+      type: string
+    is_editable:
+      type: boolean
+    is_required:
+      type: boolean
+    supports_enum:
+      type: boolean
+    supports_array:
+      type: boolean
+
+RequestRule:
+  type: object
+  properties:
+    required:
+      type: boolean
+    body_type:
+      type: string
+    content_type:
+      type: string
+    supports_file:
+      type: boolean
+    allowed_fields:
+      type: array
+      items:
+        type: string
+
+ResponseRule:
+  type: object
+  properties:
+    is_error:
+      type: boolean
+    description:
+      type: string
+    schema_type:
+      type: string
+      nullable: true
+    status_code:
+      type: string
+    content_type:
+      type: string
+      nullable: true
+    ref_component:
+      type: string
+      nullable: true
