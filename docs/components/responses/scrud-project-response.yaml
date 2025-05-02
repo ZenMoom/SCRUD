@@ -3,4 +3,4 @@ ScrudProjectListResponse:
   content:
     application/json:
       schema:
-        $ref: "../schemas/scrud-project-dto.yaml#/PageScrudProjectDTO"
+        $ref: "../schemas/scrud-project-dto.yaml#/ScrudProjectPageDto"

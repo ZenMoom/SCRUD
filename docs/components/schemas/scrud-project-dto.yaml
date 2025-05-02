@@ -1,8 +1,8 @@
-FileType:
+FileTypeEnumDto:
   type: string
   enum: [REQUIREMENTS, ERD, UTIL, CONVENTION, DEPENDENCY, ERROR_CODE, SECURITY, ARCHITECTURE]
 
-ScrudProjectDTO:
+ScrudProjectDto:
   description: "프로젝트 기본 정보"
   type: object
   properties:
@@ -21,36 +21,36 @@ ScrudProjectDTO:
       format: date-time
       description: "프로젝트 수정 날짜"
 
-PageScrudProjectDTO:
+ScrudProjectPageDto:
   description: "프로젝트 목록"
   type: object
   properties:
     content:
       type: array
       items:
-        $ref: "#/ScrudProjectDTO"
+        $ref: "#/ScrudProjectDto"
     pageable:
       $ref: "../schemas/page-schema.yaml#/PageDto"
   required:
     - content
     - pageable
 
-GlobalFileDTO:
+GlobalFileDto:
   description: "전역설정 파일 목록"
   type: object
   properties:
     fileType:
-      $ref: "#/FileType"
+      $ref: "#/FileTypeEnumDto"
     fileContent:
       type: string
 
-CreateProjectRequestDTO:
+CreateProjectRequest:
   description: "프로젝트 생성에 필요한 기본 정보 & 전역 설정"
   type: object
   properties:
-    scrudProjectDTO:
-      $ref: "#/ScrudProjectDTO"
+    scrudProjectDto:
+      $ref: "#/ScrudProjectDto"
     globalFiles:
       type: array
       items:
-        $ref: "#/GlobalFileDTO"
+        $ref: "#/GlobalFileDto"

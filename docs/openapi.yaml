@@ -183,7 +183,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "./components/schemas/scrud-project-dto.yaml#/CreateProjectRequestDTO"
+              $ref: "./components/schemas/scrud-project-dto.yaml#/CreateProjectRequest"
       responses:
         "201":
           description: "API 반환"
@@ -205,7 +205,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "./components/schemas/scrud-project-dto.yaml#/GlobalFileDTO"
+              $ref: "./components/schemas/scrud-project-dto.yaml#/GlobalFileDto"
       parameters:
         - name: projectId
           in: path
