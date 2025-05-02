@@ -4,7 +4,6 @@ import { useRef, useState, useEffect } from "react"
 import Sidebar from "@/components/globalsetting/sidebar"
 import ContentArea from "@/components/globalsetting/contentarea"
 import Floatingbutton from "@/components/globalsetting/floatingbutton"
-import styles from "./page.module.css"
 
 export default function GlobalSettingPage() {
   // 각 설정 항목의 상태를 관리 - 초기값은 빈 문자열로 설정
@@ -104,8 +103,8 @@ export default function GlobalSettingPage() {
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.content}>
+    <div className="flex flex-col h-[90vh] w-full bg-[#fafafa]">
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar completed={completed} activeItem={activeItem} onItemClick={handleItemClick} />
         <ContentArea settings={settings} onSettingChange={handleSettingChange} refs={refs} />
       </div>

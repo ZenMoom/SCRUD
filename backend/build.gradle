@@ -47,15 +47,53 @@ subprojects {
 
 	dependencies {
 		implementation 'org.springframework.boot:spring-boot-starter'
-		testImplementation 'org.springframework.boot:spring-boot-starter-test'
-		implementation 'org.springframework.boot:spring-boot-starter-web'
-		implementation 'org.springframework.boot:spring-boot-starter-validation'
-		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-		compileOnly 'org.projectlombok:lombok'
-		implementation 'org.projectlombok:lombok'
-		annotationProcessor 'org.projectlombok:lombok'
-		implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 		implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+
+		/* DATABASE */
+		implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+		/********* SECURITY *********/
+		implementation 'org.springframework.boot:spring-boot-starter-security'
+		implementation 'org.springframework.boot:spring-boot-starter-validation'
+		implementation 'org.springframework.boot:spring-boot-starter-web'
+
+		/********* TOOLS *********/
+		implementation 'org.projectlombok:lombok'
+		compileOnly 'org.projectlombok:lombok'
+
+		/********* RUNTIME *********/
+		runtimeOnly 'com.mysql:mysql-connector-j'
+		annotationProcessor 'org.projectlombok:lombok'
+
+		/********* TEST *********/
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+		testImplementation 'org.springframework.security:spring-security-test'
+		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+		testImplementation 'com.h2database:h2'
+
+		/* JWT START */
+		implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+		runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+		runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+		/* JWT END */
+
+		/* SQL 로깅 */
+		implementation 'com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.10.0'
+
+		/* env 파일 관리 */
+		implementation 'me.paulschwarz:spring-dotenv:2.5.4'
+
+		/* Swagger 3 START */
+		implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+		// Swagger Core (OpenAPI)
+		implementation 'org.springdoc:springdoc-openapi-starter-common:2.3.0'
+		/* Swagger 3 END */
+
+		/* Oauth START */
+		implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+		implementation 'org.kohsuke:github-api:1.315' // Github API
+		/* Oauth END */
 	}
 
 	dependencyManagement {
