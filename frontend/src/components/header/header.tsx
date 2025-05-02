@@ -5,10 +5,10 @@ import Link from "next/link"
 
 export default function Header() {
   // 로고 이미지 경로 (프로젝트에 맞게 수정 필요)
-  const logoPath = "/vercel.svg" // 기본 Next.js 로고 경로로 변경
+  const logoPath = "/next.svg" // 기본 Next.js 로고 경로로 변경
 
   return (
-    <header className="sticky top-0 w-full h-[70px] bg-white shadow-md z-50">
+    <header className="sticky top-0 w-full h-[70px] bg-white z-50">
       <div className="flex items-center justify-between h-full w-full px-[5%]">
         {/* 로고 영역 */}
         <div className="flex items-center ml-4">
