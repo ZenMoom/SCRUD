@@ -13,11 +13,6 @@ else
   docker network create --driver bridge $NETWORK_NAME
 fi
 
-# 백엔드 .java 파일 삭제
-echo -e "\e[1;34m🔧 Codegen을 실행합니다. 🔧\e[0m"
-
-./codegen.sh
-
 docker-compose -f ./infra/docker/docker-compose.dev.yaml --project-directory . down
 
 # 포트 8080을 사용하는 프로세스의 PID 찾기

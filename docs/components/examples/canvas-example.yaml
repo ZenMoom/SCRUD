@@ -1,0 +1,284 @@
+######################
+# 컴포넌트 위치 업데이트 요청
+######################
+
+ComponentPositionUpdateRequestExample:
+  summary: '컴포넌트 위치 업데이트 요청 예시'
+  value:
+    x: 250.5
+    y: 150.75
+
+######################
+# 컴포넌트 업데이트 응답
+######################
+
+ComponentUpdatedResponseExample:
+  summary: '컴포넌트 위치 업데이트 성공 응답 예시'
+  value:
+    componentId: "component-123"
+    type: "CLASS"
+    name: "BoardController"
+    description: "게시판 컨트롤러 클래스"
+    positionX: 250.5
+    positionY: 150.75
+    methods:
+      - methodId: "method-456"
+        name: "getAllPosts"
+        signature: "public ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable)"
+        body: "@GetMapping\npublic ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable) {\n    return ResponseEntity.ok(boardService.getAllPosts(pageable));\n}"
+        description: "모든 게시글을 페이징하여 조회합니다."
+      - methodId: "method-457"
+        name: "getPostById"
+        signature: "public ResponseEntity<PostDto> getPostById(Long postId)"
+        body: "@GetMapping(\"/{postId}\")\npublic ResponseEntity<PostDto> getPostById(@PathVariable Long postId) {\n    return ResponseEntity.ok(boardService.getPostById(postId));\n}"
+        description: "특정 ID의 게시글을 조회합니다."
+
+######################
+# API 프로세스 상태 요청
+######################
+
+ApiProcessStateRequestExample:
+  summary: 'API 처리 상태 변경 요청 예시'
+  value:
+    status: "USER_COMPLETED"
+
+######################
+# API 프로세스 상태 업데이트 응답
+######################
+
+ApiProcessStateUpdatedResponseExample:
+  summary: 'API 처리 상태 변경 성공 응답 예시'
+  value:
+    status: "USER_COMPLETED"
+
+######################
+# API 요약 페이지 응답
+######################
+
+ApiSummaryPageResponseExample:
+  summary: 'API 목록 페이지 조회 성공 응답 예시'
+  value:
+    content:
+      - apiId: "api-123"
+        name: "게시판 API"
+        status: "AI_VISUALIZED"
+        description: "게시판 서비스를 위한 CRUD API 모음"
+      - apiId: "api-124"
+        name: "댓글 API"
+        status: "AI_GENERATED"
+        description: "게시글 댓글 관련 API 모음"
+      - apiId: "api-125"
+        name: "사용자 API"
+        status: "AI_VISUALIZED"
+        description: "사용자 관리 API 모음"
+    listSize: 3
+    isFirstPage: true
+    isLastPage: true
+    totalPages: 1
+    totalElements: 3
+
+######################
+# 도식화 데이터 응답
+######################
+
+DiagramResponseExample:
+  summary: '도식화 데이터 조회 성공 응답 예시'
+  value:
+    diagramId: "diagram-123"
+    components:
+      - componentId: "component-123"
+        type: "CLASS"
+        name: "BoardController"
+        description: "게시판 컨트롤러 클래스"
+        positionX: 250.5
+        positionY: 150.75
+        methods:
+          - methodId: "method-456"
+            name: "getAllPosts"
+            signature: "public ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable)"
+            body: "@GetMapping\npublic ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable) {\n    return ResponseEntity.ok(boardService.getAllPosts(pageable));\n}"
+            description: "모든 게시글을 페이징하여 조회합니다."
+          - methodId: "method-457"
+            name: "getPostById"
+            signature: "public ResponseEntity<PostDto> getPostById(Long postId)"
+            body: "@GetMapping(\"/{postId}\")\npublic ResponseEntity<PostDto> getPostById(@PathVariable Long postId) {\n    return ResponseEntity.ok(boardService.getPostById(postId));\n}"
+            description: "특정 ID의 게시글을 조회합니다."
+      - componentId: "component-124"
+        type: "CLASS"
+        name: "BoardService"
+        description: "게시판 서비스 클래스"
+        positionX: 450.0
+        positionY: 150.0
+        methods:
+          - methodId: "method-458"
+            name: "getAllPosts"
+            signature: "public PageDto<PostDto> getAllPosts(Pageable pageable)"
+            body: "public PageDto<PostDto> getAllPosts(Pageable pageable) {\n    Page<Post> postsPage = postRepository.findAll(pageable);\n    List<PostDto> postDtos = postsPage.getContent().stream()\n        .map(this::convertToDto)\n        .collect(Collectors.toList());\n    \n    return new PageDto<>(postDtos, postsPage.getNumber(), postsPage.isFirst(), postsPage.isLast(), \n        postsPage.getTotalPages(), postsPage.getTotalElements());\n}"
+            description: "모든 게시글을 페이징하여 조회합니다."
+          - methodId: "method-459"
+            name: "getPostById"
+            signature: "public PostDto getPostById(Long postId)"
+            body: "public PostDto getPostById(Long postId) {\n    Post post = postRepository.findById(postId)\n        .orElseThrow(() -> new NotFoundException(\"Post not found with id: \" + postId));\n    return convertToDto(post);\n}"
+            description: "특정 ID의 게시글을 조회합니다."
+      - componentId: "component-125"
+        type: "INTERFACE"
+        name: "PostRepository"
+        description: "게시글 저장소 인터페이스"
+        positionX: 650.0
+        positionY: 150.0
+        methods:
+          - methodId: "method-460"
+            name: "findAll"
+            signature: "Page<Post> findAll(Pageable pageable)"
+            description: "모든 게시글을 페이징하여 조회합니다."
+          - methodId: "method-461"
+            name: "findById"
+            signature: "Optional<Post> findById(Long id)"
+            description: "ID로 게시글을 조회합니다."
+    connections:
+      - connectionId: "connection-123"
+        sourceMethodId: "method-456"
+        targetMethodId: "method-458"
+        type: "SOLID"
+      - connectionId: "connection-124"
+        sourceMethodId: "method-457"
+        targetMethodId: "method-459"
+        type: "SOLID"
+      - connectionId: "connection-125"
+        sourceMethodId: "method-458"
+        targetMethodId: "method-460"
+        type: "DOTTED"
+      - connectionId: "connection-126"
+        sourceMethodId: "method-459"
+        targetMethodId: "method-461"
+        type: "DOTTED"
+    dto:
+      - dtoId: "dto-123"
+        name: "PostDto"
+        description: "게시글 DTO"
+        body: "public class PostDto {\n    private Long id;\n    private String title;\n    private String content;\n    private String author;\n    private LocalDateTime createdAt;\n    private LocalDateTime updatedAt;\n    \n    // getters and setters\n}"
+      - dtoId: "dto-124"
+        name: "PageDto"
+        description: "페이지 DTO"
+        body: "public class PageDto<T> {\n    private List<T> content;\n    private int listSize;\n    private boolean isFirstPage;\n    private boolean isLastPage;\n    private int totalPages;\n    private long totalElements;\n    \n    // constructors, getters and setters\n}"
+    metadata:
+      metadataId: "metadata-123"
+      version: "1.0.0"
+      lastModified: "2025-04-25T10:30:45.123Z"
+      name: "게시판 API"
+      description: "게시판 서비스를 위한 CRUD API 모음"
+
+######################
+# 채팅 응답
+######################
+
+ChatResponseExample:
+  summary: '채팅 응답 예시'
+  value:
+    chatId: "chat-123"
+    createdAt: "2025-04-25T10:45:30.123Z"
+    userChat:
+      tag: "IMPLEMENT"
+      promptType: "BODY"
+      message: "게시글 수정 기능을 구현해주세요."
+      targetMethods:
+        - methodId: "method-462"
+    systemChat:
+      systemChatId: "system-chat-123"
+      status: "MODIFIED"
+      versionInfo:
+        newVersionId: "version-124"
+        description: "게시글 수정 기능을 구현했습니다."
+      diagramData:
+        diagramId: "diagram-124"
+        components:
+          - componentId: "component-123"
+            type: "CLASS"
+            name: "BoardController"
+            description: "게시판 컨트롤러 클래스"
+            positionX: 250.5
+            positionY: 150.75
+            methods:
+              - methodId: "method-462"
+                name: "updatePost"
+                signature: "public ResponseEntity<PostDto> updatePost(Long postId, PostUpdateDto postUpdateDto)"
+                body: "@PutMapping(\"/{postId}\")\npublic ResponseEntity<PostDto> updatePost(@PathVariable Long postId, @RequestBody PostUpdateDto postUpdateDto) {\n    return ResponseEntity.ok(boardService.updatePost(postId, postUpdateDto));\n}"
+                description: "특정 ID의 게시글을 수정합니다."
+
+######################
+# 시스템 채팅 응답
+######################
+
+SystemChatResponseExample:
+  summary: '시스템 채팅 응답 예시'
+  value:
+    systemChatId: "system-chat-123"
+    status: "MODIFIED"
+    versionInfo:
+      newVersionId: "version-124"
+      description: "게시글 수정 기능을 구현했습니다."
+    diagramData:
+      diagramId: "diagram-124"
+      components:
+        - componentId: "component-123"
+          type: "CLASS"
+          name: "BoardController"
+          description: "게시판 컨트롤러 클래스"
+          positionX: 250.5
+          positionY: 150.75
+          methods:
+            - methodId: "method-462"
+              name: "updatePost"
+              signature: "public ResponseEntity<PostDto> updatePost(Long postId, PostUpdateDto postUpdateDto)"
+              body: "@PutMapping(\"/{postId}\")\npublic ResponseEntity<PostDto> updatePost(@PathVariable Long postId, @RequestBody PostUpdateDto postUpdateDto) {\n    return ResponseEntity.ok(boardService.updatePost(postId, postUpdateDto));\n}"
+              description: "특정 ID의 게시글을 수정합니다."
+
+######################
+# 사용자 채팅 요청
+######################
+
+UserChatRequestExample:
+  summary: '사용자 채팅 요청 예시'
+  value:
+    tag: "IMPLEMENT"
+    promptType: "BODY"
+    message: "게시글 삭제 기능을 구현해주세요."
+    targetMethods:
+      - methodId: "method-463"
+
+######################
+# 채팅 기록 응답
+######################
+
+ChatHistoryResponseExample:
+  summary: '채팅 기록 조회 응답 예시'
+  value:
+    content:
+      - chatId: "chat-123"
+        createdAt: "2025-04-25T10:30:00.123Z"
+        userChat:
+          tag: "IMPLEMENT"
+          promptType: "BODY"
+          message: "게시글 생성 기능을 구현해주세요."
+          targetMethods:
+            - methodId: "method-464"
+        systemChat:
+          systemChatId: "system-chat-123"
+          status: "MODIFIED"
+          versionInfo:
+            newVersionId: "version-123"
+            description: "게시글 생성 기능을 구현했습니다."
+      - chatId: "chat-124"
+        createdAt: "2025-04-25T10:45:30.123Z"
+        userChat:
+          tag: "IMPLEMENT"
+          promptType: "BODY"
+          message: "게시글 수정 기능을 구현해주세요."
+          targetMethods:
+            - methodId: "method-462"
+        systemChat:
+          systemChatId: "system-chat-124"
+          status: "MODIFIED"
+          versionInfo:
+            newVersionId: "version-124"
+            description: "게시글 수정 기능을 구현했습니다."
