@@ -82,6 +82,7 @@ export default function GlobalSettingPage() {
     return () => {
       window.removeEventListener("scroll", handleScroll)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // 사이드바 항목 클릭 시 해당 설정 항목으로 스크롤
