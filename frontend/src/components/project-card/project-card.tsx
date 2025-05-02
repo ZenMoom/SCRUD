@@ -44,7 +44,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       style={{ backgroundColor }}
     >
       <h2 className="text-xl font-semibold mb-3 text-gray-800">{project.title}</h2>
-      <p className="text-sm leading-relaxed text-gray-600 flex-grow overflow-hidden line-clamp-2 mb-4">{project.description}</p>
+      <p className="text-sm leading-relaxed text-gray-600 flex-grow overflow-hidden mb-4 max-h-[3rem] line-clamp-2">{project.description}</p>
       <div className="text-xs text-gray-500 text-right">{project.createdAt}</div>
     </Link>
   )
