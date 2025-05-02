@@ -6,6 +6,7 @@ info:
   version: 1.0.0
   contact:
     name: 예시 문서입니다.
+
 servers:
   - url: http://localhost:8080
     description: 개발용 로컬 서버
@@ -15,6 +16,8 @@ servers:
 tags:
   - name: Example
     description: 예시 관련 API
+  - name: Project
+    description: 프로젝트 전역세팅 관련 API - 개발 전
 
 paths:
   /api/v1/examples/{exampleId}:
@@ -151,3 +154,114 @@ paths:
       responses:
         '201':
           $ref: './components/responses/api-spec-response.yaml#/ApiSpecCreatedResponse'
+
+  ########################################
+  # 5. Project 조회
+  ########################################
+  /api/v1/projects:
+    get:
+      tags:
+        - Project
+      operationId: getAllProjects
+      summary: "프로젝트 전체 목록 조회"
+      responses:
+        "200":
+          $ref: "./components/responses/scrud-project-response.yaml#/ScrudProjectListResponse"
+        "404":
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
+      x-spring-paginated: true
+    
+    ########################################
+    # 6. Project 생성
+    ########################################
+    post:
+      tags:
+        - Project
+      operationId: createProject
+      summary: "프로젝트 생성"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components/schemas/scrud-project-dto.yaml#/CreateProjectRequest"
+      responses:
+        "201":
+          description: "API 반환"
+          content:
+            text/yaml:
+              schema:
+                type: string
+                
+  ########################################
+  # 7. 전역 파일 개별 추가
+  ########################################
+  /api/v1/projects/{projectId}:
+    put:
+      tags:
+        - Project
+      operationId: addGlobalFile
+      description: "전역 파일 추가"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components/schemas/scrud-project-dto.yaml#/GlobalFileDto"
+      parameters:
+        - name: projectId
+          in: path
+          description: "프로젝트 ID"
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
+
+    ########################################
+    # 8. 프로젝트 삭제
+    ########################################
+    delete:
+      tags:
+        - Project
+      operationId: deleteProject
+      description: "프로젝트 삭제"
+      parameters:
+        - name: projectId
+          in: path
+          description: "프로젝트 ID"
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
+
+  ########################################
+  # 9. 전역 파일 삭제
+  ########################################
+  /api/v1/projects/{projectId}/{globalFileId}:
+    delete:
+      tags:
+        - Project
+      operationId: deleteGlobalFile
+      description: "전역 파일 삭제"
+      parameters:
+        - name: projectId
+          in: path
+          description: "프로젝트 ID"
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: globalFileId
+          in: path
+          description: "전역 파일 ID"
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
