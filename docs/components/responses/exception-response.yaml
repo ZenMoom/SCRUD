@@ -20,3 +20,42 @@ NotFoundException:
         properties:
           code: 'PRODUCT4001'
           isSuccess: 'false'
+
+BadRequestException:
+  description: "잘못된 요청입니다."
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: "../schemas/exception-schema.yaml#/ProblemDetail"
+          - type: object
+            properties:
+              title:
+                type: string
+                example: "잘못된 요청입니다."
+
+UnauthorizedException:
+  description: "인증되지 않은 요청입니다."
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: "../schemas/exception-schema.yaml#/ProblemDetail"
+          - type: object
+            properties:
+              title:
+                type: string
+                example: "인증되지 않은 요청입니다."
+
+ForbiddenException:
+  description: "접근 권한이 없습니다."
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: "../schemas/exception-schema.yaml#/ProblemDetail"
+          - type: object
+            properties:
+              title:
+                type: string
+                example: "접근 권한이 없습니다."
