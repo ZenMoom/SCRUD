@@ -235,12 +235,6 @@ paths:
             type: integer
             format: int64
       responses:
-        200:
-          description: New response
-          content:
-            application/json:
-              schema:
-                : 
         "204":
           $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
 
