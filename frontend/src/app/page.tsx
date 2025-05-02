@@ -2,6 +2,7 @@
 // import Link from "next/link"
 import { useState } from "react"
 import { ProjectCard, NewProjectCard, Project } from "@/components/project-card"
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   // 예시 프로젝트 데이터

@@ -5,15 +5,27 @@ import type React from "react"
 import { useState } from "react"
 import FormItem from "./form"
 import InfoModal from "./infomodal"
-import styles from "./contentarea.module.css";
 
 interface ContentAreaProps {
   settings: Record<string, string>
   onSettingChange: (key: string, value: string) => void
-  refs: Record<string, React.RefObject<HTMLDivElement>>
+  refs: {
+    title: React.RefObject<HTMLDivElement | null>
+    description: React.RefObject<HTMLDivElement | null>
+    serverUrl: React.RefObject<HTMLDivElement | null>
+    requirementSpec: React.RefObject<HTMLDivElement | null>
+    erd: React.RefObject<HTMLDivElement | null>
+    dependencyFile: React.RefObject<HTMLDivElement | null>
+    utilityClass: React.RefObject<HTMLDivElement | null>
+    errorCode: React.RefObject<HTMLDivElement | null>
+    securitySetting: React.RefObject<HTMLDivElement | null>
+    codeConvention: React.RefObject<HTMLDivElement | null>
+    architectureStructure: React.RefObject<HTMLDivElement | null>
+  }
+  setActiveItem?: (item: string) => void
 }
 
-export default function ContentArea({ settings, onSettingChange, refs }: ContentAreaProps) {
+export default function ContentArea({ settings, onSettingChange, refs, setActiveItem }: ContentAreaProps) {
   const [modalOpen, setModalOpen] = useState<string | null>(null)
 
   const openModal = (key: string) => {
@@ -25,7 +37,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
   }
 
   // 각 설정 항목에 대한 설명
-  const descriptions = {
+  const descriptions: Record<string, string> = {
     title: "프로젝트의 이름을 입력하세요.",
     description: "프로젝트에 대한 간략한 설명을 입력하세요.",
     serverUrl: "서버의 URL을 입력하세요.",
@@ -68,9 +80,16 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
     ],
   }
 
+  // 항목 포커스 시 activeItem 업데이트
+  const handleItemFocus = (key: string) => {
+    if (setActiveItem) {
+      setActiveItem(key)
+    }
+  }
+
   return (
-    <div className={styles.contentArea}>
-      <div className={styles.scrollContainer}>
+    <div className="flex-1 relative bg-[#f8f8f8] shadow-[inset_0_0_10px_rgba(0,0,0,0.02)]">
+      <div className="h-full overflow-y-auto p-8 md:p-12">
         <FormItem
           ref={refs.title}
           title="프로젝트명"
@@ -78,6 +97,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           value={settings.title}
           onChange={(value) => onSettingChange("title", value)}
           onInfoClick={() => openModal("title")}
+          onFocus={() => handleItemFocus("title")}
         />
 
         <FormItem
@@ -87,6 +107,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           value={settings.description}
           onChange={(value) => onSettingChange("description", value)}
           onInfoClick={() => openModal("description")}
+          onFocus={() => handleItemFocus("description")}
         />
 
         <FormItem
@@ -96,6 +117,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           value={settings.serverUrl}
           onChange={(value) => onSettingChange("serverUrl", value)}
           onInfoClick={() => openModal("serverUrl")}
+          onFocus={() => handleItemFocus("serverUrl")}
         />
 
         <FormItem
@@ -105,6 +127,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           value={settings.requirementSpec}
           onChange={(value) => onSettingChange("requirementSpec", value)}
           onInfoClick={() => openModal("requirementSpec")}
+          onFocus={() => handleItemFocus("requirementSpec")}
         />
 
         <FormItem
@@ -114,6 +137,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           value={settings.erd}
           onChange={(value) => onSettingChange("erd", value)}
           onInfoClick={() => openModal("erd")}
+          onFocus={() => handleItemFocus("erd")}
         />
 
         <FormItem
@@ -123,6 +147,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           value={settings.dependencyFile}
           onChange={(value) => onSettingChange("dependencyFile", value)}
           onInfoClick={() => openModal("dependencyFile")}
+          onFocus={() => handleItemFocus("dependencyFile")}
         />
 
         <FormItem
@@ -132,6 +157,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           value={settings.utilityClass}
           onChange={(value) => onSettingChange("utilityClass", value)}
           onInfoClick={() => openModal("utilityClass")}
+          onFocus={() => handleItemFocus("utilityClass")}
         />
 
         <FormItem
@@ -141,6 +167,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           value={settings.errorCode}
           onChange={(value) => onSettingChange("errorCode", value)}
           onInfoClick={() => openModal("errorCode")}
+          onFocus={() => handleItemFocus("errorCode")}
         />
 
         <FormItem
@@ -151,6 +178,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           onChange={(value) => onSettingChange("securitySetting", value)}
           onInfoClick={() => openModal("securitySetting")}
           options={radioOptions.securitySetting}
+          onFocus={() => handleItemFocus("securitySetting")}
         />
 
         <FormItem
@@ -160,6 +188,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           value={settings.codeConvention}
           onChange={(value) => onSettingChange("codeConvention", value)}
           onInfoClick={() => openModal("codeConvention")}
+          onFocus={() => handleItemFocus("codeConvention")}
         />
 
         <FormItem
@@ -170,6 +199,7 @@ export default function ContentArea({ settings, onSettingChange, refs }: Content
           onChange={(value) => onSettingChange("architectureStructure", value)}
           onInfoClick={() => openModal("architectureStructure")}
           options={radioOptions.architectureStructure}
+          onFocus={() => handleItemFocus("architectureStructure")}
         />
       </div>
 

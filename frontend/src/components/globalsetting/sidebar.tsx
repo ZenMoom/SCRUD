@@ -1,7 +1,6 @@
 "use client"
 
 import { CheckCircle, XCircle } from 'lucide-react';
-import styles from "./sidebar.module.css"
 
 interface SidebarProps {
   completed: Record<string, boolean>
@@ -11,8 +10,8 @@ interface SidebarProps {
 
 export default function Sidebar({ completed, activeItem, onItemClick }: SidebarProps) {
   const items = [
-    { id: "projectName", label: "프로젝트명" },
-    { id: "projectDescription", label: "프로젝트 설명" },
+    { id: "title", label: "프로젝트명" },
+    { id: "description", label: "프로젝트 설명" },
     { id: "serverUrl", label: "Server URL" },
     { id: "requirementSpec", label: "요구사항 명세서" },
     { id: "erd", label: "ERD" },
@@ -25,20 +24,21 @@ export default function Sidebar({ completed, activeItem, onItemClick }: SidebarP
   ]
 
   return (
-    <div className={styles.sidebar}>
-      <ul className={styles.list}>
+    <div className="w-[300px] h-[90vh] bg-white p-6 overflow-y-auto shadow-md">
+      <ul className="list-none p-0 m-0">
         {items.map((item) => (
           <li
             key={item.id}
-            className={`${styles.item} ${activeItem === item.id ? styles.active : ""}`}
+            className={`flex items-center py-3 px-4 mb-1 rounded-lg cursor-pointer transition-colors duration-200 hover:bg-gray-100 
+            ${activeItem === item.id ? 'bg-gray-100 font-medium' : ''}`}
             onClick={() => onItemClick(item.id)}
           >
             {completed[item.id] ? (
-              <CheckCircle className={styles.iconCompleted} size={20} />
+              <CheckCircle className="text-green-500 mr-2.5" size={20} />
             ) : (
-              <XCircle className={styles.iconIncomplete} size={20} />
+              <XCircle className="text-red-500 mr-2.5" size={20} />
             )}
-            <span className={styles.label}>{item.label}</span>
+            <span className="text-base">{item.label}</span>
           </li>
         ))}
       </ul>
