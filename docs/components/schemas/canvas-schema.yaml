@@ -1,6 +1,6 @@
 #################### MODELS ####################
 
-ApiSummaryModelDto:
+ApiSummaryDto:
   type: object
   properties:
     apiId:
@@ -15,7 +15,7 @@ ApiSummaryModelDto:
       type: string
       description: 'API에 대한 설명'
 
-DiagramModelDto:
+DiagramDto:
   type: object
   properties:
     diagramId:
@@ -25,21 +25,21 @@ DiagramModelDto:
       type: array
       description: 캔버스의 컴포넌트 데이터
       items:
-        $ref: '#/ComponentModelDto'
+        $ref: '#/ComponentDto'
     connections:
       type: array
       description: 컴포넌트 간 연결 데이터
       items:
-        $ref: '#/ConnectionModelDto'
+        $ref: '#/ConnectionDto'
     dto:
       type: array
       description: DTO 데이터
       items:
         $ref: '#/DtoModelDto'
     metadata:
-      $ref: '#/MetadataModelDto'
+      $ref: '#/MetadataDto'
 
-ComponentModelDto:
+ComponentDto:
   type: object
   required:
     - componentId
@@ -68,9 +68,9 @@ ComponentModelDto:
       type: array
       description: 컴포넌트에 속한 메서드 목록
       items:
-        $ref: '#/MethodModelDto'
+        $ref: '#/MethodDto'
 
-MethodModelDto:
+MethodDto:
   type: object
   required:
     - methodId
@@ -93,7 +93,7 @@ MethodModelDto:
       type: string
       description: 메서드 설명
 
-ConnectionModelDto:
+ConnectionDto:
   type: object
   required:
     - connectionId
@@ -132,7 +132,7 @@ DtoModelDto:
       type: string
       description: DTO 전체 코드
 
-MetadataModelDto:
+MetadataDto:
   type: object
   required:
     - version
@@ -165,7 +165,7 @@ VersionInfoDto:
       type: string
       description: 버전 변경 설명
 
-ChatModelDto:
+ChatDto:
   type: object
   required:
     - chatId
@@ -179,11 +179,11 @@ ChatModelDto:
       format: date-time
       description: 메시지 생성 시간
     userChat:
-      $ref: "#/UserChatModelDto"
+      $ref: "#/UserChatDto"
     systemChat:
-      $ref: "#/SystemChatModelDto"
+      $ref: "#/SystemChatDto"
 
-SystemChatModelDto:
+SystemChatDto:
   type: object
   description: 사용자가 요청한 프롬프트를 수행한 응답 메시지
   properties:
@@ -194,9 +194,9 @@ SystemChatModelDto:
     versionInfo:
       $ref: '#/VersionInfoDto'
     diagramData:
-      $ref: '#/DiagramModelDto'
+      $ref: '#/DiagramDto'
 
-UserChatModelDto:
+UserChatDto:
   type: object
   description: 사용자 메시지 관련 데이터
   properties:
@@ -251,22 +251,22 @@ MethodConnectionTypeEnumDto:
 DiagramResponse:
   type: object
   allOf:
-    - $ref: '#/DiagramModelDto'
+    - $ref: '#/DiagramDto'
 
 ChatResponse:
   type: object
   allOf:
-    - $ref: '#/ChatModelDto'
+    - $ref: '#/ChatDto'
 
 SystemChatResponse:
   type: object
   allOf:
-    - $ref: "#/SystemChatModelDto"
+    - $ref: "#/SystemChatDto"
 
 UserChatRequest:
   type: object
   allOf:
-    - $ref: '#/UserChatModelDto'
+    - $ref: '#/UserChatDto'
 
 ChatHistoryResponse:
   type: object
@@ -277,7 +277,7 @@ ChatHistoryResponse:
       type: array
       description: 프롬프트 채팅 목록 (시간순 정렬)
       items:
-        $ref: '#/ChatModelDto'
+        $ref: '#/ChatDto'
 
 
 ComponentPositionUpdateRequest:
@@ -315,7 +315,7 @@ ApiSummaryPageResponse:
         content:
           type: array
           items:
-            $ref: '#/ApiSummaryModelDto'
+            $ref: '#/ApiSummaryDto'
     - $ref: "./page-schema.yaml#/PageDto"
 
 
@@ -323,7 +323,7 @@ ApiSummaryPageResponse:
 ComponentUpdatedResponse:
   type: object
   allOf:
-    - $ref: '#/ComponentModelDto'
+    - $ref: '#/ComponentDto'
 
 ApiProcessStateRequest:
   type: object
