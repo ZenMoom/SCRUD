@@ -1,0 +1,75 @@
+ApiSpecWithFields:
+  type: object
+  properties:
+    endpoint:
+      type: string
+      example: /api/v1/examples/{id}
+    group:
+      type: string
+      example: example
+    version:
+      type: integer
+      example: 1
+    summary:
+      type: string
+      example: '예시 스펙입니다.'
+    description:
+      type: string
+      example: '이 API는 예시 데이터를 처리합니다.'
+    dtype:
+      type: string
+      enum: [g, p, u, a, d]
+      description: HTTP method의 축약 (get, post, put, patch, delete)
+    fields:
+      type: array
+      items:
+        $ref: '#/ApiField'
+
+ApiField:
+  type: object
+  properties:
+    field_type:
+      type: string
+      enum: [path, query, request_body]
+    name:
+      type: string
+    data_type:
+      type: string
+      example: string
+    required:
+      type: boolean
+    description:
+      type: string
+    example:
+      type: string
+    location_path:
+      type: string
+
+ApiSpecRequest:
+  type: object
+  required:
+    - endpoint
+    - group
+    - version
+    - dtype
+  properties:
+    endpoint:
+      type: string
+      example: /api/v1/examples/{id}
+    group:
+      type: string
+      example: example
+    version:
+      type: integer
+      example: 1
+    summary:
+      type: string
+    description:
+      type: string
+    dtype:
+      type: string
+      enum: [g, p, u, a, d]
+    fields:
+      type: array
+      items:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiField'
