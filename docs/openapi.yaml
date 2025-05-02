@@ -15,9 +15,9 @@ servers:
 tags:
   - name: Example
     description: 예시 관련 API
-  
+
 paths:
-  /api/examples/{exampleId}:
+  /api/v1/examples/{exampleId}:
     get:
       tags:
         - Example
@@ -47,7 +47,7 @@ paths:
         '404':
           $ref: './components/responses/exception-response.yaml#/NotFoundException'
 
-  /api/examples:
+  /api/v1/examples:
     get:
       tags:
         - Example
@@ -79,3 +79,75 @@ paths:
         '404':
           $ref: './components/responses/exception-response.yaml#/NotFoundException'
 
+
+  ########################################
+  # 1. 룰 조회
+  ########################################
+  /api/v1/rules:
+    get:
+      tags:
+        - Rule
+      summary: 사용 가능한 룰 목록 조회
+      description: 입력값의 타입, 필수 여부, 제약 조건 등을 설정하는 룰 정보를 조회합니다.
+      operationId: getRules
+      responses:
+        '200':
+          $ref: './components/responses/rule-response.yaml#/RuleResponse'
+
+  ########################################
+  # 2. API 조회 (단일 조회)
+  ########################################
+  /api/v1/specs/{apiSpecVersionId}:
+    get:
+      tags:
+        - ApiSpec
+      summary: API 스펙 상세 조회
+      description: 단일 API 스펙과 관련 필드를 조회합니다.
+      operationId: getApiSpecById
+      parameters:
+        - name: apiSpecVersionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: './components/responses/api-spec-response.yaml#/ApiSpecResponse'
+
+    ########################################
+    # 3. API 수정
+    ########################################
+    put:
+      tags:
+        - ApiSpec
+      summary: API 스펙 수정
+      description: 단일 API 스펙과 필드를 전체 수정합니다.
+      operationId: updateApiSpec
+      parameters:
+        - name: apiSpecVersionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        $ref: './components/requests/api-spec-request.yaml#/ApiSpecRequest'
+      responses:
+        '200':
+          $ref: './components/responses/api-spec-response.yaml#/ApiSpecUpdateResponse'
+
+
+    ########################################
+    # 4. API 생성
+    ########################################
+  /api/v1/specs:
+    post:
+      tags:
+        - ApiSpec
+      summary: API 스펙 생성
+      description: 새로운 API 스펙과 필드를 등록합니다.
+      operationId: createApiSpec
+      requestBody:
+        $ref: './components/requests/api-spec-request.yaml#/ApiSpecRequest'
+      responses:
+        '201':
+          $ref: './components/responses/api-spec-response.yaml#/ApiSpecCreatedResponse'

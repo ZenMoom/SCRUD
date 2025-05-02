@@ -1,0 +1,306 @@
+{
+  "rules": [
+    {
+      "field_name": "summary",
+      "is_editable": true,
+      "editable_sub_fields": [
+        "text"
+      ]
+    },
+    {
+      "field_name": "description",
+      "is_editable": true,
+      "editable_sub_fields": [
+        "text"
+      ]
+    },
+    {
+      "field_name": "operationId",
+      "is_editable": true,
+      "editable_sub_fields": [
+        "text"
+      ]
+    },
+    {
+      "field_name": "tags",
+      "is_editable": true,
+      "editable_sub_fields": [
+        "array"
+      ]
+    },
+    {
+      "field_name": "parameters",
+      "is_editable": true,
+      "parameter_rules": [
+        {
+          "in_type": "query",
+          "data_type": "string",
+          "is_editable": true,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": false
+        },
+        {
+          "in_type": "query",
+          "data_type": "string",
+          "is_editable": true,
+          "is_required": false,
+          "supports_enum": true,
+          "supports_array": false
+        },
+        {
+          "in_type": "query",
+          "data_type": "integer",
+          "is_editable": true,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": false
+        },
+        {
+          "in_type": "query",
+          "data_type": "boolean",
+          "is_editable": true,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": false
+        },
+        {
+          "in_type": "query",
+          "data_type": "array",
+          "is_editable": true,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": true
+        },
+        {
+          "in_type": "query",
+          "data_type": "array",
+          "is_editable": true,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": true
+        },
+        {
+          "in_type": "query",
+          "data_type": "array",
+          "is_editable": true,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": true
+        },
+        {
+          "in_type": "query",
+          "data_type": "integer",
+          "is_editable": true,
+          "is_required": false,
+          "supports_enum": true,
+          "supports_array": false
+        },
+        {
+          "in_type": "query",
+          "data_type": "boolean",
+          "is_editable": true,
+          "is_required": false,
+          "supports_enum": true,
+          "supports_array": false
+        },
+        {
+          "in_type": "path",
+          "data_type": "string",
+          "is_editable": true,
+          "is_required": true,
+          "supports_enum": false,
+          "supports_array": false
+        },
+        {
+          "in_type": "path",
+          "data_type": "integer",
+          "is_editable": true,
+          "is_required": true,
+          "supports_enum": false,
+          "supports_array": false
+        },
+        {
+          "in_type": "path",
+          "data_type": "boolean",
+          "is_editable": true,
+          "is_required": true,
+          "supports_enum": false,
+          "supports_array": false
+        },
+        {
+          "in_type": "header",
+          "data_type": "string",
+          "is_editable": false,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": false
+        },
+        {
+          "in_type": "header",
+          "data_type": "array",
+          "is_editable": false,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": true
+        },
+        {
+          "in_type": "cookie",
+          "data_type": "string",
+          "is_editable": false,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": false
+        },
+        {
+          "in_type": "cookie",
+          "data_type": "array",
+          "is_editable": false,
+          "is_required": false,
+          "supports_enum": false,
+          "supports_array": true
+        }
+      ],
+      "editable_sub_fields": [
+        "name",
+        "in",
+        "required",
+        "schema.type",
+        "schema.enum"
+      ]
+    },
+    {
+      "field_name": "requestBody",
+      "is_editable": true,
+      "request_rules": [
+        {
+          "required": true,
+          "body_type": "object",
+          "content_type": "application/json",
+          "supports_file": false,
+          "allowed_fields": [
+            "title",
+            "content",
+            "tags"
+          ]
+        },
+        {
+          "required": true,
+          "body_type": "array",
+          "content_type": "application/json",
+          "supports_file": false,
+          "allowed_fields": [
+            "users",
+            "items"
+          ]
+        },
+        {
+          "required": false,
+          "body_type": "string",
+          "content_type": "application/json",
+          "supports_file": false,
+          "allowed_fields": [
+            "message"
+          ]
+        },
+        {
+          "required": true,
+          "body_type": "object",
+          "content_type": "multipart/form-data",
+          "supports_file": true,
+          "allowed_fields": [
+            "file",
+            "description"
+          ]
+        },
+        {
+          "required": true,
+          "body_type": "object",
+          "content_type": "application/x-www-form-urlencoded",
+          "supports_file": false,
+          "allowed_fields": [
+            "email",
+            "password"
+          ]
+        }
+      ],
+      "editable_sub_fields": [
+        "required",
+        "content.application/json.schema"
+      ]
+    },
+    {
+      "field_name": "responses",
+      "is_editable": true,
+      "request_rules": null,
+      "response_rules": [
+        {
+          "is_error": false,
+          "description": "성공적으로 처리됨",
+          "schema_type": "object",
+          "status_code": "200",
+          "content_type": "application/json",
+          "ref_component": "#/components/schemas/SuccessResponse"
+        },
+        {
+          "is_error": false,
+          "description": "리소스가 생성됨",
+          "schema_type": "object",
+          "status_code": "201",
+          "content_type": "application/json",
+          "ref_component": "#/components/schemas/SuccessResponse"
+        },
+        {
+          "is_error": false,
+          "description": "응답 본문 없음",
+          "schema_type": null,
+          "status_code": "204",
+          "content_type": null,
+          "ref_component": null
+        },
+        {
+          "is_error": true,
+          "description": "잘못된 요청입니다.",
+          "schema_type": "object",
+          "status_code": "400",
+          "content_type": "application/json",
+          "ref_component": "#/components/schemas/ErrorResponse"
+        },
+        {
+          "is_error": true,
+          "description": "인증이 필요합니다.",
+          "schema_type": "object",
+          "status_code": "401",
+          "content_type": "application/json",
+          "ref_component": "#/components/schemas/ErrorResponse"
+        },
+        {
+          "is_error": true,
+          "description": "접근 권한이 없습니다.",
+          "schema_type": "object",
+          "status_code": "403",
+          "content_type": "application/json",
+          "ref_component": "#/components/schemas/ErrorResponse"
+        },
+        {
+          "is_error": true,
+          "description": "서버 오류가 발생했습니다.",
+          "schema_type": "object",
+          "status_code": "500",
+          "content_type": "application/json",
+          "ref_component": "#/components/schemas/ErrorResponse"
+        }
+      ],
+      "editable_sub_fields": [
+        "status_code",
+        "description",
+        "content_type",
+        "schema_type",
+        "ref_component"
+      ]
+    }
+  ],
+  "status": "draft",
+  "version": "1.0.0",
+  "service_spec_version_id": true
+}
