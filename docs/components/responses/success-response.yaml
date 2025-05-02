@@ -1,0 +1,4 @@
+SuccessNoContent:
+  description: "성공적으로 처리되었습니다"
+SuccessCreated:
+  description: "성공적으로 생성되었습니다"

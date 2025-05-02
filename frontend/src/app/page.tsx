@@ -2,6 +2,7 @@
 // import Link from "next/link"
 import { useState } from "react"
 import { ProjectCard, NewProjectCard, Project } from "@/components/project-card"
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   // 예시 프로젝트 데이터
@@ -32,10 +33,13 @@ export default function Home() {
     },
   ])
 
+  const router = useRouter();
   // 새 프로젝트 생성 함수
   const createNewProject = () => {
     console.log("새 프로젝트 생성")
     // 실제로는 API 호출 등을 통해 새 프로젝트를 생성하고 목록에 추가하는 로직 구현
+    router.push("/globalsetting")
+
   }
 
   return (

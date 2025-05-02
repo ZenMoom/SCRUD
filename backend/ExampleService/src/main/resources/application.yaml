@@ -27,7 +27,7 @@ spring:
 
   config:
     import:
-      - optional:file:../infra/env/.env[.properties]
+      - optional:file:../infra/env/.env.development[.properties]
 
   jackson:
     time-zone: Asia/Seoul

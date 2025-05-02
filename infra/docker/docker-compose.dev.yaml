@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend  # 도커 파일 실행은 프로젝트 루트
       dockerfile: ./ExampleService/Dockerfile # 루트에서부터 Dockerfile을 찾는다/
-      target: development
+      target: runner
     env_file:
       - ./infra/env/.env.development
     ports:
