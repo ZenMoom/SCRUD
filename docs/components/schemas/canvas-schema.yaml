@@ -345,7 +345,7 @@ ComponentId:
   required: true
   description: '위치를 변경할 컴포넌트 ID'
   schema:
-    type: integer
+    type: string
 ProjectId:
   name: projectId
   in: path
