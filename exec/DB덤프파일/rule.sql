@@ -1,3 +1,5 @@
+use scrud;
+
 INSERT INTO spec_version (spec_version_id, openapi_major, openapi_minor, openapi_patch, description, created_at,
                           updated_at)
 VALUES (1, 3, 0, 0, 'OpenAPI 3.0.0', NOW(), NOW());
@@ -45,93 +47,93 @@ VALUES (7, 1, 'responses', true, '["status_code", "description", "content_type",
 -- ✅ Editable: true (13가지)
 -- 기본적인 query 타입
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (1, 5, 'query', 'string', FALSE, FALSE, FALSE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (1, 5, 'query', 'string', FALSE, FALSE, FALSE, NOW(), NOW());
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (2, 5, 'query', 'string', TRUE, FALSE, FALSE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (2, 5, 'query', 'string', TRUE, FALSE, FALSE, NOW(), NOW());
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (3, 5, 'query', 'integer', FALSE, FALSE, FALSE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (3, 5, 'query', 'integer', FALSE, FALSE, FALSE, NOW(), NOW());
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (4, 5, 'query', 'boolean', FALSE, FALSE, FALSE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (4, 5, 'query', 'boolean', FALSE, FALSE, FALSE, NOW(), NOW());
 
 -- query array (items type 별로 구분)
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (5, 5, 'query', 'array', FALSE, TRUE, FALSE, TRUE, NOW()); -- string[]
+                            supports_array, is_required, created_at, updated_at)
+VALUES (5, 5, 'query', 'array', FALSE, TRUE, FALSE, NOW(), NOW()); -- string, NOW()[]
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (6, 5, 'query', 'array', FALSE, TRUE, FALSE, TRUE, NOW()); -- integer[]
+                            supports_array, is_required, created_at, updated_at)
+VALUES (6, 5, 'query', 'array', FALSE, TRUE, FALSE, NOW(), NOW()); -- integer, NOW()[]
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (7, 5, 'query', 'array', FALSE, TRUE, FALSE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (7, 5, 'query', 'array', FALSE, TRUE, FALSE, NOW(), NOW());
 -- boolean[]
 
 -- query enum 확장 (non-string enum)
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (8, 5, 'query', 'integer', TRUE, FALSE, FALSE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (8, 5, 'query', 'integer', TRUE, FALSE, FALSE, NOW(), NOW());
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (9, 5, 'query', 'boolean', TRUE, FALSE, FALSE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (9, 5, 'query', 'boolean', TRUE, FALSE, FALSE, NOW(), NOW());
 
 -- path 파라미터
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (10, 5, 'path', 'string', FALSE, FALSE, TRUE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (10, 5, 'path', 'string', FALSE, FALSE, TRUE, NOW(), NOW());
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (11, 5, 'path', 'integer', FALSE, FALSE, TRUE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (11, 5, 'path', 'integer', FALSE, FALSE, TRUE, NOW(), NOW());
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (12, 5, 'path', 'boolean', FALSE, FALSE, TRUE, TRUE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (12, 5, 'path', 'boolean', FALSE, FALSE, TRUE, NOW(), NOW());
 
 -- ❌ Editable: false (header, cookie)
 
 -- 9. header + string
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (9, 5, 'header', 'string', FALSE, FALSE, FALSE, FALSE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (13, 5, 'header', 'string', FALSE, FALSE, FALSE, NOW(), NOW());
 
 -- 10. header + array
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (10, 5, 'header', 'array', FALSE, TRUE, FALSE, FALSE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (14, 5, 'header', 'array', FALSE, TRUE, FALSE, NOW(), NOW());
 
 -- 11. cookie + string
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (11, 5, 'cookie', 'string', FALSE, FALSE, FALSE, FALSE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (15, 5, 'cookie', 'string', FALSE, FALSE, FALSE, NOW(), NOW());
 
 -- 12. cookie + array
 INSERT INTO parameter_rule (parameter_rule_id, operation_field_rule_id, in_type, data_type, supports_enum,
-                            supports_array, is_required, is_editable, created_at)
-VALUES (12, 5, 'cookie', 'array', FALSE, TRUE, FALSE, FALSE, NOW());
+                            supports_array, is_required, created_at, updated_at)
+VALUES (16, 5, 'cookie', 'array', FALSE, TRUE, FALSE, NOW(), NOW());
 
 -- 1. JSON 객체 요청
-INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, required,
+INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, is_required,
                           supports_file, allowed_fields, created_at, updated_at)
 VALUES (1, 6, 'application/json', 'object', true, false, '["title", "content", "tags"]', NOW(), NOW());
 
 -- 2. JSON 배열 요청
-INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, required,
+INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, is_required,
                           supports_file, allowed_fields, created_at, updated_at)
 VALUES (2, 6, 'application/json', 'array', true, false, '["users", "items"]', NOW(), NOW());
 
 -- 3. 단일 필드 문자열 요청 (string)
-INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, required,
+INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, is_required,
                           supports_file, allowed_fields, created_at, updated_at)
 VALUES (3, 6, 'application/json', 'string', false, false, '["message"]', NOW(), NOW());
 
 -- 4. 파일 업로드 (multipart)
-INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, required,
+INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, is_required,
                           supports_file, allowed_fields, created_at, updated_at)
 VALUES (4, 6, 'multipart/form-data', 'object', true, true, '["file", "description"]', NOW(), NOW());
 
 -- 5. x-www-form-urlencoded
-INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, required,
+INSERT INTO request_rule (request_rule_id, operation_field_rule_id, content_type, body_type, is_required,
                           supports_file, allowed_fields, created_at, updated_at)
 VALUES (5, 6, 'application/x-www-form-urlencoded', 'object', true, false, '["email", "password"]', NOW(), NOW());
 
