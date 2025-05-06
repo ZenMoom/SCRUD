@@ -7,7 +7,7 @@ import com.barcoder.scrud.apispec.application.facade.ApiCreateFacade;
 import com.barcoder.scrud.apispec.application.service.ApiSpecVersionService;
 import com.barcoder.scrud.model.ApiSpecVersionCreateRequest;
 import com.barcoder.scrud.model.ApiSpecVersionCreatedResponse;
-import com.barcoder.scrud.model.ApiSpecWithFields;
+import com.barcoder.scrud.model.ApiSpecVersionResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -49,8 +49,13 @@ public class ApiSpecController implements ApiSpecApi {
 	 * @return ApiSpecWithFields 단일 API 스펙 조회 성공 (status code 200)
 	 */
 	@Override
-	public ResponseEntity<ApiSpecWithFields> getApiSpecById(Integer apiSpecVersionId) {
-		return null;
+	public ResponseEntity<ApiSpecVersionResponse> getApiSpecById(Long apiSpecVersionId) {
+
+		ApiSpecVersionOut apiSpecVersionById = apiSpecVersionService.getApiSpecVersionById(apiSpecVersionId);
+
+		ApiSpecVersionResponse apiSpecWithFields = modelMapper.map(apiSpecVersionById, ApiSpecVersionResponse.class);
+
+		return ResponseEntity.ok(apiSpecWithFields);
 	}
 
 	/**
