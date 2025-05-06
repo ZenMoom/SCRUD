@@ -3,7 +3,7 @@ ApiSpecResponse:
   content:
     application/json:
       schema:
-        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecWithFields'
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionResponse'
 
 ApiSpecCreatedResponse:
   description: API 스펙 생성 성공

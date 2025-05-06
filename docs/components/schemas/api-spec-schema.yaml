@@ -1,10 +1,14 @@
-ApiSpecWithFields:
+ApiSpecVersionResponse:
   type: object
   properties:
+    apiSpecVersionId:
+      type: integer
+      format: int64
+      example: 101
     endpoint:
       type: string
       example: /api/v1/examples/{id}
-    group:
+    apiGroup:
       type: string
       example: example
     version:
@@ -16,14 +20,23 @@ ApiSpecWithFields:
     description:
       type: string
       example: '이 API는 예시 데이터를 처리합니다.'
-    dtype:
+    httpMethod:
       type: string
       enum: [GET, POST, PUT, PATCH, DELETE]
-      description: HTTP method의 축약 (get, post, put, patch, delete)
-    fields:
-      type: array
-      items:
-        $ref: '#/ApiFieldDto'
+      description: HTTP 메서드 (GET, POST, PUT, PATCH, DELETE)
+    requestBody:
+      type: string
+      example: '{"name":"홍길동"}'
+    queryParameters:
+      type: string
+      example: '[{"name": "id", "type": "integer", "required": true}]'
+    pathParameters:
+      type: string
+      example: '[{"name": "exampleId", "type": "string", "required": true}]'
+    response:
+      type: string
+      example: '{"message":"성공"}'
+
 
 ApiFieldDto:
   type: object
