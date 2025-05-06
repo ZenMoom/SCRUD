@@ -1,6 +1,6 @@
 FileTypeEnumDto:
   type: string
-  enum: [REQUIREMENTS, ERD, UTIL, CONVENTION, DEPENDENCY, ERROR_CODE, SECURITY, ARCHITECTURE]
+  enum: [REQUIREMENTS, ERD, UTIL, CONVENTION, DEPENDENCY, ERROR_CODE, SECURITY, ARCHITECTURE_DEFAULT, ARCHITECTURE_GITHUB]
 
 ScrudProjectDto:
   description: "프로젝트 기본 정보"
@@ -16,12 +16,16 @@ ScrudProjectDto:
     description:
       type: string
       description: "프로젝트 설명"
+    serverUrl:
+      type: string
+      description: "serverUrl"
     updatedAt:
       type: string
       format: date-time
       description: "프로젝트 수정 날짜"
 
 ScrudProjectPageDto:
+  x-spring-paginated: true
   description: "프로젝트 목록"
   type: object
   properties:
@@ -35,12 +39,25 @@ ScrudProjectPageDto:
     - content
     - pageable
 
+GlobalFileListDto:
+  description: "전체 전역설정 파일 목록"
+  type: object
+  properties:
+    content:
+      type: array
+      items:
+        $ref: "#/GlobalFileDto"
+
 GlobalFileDto:
   description: "전역설정 파일 목록"
   type: object
   properties:
+    fileName:
+      type: string
     fileType:
       $ref: "#/FileTypeEnumDto"
+    fileUrl:
+      type: string
     fileContent:
       type: string
 

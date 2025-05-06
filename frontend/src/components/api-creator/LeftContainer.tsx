@@ -1,4 +1,3 @@
-// components/api-creator/LeftContainer.tsx
 "use client"
 
 import { useState } from "react"
@@ -36,45 +35,46 @@ export default function LeftContainer() {
   }
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow h-full">
-      <h2 className="text-lg font-bold mb-4 border-b pb-2">프로젝트 설정</h2>
-      <ul className="space-y-2">
-        {menuItems.map((item) => (
-          <li key={item.id} className="border-b pb-2">
-            <button className="flex items-center justify-between w-full py-2 text-left font-medium" onClick={() => toggleAccordion(item.id)}>
-              <div className="flex items-center gap-2">
-                <span className="h-4 w-4 rounded-full bg-green-400"></span>
+    <div className="bg-white h-full w-full">
+      <div className="py-4 px-3">
+        <h2 className="text-lg font-bold text-gray-800">프로젝트 설정</h2>
+      </div>
+      <div className="overflow-y-auto" style={{ height: "calc(100vh - 120px)" }}>
+        <ul className="divide-y divide-gray-200">
+          {menuItems.map((item) => (
+            <li key={item.id} className="border-gray-100">
+              <button className="flex items-center justify-between w-full py-3 px-3 text-left font-medium text-gray-700 hover:text-gray-900 transition-colors" onClick={() => toggleAccordion(item.id)}>
                 <span>{item.name}</span>
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`transition-transform duration-300 ${expandedItem === item.id ? "rotate-180" : ""}`}
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`transition-transform duration-300 text-gray-400 ${expandedItem === item.id ? "rotate-180" : ""}`}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
 
-            {/* 아코디언 콘텐츠 */}
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedItem === item.id ? "max-h-40 opacity-100 pt-2" : "max-h-0 opacity-0"}`}>
-              <ul className="pl-6 space-y-1">
-                {item.subItems?.map((subItem, index) => (
-                  <li key={index} className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer">
-                    {subItem}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </li>
-        ))}
-      </ul>
+              {/* 아코디언 콘텐츠 */}
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedItem === item.id ? "max-h-40 opacity-100 pb-2" : "max-h-0 opacity-0"}`}>
+                <ul className="pl-4 space-y-1">
+                  {item.subItems?.map((subItem, index) => (
+                    <li key={index} className="text-sm text-gray-600 hover:text-blue-500 transition-colors cursor-pointer py-1 px-3">
+                      {subItem}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }

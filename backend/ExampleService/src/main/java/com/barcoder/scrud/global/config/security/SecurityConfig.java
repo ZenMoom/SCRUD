@@ -25,16 +25,21 @@ public class SecurityConfig {
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    private final SecurityProperties securityProperties;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
         throws Exception {
         http
-            .authorizeHttpRequests(authorizationManager -> authorizationManager
-                // 인증, 인가가 필요없는 url 허용
-                .requestMatchers(toRequestMatcher(securityProperties.getRequestMatchers())).permitAll()
-                .anyRequest().authenticated())
+            // 안되면 주석 풀기
+//            .authorizeHttpRequests(authorizationManager -> authorizationManager
+//                // 인증, 인가가 필요없는 url 허용
+//                .requestMatchers(toRequestMatcher(securityProperties.getRequestMatchers())).permitAll()
+//                .anyRequest().authenticated())
+
+                // CSRF 비활성화
+                .csrf(csrf -> csrf.disable())
+                .httpBasic(basic -> basic.disable())
+                .formLogin(form -> form.disable())
+
             // OAuth 관련
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo
