@@ -100,7 +100,10 @@ security:
 cors:
   allow:
     origins:
-      - /** # 추후 제거하고 실제 url 주소를 넣으면 됨
+      - http://localhost # 추후 제거하고 실제 url 주소를 넣으면 됨
+      - http://localhost:3000
+      - http://localhost:3001
+      - https://scrud.co.kr
 
 #  datasource:
 #    url: jdbc:h2:mem:testdb   # ???? DB
