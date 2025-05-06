@@ -1,10 +1,10 @@
 use scrud;
 
-INSERT INTO spec_version (spec_version_id, openapi_major, openapi_minor, openapi_patch, description, created_at,
+INSERT INTO spec_version (spec_version_id, major, minor, patch, description, created_at,
                           updated_at)
 VALUES (1, 3, 0, 0, 'OpenAPI 3.0.0', NOW(), NOW());
 
-INSERT INTO service_spec_version (service_spec_version_id, spec_version_id, version_major, version_minor, version_patch,
+INSERT INTO service_spec_version (service_spec_version_id, spec_version_id, major, minor, patch,
                                   status, description, created_at, updated_at)
 VALUES (1, 1, 1, 0, 0, 'draft', 'SCRUD 서비스 기본 명세 1.0.0', NOW(), NOW());
 

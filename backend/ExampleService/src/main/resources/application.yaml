@@ -92,6 +92,7 @@ security:
     # method는 , 으로 구분하여 추가
     requestMatchers:
       - /api/v1/rules:GET
+      - /api/v1/api-specs:GET, POST, PUT
     # test
     # - /api/v1/tests:GET, POST
 

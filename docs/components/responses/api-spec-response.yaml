@@ -10,8 +10,8 @@ ApiSpecCreatedResponse:
   content:
     application/json:
       schema:
-        type: integer
-        example: 101
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionCreatedResponse'
+
 
 ApiSpecUpdateResponse:
   description: API 스펙 수정 성공

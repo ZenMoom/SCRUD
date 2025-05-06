@@ -321,7 +321,7 @@ paths:
   ########################################
   # 2. API 조회 (단일 조회)
   ########################################
-  /api/v1/specs/{apiSpecVersionId}:
+  /api/v1/api-specs/{apiSpecVersionId}:
     get:
       tags:
         - ApiSpec
@@ -354,7 +354,7 @@ paths:
           schema:
             type: integer
       requestBody:
-        $ref: "./components/requests/api-spec-request.yaml#/ApiSpecRequest"
+        $ref: "./components/requests/api-spec-request.yaml#/ApiSpecCreateRequest"
       responses:
         "200":
           $ref: "./components/responses/api-spec-response.yaml#/ApiSpecUpdateResponse"
@@ -362,7 +362,7 @@ paths:
     ########################################
     # 4. API 생성
     ########################################
-  /api/v1/specs:
+  /api/v1/api-specs:
     post:
       tags:
         - ApiSpec
@@ -370,7 +370,7 @@ paths:
       description: 새로운 API 스펙과 필드를 등록합니다.
       operationId: createApiSpec
       requestBody:
-        $ref: "./components/requests/api-spec-request.yaml#/ApiSpecRequest"
+        $ref: "./components/requests/api-spec-request.yaml#/ApiSpecCreateRequest"
       responses:
         "201":
           $ref: "./components/responses/api-spec-response.yaml#/ApiSpecCreatedResponse"
