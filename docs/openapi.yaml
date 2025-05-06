@@ -24,7 +24,7 @@ tags:
     description: 도식화와 관련된 메서드
   - name: Chat
     description: 프롬프트 채팅 관련 API
-  - name: Project
+  - name: ScrudProject
     description: 프로젝트 전역세팅 관련 API - 개발 전
 
 components:
@@ -41,15 +41,15 @@ paths:
       tags:
         - Example
       operationId: getExampleById
-      summary: '특정 ID의 예시를 조회합니다.'
-      description: '주어진 ID에 해당하는 예시를 조회합니다. 상세 예시 입니다.'
+      summary: "특정 ID의 예시를 조회합니다."
+      description: "주어진 ID에 해당하는 예시를 조회합니다. 상세 예시 입니다."
       parameters:
-        - $ref: './components/schemas/example-schema.yaml#/ExampleId'
+        - $ref: "./components/schemas/example-schema.yaml#/ExampleId"
       responses:
-        '200':
-          $ref: './components/responses/example-response.yaml#/ExampleResponse'
-        '404':
-          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+        "200":
+          $ref: "./components/responses/example-response.yaml#/ExampleResponse"
+        "404":
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
     post:
       tags:
         - Example
@@ -57,14 +57,14 @@ paths:
       summary: 특정 ID의 예시를 업데이트합니다.
       description: 주어진 ID에 해당하는 예시를 업데이트합니다. 상세 예시 입니다.
       parameters:
-        - $ref: './components/schemas/example-schema.yaml#/ExampleId'
+        - $ref: "./components/schemas/example-schema.yaml#/ExampleId"
       requestBody:
-        $ref: './components/requests/example-request.yaml#/ExampleRequest'
+        $ref: "./components/requests/example-request.yaml#/ExampleRequest"
       responses:
-        '200':
-          $ref: './components/responses/example-response.yaml#/ExampleResponse'
-        '404':
-          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+        "200":
+          $ref: "./components/responses/example-response.yaml#/ExampleResponse"
+        "404":
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
 
   /api/v1/examples:
     get:
@@ -72,17 +72,17 @@ paths:
         - Example
       operationId: getExamplesWithPagination
       x-spring-paginated: true
-      summary: '예시 목록을 페이지네이션하여 조회합니다.'
-      description: '예시 목록을 페이지 번호와 페이지 크기를 이용하여 페이지네이션하여 조회합니다.'
+      summary: "예시 목록을 페이지네이션하여 조회합니다."
+      description: "예시 목록을 페이지 번호와 페이지 크기를 이용하여 페이지네이션하여 조회합니다."
       parameters:
-        - $ref: './components/schemas/page-schema.yaml#/Page'
-        - $ref: './components/schemas/page-schema.yaml#/Size'
+        - $ref: "./components/schemas/page-schema.yaml#/Page"
+        - $ref: "./components/schemas/page-schema.yaml#/Size"
 
       responses:
-        '200':
-          $ref: './components/responses/example-response.yaml#/ExamplePageResponse'
-        '404':
-          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+        "200":
+          $ref: "./components/responses/example-response.yaml#/ExamplePageResponse"
+        "404":
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
 
     post:
       tags:
@@ -91,12 +91,12 @@ paths:
       summary: 예시를 하나 생성합니다.
       description: 예시를 하나 생성합니다. 상세 예시 입니다.
       requestBody:
-        $ref: './components/requests/example-request.yaml#/ExampleRequest'
+        $ref: "./components/requests/example-request.yaml#/ExampleRequest"
       responses:
-        '200':
-          $ref: './components/responses/example-response.yaml#/ExampleResponse'
-        '404':
-          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+        "200":
+          $ref: "./components/responses/example-response.yaml#/ExampleResponse"
+        "404":
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
 
   /api/sse/send:
     post:
@@ -106,19 +106,19 @@ paths:
       operationId: sendSSEEvent
       security:
         - bearerAuth: []
-      summary: 'SSE 이벤트를 전송받습니다.'
-      description: '연결된 특정 클라이언트 또는 모든 클라이언트에게 이벤트를 전송합니다.'
+      summary: "SSE 이벤트를 전송받습니다."
+      description: "연결된 특정 클라이언트 또는 모든 클라이언트에게 이벤트를 전송합니다."
       responses:
-        '200':
-          description: '이벤트 전송 성공'
+        "200":
+          description: "이벤트 전송 성공"
           content:
             application/json:
               schema:
-                $ref: './components/schemas/canvas-schema.yaml#/SSEEventDto'
-        '400':
-          description: '잘못된 요청'
-        '401':
-          description: '인증되지 않은 요청'
+                $ref: "./components/schemas/canvas-schema.yaml#/SSEEventDto"
+        "400":
+          description: "잘못된 요청"
+        "401":
+          description: "인증되지 않은 요청"
   /api/sse/connect:
     get:
       tags:
@@ -126,77 +126,77 @@ paths:
       operationId: connectSSE
       deprecated: true
       security:
-        - bearerAuth: [ ]
-      summary: 'SSE 연결을 설정합니다.'
-      description: '서버와 클라이언트 간의 SSE 연결을 설정하여 실시간 이벤트 스트림을 수신할 수 있습니다.'
+        - bearerAuth: []
+      summary: "SSE 연결을 설정합니다."
+      description: "서버와 클라이언트 간의 SSE 연결을 설정하여 실시간 이벤트 스트림을 수신할 수 있습니다."
       responses:
-        '200':
-          description: 'SSE 연결 성공'
+        "200":
+          description: "SSE 연결 성공"
           content:
             text/event-stream:
               schema:
                 type: string
-                description: '이벤트 스트림'
-        '401':
-          description: '인증되지 않은 요청'
+                description: "이벤트 스트림"
+        "401":
+          description: "인증되지 않은 요청"
   /api/v1/projects/{projectId}/apis/{apiId}/components/{componentId}/position:
     put:
       tags:
         - Component
       operationId: updateComponentPosition
-      summary: '컴포넌트의 위치를 업데이트합니다.'
-      description: '도식화에서 특정 컴포넌트의 위치 좌표를 변경합니다.'
+      summary: "컴포넌트의 위치를 업데이트합니다."
+      description: "도식화에서 특정 컴포넌트의 위치 좌표를 변경합니다."
       parameters:
-        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
-        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
-        - $ref: './components/schemas/canvas-schema.yaml#/ComponentId'
+        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
+        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
+        - $ref: "./components/schemas/canvas-schema.yaml#/ComponentId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: './components/schemas/canvas-schema.yaml#/ComponentPositionUpdateRequest'
+              $ref: "./components/schemas/canvas-schema.yaml#/ComponentPositionUpdateRequest"
             examples:
               example1:
-                $ref: './components/examples/canvas-example.yaml#/ComponentPositionUpdateRequestExample'
+                $ref: "./components/examples/canvas-example.yaml#/ComponentPositionUpdateRequestExample"
       responses:
-        '200':
-          description: '컴포넌트 위치 업데이트 성공'
+        "200":
+          description: "컴포넌트 위치 업데이트 성공"
           content:
             application/json:
               schema:
-                $ref: './components/schemas/canvas-schema.yaml#/ComponentUpdatedResponse'
+                $ref: "./components/schemas/canvas-schema.yaml#/ComponentUpdatedResponse"
               examples:
                 example1:
-                  $ref: './components/examples/canvas-example.yaml#/ComponentUpdatedResponseExample'
-        '404':
-          description: '컴포넌트를 찾을 수 없음'
+                  $ref: "./components/examples/canvas-example.yaml#/ComponentUpdatedResponseExample"
+        "404":
+          description: "컴포넌트를 찾을 수 없음"
           content:
             application/json:
               schema:
-                $ref: './components/responses/exception-response.yaml#/NotFoundException'
+                $ref: "./components/responses/exception-response.yaml#/NotFoundException"
   /api/v1/projects/{projectId}/apis:
     get:
       tags:
         - ScrudApi
       operationId: getIncompleteApis
-      summary: '완료되지 않은 API 목록을 조회합니다.'
+      summary: "완료되지 않은 API 목록을 조회합니다."
       description: |
         현재 USER_COMPLETED 상태가 아닌(AI_GENERATED 또는 AI_VISUALIZED) 모든 API 목록을 조회합니다. 수정된 날자순으로 정렬되어 출력됩니다.
 
       parameters:
-        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
-        - $ref: './components/schemas/canvas-schema.yaml#/Incomplete'
+        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
+        - $ref: "./components/schemas/canvas-schema.yaml#/Incomplete"
       responses:
-        '200':
-          description: '미완료 API 목록 조회 성공'
+        "200":
+          description: "미완료 API 목록 조회 성공"
           content:
             application/json:
               schema:
-                $ref: './components/schemas/canvas-schema.yaml#/ApiSummaryPageResponse'
+                $ref: "./components/schemas/canvas-schema.yaml#/ApiSummaryPageResponse"
               examples:
                 example1:
-                  $ref: './components/examples/canvas-example.yaml#/ApiSummaryPageResponseExample'
+                  $ref: "./components/examples/canvas-example.yaml#/ApiSummaryPageResponseExample"
   /api/v1/projects/{projectId}/apis/{apiId}/versions/{versionId}:
     get:
       tags:
@@ -205,21 +205,21 @@ paths:
       description: 특정 프로젝트의 특정 API 버전에 대한 메서드 도식화 데이터를 가져옵니다.
       operationId: getDiagram
       parameters:
-        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
-        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
-        - $ref: './components/schemas/canvas-schema.yaml#/VersionId'
+        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
+        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
+        - $ref: "./components/schemas/canvas-schema.yaml#/VersionId"
       responses:
-        '200':
+        "200":
           description: 성공적으로 도식화 데이터를 조회함
           content:
             application/json:
               schema:
-                $ref: './components/schemas/canvas-schema.yaml#/DiagramResponse'
+                $ref: "./components/schemas/canvas-schema.yaml#/DiagramResponse"
               examples:
                 example1:
-                  $ref: './components/examples/canvas-example.yaml#/DiagramResponseExample'
-        '404':
-          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+                  $ref: "./components/examples/canvas-example.yaml#/DiagramResponseExample"
+        "404":
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
   /api/v1/projects/{projectId}/apis/{apiId}/status:
     put:
       tags:
@@ -228,28 +228,28 @@ paths:
       summary: API 처리 상태를 변경합니다.
       description: API 처리 상태를 변경합니다.
       parameters:
-        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
-        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
+        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
+        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
       requestBody:
         required: true
         description: 처리상태
         content:
           application/json:
             schema:
-              $ref: './components/schemas/canvas-schema.yaml#/ApiProcessStateRequest'
+              $ref: "./components/schemas/canvas-schema.yaml#/ApiProcessStateRequest"
             examples:
               example1:
-                $ref: './components/examples/canvas-example.yaml#/ApiProcessStateRequestExample'
+                $ref: "./components/examples/canvas-example.yaml#/ApiProcessStateRequestExample"
       responses:
-        '200':
+        "200":
           description: 프롬프트 처리 결과
           content:
             application/json:
               schema:
-                $ref: './components/schemas/canvas-schema.yaml#/ApiProcessStateUpdatedResponse'
+                $ref: "./components/schemas/canvas-schema.yaml#/ApiProcessStateUpdatedResponse"
               examples:
                 example1:
-                  $ref: './components/examples/canvas-example.yaml#/ApiProcessStateUpdatedResponseExample'
+                  $ref: "./components/examples/canvas-example.yaml#/ApiProcessStateUpdatedResponseExample"
   /api/v1/projects/{projectId}/apis/{apiId}/chats:
     get:
       tags:
@@ -258,20 +258,20 @@ paths:
       description: 특정 API에 대한 프롬프트 채팅 기록을 시간순으로 조회합니다.
       operationId: getPrompts
       parameters:
-        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
-        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
+        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
+        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
       responses:
-        '200':
+        "200":
           description: 프롬프트 채팅 기록 조회 결과
           content:
             application/json:
               schema:
-                $ref: './components/schemas/canvas-schema.yaml#/ChatHistoryResponse'
+                $ref: "./components/schemas/canvas-schema.yaml#/ChatHistoryResponse"
               examples:
                 example1:
-                  $ref: './components/examples/canvas-example.yaml#/ChatHistoryResponseExample'
-        '404':
-          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+                  $ref: "./components/examples/canvas-example.yaml#/ChatHistoryResponseExample"
+        "404":
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
 
     post:
       tags:
@@ -280,30 +280,29 @@ paths:
       description: 프롬프트를 입력하여 도식화 수정을 요청하거나 설명을 요청합니다.
       operationId: promptChat
       parameters:
-        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
-        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
+        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
+        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: './components/schemas/canvas-schema.yaml#/UserChatRequest'
+              $ref: "./components/schemas/canvas-schema.yaml#/UserChatRequest"
             examples:
               example1:
-                $ref: './components/examples/canvas-example.yaml#/UserChatRequestExample'
+                $ref: "./components/examples/canvas-example.yaml#/UserChatRequestExample"
       responses:
-        '200':
+        "200":
           description: 프롬프트 처리 결과
           content:
             application/json:
               schema:
-                $ref: './components/schemas/canvas-schema.yaml#/SystemChatResponse'
+                $ref: "./components/schemas/canvas-schema.yaml#/SystemChatResponse"
               examples:
                 example1:
-                  $ref: './components/examples/canvas-example.yaml#/SystemChatResponseExample'
-        '404':
-          $ref: './components/responses/exception-response.yaml#/NotFoundException'
-
+                  $ref: "./components/examples/canvas-example.yaml#/SystemChatResponseExample"
+        "404":
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
 
   ########################################
   # 1. 룰 조회
@@ -316,8 +315,8 @@ paths:
       description: 입력값의 타입, 필수 여부, 제약 조건 등을 설정하는 룰 정보를 조회합니다.
       operationId: getRules
       responses:
-        '200':
-          $ref: './components/responses/rule-response.yaml#/RuleResponse'
+        "200":
+          $ref: "./components/responses/rule-response.yaml#/RuleResponse"
 
   ########################################
   # 2. API 조회 (단일 조회)
@@ -336,8 +335,8 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
-          $ref: './components/responses/api-spec-response.yaml#/ApiSpecResponse'
+        "200":
+          $ref: "./components/responses/api-spec-response.yaml#/ApiSpecResponse"
 
     ########################################
     # 3. API 수정
@@ -355,11 +354,10 @@ paths:
           schema:
             type: integer
       requestBody:
-        $ref: './components/requests/api-spec-request.yaml#/ApiSpecRequest'
+        $ref: "./components/requests/api-spec-request.yaml#/ApiSpecRequest"
       responses:
-        '200':
-          $ref: './components/responses/api-spec-response.yaml#/ApiSpecUpdateResponse'
-
+        "200":
+          $ref: "./components/responses/api-spec-response.yaml#/ApiSpecUpdateResponse"
 
     ########################################
     # 4. API 생성
@@ -372,10 +370,10 @@ paths:
       description: 새로운 API 스펙과 필드를 등록합니다.
       operationId: createApiSpec
       requestBody:
-        $ref: './components/requests/api-spec-request.yaml#/ApiSpecRequest'
+        $ref: "./components/requests/api-spec-request.yaml#/ApiSpecRequest"
       responses:
-        '201':
-          $ref: './components/responses/api-spec-response.yaml#/ApiSpecCreatedResponse'
+        "201":
+          $ref: "./components/responses/api-spec-response.yaml#/ApiSpecCreatedResponse"
 
   ########################################
   # 5. Project 조회
@@ -383,7 +381,7 @@ paths:
   /api/v1/projects:
     get:
       tags:
-        - Project
+        - ScrudProject
       operationId: getAllProjects
       summary: "프로젝트 전체 목록 조회"
       responses:
@@ -398,9 +396,11 @@ paths:
     ########################################
     post:
       tags:
-        - Project
+        - ScrudProject
       operationId: createProject
       summary: "프로젝트 생성"
+      description: "프로젝트 생성 API. 전역 파일 추가 주의사항! 아키텍처 구조도는 사용자 선택일 경우 ARCHITECTURE_DEFAULT, 깃허브 연동해서 올리는 경우엔 ARCHITECTURE_GITHUB 로 부탁해요!
+            그리고 fileContent: JSON.stringify(fileContent) 이렇게 직렬화해서 보내주세요!"
       requestBody:
         content:
           application/json:
@@ -414,15 +414,16 @@ paths:
               schema:
                 type: string
 
-  ########################################
-  # 7. 전역 파일 개별 추가
-  ########################################
   /api/v1/projects/{projectId}:
+    ########################################
+    # 7. 전역 파일 개별 추가
+    ########################################
     put:
       tags:
-        - Project
+        - ScrudProject
       operationId: addGlobalFile
-      description: "전역 파일 추가"
+      description: "전역 파일 추가 - 아키텍처 구조도는 사용자 선택일 경우 ARCHITECTURE_DEFAULT, 깃허브 연동해서 올리는 경우엔 ARCHITECTURE_GITHUB 로 부탁해요!
+      그리고 fileContent: JSON.stringify(fileContent) 이렇게 직렬화해서 보내주세요!"
       requestBody:
         content:
           application/json:
@@ -441,11 +442,32 @@ paths:
           $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
 
     ########################################
-    # 8. 프로젝트 삭제
+    # 8. 해당 프로젝트의 전역 파일 전체 조회
+    ########################################
+    get:
+      tags:
+        - ScrudProject
+      operationId: getAllGlobalFile
+      parameters:
+        - name: projectId
+          in: path
+          description: "프로젝트 ID"
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          $ref: "./components/responses/scrud-project-response.yaml#/GlobalFileListResponse"
+        "404":
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
+
+    ########################################
+    # 9. 프로젝트 삭제
     ########################################
     delete:
       tags:
-        - Project
+        - ScrudProject
       operationId: deleteProject
       description: "프로젝트 삭제"
       parameters:
@@ -461,12 +483,12 @@ paths:
           $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
 
   ########################################
-  # 9. 전역 파일 삭제
+  # 10. 전역 파일 삭제
   ########################################
   /api/v1/projects/{projectId}/{globalFileId}:
     delete:
       tags:
-        - Project
+        - ScrudProject
       operationId: deleteGlobalFile
       description: "전역 파일 삭제"
       parameters:

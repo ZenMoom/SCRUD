@@ -1,0 +1,18 @@
+├── src
+│   ├── main
+│   │   ├── java/com/example/app
+│   │   │   ├── user
+│   │   │   │   ├── UserController.java
+│   │   │   │   ├── UserService.java
+│   │   │   │   ├── UserRepository.java
+│   │   │   │   └── User.java
+│   │   │   ├── order
+│   │   │   │   ├── OrderController.java
+│   │   │   │   ├── OrderService.java
+│   │   │   │   ├── OrderRepository.java
+│   │   │   │   └── Order.java
+│   └── test
+
+기능 단위(Folder by Feature) 구조
+각 기능(user, order 등) 별로 controller/service/repo/도메인 클래스가 함께 존재
+유지보수와 도메인 중심 설계(Domain-Driven Design)에 유리
