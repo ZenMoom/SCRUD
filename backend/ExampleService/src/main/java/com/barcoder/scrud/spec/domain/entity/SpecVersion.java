@@ -1,7 +1,9 @@
 package com.barcoder.scrud.spec.domain.entity;
 
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
+import com.barcoder.scrud.spec.domain.vo.OpenApiVersion;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -23,12 +25,8 @@ public class SpecVersion extends BaseTimeEntity {
 	@GeneratedValue
 	private Long SpecVersionId;
 
-	@Column(nullable = false)
-	private int openapiMajor;
-	@Column(nullable = false)
-	private int openapiMinor;
-	@Column(nullable = false)
-	private int openapiPatch;
+	@Embedded
+	private OpenApiVersion openApiVersion;
 
 	@Column(columnDefinition = "TEXT")
 	private String description;
