@@ -5,6 +5,7 @@ import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
 import com.barcoder.scrud.apispec.application.facade.ApiCreateFacade;
+import com.barcoder.scrud.apispec.application.facade.ApiDeleteFacade;
 import com.barcoder.scrud.apispec.application.facade.ApiUpdateFacade;
 import com.barcoder.scrud.apispec.application.service.ApiSpecVersionService;
 import com.barcoder.scrud.model.ApiSpecVersionCreateRequest;
@@ -26,6 +27,7 @@ public class ApiSpecController implements ApiSpecApi {
 	private final ApiSpecVersionService apiSpecVersionService;
 	private final ApiCreateFacade apiCreateFacade;
 	private final ApiUpdateFacade apiUpdateFacade;
+	private final ApiDeleteFacade apiDeleteFacade;
 	private final ModelMapper modelMapper;
 
 	/**
@@ -81,5 +83,18 @@ public class ApiSpecController implements ApiSpecApi {
 		ApiSpecVersionResponse response = modelMapper.map(outDto, ApiSpecVersionResponse.class);
 
 		return ResponseEntity.ok(response);
+	}
+
+	/**
+	 * DELETE /api/v1/api-specs/{apiSpecVersionId} : API 스펙 삭제
+	 * 단일 API 스펙과 관련 필드를 삭제합니다.
+	 *
+	 * @param apiSpecVersionId (required)
+	 * @return Void 성공적으로 처리되었습니다 (status code 204)
+	 */
+	@Override
+	public ResponseEntity<Void> deleteApiSpec(Long apiSpecVersionId) {
+		apiDeleteFacade.deleteApiSpecVersion(apiSpecVersionId);
+		return ResponseEntity.ok().build();
 	}
 }

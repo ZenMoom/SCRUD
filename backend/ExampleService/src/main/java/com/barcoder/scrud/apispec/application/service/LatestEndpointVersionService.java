@@ -71,4 +71,17 @@ public class LatestEndpointVersionService {
 		latestEndpointVersion.updateApiSpecVersion(apiSpecVersion);
 	}
 
+	/**
+	 * 최신 API 스펙 버전 삭제
+	 *
+	 * @param apiSpecVersionId API 스펙 버전 ID
+	 */
+	public void deleteLatestEndpointVersion(Long apiSpecVersionId) {
+		// 1. LatestEndpointVersion entity 조회
+		LatestEndpointVersion latestEndpointVersion = latestEndpointVersionJpaRepository.findByApiSpecVersion_ApiSpecVersionId(apiSpecVersionId)
+				.orElseThrow(() -> new BaseException(ApiSpecVersionErrorStatus.API_SPEC_VERSION_NOT_FOUND));
+
+		// 2. LatestEndpointVersion entity 삭제
+		latestEndpointVersionJpaRepository.delete(latestEndpointVersion);
+	}
 }

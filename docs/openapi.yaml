@@ -105,7 +105,7 @@ paths:
       deprecated: true
       operationId: sendSSEEvent
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       summary: "SSE 이벤트를 전송받습니다."
       description: "연결된 특정 클라이언트 또는 모든 클라이언트에게 이벤트를 전송합니다."
       responses:
@@ -126,7 +126,7 @@ paths:
       operationId: connectSSE
       deprecated: true
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       summary: "SSE 연결을 설정합니다."
       description: "서버와 클라이언트 간의 SSE 연결을 설정하여 실시간 이벤트 스트림을 수신할 수 있습니다."
       responses:
@@ -360,6 +360,23 @@ paths:
       responses:
         "200":
           $ref: "./components/responses/api-spec-response.yaml#/ApiSpecUpdateResponse"
+
+    delete:
+      tags:
+        - ApiSpec
+      summary: API 스펙 삭제
+      description: 단일 API 스펙과 관련 필드를 삭제합니다.
+      operationId: deleteApiSpec
+      parameters:
+        - name: apiSpecVersionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
 
     ########################################
     # 4. API 생성
