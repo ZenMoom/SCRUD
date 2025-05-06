@@ -45,7 +45,7 @@ ApiFieldDto:
     location_path:
       type: string
 
-ApiSpecVersionRequest:
+ApiSpecVersionCreateRequest:
   type: object
   required:
     - endpoint
@@ -99,3 +99,10 @@ ApiSpecVersionRequest:
       example: '{ "id": "123" }'
       description: 경로 파라미터 (JSON 형식 문자열)
 
+ApiSpecVersionCreatedResponse:
+  type: object
+  properties:
+    apiSpecVersionId:
+      type: integer
+      format: int64
+      example: 101
