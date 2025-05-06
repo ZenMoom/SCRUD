@@ -171,3 +171,11 @@ ApiSpecVersionUpdateRequest:
       format: json
       example: '{ "id": "123" }'
       description: 경로 파라미터 (JSON 형식 문자열)
+
+ApiSpecVersionListResponse:
+  type: object
+  properties:
+    content:
+        type: array
+        items:
+            $ref: '#/ApiSpecVersionResponse'

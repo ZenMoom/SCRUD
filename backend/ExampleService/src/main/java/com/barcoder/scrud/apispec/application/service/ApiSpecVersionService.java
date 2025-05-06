@@ -8,10 +8,10 @@ import com.barcoder.scrud.apispec.domain.entity.ApiSpecVersion;
 import com.barcoder.scrud.apispec.domain.exception.ApiSpecVersionErrorStatus;
 import com.barcoder.scrud.apispec.infrastructure.jpa.ApiSpecVersionJpaRepository;
 import com.barcoder.scrud.global.common.exception.BaseException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -48,6 +48,7 @@ public class ApiSpecVersionService {
 	 * @param apiSpecVersionId API 스펙 버전 ID
 	 * @return API 스펙버전 응답 DTO
 	 */
+	@Transactional(readOnly = true)
 	public ApiSpecVersionOut getApiSpecVersionById(Long apiSpecVersionId) {
 		// 1. API 스펙 버전 ID로 DB 조회
 		ApiSpecVersion apiSpecVersion = apiSpecVersionJpaRepository.findById(apiSpecVersionId)
