@@ -60,8 +60,6 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
 
   const handleGithubUpload = () => {
     setDropdownOpen(false)
-    // GitHub 연결 로직 (여기서는 파일명만 설정)
-    onChange(`GitHub: ${title} 파일`)
   }
 
   const renderInput = () => {

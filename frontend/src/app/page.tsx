@@ -171,7 +171,7 @@ export default function Home() {
 
   const handleNewProject = () => {
     // 프로젝트 생성 후 API Creator 페이지로 이동
-    window.location.href = "/api-creator"
+    window.location.href = "/globalsetting"
     // 또는 Next.js의 라우터를 사용할 경우:
     // router.push("/api-creator");
   }

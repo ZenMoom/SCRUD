@@ -1,16 +1,31 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
+import { useRouter } from 'next/navigation'
 import Sidebar from "@/components/globalsetting/sidebar"
 import ContentArea from "@/components/globalsetting/contentarea"
 import Floatingbutton from "@/components/globalsetting/floatingbutton"
+import axios from "axios"
 
 // 설정 항목 키 타입 정의
 type SettingKey = 'title' | 'description' | 'serverUrl' | 'requirementSpec' | 'erd' | 
                  'dependencyFile' | 'utilityClass' | 'errorCode' | 'securitySetting' | 
                  'codeConvention' | 'architectureStructure';
 
+// 파일 타입을 백엔드 API의 FileTypeEnumDto와 매핑
+const fileTypeMapping: Record<string, string> = {
+  'requirementSpec': 'REQUIREMENTS',
+  'erd': 'ERD',
+  'utilityClass': 'UTIL',
+  'codeConvention': 'CONVENTION',
+  'dependencyFile': 'DEPENDENCY',
+  'errorCode': 'ERROR_CODE',
+  'securitySetting': 'SECURITY',
+  'architectureStructure': 'ARCHITECTURE_DEFAULT'
+}
+
 export default function GlobalSettingPage() {
+  const router = useRouter()
   // 각 설정 항목의 상태를 관리 - 초기값은 빈 문자열로 설정
   const [settings, setSettings] = useState({
     title: "",
@@ -43,6 +58,11 @@ export default function GlobalSettingPage() {
 
   // 현재 선택된 설정 항목
   const [activeItem, setActiveItem] = useState<SettingKey>("title")
+  
+  // 로딩 상태 관리
+  const [isLoading, setIsLoading] = useState(false)
+  // 에러 메시지 관리
+  const [error, setError] = useState<string | null>(null)
 
   // 각 설정 항목의 ref를 관리하여 스크롤 위치 조정에 사용
   const refs = {
@@ -107,6 +127,77 @@ export default function GlobalSettingPage() {
   const isRequiredCompleted = () => {
     return completed.title && completed.description && completed.requirementSpec && completed.erd
   }
+  
+  // 프로젝트 생성 API 호출
+  const createProject = async () => {
+    if (!isRequiredCompleted()) {
+      setError("필수 항목을 모두 입력해주세요.")
+      return
+    }
+    
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      // API 요청 데이터 준비
+      const globalFiles = []
+      
+      // 파일 타입 항목들 추가
+      Object.entries(settings).forEach(([key, value]) => {
+        if (fileTypeMapping[key] && value) {
+          globalFiles.push({
+            fileName: value,
+            fileType: fileTypeMapping[key],
+            fileUrl: "",
+            fileContent: JSON.stringify({ content: value })
+          })
+        }
+      })
+      
+      // 아키텍처 구조 추가 (사용자 선택)
+      globalFiles.push({
+        fileName: `Architecture-${settings.architectureStructure}`,
+        fileType: "ARCHITECTURE_DEFAULT",
+        fileUrl: "",
+        fileContent: JSON.stringify({ type: settings.architectureStructure })
+      })
+      
+      // 보안 설정 추가
+      globalFiles.push({
+        fileName: `Security-${settings.securitySetting}`,
+        fileType: "SECURITY",
+        fileUrl: "",
+        fileContent: JSON.stringify({ type: settings.securitySetting })
+      })
+      
+      const projectData = {
+        scrudProjectDto: {
+          title: settings.title,
+          description: settings.description,
+          serverUrl: settings.serverUrl
+        },
+        globalFiles: globalFiles
+      }
+      
+      // API 호출
+      const response = await axios.post('/api/v1/projects', projectData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiZDc1ZDIwYzYtODM1ZS00YTU0LTk5MzAtNzIxNDY5MjlhODYwIiwiaWF0IjoxNzQ2NTQzNjU1LCJleHAiOjE3NDY1NDk2NTV9.EOhS2YIF8Hc4hTIodiMlR_GMsyIzVOI_5yuH4ntULa0'
+        }
+      })
+      
+      console.log('프로젝트 생성 성공:', response.data)
+      
+      // 프로젝트 생성 성공 후 메인 페이지로 이동
+      router.push('/')
+    } catch (err) {
+      console.error('프로젝트 생성 오류:', err)
+      setError('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <main className="p-4">
@@ -137,7 +228,12 @@ export default function GlobalSettingPage() {
             setActiveItem={(item: string) => setActiveItem(item as SettingKey)}
           />
         </div>
-        <Floatingbutton isActive={isRequiredCompleted()} />
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed bottom-20 right-8 z-50">
+            {error}
+          </div>
+        )}
+        <Floatingbutton isActive={isRequiredCompleted() && !isLoading} onClick={createProject} isLoading={isLoading} />
       </div>
     </main>
   )
