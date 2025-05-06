@@ -4,9 +4,9 @@ import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
 import com.barcoder.scrud.apispec.application.service.ApiSpecVersionService;
 import com.barcoder.scrud.apispec.application.service.LatestEndpointVersionService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 

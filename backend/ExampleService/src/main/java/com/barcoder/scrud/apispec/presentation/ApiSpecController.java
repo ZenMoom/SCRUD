@@ -3,13 +3,16 @@ package com.barcoder.scrud.apispec.presentation;
 import com.barcoder.scrud.api.ApiSpecApi;
 import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecVersionIn;
+import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionListOut;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
 import com.barcoder.scrud.apispec.application.facade.ApiCreateFacade;
 import com.barcoder.scrud.apispec.application.facade.ApiDeleteFacade;
+import com.barcoder.scrud.apispec.application.facade.ApiGetFacade;
 import com.barcoder.scrud.apispec.application.facade.ApiUpdateFacade;
 import com.barcoder.scrud.apispec.application.service.ApiSpecVersionService;
 import com.barcoder.scrud.model.ApiSpecVersionCreateRequest;
 import com.barcoder.scrud.model.ApiSpecVersionCreatedResponse;
+import com.barcoder.scrud.model.ApiSpecVersionListResponse;
 import com.barcoder.scrud.model.ApiSpecVersionResponse;
 import com.barcoder.scrud.model.ApiSpecVersionUpdateRequest;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,6 +33,7 @@ public class ApiSpecController implements ApiSpecApi {
 	private final ApiCreateFacade apiCreateFacade;
 	private final ApiUpdateFacade apiUpdateFacade;
 	private final ApiDeleteFacade apiDeleteFacade;
+	private final ApiGetFacade apiGetFacade;
 	private final ModelMapper modelMapper;
 
 	/**
@@ -96,5 +102,21 @@ public class ApiSpecController implements ApiSpecApi {
 	public ResponseEntity<Void> deleteApiSpec(Long apiSpecVersionId) {
 		apiDeleteFacade.deleteApiSpecVersion(apiSpecVersionId);
 		return ResponseEntity.ok().build();
+	}
+
+	/**
+	 * GET /api/v1/api-specs/by-project/{scrudProjectId} : Scrud 프로젝트 ID로 API 스펙 버전 목록 조회
+	 * 중간 매핑을 통해 ScrudProject ID로 연결된 모든 API 스펙 버전을 조회합니다.
+	 *
+	 * @param scrudProjectId Scrud 프로젝트 ID (required)
+	 * @return ApiSpecVersionListResponse API 스펙 목록 조회 성공 (status code 200)
+	 */
+	@Override
+	public ResponseEntity<ApiSpecVersionListResponse> getApiSpecsByScrudProjectId(Long scrudProjectId) {
+
+		ApiSpecVersionListOut outList = apiGetFacade.getApiSpecVersionListByScrudProjectId(scrudProjectId);
+
+		ApiSpecVersionListResponse response = modelMapper.map(outList, ApiSpecVersionListResponse.class);
+		return ResponseEntity.ok(response);
 	}
 }
