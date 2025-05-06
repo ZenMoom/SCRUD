@@ -12,14 +12,13 @@ import java.util.UUID;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateApiSpecVersionIn {
+public class UpdateApiSpecVersionIn {
 
 	private Long scrudProjectId;
 	private Long apiSpecVersionId;
 	private UUID userId;
 	private String endpoint;
 	private String apiGroup;
-	private Integer version;
 	private String summary;
 	private String description;
 	private String response;

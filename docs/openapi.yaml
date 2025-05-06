@@ -354,8 +354,9 @@ paths:
           required: true
           schema:
             type: integer
+            format: int64
       requestBody:
-        $ref: "./components/requests/api-spec-request.yaml#/ApiSpecCreateRequest"
+        $ref: "./components/requests/api-spec-request.yaml#/ApiSpecUpdateRequest"
       responses:
         "200":
           $ref: "./components/responses/api-spec-response.yaml#/ApiSpecUpdateResponse"
