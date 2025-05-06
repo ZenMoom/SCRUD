@@ -26,7 +26,13 @@ public enum ErrorStatus implements BaseErrorCode {
     TOKEN_NOT_FOUND(HttpStatus.BAD_REQUEST, "TOKEN4006", "유저의 토큰정보를 얻어올 수 없습니다. 헤더를 확인하세요"),
 
     // 회원 관련 오류
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4001", "존재하지 않는 계정입니다.");
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4001", "존재하지 않는 계정입니다."),
+
+    // 프로젝트 관련 오류
+    SCRUDPROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT4001", "존재하지 않는 프로젝트입니다."),
+    
+    // 전역파일 관련 오류
+    GLOBALFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "GLOBALFILE4001", "존자하지 않는 전역파일입니다.");
 
 
     private final HttpStatus httpStatus;
