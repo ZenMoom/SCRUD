@@ -12,9 +12,10 @@ import com.barcoder.scrud.apispec.infrastructure.jpa.LatestEndpointVersionJpaRep
 import com.barcoder.scrud.global.common.exception.BaseException;
 import com.barcoder.scrud.scrudproject.domain.entity.ScrudProject;
 import com.barcoder.scrud.scrudproject.repository.ScrudProjectRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class LatestEndpointVersionService {
 	private final ScrudProjectRepository scrudProjectRepository;
 	private final ApiSpecVersionJpaRepository apiSpecVersionJpaRepository;
 	private final LatestEndpointVersionJpaRepository latestEndpointVersionJpaRepository;
+	private final ModelMapper modelMapper;
 
 	/**
 	 * 최신 API 스펙 버전 생성
@@ -114,5 +116,29 @@ public class LatestEndpointVersionService {
 
 		// 5. LatestEndpointVersion entity DB 저장
 		latestEndpointVersionJpaRepository.saveAll(latestEndpointVersionList);
+	}
+
+	/**
+	 * 최신 API 스펙 버전 리스트 조회
+	 *
+	 * @param scrudProjectId Scrud 프로젝트 ID
+	 * @return 최신 API 스펙 버전 리스트
+	 */
+	public List<ApiSpecVersionOut> getLatestApiSpecVersionListByScrudProjectId(Long scrudProjectId) {
+		// 1. scrud project id 사용
+		ScrudProject scrudProject = scrudProjectRepository.getReferenceById(scrudProjectId);
+
+		// 2. LatestEndpointVersion entity 리스트 조회
+		List<LatestEndpointVersion> latestEndpointVersionList = latestEndpointVersionJpaRepository.findAllByScrudProject(scrudProject);
+
+		// LatestEndpointVersion entity가 존재하지 않는 경우
+		if (latestEndpointVersionList.isEmpty()) {
+			return List.of();
+		}
+
+		// 3. ApiSpecVersionOut 리스트 생성
+		return latestEndpointVersionList.stream()
+				.map(latestEndpointVersion -> modelMapper.map(latestEndpointVersion.getApiSpecVersion(), ApiSpecVersionOut.class))
+				.toList();
 	}
 }

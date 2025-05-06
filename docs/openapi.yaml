@@ -319,8 +319,27 @@ paths:
           $ref: "./components/responses/rule-response.yaml#/RuleResponse"
 
   ########################################
-  # 2. API 조회 (단일 조회)
+  # 2. API 조회
   ########################################
+  /api/v1/api-specs/by-project/{scrudProjectId}:
+    get:
+      tags:
+        - ApiSpec
+      summary: Scrud 프로젝트 ID로 API 스펙 버전 목록 조회
+      description: 중간 매핑을 통해 ScrudProject ID로 연결된 모든 API 스펙 버전을 조회합니다.
+      operationId: getApiSpecsByScrudProjectId
+      parameters:
+        - name: scrudProjectId
+          in: path
+          required: true
+          description: Scrud 프로젝트 ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          $ref: "./components/responses/api-spec-response.yaml#/ApiSpecVersionListResponse"
+
   /api/v1/api-specs/{apiSpecVersionId}:
     get:
       tags:

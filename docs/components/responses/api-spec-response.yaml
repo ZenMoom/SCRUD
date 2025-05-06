@@ -19,3 +19,10 @@ ApiSpecUpdateResponse:
     application/json:
       schema:
         $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionResponse'
+
+ApiSpecVersionListResponse:
+  description: API 스펙 목록 조회 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionListResponse'
