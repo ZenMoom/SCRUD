@@ -4,5 +4,5 @@ ApiSpecRequest:
   content:
     application/json:
       schema:
-        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecRequest'
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionRequest'
 

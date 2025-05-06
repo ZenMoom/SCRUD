@@ -5,13 +5,18 @@ ApiSpecResponse:
       schema:
         $ref: '../schemas/api-spec-schema.yaml#/ApiSpecWithFields'
 
-ApiSpecCreatedResponse:
+ApiSpecVersionCreatedResponse:
   description: API 스펙 생성 성공
   content:
     application/json:
       schema:
-        type: integer
-        example: 101
+        type: object
+        properties:
+          apiSpecVersionId:
+            type: integer
+            format: int64
+            example: 101
+
 
 ApiSpecUpdateResponse:
   description: API 스펙 수정 성공

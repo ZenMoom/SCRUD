@@ -1,7 +1,7 @@
 package com.barcoder.scrud.apispec.domain.entity;
 
 import com.barcoder.scrud.apispec.domain.enums.HttpMethod;
-import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
+import com.barcoder.scrud.global.common.baseentity.SuperBuilderBaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -11,17 +11,28 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+import java.util.UUID;
 
 @Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "dtype")
 @Getter
-public abstract class ApiSpecVersion extends BaseTimeEntity {
+@SuperBuilder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public abstract class ApiSpecVersion extends SuperBuilderBaseTimeEntity {
 
 	@Id
 	@GeneratedValue
 	private Long apiSpecVersionId;
+
+	private UUID userId;
 
 	@Column(columnDefinition = "VARCHAR(255)", nullable = false)
 	private String endpoint;

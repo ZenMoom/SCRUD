@@ -322,7 +322,7 @@ paths:
   ########################################
   # 2. API 조회 (단일 조회)
   ########################################
-  /api/v1/specs/{apiSpecVersionId}:
+  /api/v1/api-specs/{apiSpecVersionId}:
     get:
       tags:
         - ApiSpec
@@ -364,7 +364,7 @@ paths:
     ########################################
     # 4. API 생성
     ########################################
-  /api/v1/specs:
+  /api/v1/api-specs:
     post:
       tags:
         - ApiSpec
@@ -375,7 +375,7 @@ paths:
         $ref: './components/requests/api-spec-request.yaml#/ApiSpecRequest'
       responses:
         '201':
-          $ref: './components/responses/api-spec-response.yaml#/ApiSpecCreatedResponse'
+          $ref: './components/responses/api-spec-response.yaml#/ApiSpecVersionCreatedResponse'
 
   ########################################
   # 5. Project 조회
