@@ -5,6 +5,8 @@
 {{/description}}
 
 {{#discriminator}}{{>typeInfoAnnotation}}{{/discriminator}}{{>xmlAnnotation}}{{>additionalModelTypeAnnotations}}
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
@@ -100,32 +102,7 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}}{{^parent}}
   }
   {{/isMap}}
 
-  /**
-  {{#description}}
-   * {{{description}}}
-  {{/description}}
-  {{^description}}
-   * Get {{name}}
-  {{/description}}
-  {{#minimum}}
-   * minimum: {{minimum}}
-  {{/minimum}}
-  {{#maximum}}
-   * maximum: {{maximum}}
-  {{/maximum}}
-   * @return {{name}}
-  */
- {{#vendorExtensions.x-extra-annotation}}
-  {{{vendorExtensions.x-extra-annotation}}}
-  {{/vendorExtensions.x-extra-annotation}}
 
-  public {{>nullableDataType}} {{getter}}() {
-    return {{name}};
-  }
-
-  public void {{setter}}({{>nullableDataType}} {{name}}) {
-    this.{{name}} = {{name}};
-  }
 
   {{/vars}}
 

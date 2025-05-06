@@ -1,0 +1,6 @@
+ScrudProjectListResponse:
+  description: "프로젝트 목록"
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/scrud-project-dto.yaml#/ScrudProjectPageDto"

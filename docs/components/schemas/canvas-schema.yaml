@@ -1,0 +1,390 @@
+#################### MODELS ####################
+
+ApiSummaryDto:
+  type: object
+  properties:
+    apiId:
+      type: string
+      description: 'API의 고유 식별자'
+    name:
+      type: string
+      description: 'API의 이름'
+    status:
+      $ref: '#/ApiProcessStateEnumDto'
+    description:
+      type: string
+      description: 'API에 대한 설명'
+
+DiagramDto:
+  type: object
+  properties:
+    diagramId:
+      type: string
+      description: 다이어그램 아이디
+    components:
+      type: array
+      description: 캔버스의 컴포넌트 데이터
+      items:
+        $ref: '#/ComponentDto'
+    connections:
+      type: array
+      description: 컴포넌트 간 연결 데이터
+      items:
+        $ref: '#/ConnectionDto'
+    dto:
+      type: array
+      description: DTO 데이터
+      items:
+        $ref: '#/DtoModelDto'
+    metadata:
+      $ref: '#/MetadataDto'
+
+ComponentDto:
+  type: object
+  required:
+    - componentId
+    - type
+    - name
+    - methods
+  properties:
+    componentId:
+      type: string
+      description: 컴포넌트 ID
+    type:
+      $ref: '#/ComponentTypeEnumDto'
+    name:
+      type: string
+      description: 컴포넌트 이름
+    description:
+      type: string
+      description: 컴포넌트 설명
+    positionX:
+      type: number
+      description: X 좌표
+    positionY:
+      type: number
+      description: Y 좌표
+    methods:
+      type: array
+      description: 컴포넌트에 속한 메서드 목록
+      items:
+        $ref: '#/MethodDto'
+
+MethodDto:
+  type: object
+  required:
+    - methodId
+    - name
+    - signature
+  properties:
+    methodId:
+      type: string
+      description: 메서드 ID
+    name:
+      type: string
+      description: 메서드 이름
+    signature:
+      type: string
+      description: 메서드 시그니처
+    body:
+      type: string
+      description: 메서드 본문
+    description:
+      type: string
+      description: 메서드 설명
+
+ConnectionDto:
+  type: object
+  required:
+    - connectionId
+    - sourceMethodId
+    - targetMethodId
+    - type
+  properties:
+    connectionId:
+      type: string
+      description: 연결 ID
+    sourceMethodId:
+      type: string
+      description: 소스 메서드 ID
+    targetMethodId:
+      type: string
+      description: 타겟 메서드 ID
+    type:
+      $ref: '#/MethodConnectionTypeEnumDto'
+
+DtoModelDto:
+  type: object
+  required:
+    - dtoId
+    - name
+  properties:
+    dtoId:
+      type: string
+      description: DTO ID
+    name:
+      type: string
+      description: DTO 이름
+    description:
+      type: string
+      description: DTO 설명
+    body:
+      type: string
+      description: DTO 전체 코드
+
+MetadataDto:
+  type: object
+  required:
+    - version
+    - lastModified
+  properties:
+    metadataId:
+      type: string
+    version:
+      type: string
+      description: 버전 번호
+    lastModified:
+      type: string
+      format: date-time
+      description: 마지막 수정 일시
+    name:
+      type: string
+      description: API 이름
+    description:
+      type: string
+      description: API 설명
+
+VersionInfoDto:
+  type: object
+  description: 버전 변경 정보 (상태가 MODIFIED 또는 MODIFIED_WITH_NEW_COMPONENTS인 경우)
+  properties:
+    newVersionId:
+      type: string
+      description: 새 버전 ID
+    description:
+      type: string
+      description: 버전 변경 설명
+
+ChatDto:
+  type: object
+  required:
+    - chatId
+    - createdAt
+  properties:
+    chatId:
+      type: string
+      description: 메시지 ID
+    createdAt:
+      type: string
+      format: date-time
+      description: 메시지 생성 시간
+    userChat:
+      $ref: "#/UserChatDto"
+    systemChat:
+      $ref: "#/SystemChatDto"
+
+SystemChatDto:
+  type: object
+  description: 사용자가 요청한 프롬프트를 수행한 응답 메시지
+  properties:
+    systemChatId:
+      type: string
+    status:
+      $ref: '#/PromptResponseEnumDto'
+    versionInfo:
+      $ref: '#/VersionInfoDto'
+    diagramData:
+      $ref: '#/DiagramDto'
+
+UserChatDto:
+  type: object
+  description: 사용자 메시지 관련 데이터
+  properties:
+    tag:
+      $ref: '#/MethodPromptTagEnumDto'
+    promptType:
+      $ref: '#/MethodPromptTargetEnumDto'
+    message:
+      type: string
+      description: 메시지 내용
+    targetMethods:
+      type: array
+      description: 프롬프트 대상 메서드 정보
+      items:
+        methodId:
+          type: string
+          description: 메서드 ID
+
+#################### ENUMS ####################
+
+ApiProcessStateEnumDto:
+  type: string
+  description: API 처리 상태
+  enum: [AI_GENERATED, AI_VISUALIZED, USER_COMPLETED]
+
+MethodPromptTagEnumDto:
+  type: string
+  description: 프롬프트 태그
+  enum: [ EXPLAIN, REFACTORING, OPTIMIZE, DOCUMENT, TEST, SECURITY, CONVENTION, ANALYZE, IMPLEMENT ]
+
+MethodPromptTargetEnumDto:
+  type: string
+  description: 프롬프트 타입
+  enum: [ SIGNATURE, BODY ]
+
+PromptResponseEnumDto:
+  type: string
+  description: 프롬프트 처리 상태
+  enum: [ MODIFIED, UNCHANGED, EXPLANATION, MODIFIED_WITH_NEW_COMPONENTS, ERROR ]
+
+ComponentTypeEnumDto:
+  type: string
+  description: 컴포넌트 타입
+  enum: [ CLASS, INTERFACE ]
+
+MethodConnectionTypeEnumDto:
+  type: string
+  description: 연결 타입 (실선 또는 점선)
+  enum: [SOLID, DOTTED]
+
+#################### REQ/RES ####################
+DiagramResponse:
+  type: object
+  allOf:
+    - $ref: '#/DiagramDto'
+
+ChatResponse:
+  type: object
+  allOf:
+    - $ref: '#/ChatDto'
+
+SystemChatResponse:
+  type: object
+  allOf:
+    - $ref: "#/SystemChatDto"
+
+UserChatRequest:
+  type: object
+  allOf:
+    - $ref: '#/UserChatDto'
+
+ChatHistoryResponse:
+  type: object
+  required:
+    - content
+  properties:
+    content:
+      type: array
+      description: 프롬프트 채팅 목록 (시간순 정렬)
+      items:
+        $ref: '#/ChatDto'
+
+
+ComponentPositionUpdateRequest:
+  type: object
+  required:
+    - x
+    - y
+  properties:
+    x:
+      type: number
+      format: float
+      description: '컴포넌트의 X 좌표'
+    y:
+      type: number
+      format: float
+      description: '컴포넌트의 Y 좌표'
+
+SSEEventDto:
+  type: object
+  required:
+    - eventName
+    - data
+  properties:
+    eventName:
+      type: string
+      description: '이벤트 이름'
+    data:
+      type: object
+      description: '이벤트 데이터'
+
+ApiSummaryPageResponse:
+  allOf:
+    - type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/ApiSummaryDto'
+    - $ref: "./page-schema.yaml#/PageDto"
+
+
+
+ComponentUpdatedResponse:
+  type: object
+  allOf:
+    - $ref: '#/ComponentDto'
+
+ApiProcessStateRequest:
+  type: object
+  properties:
+    status:
+      $ref: '#/ApiProcessStateEnumDto'
+
+ApiProcessStateUpdatedResponse:
+  type: object
+  properties:
+    status:
+      $ref: '#/ApiProcessStateEnumDto'
+
+#################### PARAMS ####################
+
+ComponentId:
+  name: componentId
+  in: path
+  required: true
+  description: '위치를 변경할 컴포넌트 ID'
+  schema:
+    type: string
+ProjectId:
+  name: projectId
+  in: path
+  description: 프로젝트 ID
+  required: true
+  schema:
+    type: string
+ApiId:
+  name: apiId
+  in: path
+  description: API ID
+  required: true
+  schema:
+    type: string
+VersionId:
+  name: versionId
+  in: path
+  description: 버전 ID
+  required: true
+  schema:
+    type: string
+MethodId:
+  name: methodId
+  in: path
+  description: 메서드 ID
+  required: true
+  schema:
+    type: string
+PromptId:
+  name: promptId
+  in: path
+  description: 프롬프트 ID
+  required: true
+  schema:
+    type: string
+Incomplete:
+  name: exclude
+  in: query
+  description: 제외
+  required: false
+  schema:
+    type: string

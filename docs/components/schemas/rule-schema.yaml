@@ -1,34 +1,55 @@
 RuleResponse:
   type: object
   properties:
-    rules:
-      type: array
-      items:
-        $ref: '#/RuleItem'
+    service_spec_version_id:
+      type: integer
+    spec_version:
+      $ref: '#/SpecVersionOut'
+    scrud_version:
+      type: string
     status:
       type: string
-    version:
+    description:
       type: string
-    service_spec_version_id:
-      type: boolean
-
+    operation_field_rules:
+      type: array
+      items:
+        $ref: '#/OperationFieldRuleOut'
   required:
-    - rules
-    - status
-    - version
     - service_spec_version_id
+    - spec_version
+    - scrud_version
+    - status
+    - operation_field_rules
 
-RuleItem:
+SpecVersionOut:
   type: object
   properties:
+    spec_version_id:
+      type: integer
+    open_api_version:
+      $ref: '#/OpenApiVersion'
+    description:
+      type: string
+  required:
+    - spec_version_id
+    - open_api_version
+
+OpenApiVersion:
+  type: string
+  example: "3.0.1"
+
+OperationFieldRuleOut:
+  type: object
+  properties:
+    operation_field_rule_id:
+      type: integer
     field_name:
       type: string
     is_editable:
       type: boolean
     editable_sub_fields:
-      type: array
-      items:
-        type: string
+      type: string
     parameter_rules:
       type: array
       items:
@@ -41,6 +62,10 @@ RuleItem:
       type: array
       items:
         $ref: '#/ResponseRule'
+  required:
+    - operation_field_rule_id
+    - field_name
+    - is_editable
 
 ParameterRule:
   type: object
@@ -61,7 +86,7 @@ ParameterRule:
 RequestRule:
   type: object
   properties:
-    required:
+    is_required:
       type: boolean
     body_type:
       type: string
@@ -69,10 +94,6 @@ RequestRule:
       type: string
     supports_file:
       type: boolean
-    allowed_fields:
-      type: array
-      items:
-        type: string
 
 ResponseRule:
   type: object

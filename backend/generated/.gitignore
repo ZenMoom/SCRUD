@@ -39,6 +39,5 @@ out/
 
 /src/**/*.java
 .openapi-generator
-
 pom.xml
 README.md

@@ -27,7 +27,8 @@ spring:
 
   config:
     import:
-      - optional:file:../infra/env/.env[.properties]
+      - optional:file:../../infra/env/.env.development[.properties]
+      - optional:file:../infra/env/.env.development[.properties]
 
   jackson:
     time-zone: Asia/Seoul
@@ -90,8 +91,9 @@ security:
     # endpoint:method 구조를 가짐
     # method는 , 으로 구분하여 추가
     requestMatchers:
-      # test
-      # - /api/v1/tests:GET, POST
+      - /api/v1/rules:GET
+    # test
+    # - /api/v1/tests:GET, POST
 
 # 허용할 cors 경로
 cors:
