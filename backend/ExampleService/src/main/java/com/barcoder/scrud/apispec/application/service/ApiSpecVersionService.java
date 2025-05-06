@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -72,5 +74,22 @@ public class ApiSpecVersionService {
 
 		// 3. 새로운 entity 생성
 		return createApiSpecVersion(createIn);
+	}
+
+	/**
+	 * API 스펙 버전 벌크 생성
+	 * @param inDtoList
+	 */
+	public List<ApiSpecVersionOut> bulkCreateApiSpecVersion(List<CreateApiSpecVersionIn> inDtoList) {
+		// 1. DTO -> Entity 변환
+		List<ApiSpecVersion> apiSpecVersionList = apiSpecVersionAssembler.toApiSpecVersionEntityList(inDtoList);
+
+		// 2. Entity -> DB 저장
+		List<ApiSpecVersion> apiSpecVersions = apiSpecVersionJpaRepository.saveAll(apiSpecVersionList);
+
+		// 3. Entity -> DTO 변환
+		return apiSpecVersions.stream()
+				.map(apiSpecVersion -> modelMapper.map(apiSpecVersion, ApiSpecVersionOut.class))
+				.toList();
 	}
 }

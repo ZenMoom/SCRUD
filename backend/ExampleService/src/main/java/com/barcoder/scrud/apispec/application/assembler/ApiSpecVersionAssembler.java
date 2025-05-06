@@ -9,6 +9,8 @@ import com.barcoder.scrud.apispec.domain.entity.PostApiSpecVersion;
 import com.barcoder.scrud.apispec.domain.entity.PutApiSpecVersion;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class ApiSpecVersionAssembler {
 
@@ -85,5 +87,11 @@ public class ApiSpecVersionAssembler {
 					.pathParameters(inDto.getPathParameters())
 					.build();
 		};
+	}
+
+	public List<ApiSpecVersion> toApiSpecVersionEntityList(List<CreateApiSpecVersionIn> inDtoList) {
+		return inDtoList.stream()
+				.map(this::toApiSpecVersionEntity)
+				.toList();
 	}
 }

@@ -16,6 +16,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class LatestEndpointVersionService {
 
 	/**
 	 * 최신 API 스펙 버전 생성
+	 *
 	 * @param inDto
 	 * @param apiSpecVersionOut
 	 */
@@ -52,7 +55,7 @@ public class LatestEndpointVersionService {
 	/**
 	 * 최신 API 스펙 버전 정보 업데이트
 	 *
-	 * @param inDto API 스펙 버전 수정 요청 DTO
+	 * @param inDto             API 스펙 버전 수정 요청 DTO
 	 * @param apiSpecVersionOut 최신 API 스펙 버전 응답 DTO
 	 */
 	public void updateLatestEndpointVersion(UpdateApiSpecVersionIn inDto, ApiSpecVersionOut apiSpecVersionOut) {
@@ -83,5 +86,33 @@ public class LatestEndpointVersionService {
 
 		// 2. LatestEndpointVersion entity 삭제
 		latestEndpointVersionJpaRepository.delete(latestEndpointVersion);
+	}
+
+	/**
+	 * 최신 API 스펙 버전 벌크 생성
+	 *
+	 * @param scrudProjectId
+	 * @param apiSpecVersionOuts
+	 */
+	public void bulkCreateLatestEndpointVersion(Long scrudProjectId, List<ApiSpecVersionOut> apiSpecVersionOuts) {
+		// 1. scrud project id 사용
+		ScrudProject scrudProject = scrudProjectRepository.getReferenceById(scrudProjectId);
+
+		// 2. ApiSpecVersion id 리스트
+		List<Long> apiSpecVersionIds = apiSpecVersionOuts.stream()
+				.map(ApiSpecVersionOut::getApiSpecVersionId)
+				.toList();
+
+		// 3. ApiSpecVersion entity 리스트
+		List<ApiSpecVersion> apiSpecVersions = apiSpecVersionJpaRepository.findAllById(apiSpecVersionIds);
+
+		// 4. LatestEndpointVersion entity 리스트 생성
+		List<LatestEndpointVersion> latestEndpointVersionList = latestEndpointVersionAssembler.toLatestEndpointVersionEntityList(
+				scrudProject,
+				apiSpecVersions
+		);
+
+		// 5. LatestEndpointVersion entity DB 저장
+		latestEndpointVersionJpaRepository.saveAll(latestEndpointVersionList);
 	}
 }
