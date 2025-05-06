@@ -66,6 +66,10 @@ ApiSpecVersionCreateRequest:
     - version
     - httpMethod
   properties:
+    scrudProjectId:
+      type: integer
+      format: int64
+      example: 101
     endpoint:
       type: string
       example: /api/v1/examples/{id}
@@ -74,11 +78,6 @@ ApiSpecVersionCreateRequest:
       type: string
       example: example
       description: API가 속한 그룹 이름
-    version:
-      type: integer
-      format: int32
-      example: 1
-      description: API 버전 번호
     summary:
       type: string
       example: 예시 스펙입니다.
@@ -119,3 +118,56 @@ ApiSpecVersionCreatedResponse:
       type: integer
       format: int64
       example: 101
+
+ApiSpecVersionUpdateRequest:
+  type: object
+  required:
+    - endpoint
+    - apiGroup
+    - version
+    - httpMethod
+  properties:
+    scrudProjectId:
+      type: integer
+      format: int64
+      example: 101
+    endpoint:
+      type: string
+      example: /api/v1/examples/{id}
+      description: API 엔드포인트 경로
+    apiGroup:
+      type: string
+      example: example
+      description: API가 속한 그룹 이름
+    summary:
+      type: string
+      example: 예시 스펙입니다.
+      description: API에 대한 간단한 설명
+    description:
+      type: string
+      example: 이 API는 예시 데이터를 처리합니다.
+      description: API 상세 설명
+    response:
+      type: string
+      example: JSON 응답 예시 문자열
+      description: 응답 예시(JSON 형태의 문자열)
+    httpMethod:
+      type: string
+      enum: [GET, POST, PUT, PATCH, DELETE]
+      example: POST
+      description: HTTP 메서드
+    requestBody:
+      type: string
+      format: json
+      example: '{ "name": "홍길동" }'
+      description: 요청 바디 (JSON 형식 문자열)
+    queryParameters:
+      type: string
+      format: json
+      example: '{ "page": "1", "size": "10" }'
+      description: 쿼리 파라미터 (JSON 형식 문자열)
+    pathParameters:
+      type: string
+      format: json
+      example: '{ "id": "123" }'
+      description: 경로 파라미터 (JSON 형식 문자열)

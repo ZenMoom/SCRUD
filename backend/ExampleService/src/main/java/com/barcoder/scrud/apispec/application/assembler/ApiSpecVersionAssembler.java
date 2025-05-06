@@ -15,13 +15,16 @@ public class ApiSpecVersionAssembler {
 
 	public ApiSpecVersion toApiSpecVersionEntity(CreateApiSpecVersionIn inDto){
 
+		// version
+		int version = inDto.getVersion() != null ? inDto.getVersion() : 1;
+
 		return switch (inDto.getHttpMethod()) {
 
 			case GET -> GetApiSpecVersion.builder()
 			.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
 					.apiGroup(inDto.getApiGroup())
-					.version(inDto.getVersion())
+					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
 					.response(inDto.getResponse())
@@ -34,7 +37,7 @@ public class ApiSpecVersionAssembler {
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
 					.apiGroup(inDto.getApiGroup())
-					.version(inDto.getVersion())
+					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
 					.response(inDto.getResponse())
@@ -48,7 +51,7 @@ public class ApiSpecVersionAssembler {
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
 					.apiGroup(inDto.getApiGroup())
-					.version(inDto.getVersion())
+					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
 					.response(inDto.getResponse())
@@ -61,7 +64,7 @@ public class ApiSpecVersionAssembler {
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
 					.apiGroup(inDto.getApiGroup())
-					.version(inDto.getVersion())
+					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
 					.response(inDto.getResponse())
@@ -74,7 +77,7 @@ public class ApiSpecVersionAssembler {
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
 					.apiGroup(inDto.getApiGroup())
-					.version(inDto.getVersion())
+					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
 					.response(inDto.getResponse())

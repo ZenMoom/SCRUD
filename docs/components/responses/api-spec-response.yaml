@@ -18,5 +18,4 @@ ApiSpecUpdateResponse:
   content:
     application/json:
       schema:
-        type: boolean
-        example: true
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionResponse'
