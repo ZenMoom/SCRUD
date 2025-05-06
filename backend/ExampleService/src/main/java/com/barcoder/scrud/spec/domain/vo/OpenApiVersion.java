@@ -26,8 +26,8 @@ public class OpenApiVersion {
 	@Column(nullable = false)
 	private int patch;
 
-	@JsonValue
-	public String getVersion() {
+	@Override
+	public String toString() {
 		return major + "." + minor + "." + patch;
 	}
 

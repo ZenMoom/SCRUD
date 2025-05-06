@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.Objects;
 
@@ -26,8 +27,8 @@ public class ScrudVersion {
 	@Column(nullable = false)
 	private int patch;
 
-	@JsonValue
-	public String getVersion() {
+	@Override
+	public String toString() {
 		return major + "." + minor + "." + patch;
 	}
 

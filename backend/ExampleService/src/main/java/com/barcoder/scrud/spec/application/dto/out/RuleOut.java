@@ -2,7 +2,6 @@ package com.barcoder.scrud.spec.application.dto.out;
 
 import com.barcoder.scrud.spec.domain.vo.OpenApiVersion;
 import com.barcoder.scrud.spec.domain.vo.ScrudVersion;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
