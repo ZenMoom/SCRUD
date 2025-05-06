@@ -8,4 +8,6 @@ import java.util.Optional;
 
 public interface LatestEndpointVersionJpaRepository extends JpaRepository<LatestEndpointVersion, Long> {
 	Optional<LatestEndpointVersion> findByScrudProjectAndApiSpecVersion_ApiSpecVersionId(ScrudProject scrudProject, Long apiSpecVersionId);
+
+	Optional<LatestEndpointVersion> findByApiSpecVersion_ApiSpecVersionId(Long apiSpecVersionId);
 }
