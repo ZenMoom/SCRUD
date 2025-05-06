@@ -91,6 +91,7 @@ security:
     # endpoint:method 구조를 가짐
     # method는 , 으로 구분하여 추가
     requestMatchers:
+      - /api/v1/rules:GET
     # test
     # - /api/v1/tests:GET, POST
 
