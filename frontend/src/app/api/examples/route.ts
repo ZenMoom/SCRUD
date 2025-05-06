@@ -9,7 +9,7 @@ export async function GET() {
     basePath: apiUrl,
   });
   const exampleApi = new ExampleApi(config);
-
+  
   const response = await exampleApi.getExamplesWithPagination({
     page: 1,
     size: 5,

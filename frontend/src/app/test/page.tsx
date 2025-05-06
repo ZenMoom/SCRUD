@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { ExamplePageDto } from "@generated/model/example-page-dto"
-import styles from "./page.module.css"
 
 // 환경 모드에 대한 타입 정의 (실제 생성된 타입이 있다면 그것을 import 해야 함)
 interface EnvModeResponse {
@@ -35,22 +34,22 @@ export default function TestPage() {
   }, [])
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>API 테스트 페이지</h1>
+    <div className="max-w-6xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">API 테스트 페이지</h1>
 
-      <div className={styles.infoBox}>
-        <h3 className={styles.subtitle}>실행 환경: {envMode}</h3>
-        <p className={styles.text}>환경 변수 테스트: {helloWorld}</p>
+      <div className="mb-6 p-4 bg-gray-100 rounded-lg border-l-4 border-blue-500">
+        <h3 className="text-xl font-semibold mb-4 text-gray-800">실행 환경: {envMode}</h3>
+        <p className="mt-2 text-gray-600 leading-relaxed">환경 변수 테스트: {helloWorld}</p>
       </div>
 
-      <button onClick={handleClick} className={styles.button}>
+      <button onClick={handleClick} className="inline-block px-4 py-2 bg-blue-500 text-white font-medium rounded hover:bg-blue-600 transition-colors cursor-pointer">
         데이터 가져오기
       </button>
 
       {data && (
-        <div className={styles.resultSection}>
-          <h2 className={styles.subtitle}>API 응답:</h2>
-          <pre className={styles.codeBlock}>{JSON.stringify(data, null, 2)}</pre>
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">API 응답:</h2>
+          <pre className="p-4 bg-gray-100 rounded-lg overflow-auto font-mono text-sm leading-relaxed whitespace-pre-wrap break-all">{JSON.stringify(data, null, 2)}</pre>
         </div>
       )}
     </div>
