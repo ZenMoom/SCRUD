@@ -8,6 +8,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -25,5 +27,14 @@ public class ApiCreateFacade {
 		latestEndpointVersionService.createLatestEndpointVersion(inDto, apiSpecVersionOut);
 
 		return apiSpecVersionOut;
+	}
+
+	public void bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
+
+		// 1. API 스펙 버전 생성
+		List<ApiSpecVersionOut> apiSpecVersionOuts = apiSpecVersionService.bulkCreateApiSpecVersion(inDtoList);
+
+		// 2. 최신 API 스펙 버전 생성
+		latestEndpointVersionService.bulkCreateLatestEndpointVersion(scrudProjectId, apiSpecVersionOuts);
 	}
 }
