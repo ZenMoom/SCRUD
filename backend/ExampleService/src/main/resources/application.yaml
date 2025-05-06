@@ -103,6 +103,8 @@ cors:
       - http://localhost # 추후 제거하고 실제 url 주소를 넣으면 됨
       - http://localhost:3000
       - http://localhost:3001
+      - http://localhost:18512
+      - http://localhost:18513
       - https://scrud.co.kr
 
 #  datasource:
