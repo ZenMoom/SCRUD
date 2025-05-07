@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Project } from "@/components/project-card/project-card"
 import ProjectCard from "@/components/project-card/project-card"
 import ProjectForm from "@/components/project-card/project-form"
-import { useRouter, useSearchParams } from "next/navigation"
 
 // API 요청 더미 함수 (나중에 실제 API로 교체)
 const getProjects = async (): Promise<Project[]> => {
@@ -137,9 +136,6 @@ const deleteProject = async (id: string): Promise<void> => {
 
 // 메인 페이지 컴포넌트
 export default function Home() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-
   // 프로젝트 데이터 상태
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState<boolean>(true)
