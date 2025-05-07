@@ -1,6 +1,6 @@
 package com.barcoder.scrud.global.config.security;
 
-import com.barcoder.scrud.global.config.properties.SecurityProperties;
+import com.barcoder.scrud.oauth.repository.HttpSessionOAuth2AuthorizationRequestRepository;
 import com.barcoder.scrud.oauth.service.CustomOAuth2UserService;
 import com.barcoder.scrud.oauth.service.OAuth2AuthenticationFailureHandler;
 import com.barcoder.scrud.oauth.service.OAuth2AuthenticationSuccessHandler;
@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -24,6 +26,12 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+    // OAuth2 인증 요청과 관련된 상태를 저장하기 위한 저장소
+    @Bean
+    public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
+        return new HttpSessionOAuth2AuthorizationRequestRepository();
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
@@ -42,6 +50,17 @@ public class SecurityConfig {
 
             // OAuth 관련
             .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(endpoint -> endpoint
+                    // OAuth2 인증 요청 엔드포인트 설정
+                    .baseUri("/oauth2/authorization")
+                    // 인증 요청을 저장할 저장소 설정
+                    .authorizationRequestRepository(authorizationRequestRepository())
+                )
+                .redirectionEndpoint(endpoint -> endpoint
+                    // OAuth2 콜백 엔드포인트 설정
+                    .baseUri("/login/oauth2/code/*")
+                )
+
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService))
                 .successHandler(oAuth2AuthenticationSuccessHandler)
