@@ -2,7 +2,6 @@
 
 import { forwardRef, useState, useEffect, useRef } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
-import { useFormDataStore } from "@/store/formDataStore"
 import { getGitHubRepositories } from "@/app/api/v1/github/oauth/githubAPI"
 import axios from 'axios'
 
@@ -21,22 +20,6 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
   const [dragActive, setDragActive] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
-  const { updateFormItem, getFormItemValue } = useFormDataStore()
-
-  // 컴포넌트가 마운트될 때 저장된 값이 있으면 불러오기
-  useEffect(() => {
-    const savedValue = getFormItemValue(title);
-    if (savedValue && savedValue !== value) {
-      onChange(savedValue);
-    }
-  }, [title, getFormItemValue, onChange, value]);
-  
-  // 값이 변경될 때 저장하기
-  useEffect(() => {
-    if (value) {
-      updateFormItem(title, value, type);
-    }
-  }, [title, value, type, updateFormItem]);
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -83,9 +66,14 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
     // 1. 깃허브 토큰 확인
     const githubToken = localStorage.getItem('github-token-direct');
     if (!githubToken) {
-      // 깃허브 인증 요청 시 redirect_uri를 인코딩 없이 고정 경로로 넣음
-      const googleToken = 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiNDcxNTVjNzktMTVjMS00MzAwLWIwMTAtMzE1MjQ5NzFjYWNmIiwiaWF0IjoxNzQ2NTk4MzAwLCJleHAiOjE3NDY2MDQzMDB9.AeNOkS0lp_kdDnEQj4XUUFu4TrHpyZEpLJN7N4igcrk';
-      const oauthUrl = `http://localhost:8080/oauth2/authorization/github?token=${googleToken}&redirect_uri=http://localhost:3000/globalsetting`;
+      // 명시적인 리다이렉트 URI
+      const redirectUri = 'http://localhost:3000/globalsetting';
+      
+      // OAuth2 세션 저장소를 사용하는 방식으로 백엔드 인증 엔드포인트로 이동
+      // /oauth2/authorize/github 엔드포인트는 리다이렉트 URI를 세션에 저장
+      const oauthUrl = `http://localhost:8080/oauth2/authorize/github?redirect_uri=${redirectUri}`;
+      
+      console.log('GitHub 인증 요청:', oauthUrl);
       window.location.href = oauthUrl;
       return;
     }

@@ -186,7 +186,7 @@ export default function GlobalSettingPage() {
       const response = await axios.post('/api/v1/projects', projectData, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiNDcxNTVjNzktMTVjMS00MzAwLWIwMTAtMzE1MjQ5NzFjYWNmIiwiaWF0IjoxNzQ2NTk4MzAwLCJleHAiOjE3NDY2MDQzMDB9.AeNOkS0lp_kdDnEQj4XUUFu4TrHpyZEpLJN7N4igcrk'
+          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiODY4MDAzYzgtZGVhYS00MTE0LWJiZGUtN2YzNGQ4NTE4MjYxIiwiaWF0IjoxNzQ2NjAyNDczLCJleHAiOjE3NDY2MDg0NzN9.lkZqWPclba8rwBaTyWd97-Zsl4mPdNMDLu87bgE0HsM'
         }
       })
       

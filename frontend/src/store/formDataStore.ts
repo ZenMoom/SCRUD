@@ -17,37 +17,27 @@ interface FormDataState {
 
 export const useFormDataStore = create<FormDataState>()(
   persist(
-    (set, get) => ({
-      formItems: [],
+    (set) => ({
+      formItems: [], 
       
-      updateFormItem: (title, value, type = 'text') => set((state) => {
-        const itemIndex = state.formItems.findIndex(item => item.title === title);
-        
-        if (itemIndex !== -1) {
-          // 기존 아이템 업데이트
-          const updatedItems = [...state.formItems];
-          updatedItems[itemIndex] = {
-            ...updatedItems[itemIndex],
-            value
-          };
-          return { formItems: updatedItems };
-        } else {
-          // 새 아이템 추가
-          return { 
-            formItems: [...state.formItems, { title, value, type }] 
-          };
-        }
-      }),
+      updateFormItem: () => {
+        // 기능 비활성화 - 저장하지 않음
+      },
       
-      getFormItemValue: (title) => {
-        const item = get().formItems.find(item => item.title === title);
-        return item ? item.value : '';
+      getFormItemValue: () => {
+        // 항상 빈 문자열 반환
+        return '';
       },
       
       clearFormData: () => set({ formItems: [] }),
     }),
     {
-      name: 'global-setting-form-data', // 로컬 스토리지에 저장될 키 이름
+      name: 'global-setting-form-data',
+      storage: {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {}
+      }
     }
   )
 ); 
