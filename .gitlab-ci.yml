@@ -1,6 +1,7 @@
 stages:
   - prepare
   - build
+  - build-and-push
   - deploy
 
 variables:
@@ -13,15 +14,12 @@ variables:
   SERVER_HOST: k12e105.p.ssafy.io
   PEM_FILE: K12E105T.pem
   PROJECT_NAME: scrud
-  CACHE_PATH: /cache_cicd/${CI_PROJECT_PATH}
 
 # Common configuration for Docker services
 .docker:
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
-  variables:
-    PLATFORM: linux/amd64
 
 # Generate OpenAPI code for both frontend and backend
 prepare_job:
@@ -42,7 +40,7 @@ prepare_job:
     - if: '$CI_COMMIT_BRANCH == "develop"'
       allow_failure: false
   tags:
-    - cicd
+    - ec2
 
 # Build and push backend image
 build_backend:
@@ -50,29 +48,22 @@ build_backend:
   stage: build
   needs:
     - job: prepare_job
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-backend-cache
-    paths:
-      - ${CACHE_PATH}/backend
   artifacts:
     paths:
       - backend/generated/
       - frontend/generated/
-  before_script:
-    - docker buildx create --use
-    - mkdir -p ${CACHE_PATH}/backend
-    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
-    # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner -f ./backend/ExampleService/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./backend
-    - |
-      docker buildx build -f ./backend/ExampleService/Dockerfile \
-      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest \
-      --target runner \
-      --platform=linux/amd64 \
-      --build-arg PLATFORM=linux/amd64 \
-      --cache-from=type=local,src=${CACHE_PATH}/backend \
-      --cache-to=type=local,dest=${CACHE_PATH}/backend,mode=max \
-      --push ./backend
+    - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
+      
+#    - |
+#      docker buildx build -f ./backend/ExampleService/Dockerfile \
+#      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest \
+#      --target runner \
+#      --platform=linux/amd64 \
+#      --build-arg PLATFORM=linux/amd64 \
+#      --cache-from=type=local,src=${CACHE_PATH}/backend \
+#      --cache-to=type=local,dest=${CACHE_PATH}/backend,mode=max \
+#      --push ./backend
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
       changes:
@@ -85,7 +76,7 @@ build_backend:
       when: on_success
       allow_failure: false
   tags:
-    - cicd
+    - ec2
 
 # Build and push frontend image
 build_frontend:
@@ -93,30 +84,14 @@ build_frontend:
   stage: build
   needs:
     - job: prepare_job
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-frontend-cache
-    paths:
-      - ${CACHE_PATH}/frontend
-
   artifacts:
     paths:
       - backend/generated/
       - frontend/generated/
-  before_script:
-    - mkdir -p ${CACHE_PATH}/frontend
-    - docker buildx create --use
-    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
     # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./frontend
-    - |
-      docker buildx build -f ./frontend/Dockerfile \
-      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest \
-      --target runner \
-      --platform=linux/amd64 \
-      --build-arg PLATFORM=linux/amd64 \
-      --cache-from=type=local,src=${CACHE_PATH}/frontend \
-      --cache-to=type=local,dest=${CACHE_PATH}/frontend,mode=max \
-      --push ./frontend
+    - docker build -f ./frontend/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner ./frontend
+
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
       changes:
@@ -129,15 +104,57 @@ build_frontend:
       when: on_success
       allow_failure: false
   tags:
-    - cicd
+    - ec2
+
+build_and_push_backend:
+  extends: .docker
+  stage: build-and-push
+  needs:
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  script:
+    - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - backend/**/*
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
+
+build_and_push_frontend:
+  extends: .docker
+  stage: build-and-push
+  needs:
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  script:
+    - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - frontend/**/*
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
 
 # Deploy to production server
 deploy:
   stage: deploy
   needs:
-    - job: build_frontend
+    - job: build_and_push_backend
       optional: true
-    - job: build_backend
+    - job: build_and_push_frontend
       optional: true
 
   image: alpine:latest
@@ -169,4 +186,4 @@ deploy:
       when: on_success
       allow_failure: false
   tags:
-    - cicd
+    - ec2

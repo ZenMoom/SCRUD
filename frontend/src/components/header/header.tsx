@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useState } from "react"
 export default function Header() {
   // 로고 이미지 경로
-  const logoPath = "/next.svg"
+  const logoPath = "/logo.png"
   // 개발자 메뉴 상태 관리
   const [showDevMenu, setShowDevMenu] = useState(false)
   return (
@@ -20,7 +20,10 @@ export default function Header() {
         <div className="flex items-center gap-4 mr-4">
           {/* 개발자 메뉴 드롭다운 */}
           <div className="relative">
-            <button className="px-4 py-2 bg-gray-200 text-gray-800 font-medium rounded-md hover:bg-gray-300 transition-colors" onClick={() => setShowDevMenu(!showDevMenu)}>
+            <button
+              onClick={() => setShowDevMenu(!showDevMenu)}
+              className="px-6 py-2 border-2 border-black text-black font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors duration-200"
+            >
               개발 메뉴
             </button>
 
@@ -33,18 +36,25 @@ export default function Header() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/test" className="block px-4 py-3 hover:bg-gray-100 text-gray-800">
+                    <Link href="/test" className="block px-4 py-3 hover:bg-gray-100 text-gray-800 border-b border-gray-100">
                       API 테스트 페이지
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/apis" className="block px-4 py-3 hover:bg-gray-100 text-gray-800">
+                      API 연결 확인
                     </Link>
                   </li>
                 </ul>
               </div>
             )}
           </div>
-
-          {/* 로그인 버튼 */}
-          <button className="px-6 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 transition-colors" onClick={() => console.log("로그인 버튼 클릭")}>
-            로그인
+          {/* 로그인 버튼 - 로고 스타일에 맞춘 심플한 디자인 */}
+          <button
+            onClick={() => console.log("로그인 버튼 클릭")}
+            className="px-6 py-2 border-2 border-black text-black font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors duration-200"
+          >
+            Login
           </button>
         </div>
       </div>
