@@ -212,10 +212,10 @@ export default function GlobalSettingPage() {
       }
       
       // API 호출
-      const response = await axios.post('/api/v1/projects', projectData, {
+      const response = await axios.post('/api/projects', projectData, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiOWJiNDRkYTMtOTdlMC00MmE0LThkMDctYTYwNGZlOWUzODI5IiwiaWF0IjoxNzQ2NTk3NjA0LCJleHAiOjE3NDY2MDM2MDR9.Bfph7o282attk-GqMM-gy2o_Zd8zBBAOjmnNdA1K7TE'
+          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiMmNiOWNkZmYtMDA5ZC00N2EwLTkyNTItODEyMTE1OTJjMjAyIiwiaWF0IjoxNzQ2NjA2NzEyLCJleHAiOjE3NDY2MTI3MTJ9.ODGGlqmO01arCmCDY6ctUdnM3y5Xis426rA09dJYKKA'
         }
       })
       

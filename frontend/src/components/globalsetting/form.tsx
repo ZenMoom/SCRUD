@@ -2,7 +2,7 @@
 
 import { forwardRef, useState, useEffect, useRef } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
-import { getGitHubRepositories } from "@/app/api/v1/github/oauth/githubAPI"
+import { getGitHubAuthUrl } from "@/auth/github"
 import axios from 'axios'
 
 interface FormItemProps {
@@ -69,9 +69,8 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
       // 명시적인 리다이렉트 URI
       const redirectUri = 'http://localhost:3000/globalsetting';
       
-      // OAuth2 세션 저장소를 사용하는 방식으로 백엔드 인증 엔드포인트로 이동
-      // /oauth2/authorize/github 엔드포인트는 리다이렉트 URI를 세션에 저장
-      const oauthUrl = `http://localhost:8080/oauth2/authorize/github?redirect_uri=${redirectUri}`;
+      // OAuth URL 생성
+      const oauthUrl = getGitHubAuthUrl(redirectUri);
       
       console.log('GitHub 인증 요청:', oauthUrl);
       window.location.href = oauthUrl;
@@ -85,7 +84,15 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
       console.log(`GitHub 토큰 존재: 길이 ${githubToken.length}`);
       console.log(`GitHub 토큰 첫 부분: ${githubToken.substring(0, 20)}...`);
       
-      const repositories = await getGitHubRepositories();
+      // API 직접 호출
+      const response = await axios.get('/api/github/user/repos', {
+        headers: {
+          'Authorization': `Bearer ${githubToken}`
+        }
+      });
+      
+      const repositories = response.data;
+      
       // 가져온 첫 번째 레포지토리 이름을 폼 필드에 설정
       if (repositories && repositories.length > 0) {
         onChange(repositories[0].name);
