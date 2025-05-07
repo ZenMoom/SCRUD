@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from 'next/navigation'
 import Sidebar from "@/components/globalsetting/sidebar"
 import ContentArea from "@/components/globalsetting/contentarea"
@@ -25,10 +25,39 @@ const fileTypeMapping: Record<string, string> = {
   'architectureStructure': 'ARCHITECTURE_DEFAULT'
 }
 
-export default function GlobalSettingPage() {
-  const router = useRouter()
+// 토큰 처리 컴포넌트
+function TokenHandler() {
   const searchParams = useSearchParams();
   const { setGithubToken } = useGitHubTokenStore();
+
+  // GitHub 토큰 확인
+  useEffect(() => {
+    const tokenFromStorage = localStorage.getItem('github-token-direct');
+    const { githubToken } = useGitHubTokenStore.getState();
+    
+    console.log('===== GitHub 토큰 확인 (전역 설정 페이지) =====');
+    console.log('Zustand 토큰:', githubToken ? '존재함' : '없음');
+    console.log('로컬스토리지 토큰:', tokenFromStorage ? '존재함' : '없음');
+    
+    if (!githubToken && tokenFromStorage) {
+      useGitHubTokenStore.getState().setGithubToken(tokenFromStorage);
+    }
+  }, []);
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      setGithubToken(token);
+    }
+  }, [searchParams, setGithubToken]);
+
+  return null;
+}
+
+// 메인 컴포넌트
+export default function GlobalSettingPage() {
+  const router = useRouter()
+  
   // 각 설정 항목의 상태를 관리 - 초기값은 빈 문자열로 설정
   const [settings, setSettings] = useState({
     title: "",
@@ -186,7 +215,7 @@ export default function GlobalSettingPage() {
       const response = await axios.post('/api/v1/projects', projectData, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiODY4MDAzYzgtZGVhYS00MTE0LWJiZGUtN2YzNGQ4NTE4MjYxIiwiaWF0IjoxNzQ2NjAyNDczLCJleHAiOjE3NDY2MDg0NzN9.lkZqWPclba8rwBaTyWd97-Zsl4mPdNMDLu87bgE0HsM'
+          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiOWJiNDRkYTMtOTdlMC00MmE0LThkMDctYTYwNGZlOWUzODI5IiwiaWF0IjoxNzQ2NTk3NjA0LCJleHAiOjE3NDY2MDM2MDR9.Bfph7o282attk-GqMM-gy2o_Zd8zBBAOjmnNdA1K7TE'
         }
       })
       
@@ -202,39 +231,13 @@ export default function GlobalSettingPage() {
     }
   }
 
-  // GitHub 토큰 확인
-  useEffect(() => {
-    const tokenFromStorage = localStorage.getItem('github-token-direct');
-    const { githubToken } = useGitHubTokenStore.getState();
-    
-    console.log('===== GitHub 토큰 확인 (전역 설정 페이지) =====');
-    console.log('Zustand 토큰:', githubToken ? '존재함' : '없음');
-    console.log('로컬스토리지 토큰:', tokenFromStorage ? '존재함' : '없음');
-    
-    if (!githubToken && tokenFromStorage) {
-      useGitHubTokenStore.getState().setGithubToken(tokenFromStorage);
-    }
-  }, []);
-
-  useEffect(() => {
-    const token = searchParams.get('token');
-    console.log('URL에서 받은 토큰 확인:', token?.substring(0, 20));
-    const provider = searchParams.get('provider') || (token?.startsWith('ghu_') ? 'github' : 'google');
-    console.log('감지된 인증 제공자:', provider);
-    
-    if (token) {
-      // GitHub 토큰일 경우만 GitHub 토큰으로 저장
-      if (provider === 'github' || token.startsWith('ghu_')) {
-        console.log('GitHub 토큰으로 저장합니다');
-        setGithubToken(token);
-      } else {
-        console.log('GitHub 토큰이 아니므로 저장하지 않습니다');
-      }
-    }
-  }, [searchParams, setGithubToken]);
-
   return (
     <main className="p-4">
+      {/* 토큰 처리 컴포넌트를 Suspense로 감싸서 사용 */}
+      <Suspense fallback={null}>
+        <TokenHandler />
+      </Suspense>
+      
       <h1 className="text-2xl font-bold mb-6">SCRUD</h1>
       <div className="mb-6">
         <div className="flex items-center mb-4">
