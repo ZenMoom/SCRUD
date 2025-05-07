@@ -13,15 +13,12 @@ variables:
   SERVER_HOST: k12e105.p.ssafy.io
   PEM_FILE: K12E105T.pem
   PROJECT_NAME: scrud
-  CACHE_PATH: /cache_cicd/${CI_PROJECT_PATH}
 
 # Common configuration for Docker services
 .docker:
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
-  variables:
-    PLATFORM: linux/amd64
 
 # Generate OpenAPI code for both frontend and backend
 prepare_job:
@@ -42,7 +39,7 @@ prepare_job:
     - if: '$CI_COMMIT_BRANCH == "develop"'
       allow_failure: false
   tags:
-    - cicd
+    - ec2
 
 # Build and push backend image
 build_backend:
@@ -50,10 +47,6 @@ build_backend:
   stage: build
   needs:
     - job: prepare_job
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-backend-cache
-    paths:
-      - ${CACHE_PATH}/backend
   artifacts:
     paths:
       - backend/generated/
@@ -85,7 +78,7 @@ build_backend:
       when: on_success
       allow_failure: false
   tags:
-    - cicd
+    - ec2
 
 # Build and push frontend image
 build_frontend:
@@ -129,7 +122,7 @@ build_frontend:
       when: on_success
       allow_failure: false
   tags:
-    - cicd
+    - ec2
 
 # Deploy to production server
 deploy:
@@ -169,4 +162,4 @@ deploy:
       when: on_success
       allow_failure: false
   tags:
-    - cicd
+    - ec2
