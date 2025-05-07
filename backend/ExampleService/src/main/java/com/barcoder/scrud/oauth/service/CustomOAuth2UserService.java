@@ -1,16 +1,15 @@
 package com.barcoder.scrud.oauth.service;
 
-import com.barcoder.scrud.global.common.error.ErrorStatus;
 import com.barcoder.scrud.github.domain.entity.GithubAccount;
 import com.barcoder.scrud.github.infrastructure.repository.GithubAccountRepository;
+import com.barcoder.scrud.global.common.error.ErrorStatus;
+import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.oauth.UserPrincipal;
 import com.barcoder.scrud.oauth.provider.GithubOAuth2UserInfo;
 import com.barcoder.scrud.oauth.provider.GoogleOAuth2UserInfo;
 import com.barcoder.scrud.user.application.assembler.UserAssembler;
 import com.barcoder.scrud.user.domain.entity.User;
 import com.barcoder.scrud.user.infrastructure.repository.UserRepository;
-import com.barcoder.scrud.global.common.exception.ExceptionHandler;
-import com.barcoder.scrud.global.common.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -36,12 +35,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     // http://localhost:8080/oauth2/authorization/google
     
     // github oauth
-    // http://localhost:8080/oauth2/authorization/github
+    //  http://localhost:8080/oauth2/authorize/github?redirect_uri=https://www.naver.com
 
     // github repository 가져오기
     // https://api.github.com/user/repos
 
-    private final SecurityUtil securityUtil;
     private final UserRepository userRepository;
     private final UserAssembler userAssembler;
     private final GithubAccountRepository githubAccountRepository;
@@ -64,7 +62,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private OAuth2User processOAuth2User(OAuth2UserRequest oAuth2UserRequest, OAuth2User oAuth2User) {
         // 제공자 이름 추출 (github, google 등)
         String providerName = oAuth2UserRequest.getClientRegistration().getRegistrationId();
-        log.info("providerName: {}", providerName);
+
         if ("github".equals(providerName)) {
             // GitHub 인증 처리
             return processGitHubUser(oAuth2UserRequest, oAuth2User);
@@ -78,9 +76,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 3. 깃허브 유저 저장하기
     private OAuth2User processGitHubUser(OAuth2UserRequest oAuth2UserRequest, OAuth2User oAuth2User) {
-
-        log.info("githubProcess UserRequest: {}, user : {}", oAuth2UserRequest, oAuth2User);
-
         GithubOAuth2UserInfo githubOAuth2UserInfo = new GithubOAuth2UserInfo(oAuth2User.getAttributes());
 
         // GitHub 계정 연동
@@ -91,7 +86,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 3. 구글에서 받아온 정보를 DB 에 저장
     private OAuth2User processOAuth2User(OAuth2User oAuth2User) {
-        log.info("processOAuth2User: {}", oAuth2User);
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
         GoogleOAuth2UserInfo googleOAuth2UserInfo = new GoogleOAuth2UserInfo(attributes);
@@ -99,14 +93,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 기존 회원 조회
         Optional<User> optionalUser =  userRepository.findByUsername(googleOAuth2UserInfo.getEmail());
 
-        User user;
-
         // 신규 회원 가입, 기존 회원 업데이트
-         user = optionalUser
+        User user = optionalUser
                 .map(value -> updateUser(value, googleOAuth2UserInfo))
                 .orElseGet(() -> register(googleOAuth2UserInfo));
 
-        return UserPrincipal.create( user, attributes);
+        return UserPrincipal.create(user, attributes);
     }
 
     // 4. 깃허브 유저 정보 저장
@@ -118,8 +110,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         // 테스트용 코드
         UUID userId = userRepository.findFirstByOrderByUserId().get().getUserId();
-
-        log.info("CurrentUserId: {}", userId);
 
         User user = userRepository.findByUserId(userId).orElseThrow(() -> new ExceptionHandler(ErrorStatus.USER_NOT_FOUND));
 
@@ -135,9 +125,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
                 user.updateGithubConnection(true);
 
-                log.info("accessToken: {}", accessToken);
-                log.info("github Account: {}", newAccount);
-
                 return githubAccountRepository.save(newAccount);
             });
 
@@ -148,15 +135,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 4. 사용자 정보 저장
     private User register(GoogleOAuth2UserInfo oAuth2UserInfo) {
-        log.info("register: {}", oAuth2UserInfo);
-
         User user = userAssembler.assemble(oAuth2UserInfo);
         return userRepository.save(user);
     }
 
     // 4. 사용자 정보 업데이트
     private User updateUser(User existingUser, GoogleOAuth2UserInfo oAuth2UserInfo) {
-        log.info("updateUser: {}", existingUser);
         if(!existingUser.getProfileImgUrl().equals(oAuth2UserInfo.getImageUrl())) {
             existingUser.updateProfileImgUrl(oAuth2UserInfo.getImageUrl());
         }
