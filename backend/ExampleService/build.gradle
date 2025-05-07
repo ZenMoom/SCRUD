@@ -16,4 +16,9 @@ dependencies {
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 }
 
+bootJar{
+    archiveFileName = 'scrud.jar'
+    archiveVersion = "0.0.1"
+}
+
 tasks.register("prepareKotlinBuildScriptModel") {}

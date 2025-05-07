@@ -120,6 +120,8 @@ build_and_push_backend:
     - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - backend/**/*
       when: on_success
       allow_failure: false
   tags:
@@ -139,6 +141,8 @@ build_and_push_frontend:
     - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - frontend/**/*
       when: on_success
       allow_failure: false
   tags:
