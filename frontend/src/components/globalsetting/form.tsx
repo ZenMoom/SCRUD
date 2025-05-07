@@ -2,6 +2,9 @@
 
 import { forwardRef, useState, useEffect, useRef } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
+import { useFormDataStore } from "@/store/formDataStore"
+import { getGitHubRepositories } from "@/app/api/v1/github/oauth/githubAPI"
+import axios from 'axios'
 
 interface FormItemProps {
   title: string
@@ -18,6 +21,22 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
   const [dragActive, setDragActive] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
+  const { updateFormItem, getFormItemValue } = useFormDataStore()
+
+  // 컴포넌트가 마운트될 때 저장된 값이 있으면 불러오기
+  useEffect(() => {
+    const savedValue = getFormItemValue(title);
+    if (savedValue && savedValue !== value) {
+      onChange(savedValue);
+    }
+  }, [title, getFormItemValue, onChange, value]);
+  
+  // 값이 변경될 때 저장하기
+  useEffect(() => {
+    if (value) {
+      updateFormItem(title, value, type);
+    }
+  }, [title, value, type, updateFormItem]);
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -58,8 +77,48 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
     document.getElementById(`file-upload-${title}`)?.click()
   }
 
-  const handleGithubUpload = () => {
+  const handleGithubUpload = async () => {
     setDropdownOpen(false)
+    
+    // 1. 깃허브 토큰 확인
+    const githubToken = localStorage.getItem('github-token-direct');
+    if (!githubToken) {
+      // 깃허브 인증 요청 시 redirect_uri를 인코딩 없이 고정 경로로 넣음
+      const googleToken = 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiNDcxNTVjNzktMTVjMS00MzAwLWIwMTAtMzE1MjQ5NzFjYWNmIiwiaWF0IjoxNzQ2NTk4MzAwLCJleHAiOjE3NDY2MDQzMDB9.AeNOkS0lp_kdDnEQj4XUUFu4TrHpyZEpLJN7N4igcrk';
+      const oauthUrl = `http://localhost:8080/oauth2/authorization/github?token=${googleToken}&redirect_uri=http://localhost:3000/globalsetting`;
+      window.location.href = oauthUrl;
+      return;
+    }
+    
+    // 2. 깃허브 토큰이 있으면 레포지토리 조회 시도
+    try {
+      // GitHub 레포지토리 정보 가져오기 시도
+      console.log("===== GitHub 토큰 디버깅 정보 =====");
+      console.log(`GitHub 토큰 존재: 길이 ${githubToken.length}`);
+      console.log(`GitHub 토큰 첫 부분: ${githubToken.substring(0, 20)}...`);
+      
+      const repositories = await getGitHubRepositories();
+      // 가져온 첫 번째 레포지토리 이름을 폼 필드에 설정
+      if (repositories && repositories.length > 0) {
+        onChange(repositories[0].name);
+        console.log(`첫 번째 레포지토리(${repositories[0].name})를 선택했습니다.`);
+      } else {
+        console.log('사용 가능한 GitHub 레포지토리가 없습니다.');
+      }
+    } catch (error) {
+      console.error('GitHub 레포지토리 가져오기 실패:', error);
+      let errorMessage = '알 수 없는 오류가 발생했습니다.';
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          errorMessage = 'GitHub 인증이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요.';
+        } else if (error.response?.status === 403) {
+          errorMessage = 'GitHub API 요청 한도를 초과했거나 권한이 없습니다.';
+        } else {
+          errorMessage = `GitHub API 오류: ${error.response?.status || '알 수 없는 오류'} - ${error.message}`;
+        }
+      }
+      alert(errorMessage);
+    }
   }
 
   const renderInput = () => {
