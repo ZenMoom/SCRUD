@@ -1,6 +1,7 @@
 stages:
   - prepare
   - build
+  - build-and-push
   - deploy
 
 variables:
@@ -51,21 +52,18 @@ build_backend:
     paths:
       - backend/generated/
       - frontend/generated/
-  before_script:
-    - docker buildx create --use
-    - mkdir -p ${CACHE_PATH}/backend
-    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
-    # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner -f ./backend/ExampleService/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./backend
-    - |
-      docker buildx build -f ./backend/ExampleService/Dockerfile \
-      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest \
-      --target runner \
-      --platform=linux/amd64 \
-      --build-arg PLATFORM=linux/amd64 \
-      --cache-from=type=local,src=${CACHE_PATH}/backend \
-      --cache-to=type=local,dest=${CACHE_PATH}/backend,mode=max \
-      --push ./backend
+    - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
+      
+#    - |
+#      docker buildx build -f ./backend/ExampleService/Dockerfile \
+#      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest \
+#      --target runner \
+#      --platform=linux/amd64 \
+#      --build-arg PLATFORM=linux/amd64 \
+#      --cache-from=type=local,src=${CACHE_PATH}/backend \
+#      --cache-to=type=local,dest=${CACHE_PATH}/backend,mode=max \
+#      --push ./backend
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
       changes:
@@ -86,30 +84,14 @@ build_frontend:
   stage: build
   needs:
     - job: prepare_job
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-frontend-cache
-    paths:
-      - ${CACHE_PATH}/frontend
-
   artifacts:
     paths:
       - backend/generated/
       - frontend/generated/
-  before_script:
-    - mkdir -p ${CACHE_PATH}/frontend
-    - docker buildx create --use
-    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
     # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./frontend
-    - |
-      docker buildx build -f ./frontend/Dockerfile \
-      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest \
-      --target runner \
-      --platform=linux/amd64 \
-      --build-arg PLATFORM=linux/amd64 \
-      --cache-from=type=local,src=${CACHE_PATH}/frontend \
-      --cache-to=type=local,dest=${CACHE_PATH}/frontend,mode=max \
-      --push ./frontend
+    - docker build -f ./frontend/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner ./frontend
+
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
       changes:
@@ -124,13 +106,51 @@ build_frontend:
   tags:
     - ec2
 
+build_and_push_backend:
+  extends: .docker
+  stage: build-and-push
+  needs:
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  script:
+    - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
+
+build_and_push_frontend:
+  extends: .docker
+  stage: build-and-push
+  needs:
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  script:
+    - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
+
 # Deploy to production server
 deploy:
   stage: deploy
   needs:
-    - job: build_frontend
+    - job: build_and_push_backend
       optional: true
-    - job: build_backend
+    - job: build_and_push_frontend
       optional: true
 
   image: alpine:latest
