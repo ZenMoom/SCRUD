@@ -3,6 +3,7 @@ RuleResponse:
   properties:
     service_spec_version_id:
       type: integer
+      example: 1
     spec_version:
       $ref: '#/SpecVersionOut'
     scrud_version:
