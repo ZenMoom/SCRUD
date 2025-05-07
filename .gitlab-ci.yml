@@ -54,23 +54,9 @@ build_backend:
       - frontend/generated/
   script:
     - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
-      
-#    - |
-#      docker buildx build -f ./backend/ExampleService/Dockerfile \
-#      -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest \
-#      --target runner \
-#      --platform=linux/amd64 \
-#      --build-arg PLATFORM=linux/amd64 \
-#      --cache-from=type=local,src=${CACHE_PATH}/backend \
-#      --cache-to=type=local,dest=${CACHE_PATH}/backend,mode=max \
-#      --push ./backend
+
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
-      changes:
-        - backend/**/*
-      when: on_success
-      allow_failure: false
-    - if: '$CI_COMMIT_BRANCH == "develop"'
       changes:
         - backend/**/*
       when: on_success
@@ -89,7 +75,6 @@ build_frontend:
       - backend/generated/
       - frontend/generated/
   script:
-    # - docker buildx build -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner -f ./frontend/Dockerfile --build-arg PLATFORM=linux/amd64 --platform linux/amd64 ./frontend
     - docker build -f ./frontend/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner ./frontend
 
   rules:
@@ -98,11 +83,7 @@ build_frontend:
         - frontend/**/*
       when: on_success
       allow_failure: false
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-      changes:
-        - frontend/**/*
-      when: on_success
-      allow_failure: false
+
   tags:
     - ec2
 
