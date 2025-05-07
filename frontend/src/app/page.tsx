@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Project } from "@/components/project-card/project-card"
 import ProjectCard from "@/components/project-card/project-card"
 import ProjectForm from "@/components/project-card/project-form"
-// import { useRouter } from "next/navigation"
 
 // API 요청 더미 함수 (나중에 실제 API로 교체)
 const getProjects = async (): Promise<Project[]> => {
@@ -166,12 +165,9 @@ export default function Home() {
     loadProjects()
   }, [])
 
-  // const router = useRouter()
-  // // 새 프로젝트 생성 함수
-
   const handleNewProject = () => {
     // 프로젝트 생성 후 API Creator 페이지로 이동
-    window.location.href = "/api-creator"
+    window.location.href = "/globalsetting"
     // 또는 Next.js의 라우터를 사용할 경우:
     // router.push("/api-creator");
   }
