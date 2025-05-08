@@ -7,25 +7,32 @@ import com.barcoder.scrud.apispec.domain.entity.GetApiSpecVersion;
 import com.barcoder.scrud.apispec.domain.entity.PatchApiSpecVersion;
 import com.barcoder.scrud.apispec.domain.entity.PostApiSpecVersion;
 import com.barcoder.scrud.apispec.domain.entity.PutApiSpecVersion;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class ApiSpecVersionAssembler {
 
+	private final ModelMapper modelMapper;
 
 	public ApiSpecVersion toApiSpecVersionEntity(CreateApiSpecVersionIn inDto){
 
 		// version
 		int version = inDto.getVersion() != null ? inDto.getVersion() : 1;
+		// apiGroup
+		String[] segments = inDto.getEndpoint().split("/");
+		String apiGroup = segments.length >= 4 ? segments[3] : "default";
 
 		return switch (inDto.getHttpMethod()) {
 
 			case GET -> GetApiSpecVersion.builder()
 			.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
@@ -38,7 +45,7 @@ public class ApiSpecVersionAssembler {
 			case POST -> PostApiSpecVersion.builder()
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
@@ -52,7 +59,7 @@ public class ApiSpecVersionAssembler {
 			case PUT -> PutApiSpecVersion.builder()
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
@@ -65,7 +72,7 @@ public class ApiSpecVersionAssembler {
 			case PATCH -> PatchApiSpecVersion.builder()
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
@@ -78,7 +85,7 @@ public class ApiSpecVersionAssembler {
 			case DELETE -> DeleteApiSpecVersion.builder()
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
@@ -89,9 +96,13 @@ public class ApiSpecVersionAssembler {
 		};
 	}
 
-	public List<ApiSpecVersion> toApiSpecVersionEntityList(List<CreateApiSpecVersionIn> inDtoList) {
+	public List<ApiSpecVersion> toApiSpecVersionEntityList(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
 		return inDtoList.stream()
-				.map(this::toApiSpecVersionEntity)
+				.map(createApiSpecVersionIn ->
+						toApiSpecVersionEntity(createApiSpecVersionIn.toBuilder()
+								.scrudProjectId(scrudProjectId)
+								.build())
+						)
 				.toList();
 	}
 }

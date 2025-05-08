@@ -14,17 +14,16 @@ import java.util.UUID;
 @NoArgsConstructor
 public class CreateApiSpecVersionIn {
 
-	private Long scrudProjectId;
-	private Long apiSpecVersionId;
-	private UUID userId;
-	private String endpoint;
-	private String apiGroup;
-	private Integer version;
-	private String summary;
-	private String description;
-	private String response;
-	private HttpMethod httpMethod;
-	private String requestBody;
-	private String queryParameters;
-	private String pathParameters;
+    private Long scrudProjectId;
+    private Long apiSpecVersionId;
+    private UUID userId;
+    private String endpoint;
+    private Integer version;
+    private String summary;
+    private String description;
+    private String response;
+    private HttpMethod httpMethod;
+    private String requestBody;
+    private String queryParameters;
+    private String pathParameters;
 }
