@@ -37,6 +37,9 @@ prepare_job:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       allow_failure: false
+      changes:
+        - backend/**/*
+        - frontend/**/*
     - if: '$CI_COMMIT_BRANCH == "develop"'
       allow_failure: false
   tags:
@@ -96,13 +99,13 @@ build_and_push_backend:
     paths:
       - backend/generated/
       - frontend/generated/
+  before_script:
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
     - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
     - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
-      changes:
-        - backend/**/*
       when: on_success
       allow_failure: false
   tags:
@@ -117,13 +120,13 @@ build_and_push_frontend:
     paths:
       - backend/generated/
       - frontend/generated/
+  before_script:
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
     - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
     - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
-      changes:
-        - frontend/**/*
       when: on_success
       allow_failure: false
   tags:
