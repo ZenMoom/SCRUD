@@ -15,7 +15,9 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class GetApiSpecVersion extends ApiSpecVersion {
 
+	@Column(columnDefinition = "TEXT")
 	private String queryParameters;
 
+	@Column(columnDefinition = "TEXT")
 	private String pathParameters;
 }

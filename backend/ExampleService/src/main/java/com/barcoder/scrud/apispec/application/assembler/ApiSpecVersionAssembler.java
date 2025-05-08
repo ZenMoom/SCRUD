@@ -7,13 +7,17 @@ import com.barcoder.scrud.apispec.domain.entity.GetApiSpecVersion;
 import com.barcoder.scrud.apispec.domain.entity.PatchApiSpecVersion;
 import com.barcoder.scrud.apispec.domain.entity.PostApiSpecVersion;
 import com.barcoder.scrud.apispec.domain.entity.PutApiSpecVersion;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class ApiSpecVersionAssembler {
 
+	private final ModelMapper modelMapper;
 
 	public ApiSpecVersion toApiSpecVersionEntity(CreateApiSpecVersionIn inDto){
 
@@ -92,9 +96,13 @@ public class ApiSpecVersionAssembler {
 		};
 	}
 
-	public List<ApiSpecVersion> toApiSpecVersionEntityList(List<CreateApiSpecVersionIn> inDtoList) {
+	public List<ApiSpecVersion> toApiSpecVersionEntityList(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
 		return inDtoList.stream()
-				.map(this::toApiSpecVersionEntity)
+				.map(createApiSpecVersionIn ->
+						toApiSpecVersionEntity(createApiSpecVersionIn.toBuilder()
+								.scrudProjectId(scrudProjectId)
+								.build())
+						)
 				.toList();
 	}
 }
