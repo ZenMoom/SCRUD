@@ -123,8 +123,8 @@ build_and_push_frontend:
   before_script:
     - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
   script:
-    - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
-    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
+    - docker build -f ./frontend/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner ./frontend
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
       when: on_success
