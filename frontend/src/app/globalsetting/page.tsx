@@ -7,6 +7,7 @@ import ContentArea from "@/components/globalsetting/ContentArea"
 import Floatingbutton from "@/components/globalsetting/FloatingButton"
 import axios from "axios"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
+import useAuthStore from "@/app/store/useAuthStore"
 
 // 설정 항목 키 타입 정의
 type SettingKey = 'title' | 'description' | 'serverUrl' | 'requirementSpec' | 'erd' | 
@@ -57,6 +58,8 @@ function TokenHandler() {
 // 메인 컴포넌트
 export default function GlobalSettingPage() {
   const router = useRouter()
+  // AuthStore에서 토큰과 인증 상태 가져오기
+  const { token, isAuthenticated } = useAuthStore()
   
   // 각 설정 항목의 상태를 관리 - 초기값은 빈 문자열로 설정
   const [settings, setSettings] = useState({
@@ -167,6 +170,15 @@ export default function GlobalSettingPage() {
       return
     }
     
+    // 인증 토큰 확인
+    if (!token || !isAuthenticated) {
+      setError("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+      return;
+    }
+    
     setIsLoading(true)
     setError(null)
     
@@ -211,11 +223,11 @@ export default function GlobalSettingPage() {
         globalFiles: globalFiles
       }
       
-      // API 호출
+      // API 호출 - 저장된 토큰 사용
       const response = await axios.post('/api/projects', projectData, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiNzI0MDhkZmEtM2EzYy00YjE0LTg1MzAtYjUyZmVlMzhjMmZmIiwiaWF0IjoxNzQ2NjY5MzQ3LCJleHAiOjE3NDY2NzUzNDd9.mXIm7RYlyxjCuwU1rggcHXgfQPhMBYUutKCIn-QE6lI'
+          'Authorization': `Bearer ${token}`
         }
       })
       

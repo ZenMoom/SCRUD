@@ -6,7 +6,16 @@ export async function POST(request: NextRequest) {
   try {
     // 요청 본문 및 헤더 가져오기
     const body = await request.json();
-    const authorization = 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiNzI0MDhkZmEtM2EzYy00YjE0LTg1MzAtYjUyZmVlMzhjMmZmIiwiaWF0IjoxNzQ2NjY5MzQ3LCJleHAiOjE3NDY2NzUzNDd9.mXIm7RYlyxjCuwU1rggcHXgfQPhMBYUutKCIn-QE6lI';
+    // 클라이언트 요청의 Authorization 헤더 값 사용
+    const authorization = request.headers.get('Authorization');
+    
+    // 인증 토큰이 없으면 401 에러 반환
+    if (!authorization) {
+      return NextResponse.json(
+        { message: '인증 정보가 필요합니다.' },
+        { status: 401 }
+      );
+    }
     
     // 백엔드 서버로 요청 전달 (axios 사용)
     const response = await axios.post('http://localhost:8080/api/v1/projects', body, {

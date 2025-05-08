@@ -196,7 +196,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
       <div className="bg-white rounded-md p-4 w-full max-w-4xl max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold flex items-center">
-            <span className="mr-2"><Github size={20} /></span> GitHub에서 콘텐츠 추가
+            <span className="mr-2"><Github size={20} /></span> GitHub에서 파일 추가
           </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             &times;
@@ -204,7 +204,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
         </div>
         
         <p className="text-sm text-gray-600 mb-4">
-          이 대화에 추가할 파일을 선택하세요
+          전역 설정에 추가할 파일을 선택하세요
         </p>
         
         <div className="flex space-x-2 mb-4">
@@ -217,7 +217,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
               }}
               value={selectedRepo?.id || ''}
             >
-              <option value="">저장소 선택</option>
+              <option value="">GitHub 레포지토리 선택</option>
               {repositories.map(repo => (
                 <option key={repo.id} value={repo.id}>{repo.name}</option>
               ))}
@@ -268,7 +268,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
             </div>
           ) : !selectedRepo ? (
             <div className="flex justify-center items-center h-full">
-              <p className="text-gray-500">저장소를 선택하세요.</p>
+              <p className="text-gray-500">레포지토리리를 선택하세요.</p>
             </div>
           ) : contents.length === 0 ? (
             <div className="flex justify-center items-center h-full">
