@@ -18,7 +18,6 @@ public class CreateApiSpecVersionIn {
 	private Long apiSpecVersionId;
 	private UUID userId;
 	private String endpoint;
-	private String apiGroup;
 	private Integer version;
 	private String summary;
 	private String description;
