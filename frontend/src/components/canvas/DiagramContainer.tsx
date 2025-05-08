@@ -1,6 +1,8 @@
 "use client"
 
-import { useEffect } from "react"
+import type React from "react"
+
+import { useCallback, useEffect, useState } from "react"
 import ReactFlow, { Background, Controls, type Edge, type Node, useNodesState, useEdgesState, MiniMap, Panel } from "reactflow"
 import "reactflow/dist/style.css"
 import type { DiagramResponse } from "@generated/model"
@@ -32,6 +34,13 @@ const edgeTypes = {
   custom: CustomEdge,
 }
 
+// 메서드 노드의 기본 높이와 확장 시 추가 높이
+const METHOD_BASE_HEIGHT = 80 // 기본 높이
+const METHOD_EXPANDED_EXTRA_HEIGHT = 200 // 확장 시 추가 높이
+const METHOD_VERTICAL_SPACING = 30 // 메서드 간 수직 간격
+const CLASS_PADDING_TOP = 100 // 클래스 상단 패딩 (제목 영역)
+const CLASS_PADDING_BOTTOM = 50 // 클래스 하단 패딩
+
 type DiagramContainerProps = {
   diagramData: DiagramResponse | null
   loading: boolean
@@ -41,6 +50,97 @@ type DiagramContainerProps = {
 export default function DiagramContainer({ diagramData, loading, error }: DiagramContainerProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
+
+  // 노드 초기 위치를 저장할 상태 추가
+  const [initialNodePositions, setInitialNodePositions] = useState<Record<string, { x: number; y: number }>>({})
+
+  // 메서드 노드의 위치와 클래스 노드의 크기를 계산하는 함수
+  const calculateLayout = useCallback((components: any[], expandedNodeIds: Set<string>, savedPositions: Record<string, { x: number; y: number }>) => {
+    const newNodes: Node[] = []
+    const methodIdToNodeId: Record<string, string> = {}
+    const updatedPositions: Record<string, { x: number; y: number }> = { ...savedPositions }
+
+    // 각 컴포넌트(클래스/인터페이스)에 대해 처리
+    components.forEach((component, componentIndex) => {
+      const componentNodeId = `component-${component.componentId}`
+
+      // 저장된 위치가 있으면 사용, 없으면 기본값 사용
+      const posX = savedPositions[componentNodeId]?.x ?? component.positionX ?? componentIndex * 500 + 100
+      const posY = savedPositions[componentNodeId]?.y ?? component.positionY ?? 150
+
+      // 위치 저장
+      updatedPositions[componentNodeId] = { x: posX, y: posY }
+
+      // 배경색 선택
+      const backgroundColor = component.type === "CLASS" ? backgroundColors[componentIndex % backgroundColors.length] : "rgba(230, 230, 250, 0.2)"
+
+      // 메서드 노드 생성 및 위치 계산
+      let totalHeight = CLASS_PADDING_TOP // 시작 높이 (클래스 제목 영역)
+      const methodNodes: Node[] = []
+
+      if (component.methods) {
+        component.methods.forEach((method: any, methodIndex: number) => {
+          const methodNodeId = `method-${method.methodId}`
+          methodIdToNodeId[method.methodId] = methodNodeId
+
+          // 메서드가 확장되었는지 확인
+          const isExpanded = expandedNodeIds.has(methodNodeId)
+
+          // 메서드 노드 높이 계산
+          const methodHeight = isExpanded ? METHOD_BASE_HEIGHT + METHOD_EXPANDED_EXTRA_HEIGHT : METHOD_BASE_HEIGHT
+
+          // 저장된 메서드 위치가 있으면 상대적 Y 위치만 업데이트
+          const methodY = totalHeight
+
+          // 메서드 노드 생성
+          methodNodes.push({
+            id: methodNodeId,
+            type: "method",
+            position: { x: 25, y: methodY },
+            data: {
+              signature: method.signature,
+              body: method.body || "",
+              description: method.description || "",
+              isInterface: component.type === "INTERFACE",
+              isExpanded,
+            },
+            parentNode: componentNodeId,
+            extent: "parent",
+          })
+
+          // 다음 메서드의 위치 계산 (현재 메서드 높이 + 간격)
+          totalHeight += methodHeight + METHOD_VERTICAL_SPACING
+        })
+      }
+
+      // 클래스 노드의 총 높이 계산 (마지막 간격 제거 + 하단 패딩)
+      totalHeight = totalHeight > CLASS_PADDING_TOP ? totalHeight - METHOD_VERTICAL_SPACING + CLASS_PADDING_BOTTOM : CLASS_PADDING_TOP + CLASS_PADDING_BOTTOM
+
+      // 클래스/인터페이스 노드 생성
+      newNodes.push({
+        id: componentNodeId,
+        type: component.type.toLowerCase(),
+        position: { x: posX, y: posY },
+        data: {
+          label: component.name,
+          description: component.description,
+          backgroundColor,
+        },
+        style: {
+          width: 400, // 넓이 증가
+          height: totalHeight,
+          backgroundColor,
+          padding: "10px",
+        },
+      })
+
+      // 메서드 노드 추가
+      newNodes.push(...methodNodes)
+    })
+
+    return { newNodes, methodIdToNodeId, updatedPositions }
+  }, [])
 
   // 데이터로부터 노드와 엣지 생성
   useEffect(() => {
@@ -51,67 +151,16 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
 
     console.log("다이어그램 데이터 처리 시작:", diagramData)
 
-    const newNodes: Node[] = []
+    // 노드 레이아웃 계산 (초기 위치 전달)
+    const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(diagramData.components, expandedNodes, initialNodePositions)
+
+    // 초기 위치가 비어있는 경우에만 업데이트 (첫 렌더링 시에만)
+    if (Object.keys(initialNodePositions).length === 0) {
+      setInitialNodePositions(updatedPositions)
+    }
+
+    // 엣지 생성
     const newEdges: Edge[] = []
-    const methodIdToNodeId: Record<string, string> = {}
-
-    // 컴포넌트(클래스, 인터페이스) 노드 생성
-    diagramData.components.forEach((component, index) => {
-      const componentNodeId = `component-${component.componentId}`
-
-      // 기본 위치 값 설정 (positionX, positionY가 undefined인 경우 사용)
-      const posX = component.positionX ?? index * 400 + 100
-      const posY = component.positionY ?? 150
-
-      // 배경색 선택 (인덱스에 따라 순환)
-      const backgroundColor = component.type === "CLASS" ? backgroundColors[index % backgroundColors.length] : "rgba(230, 230, 250, 0.2)" // 인터페이스는 더 연한 색상
-
-      // 컴포넌트 노드 추가
-      newNodes.push({
-        id: componentNodeId,
-        type: component.type.toLowerCase(),
-        position: { x: posX, y: posY },
-        data: {
-          label: component.name,
-          description: component.description,
-          backgroundColor, // 배경색 데이터로 전달
-        },
-        style: {
-          width: 350,
-          height: (component.methods?.length || 0) * 150 + 100 + 80,
-          backgroundColor, // 배경색 적용
-          padding: "10px",
-        },
-      })
-
-      // 메서드 노드 추가
-      if (component.methods) {
-        component.methods.forEach((method, methodIndex) => {
-          const methodNodeId = `method-${method.methodId}`
-          methodIdToNodeId[method.methodId] = methodNodeId
-
-          // 메서드 간 간격 조정
-          const yPosition = 100 + methodIndex * 150
-
-          newNodes.push({
-            id: methodNodeId,
-            type: "method",
-            position: { x: 25, y: yPosition },
-            data: {
-              signature: method.signature,
-              body: method.body || "",
-              description: method.description || "",
-              isInterface: component.type === "INTERFACE",
-              isExpanded: false,
-            },
-            parentNode: componentNodeId,
-            extent: "parent",
-          })
-        })
-      }
-    })
-
-    // 연결(엣지) 생성
     if (diagramData.connections) {
       diagramData.connections.forEach((connection) => {
         const sourceNodeId = methodIdToNodeId[connection.sourceMethodId]
@@ -136,7 +185,49 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
 
     setNodes(newNodes)
     setEdges(newEdges)
-  }, [diagramData, setNodes, setEdges])
+  }, [diagramData, expandedNodes, calculateLayout, setNodes, setEdges, initialNodePositions])
+
+  // 메서드 확장/축소 토글 핸들러
+  const toggleMethodExpand = useCallback((nodeId: string) => {
+    console.log("토글 메서드 확장:", nodeId)
+
+    setExpandedNodes((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId)
+      } else {
+        newSet.add(nodeId)
+      }
+      return newSet
+    })
+  }, [])
+
+  // 이벤트 리스너 등록
+  useEffect(() => {
+    const handleToggleExpand = (e: CustomEvent) => {
+      console.log("이벤트 수신:", e.detail)
+      toggleMethodExpand(e.detail.nodeId)
+    }
+
+    // 이벤트 리스너 등록
+    document.addEventListener("toggleMethodExpand", handleToggleExpand as EventListener)
+
+    // 클린업 함수
+    return () => {
+      document.removeEventListener("toggleMethodExpand", handleToggleExpand as EventListener)
+    }
+  }, [toggleMethodExpand])
+
+  // 노드 위치 변경 핸들러 추가 (ReactFlow의 onNodeDragStop 이벤트에 연결)
+  const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
+    // 클래스/인터페이스 노드만 위치 저장 (메서드 노드는 부모에 상대적)
+    if (node.type === "class" || node.type === "interface") {
+      setInitialNodePositions((prev) => ({
+        ...prev,
+        [node.id]: node.position,
+      }))
+    }
+  }, [])
 
   // 로딩 상태 표시
   if (loading) {
@@ -183,13 +274,14 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
         minZoom={0.5}
         maxZoom={2}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-        nodesDraggable={false}
+        nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
         deleteKeyCode={null}

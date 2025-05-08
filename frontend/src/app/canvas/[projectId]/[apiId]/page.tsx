@@ -135,7 +135,7 @@ export default function CanvasPage() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-8rem)] overflow-hidden">
-          {/* 왼쪽 섹션 (비율 20%) - 채팅 데이터 전달 */}
+          {/* 왼쪽 섹션 (비율 30%) - 채팅 데이터 전달 */}
           <div className="w-full md:w-[30%] min-w-0">
             <ChatContainer
               projectId={projectId as string}
@@ -148,7 +148,7 @@ export default function CanvasPage() {
             />
           </div>
 
-          {/* 중앙 섹션 (비율 60%) - 더미 데이터 사용 */}
+          {/* 중앙 섹션 (비율 70%) - 더미 데이터 사용 */}
           <div className="w-full md:w-[70%] min-w-0">
             <DiagramContainer diagramData={dummyDiagramData as DiagramResponse} loading={false} error={null} />
           </div>
