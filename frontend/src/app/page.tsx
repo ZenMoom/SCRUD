@@ -1,9 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Project } from "@/components/project-card/project-card"
+import { useEffect, useState, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import useAuthStore from "./store/useAuthStore"
 import ProjectCard from "@/components/project-card/project-card"
 import ProjectForm from "@/components/project-card/project-form"
+import { Project } from "@/components/project-card/project-card"
+import Image from "next/image"
 
 // API 요청 더미 함수 (나중에 실제 API로 교체)
 const getProjects = async (): Promise<Project[]> => {
@@ -134,8 +137,22 @@ const deleteProject = async (id: string): Promise<void> => {
   }
 }
 
-// 메인 페이지 컴포넌트
-export default function Home() {
+// 로딩 상태 표시 컴포넌트
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex justify-center items-center">
+      <div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+    </div>
+  )
+}
+
+// 실제 홈 페이지 내용 컴포넌트
+function HomeContent() {
+  // 인증 및 라우터
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { login, logout, isAuthenticated, user } = useAuthStore()
+
   // 프로젝트 데이터 상태
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -146,7 +163,61 @@ export default function Home() {
   const [currentProject, setCurrentProject] = useState<Project | null>(null)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
-  // 프로젝트 로드
+  // 구글 OAuth 콜백 처리
+  useEffect(() => {
+    const token = searchParams.get("token")
+    const loginId = searchParams.get("loginId")
+    const profileImg = searchParams.get("profileImg")
+
+    // OAuth 콜백에서 토큰을 받았으면
+    if (token && loginId) {
+      // Zustand 스토어에 사용자 로그인
+      login(token, {
+        username: loginId,
+        profileImgUrl: profileImg || undefined,
+      })
+
+      // 최초 로그인 시 콘솔에 로그 출력
+      console.log("=== 최초 로그인 성공: 사용자 정보 ===")
+      console.log("로그인 ID:", loginId)
+      console.log("프로필 이미지:", profileImg || "없음")
+      console.log("==============================")
+
+      // 페이지 새로고침 없이 URL에서 쿼리 파라미터 제거
+      window.history.replaceState({}, document.title, "/")
+    }
+  }, [searchParams, login])
+
+  // 인증 상태가 변경될 때마다 사용자 정보 출력 (로그인 이후 또는 새로고침 시)
+  useEffect(() => {
+    // 약간의 지연 시간을 두어 상태 업데이트가 완료된 후 로그를 출력
+    const timer = setTimeout(() => {
+      if (isAuthenticated && user) {
+        console.log("=== 현재 로그인된 사용자 정보 ===")
+        console.log("로그인 상태:", "로그인됨")
+        console.log("사용자 이름:", user.username)
+        console.log("프로필 이미지:", user.profileImgUrl || "없음")
+        console.log("==============================")
+      } else if (!searchParams.get("token")) {
+        // URL에 토큰 파라미터가 없을 때만 로그인 안됨 메시지 출력
+        // 최초 로그인 중일 때는 출력하지 않음
+        console.log("=== 로그인 상태 ===")
+        console.log("로그인 상태: 로그인되지 않음")
+        console.log("==============================")
+      }
+    }, 100) // 100ms 지연
+
+    return () => clearTimeout(timer) // 클린업 함수
+  }, [isAuthenticated, user, searchParams])
+
+  // 인증 확인
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login")
+    }
+  }, [isAuthenticated, router])
+
+  // 프로젝트 데이터 로드
   useEffect(() => {
     const loadProjects = async () => {
       setLoading(true)
@@ -162,33 +233,30 @@ export default function Home() {
       }
     }
 
-    loadProjects()
-  }, [])
+    if (isAuthenticated) {
+      loadProjects()
+    }
+  }, [isAuthenticated])
 
+  // 새 프로젝트 생성 함수
   const handleNewProject = () => {
-    // 프로젝트 생성 후 API Creator 페이지로 이동
     window.location.href = "/globalsetting"
-    // 또는 Next.js의 라우터를 사용할 경우:
-    // router.push("/api-creator");
   }
 
-  // 프로젝트 편집 모달 열기
+  // 프로젝트 편집 함수
   const handleEditProject = (project: Project) => {
     setCurrentProject(project)
     setShowEditModal(true)
   }
 
-  // 프로젝트 편집 처리
+  // 프로젝트 편집 제출 처리
   const handleEditSubmit = async (projectData: Omit<Project, "id" | "createdAt">) => {
     if (!currentProject) return
 
     setIsSubmitting(true)
     try {
       const updatedProject = await updateProject(currentProject.id, projectData)
-
-      // 프로젝트 목록 업데이트
       setProjects(projects.map((p) => (p.id === updatedProject.id ? updatedProject : p)))
-
       setShowEditModal(false)
       setCurrentProject(null)
     } catch (err) {
@@ -204,10 +272,7 @@ export default function Home() {
     setIsSubmitting(true)
     try {
       await deleteProject(id)
-
-      // 프로젝트 목록에서 삭제된 프로젝트 제거
       setProjects(projects.filter((p) => p.id !== id))
-
       setShowEditModal(false)
       setCurrentProject(null)
     } catch (err) {
@@ -218,35 +283,58 @@ export default function Home() {
     }
   }
 
-  // 모달 닫기
+  // 모달 취소 함수
   const handleCancel = () => {
     setShowEditModal(false)
     setCurrentProject(null)
   }
 
+  // 로그아웃 함수
+  const handleLogout = () => {
+    logout()
+    router.push("/login")
+  }
+
+  // 인증되지 않은 경우 아무것도 렌더링하지 않음 (로그인 페이지로 리다이렉트될 때까지)
+  if (!isAuthenticated) {
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-8 md:py-16">
-        <div className="mb-10">
+        <div className="flex justify-between items-center mb-10">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">바코드</span> 님의 프로젝트
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">{user?.username || "바코드"}</span> 님의 프로젝트
           </h1>
+
+          {/* 프로필 및 로그아웃 버튼 */}
+          <div className="flex items-center">
+            {user?.profileImgUrl && (
+              <div className="w-10 h-10 rounded-full mr-3 overflow-hidden">
+                <Image src={user.profileImgUrl} alt="프로필" width={40} height={40} className="object-cover w-full h-full" />
+              </div>
+            )}
+            <button onClick={handleLogout} className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+              로그아웃
+            </button>
+          </div>
         </div>
 
-        {/* 로딩 상태 표시 */}
+        {/* 로딩 상태 */}
         {loading && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
           </div>
         )}
 
-        {/* 에러 메시지 표시 */}
+        {/* 에러 메시지 */}
         {error && !loading && <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">{error}</div>}
 
         {/* 프로젝트 그리드 */}
         {!loading && !error && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {/* 새 프로젝트 추가 버튼 */}
+            {/* 새 프로젝트 버튼 */}
             <button
               onClick={handleNewProject}
               className="flex flex-col items-center justify-center p-6 h-[220px] rounded-xl border-2 border-dashed border-gray-200 text-inherit no-underline transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
@@ -292,5 +380,13 @@ export default function Home() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function Home(): React.ReactNode {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <HomeContent />
+    </Suspense>
   )
 }

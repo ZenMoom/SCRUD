@@ -62,8 +62,6 @@ ApiSpecVersionCreateRequest:
   type: object
   required:
     - endpoint
-    - apiGroup
-    - version
     - httpMethod
   properties:
     scrudProjectId:
@@ -74,10 +72,6 @@ ApiSpecVersionCreateRequest:
       type: string
       example: /api/v1/examples/{id}
       description: API 엔드포인트 경로
-    apiGroup:
-      type: string
-      example: example
-      description: API가 속한 그룹 이름
     summary:
       type: string
       example: 예시 스펙입니다.
@@ -123,8 +117,6 @@ ApiSpecVersionUpdateRequest:
   type: object
   required:
     - endpoint
-    - apiGroup
-    - version
     - httpMethod
   properties:
     scrudProjectId:
@@ -135,10 +127,6 @@ ApiSpecVersionUpdateRequest:
       type: string
       example: /api/v1/examples/{id}
       description: API 엔드포인트 경로
-    apiGroup:
-      type: string
-      example: example
-      description: API가 속한 그룹 이름
     summary:
       type: string
       example: 예시 스펙입니다.
