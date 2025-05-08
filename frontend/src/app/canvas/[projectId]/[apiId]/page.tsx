@@ -10,7 +10,9 @@ import { ChatHistoryResponse } from "@generated/model"
 // 컴포넌트 임포트
 import ChatContainer from "@/components/canvas/ChatContainer"
 import DiagramContainer from "@/components/canvas/DiagramContainer"
-import DtoContainer from "@/components/canvas/DtoContainer"
+
+// 더미 데이터 임포트
+import { dummyDiagramData } from "@/app/data/dummy-diagram-data"
 
 export default function CanvasPage() {
   const router = useRouter()
@@ -25,9 +27,9 @@ export default function CanvasPage() {
   const currentVersionId = queryVersionId || (pathVersionId as string)
 
   // 다이어그램 데이터 상태
-  const [diagramData, setDiagramData] = useState<DiagramResponse | null>(null)
+  // const [diagramData, setDiagramData] = useState<DiagramResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
+  // const [error, setError] = useState<string | null>(null)
 
   // 채팅 데이터 상태 추가
   const [chatData, setChatData] = useState<ChatHistoryResponse | null>(null)
@@ -44,20 +46,20 @@ export default function CanvasPage() {
   const fetchDiagramData = async () => {
     try {
       setLoading(true)
-      setError(null)
+      // setError(null)
 
       // axios를 사용하여 API 호출
       const response = await axios.get<DiagramResponse>(`/api/canvas/${projectId}/${apiId}/${currentVersionId}`)
 
-      setDiagramData(response.data)
+      // setDiagramData(response.data)
       console.log("다이어그램 데이터:", response.data)
     } catch (err) {
       console.error("다이어그램 데이터 가져오기 오류:", err)
 
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.error || err.message)
+        // setError(err.response?.data?.error || err.message)
       } else {
-        setError("알 수 없는 오류가 발생했습니다.")
+        // setError("알 수 없는 오류가 발생했습니다.")
       }
     } finally {
       setLoading(false)
@@ -132,10 +134,9 @@ export default function CanvasPage() {
           </button>
         </div>
 
-        {/* 3단 레이아웃 - 비율 20:60:20 */}
         <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-8rem)] overflow-hidden">
           {/* 왼쪽 섹션 (비율 20%) - 채팅 데이터 전달 */}
-          <div className="w-full md:w-1/5 min-w-0">
+          <div className="w-full md:w-[30%] min-w-0">
             <ChatContainer
               projectId={projectId as string}
               apiId={apiId as string}
@@ -147,14 +148,9 @@ export default function CanvasPage() {
             />
           </div>
 
-          {/* 중앙 섹션 (비율 60%) */}
-          <div className="w-full md:w-3/5 min-w-0">
-            <DiagramContainer diagramData={diagramData} loading={loading} error={error} />
-          </div>
-
-          {/* 오른쪽 섹션 (비율 20%) */}
-          <div className="w-full md:w-1/5 min-w-0">
-            <DtoContainer diagramData={diagramData} loading={loading} />
+          {/* 중앙 섹션 (비율 60%) - 더미 데이터 사용 */}
+          <div className="w-full md:w-[70%] min-w-0">
+            <DiagramContainer diagramData={dummyDiagramData as DiagramResponse} loading={false} error={null} />
           </div>
         </div>
       </div>

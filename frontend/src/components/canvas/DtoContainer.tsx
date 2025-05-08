@@ -1,53 +1,72 @@
-// components/canvas/DtoContainer.tsx
 "use client"
 
-import { DiagramResponse } from "@generated/model"
+import { useState } from "react"
+import type { DiagramResponse } from "@generated/model"
+import { Loader2, X } from "lucide-react"
 
-type DtoContainerProps = {
+interface DtoContainerProps {
   diagramData: DiagramResponse | null
   loading: boolean
 }
 
 export default function DtoContainer({ diagramData, loading }: DtoContainerProps) {
+  const [selectedDto, setSelectedDto] = useState<string | null>(null)
+
+  // 로딩 상태 표시
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-white rounded-lg shadow-md">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <p className="text-gray-600">DTO 로딩 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 데이터가 없는 경우
+  if (!diagramData || !diagramData.dto || diagramData.dto.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center bg-white rounded-lg shadow-md">
+        <div className="p-6 max-w-md text-center">
+          <p className="text-gray-600">DTO 데이터가 없습니다.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const selectedDtoData = selectedDto ? diagramData.dto.find((dto) => dto.dtoId === selectedDto) : null
+
   return (
-    <div className="h-full p-4 bg-white rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">DTO 정보</h2>
+    <div className="h-full bg-white rounded-lg shadow-md p-4 flex flex-col">
+      <h2 className="text-lg font-bold mb-4">DTO 목록</h2>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-[calc(100%-4rem)]">
-          <div className="animate-spin h-6 w-6 border-3 border-blue-500 rounded-full border-t-transparent"></div>
-        </div>
-      ) : diagramData ? (
-        <div className="h-[calc(100%-4rem)] overflow-auto">
-          <div className="space-y-4">
-            <div className="p-3 bg-gray-50 rounded border border-gray-200">
-              <h3 className="text-sm font-medium mb-2 text-gray-700">관련 모델</h3>
-              <ul className="list-disc pl-5 text-sm text-gray-600">
-                <li>User</li>
-                <li>Project</li>
-                <li>Configuration</li>
-              </ul>
-            </div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {diagramData.dto.map((dto) => (
+          <button
+            key={dto.dtoId}
+            className={`px-3 py-1 text-sm rounded-full ${selectedDto === dto.dtoId ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
+            onClick={() => setSelectedDto(selectedDto === dto.dtoId ? null : dto.dtoId)}
+          >
+            {dto.name}
+          </button>
+        ))}
+      </div>
 
-            <div className="p-3 bg-gray-50 rounded border border-gray-200">
-              <h3 className="text-sm font-medium mb-2 text-gray-700">API 속성</h3>
-              <div className="text-sm text-gray-600">
-                <p>
-                  <span className="font-medium">메서드:</span> GET
-                </p>
-                <p>
-                  <span className="font-medium">경로:</span> /api/diagrams
-                </p>
-                <p>
-                  <span className="font-medium">상태:</span> 활성화
-                </p>
-              </div>
-            </div>
+      {selectedDtoData && (
+        <div className="flex-1 overflow-auto border rounded-md p-3">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-bold">{selectedDtoData.name}</h3>
+            <button onClick={() => setSelectedDto(null)} className="p-1 hover:bg-gray-100 rounded-full">
+              <X className="w-4 h-4" />
+            </button>
           </div>
+          <p className="text-sm text-gray-600 mb-2">{selectedDtoData.description}</p>
+          <pre className="text-xs font-mono bg-gray-50 p-3 rounded-md border border-gray-200 overflow-auto">{selectedDtoData.body}</pre>
         </div>
-      ) : (
-        <div className="flex justify-center items-center h-[calc(100%-4rem)] text-gray-500">데이터가 없습니다</div>
       )}
+
+      {!selectedDtoData && <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">DTO를 선택하면 상세 정보가 표시됩니다.</div>}
     </div>
   )
 }
