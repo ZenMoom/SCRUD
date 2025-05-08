@@ -19,13 +19,16 @@ public class ApiSpecVersionAssembler {
 
 		// version
 		int version = inDto.getVersion() != null ? inDto.getVersion() : 1;
+		// apiGroup
+		String[] segments = inDto.getEndpoint().split("/");
+		String apiGroup = segments.length >= 4 ? segments[3] : "default";
 
 		return switch (inDto.getHttpMethod()) {
 
 			case GET -> GetApiSpecVersion.builder()
 			.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
@@ -38,7 +41,7 @@ public class ApiSpecVersionAssembler {
 			case POST -> PostApiSpecVersion.builder()
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
@@ -52,7 +55,7 @@ public class ApiSpecVersionAssembler {
 			case PUT -> PutApiSpecVersion.builder()
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
@@ -65,7 +68,7 @@ public class ApiSpecVersionAssembler {
 			case PATCH -> PatchApiSpecVersion.builder()
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
@@ -78,7 +81,7 @@ public class ApiSpecVersionAssembler {
 			case DELETE -> DeleteApiSpecVersion.builder()
 					.userId(inDto.getUserId())
 					.endpoint(inDto.getEndpoint())
-					.apiGroup(inDto.getApiGroup())
+					.apiGroup(apiGroup)
 					.version(version)
 					.summary(inDto.getSummary())
 					.description(inDto.getDescription())
