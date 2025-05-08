@@ -22,10 +22,9 @@ export default function TestPage() {
   useEffect(() => {
     // 타입을 명시하여 API 응답 구조 명확화
     axios
-      .get<EnvModeResponse>("/api/env-mode")
+      .get<EnvModeResponse>("/api/api-spec")
       .then((res) => {
-        // API 응답 타입에 따라 mode 속성에 접근
-        setEnvMode(res.data.mode)
+        console.log("api-spec:", res.data)
       })
       .catch((error) => {
         console.error("환경 모드 가져오기 오류:", error)

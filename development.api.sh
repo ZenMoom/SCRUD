@@ -6,7 +6,7 @@ echo -e "\e[1;34m🔧 Shut Down: 현재 실행 중인 환경을 닫는 중 입�
 docker-compose -f ./infra/docker/docker-compose.yaml --project-directory . down swagger-ui
 
 # 포트 80을 사용하는 프로세스의 PID 찾기
-PID=$(netstat -ano | grep ":80" | grep "LISTENING" | awk '{print $5}')
+PID=$(netstat -ano | grep ":80\b" | grep "LISTENING" | awk '{print $5}')
 
 if [ -z "$PID" ]; then
   echo "포트 80 사용하는 프로세스가 없습니다."

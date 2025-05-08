@@ -13,15 +13,15 @@ COPY --from=base /app /app
 
 WORKDIR /app/ExampleService
 
-COPY ./ExampleService/gradlew .
-COPY ./ExampleService/build.gradle .
-COPY ./ExampleService/gradle gradle
+COPY ./ExampleService/gradlew /app/ExampleService
+COPY ./ExampleService/build.gradle /app/ExampleService
+COPY ./ExampleService/gradle /app/ExampleService/
 
 # gradlew에 실행 권한 부여
-RUN chmod +x ./gradlew
+RUN chmod +x /app/ExampleService/gradlew
 
 # Cache dependencies
-RUN ./gradlew dependencies --no-daemon || return 0
+RUN ./ExampleService/gradlew dependencies --no-daemon || return 0
 
 COPY ./ExampleService/src src
 
@@ -33,7 +33,7 @@ WORKDIR /app/ExampleService
 
 # 빌드 스테이지에서 생성된 JAR 파일 복사
 # 일반적인 스프링 부트 프로젝트의 JAR 경로 (프로젝트에 맞게 조정 필요)
-COPY --from=example-build /app/ExampleService/build/libs/*.jar scurd.jar
+COPY --from=example-build /app/ExampleService/build/libs/scrud.jar scurd.jar
 
 # 컨테이너 실행 시 사용할 포트 설정 (스프링 기본 포트: 8080)
 EXPOSE 8080
