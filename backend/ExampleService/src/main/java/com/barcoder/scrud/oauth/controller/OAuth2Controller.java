@@ -15,7 +15,7 @@ public class OAuth2Controller {
 
     // OAuth2 인증 시작 전에 리다이렉트 URI를 세션에 저장
     @GetMapping("/oauth2/authorize/{provider}")
-    public String authorize(@PathVariable String provider,
+    public String authorize(@PathVariable("provider") String provider,
                             @RequestParam(value = "redirect_uri", required = false) String redirectUri,
                             HttpServletRequest request) {
 
