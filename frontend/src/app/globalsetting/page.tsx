@@ -165,11 +165,6 @@ export default function GlobalSettingPage() {
   
   // 프로젝트 생성 API 호출
   const createProject = async () => {
-    if (!isRequiredCompleted()) {
-      setError("필수 항목을 모두 입력해주세요.")
-      return
-    }
-    
     // 인증 토큰 확인
     if (!token || !isAuthenticated) {
       setError("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
@@ -179,69 +174,40 @@ export default function GlobalSettingPage() {
       return;
     }
     
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
     
     try {
-      // API 요청 데이터 준비
-      const globalFiles = []
-      
-      // 파일 타입 항목들 추가
-      Object.entries(settings).forEach(([key, value]) => {
-        if (fileTypeMapping[key] && value) {
-          globalFiles.push({
-            fileName: value,
-            fileType: fileTypeMapping[key],
-            fileUrl: "",
-            fileContent: JSON.stringify({ content: value })
-          })
-        }
-      })
-      
-      // 아키텍처 구조 추가 (사용자 선택)
-      globalFiles.push({
-        fileName: `Architecture-${settings.architectureStructure}`,
-        fileType: "ARCHITECTURE_DEFAULT",
-        fileUrl: "",
-        fileContent: JSON.stringify({ type: settings.architectureStructure })
-      })
-      
-      // 보안 설정 추가
-      globalFiles.push({
-        fileName: `Security-${settings.securitySetting}`,
-        fileType: "SECURITY",
-        fileUrl: "",
-        fileContent: JSON.stringify({ type: settings.securitySetting })
-      })
-      
-      const projectData = {
-        scrudProjectDto: {
-          title: settings.title,
-          description: settings.description,
-          serverUrl: settings.serverUrl
-        },
-        globalFiles: globalFiles
-      }
-      
-      // API 호출 - 저장된 토큰 사용
-      const response = await axios.post('/api/projects', projectData, {
+      // 사용자 입력만 전달 (데이터 가공 없이)
+      const response = await axios.post('/api/projects', settings, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
-      })
+      });
       
-      console.log('프로젝트 생성 성공:', response.data)
+      console.log('프로젝트 생성 성공:', response.data);
+      
+      // 성공 메시지 표시 (API에서 반환한 메시지 사용)
+      if (response.data.message) {
+        alert(response.data.message);
+      }
       
       // 프로젝트 생성 성공 후 메인 페이지로 이동
-      router.push('/')
+      router.push('/');
     } catch (err) {
-      console.error('프로젝트 생성 오류:', err)
-      setError('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.')
+      console.error('프로젝트 생성 오류:', err);
+      
+      // API 라우트에서 반환한 오류 메시지 사용
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <main className="p-4">

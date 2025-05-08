@@ -193,9 +193,9 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white rounded-md p-4 w-full max-w-4xl max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold flex items-center">
+      <div className="bg-white rounded-md p-10 w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center mb-4 ">
+          <h2 className="text-lg font-semibold flex items-center ">
             <span className="mr-2"><Github size={20} /></span> GitHub에서 파일 추가
           </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -268,7 +268,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
             </div>
           ) : !selectedRepo ? (
             <div className="flex justify-center items-center h-full">
-              <p className="text-gray-500">레포지토리리를 선택하세요.</p>
+              <p className="text-gray-500">레포지토리를 선택하세요.</p>
             </div>
           ) : contents.length === 0 ? (
             <div className="flex justify-center items-center h-full">

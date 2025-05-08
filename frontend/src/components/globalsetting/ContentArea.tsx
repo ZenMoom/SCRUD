@@ -63,7 +63,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
     errorCode: "file",
     securitySetting: "radio",
     codeConvention: "file",
-    architectureStructure: "radio",
+    architectureStructure: "architecture",
   }
 
   // 라디오 버튼 옵션

@@ -19,6 +19,7 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
+  const [architectureMode, setArchitectureMode] = useState<'options' | 'github'>('options')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
 
@@ -196,6 +197,90 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
             ))}
           </div>
         )
+      case "architecture":
+        return (
+          <>
+            {architectureMode === 'options' ? (
+              <div className="flex flex-col gap-3">
+                {options?.map((option) => (
+                  <label key={option.value} className="flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-150">
+                    <input
+                      type="radio"
+                      name={title}
+                      value={option.value}
+                      checked={value === option.value}
+                      onChange={() => {
+                        onChange(option.value)
+                        if (onFocus) onFocus()
+                      }}
+                      className="w-4 h-4 text-blue-500 focus:ring-blue-500"
+                    />
+                    <span className="ml-3 text-base">{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <div className="w-full">
+                <div
+                  className={`flex flex-col items-center justify-center p-8 border-2 border-dashed ${
+                    dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"
+                  } rounded-lg cursor-pointer relative transition-all duration-200 hover:border-blue-500 hover:bg-gray-100`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => {
+                    setDropdownOpen(!dropdownOpen)
+                    if (onFocus) onFocus()
+                  }}
+                  ref={buttonRef}
+                >
+                  <div className="flex flex-col items-center justify-center w-full">
+                    <Upload size={24} className="text-gray-500 mb-2" />
+                    <span className="text-sm text-gray-500 my-2">아키텍처 파일을 추가하세요.</span>
+                  </div>
+
+                  {dropdownOpen && (
+                    <div className="absolute top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-10" ref={dropdownRef}>
+                      <button type="button" className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 first:rounded-t-lg" onClick={handleGithubUpload}>
+                        <Github size={16} className="text-gray-500" />
+                        <span>GitHub에서 가져오기</span>
+                      </button>
+                      <button type="button" className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 last:rounded-b-lg" onClick={handleFileUpload}>
+                        <File size={16} className="text-gray-500" />
+                        <span>파일 업로드</span>
+                      </button>
+                    </div>
+                  )}
+
+                  <input
+                    id={`file-upload-${title}`}
+                    type="file"
+                    className="hidden"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      if (e.target.files && e.target.files[0]) {
+                        onChange(e.target.files[0].name)
+                      }
+                    }}
+                  />
+                </div>
+                {value && (
+                  <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
+                    <File size={16} className="text-gray-500" />
+                    <span>{value}</span>
+                  </div>
+                )}
+                
+                {/* GitHub 레포지토리 브라우저 모달 */}
+                <GitHubRepoBrowser 
+                  isOpen={isGitHubModalOpen} 
+                  onClose={() => setIsGitHubModalOpen(false)} 
+                  onSelect={handleGitHubFileSelect} 
+                />
+              </div>
+            )}
+          </>
+        )
       default:
         return null
     }
@@ -213,6 +298,31 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
         >
           <HelpCircle size={20} />
         </button>
+        
+        {/* 아키텍처 구조 타입일 경우에만 모드 전환 버튼 표시 */}
+        {type === "architecture" && (
+          <button
+            type="button"
+            onClick={() => {
+              // GitHub 모드로 변경시 value 초기화
+              if (architectureMode === 'options') {
+                onChange(''); // 값을 비웁니다
+              }
+              setArchitectureMode(architectureMode === 'options' ? 'github' : 'options');
+            }}
+            className="ml-auto text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md transition flex items-center gap-1"
+          >
+            {architectureMode === 'options' ? (
+              <>
+                <span>파일 업로드하기</span>
+              </>
+            ) : (
+              <>
+                <span>옵션에서 선택</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
       {renderInput()}
     </div>
