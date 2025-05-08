@@ -5,11 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import useAuthStore from "./store/useAuthStore"
 import ProjectCard from "@/components/project-card/project-card"
 import ProjectForm from "@/components/project-card/project-form"
-<<<<<<< HEAD
 import { Project } from "@/components/project-card/project-card"
 import Image from "next/image"
-=======
->>>>>>> develop
 
 // API 요청 더미 함수 (나중에 실제 API로 교체)
 const getProjects = async (): Promise<Project[]> => {
@@ -150,7 +147,7 @@ function LoadingFallback() {
 }
 
 // 실제 홈 페이지 내용 컴포넌트
-function HomeContent() {
+export default function Home() {
   // 인증 및 라우터
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -220,7 +217,7 @@ function HomeContent() {
     }
   }, [isAuthenticated, router])
 
-  // 프로젝트 데이터 로드
+  // 프로젝트 로드
   useEffect(() => {
     const loadProjects = async () => {
       setLoading(true)
@@ -236,19 +233,14 @@ function HomeContent() {
       }
     }
 
-    useEffect(() => {
-      if (isAuthenticated) {
-        loadProjects()
-      }
-    }, [isAuthenticated])
+    loadProjects()
+  }, [])
 
-        
-
-  // 새 프로젝트 생성 함수
   const handleNewProject = () => {
-    
+    // 프로젝트 생성 후 API Creator 페이지로 이동
     window.location.href = "/globalsetting"
-    
+    // 또는 Next.js의 라우터를 사용할 경우:
+    // router.push("/api-creator");
   }
 
   // 프로젝트 편집 함수
@@ -388,14 +380,5 @@ function HomeContent() {
         </div>
       )}
     </div>
-  )
-}
-
-// 메인 페이지 래퍼 컴포넌트
-export default function Home() {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <HomeContent />
-    </Suspense>
   )
 }
