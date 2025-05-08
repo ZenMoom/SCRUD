@@ -2,9 +2,9 @@
 
 import { useRef, useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from 'next/navigation'
-import Sidebar from "@/components/globalsetting/sidebar"
-import ContentArea from "@/components/globalsetting/contentarea"
-import Floatingbutton from "@/components/globalsetting/floatingbutton"
+import Sidebar from "@/components/globalsetting/Sidebar"
+import ContentArea from "@/components/globalsetting/ContentArea"
+import Floatingbutton from "@/components/globalsetting/FloatingButton"
 import axios from "axios"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
 
@@ -215,7 +215,7 @@ export default function GlobalSettingPage() {
       const response = await axios.post('/api/projects', projectData, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiMmNiOWNkZmYtMDA5ZC00N2EwLTkyNTItODEyMTE1OTJjMjAyIiwiaWF0IjoxNzQ2NjA2NzEyLCJleHAiOjE3NDY2MTI3MTJ9.ODGGlqmO01arCmCDY6ctUdnM3y5Xis426rA09dJYKKA'
+          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsInVzZXJuYW1lIjoidmphd2IyMjYyQGdtYWlsLmNvbSIsImlkIjoiNzI0MDhkZmEtM2EzYy00YjE0LTg1MzAtYjUyZmVlMzhjMmZmIiwiaWF0IjoxNzQ2NjY5MzQ3LCJleHAiOjE3NDY2NzUzNDd9.mXIm7RYlyxjCuwU1rggcHXgfQPhMBYUutKCIn-QE6lI'
         }
       })
       

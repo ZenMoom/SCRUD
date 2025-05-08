@@ -3,8 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
-import FormItem from "./form"
-import InfoModal from "./infomodal"
+import FormItem from "./Form"
+import InfoModal from "./InfoModal"
 
 interface ContentAreaProps {
   settings: Record<string, string>
