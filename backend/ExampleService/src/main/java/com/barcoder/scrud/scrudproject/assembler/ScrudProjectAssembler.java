@@ -20,7 +20,6 @@ import java.util.Map;
 @Slf4j
 @Component
 @Transactional
-@RequiredArgsConstructor
 public class ScrudProjectAssembler {
 
     public ScrudProject toScrudProject(CreateProjectIn inDto) {
