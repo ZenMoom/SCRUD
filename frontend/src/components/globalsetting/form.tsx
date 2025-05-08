@@ -2,6 +2,8 @@
 
 import { forwardRef, useState, useEffect, useRef } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
+import { getGitHubAuthUrl } from "@/auth/github"
+import axios from 'axios'
 
 interface FormItemProps {
   title: string
@@ -58,10 +60,60 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
     document.getElementById(`file-upload-${title}`)?.click()
   }
 
-  const handleGithubUpload = () => {
+  const handleGithubUpload = async () => {
     setDropdownOpen(false)
-    // GitHub 연결 로직 (여기서는 파일명만 설정)
-    onChange(`GitHub: ${title} 파일`)
+    
+    // 1. 깃허브 토큰 확인
+    const githubToken = localStorage.getItem('github-token-direct');
+    if (!githubToken) {
+      // 명시적인 리다이렉트 URI
+      const redirectUri = 'http://localhost:3000/globalsetting';
+      
+      // OAuth URL 생성
+      const oauthUrl = getGitHubAuthUrl(redirectUri);
+      
+      console.log('GitHub 인증 요청:', oauthUrl);
+      window.location.href = oauthUrl;
+      return;
+    }
+    
+    // 2. 깃허브 토큰이 있으면 레포지토리 조회 시도
+    try {
+      // GitHub 레포지토리 정보 가져오기 시도
+      console.log("===== GitHub 토큰 디버깅 정보 =====");
+      console.log(`GitHub 토큰 존재: 길이 ${githubToken.length}`);
+      console.log(`GitHub 토큰 첫 부분: ${githubToken.substring(0, 20)}...`);
+      
+      // API 직접 호출
+      const response = await axios.get('/api/github/user/repos', {
+        headers: {
+          'Authorization': `Bearer ${githubToken}`
+        }
+      });
+      
+      const repositories = response.data;
+      
+      // 가져온 첫 번째 레포지토리 이름을 폼 필드에 설정
+      if (repositories && repositories.length > 0) {
+        onChange(repositories[0].name);
+        console.log(`첫 번째 레포지토리(${repositories[0].name})를 선택했습니다.`);
+      } else {
+        console.log('사용 가능한 GitHub 레포지토리가 없습니다.');
+      }
+    } catch (error) {
+      console.error('GitHub 레포지토리 가져오기 실패:', error);
+      let errorMessage = '알 수 없는 오류가 발생했습니다.';
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          errorMessage = 'GitHub 인증이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요.';
+        } else if (error.response?.status === 403) {
+          errorMessage = 'GitHub API 요청 한도를 초과했거나 권한이 없습니다.';
+        } else {
+          errorMessage = `GitHub API 오류: ${error.response?.status || '알 수 없는 오류'} - ${error.message}`;
+        }
+      }
+      alert(errorMessage);
+    }
   }
 
   const renderInput = () => {

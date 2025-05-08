@@ -5,8 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation"
 import useAuthStore from "./store/useAuthStore"
 import ProjectCard from "@/components/project-card/project-card"
 import ProjectForm from "@/components/project-card/project-form"
+<<<<<<< HEAD
 import { Project } from "@/components/project-card/project-card"
 import Image from "next/image"
+=======
+>>>>>>> develop
 
 // API 요청 더미 함수 (나중에 실제 API로 교체)
 const getProjects = async (): Promise<Project[]> => {
@@ -233,14 +236,19 @@ function HomeContent() {
       }
     }
 
-    if (isAuthenticated) {
-      loadProjects()
-    }
-  }, [isAuthenticated])
+    useEffect(() => {
+      if (isAuthenticated) {
+        loadProjects()
+      }
+    }, [isAuthenticated])
+
+        
 
   // 새 프로젝트 생성 함수
   const handleNewProject = () => {
-    window.location.href = "/api-creator"
+    
+    window.location.href = "/globalsetting"
+    
   }
 
   // 프로젝트 편집 함수
