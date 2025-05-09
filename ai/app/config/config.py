@@ -9,7 +9,7 @@ class Settings:
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_API_BASE: str = os.getenv("OPENAI_API_BASE", "")
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-    KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+    KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "host.docker.internal:9092")
     print(f"연결 시도 주소: {KAFKA_BOOTSTRAP_SERVERS}")  # 디버깅용
     KAFKA_CONSUMER_GROUP: str = os.getenv("KAFKA_CONSUMER_GROUP", "diagram-ai-group")
     KAFKA_TOPIC_DIAGRAM_REQUEST: str = os.getenv("KAFKA_TOPIC_DIAGRAM_REQUEST", "diagram-requests")
