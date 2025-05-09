@@ -1,55 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import axios from 'axios';
+import { NextRequest, NextResponse } from "next/server";
+import { Configuration } from "@generated/configuration";
+import { ScrudProjectApi } from "@generated/api";
 
-// 파일 타입 인터페이스 정의
-interface GlobalFile {
-  fileName: string;
-  fileType: string;
-  fileUrl: string;
-  fileContent: string;
-}
-
-interface ProjectData {
-  scrudProjectDto: {
-    title: string;
-    description: string;
-    serverUrl?: string;
-  };
-  globalFiles: GlobalFile[];
-}
-
-interface Settings {
-  title: string;
-  description: string;
-  serverUrl: string;
-  requirementSpec: string;
-  erd: string;
-  dependencyFile: string;
-  utilityClass: string;
-  errorCode: string;
-  securitySetting: string;
-  codeConvention: string;
-  architectureStructure: string;
-  [key: string]: string;
-}
-
-// 파일 타입을 백엔드 API의 FileTypeEnumDto와 매핑
-const fileTypeMapping: Record<string, string> = {
-  'requirementSpec': 'REQUIREMENTS',
-  'erd': 'ERD',
-  'utilityClass': 'UTIL',
-  'codeConvention': 'CONVENTION',
-  'dependencyFile': 'DEPENDENCY',
-  'errorCode': 'ERROR_CODE',
-  'securitySetting': 'SECURITY',
-  'architectureStructure': 'ARCHITECTURE_DEFAULT'
-};
-
-// POST 요청 처리
+// POST: 프로젝트 생성
 export async function POST(request: NextRequest) {
   try {
     // 요청 본문 및 헤더 가져오기
-    const settings = await request.json() as Settings;
+    const settings = await request.json();
     const authorization = request.headers.get('Authorization');
     
     // 인증 토큰이 없으면 401 에러 반환
@@ -68,8 +25,23 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // API 요청 데이터 준비 (페이지에서 이동된 로직)
-    const globalFiles: GlobalFile[] = [];
+    // API 기본 URL 설정
+    const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
+    
+    // 글로벌 파일 준비
+    const globalFiles = [];
+    
+    // 파일 타입 매핑 
+    const fileTypeMapping: Record<string, string> = {
+      'requirementSpec': 'REQUIREMENTS',
+      'erd': 'ERD',
+      'utilityClass': 'UTIL',
+      'codeConvention': 'CONVENTION',
+      'dependencyFile': 'DEPENDENCY',
+      'errorCode': 'ERROR_CODE',
+      'securitySetting': 'SECURITY',
+      'architectureStructure': 'ARCHITECTURE_DEFAULT'
+    };
     
     // 파일 타입 항목들 추가
     Object.entries(settings).forEach(([key, value]) => {
@@ -84,9 +56,14 @@ export async function POST(request: NextRequest) {
     });
     
     // 아키텍처 구조 추가
+    const architectureFileType = 
+      settings.architectureStructure.startsWith('github:') 
+        ? 'ARCHITECTURE_GITHUB' 
+        : 'ARCHITECTURE_DEFAULT';
+    
     globalFiles.push({
       fileName: `Architecture-${settings.architectureStructure}`,
-      fileType: "ARCHITECTURE_DEFAULT",
+      fileType: architectureFileType,
       fileUrl: "",
       fileContent: JSON.stringify({ type: settings.architectureStructure })
     });
@@ -94,69 +71,113 @@ export async function POST(request: NextRequest) {
     // 보안 설정 추가
     globalFiles.push({
       fileName: `Security-${settings.securitySetting}`,
-      fileType: "SECURITY",
+      fileType: 'SECURITY',
       fileUrl: "",
       fileContent: JSON.stringify({ type: settings.securitySetting })
     });
     
-    // 최종 프로젝트 데이터 구성
-    const projectData: ProjectData = {
+    // 프로젝트 데이터 구성
+    const createProjectRequest = {
       scrudProjectDto: {
         title: settings.title,
         description: settings.description,
         serverUrl: settings.serverUrl
       },
-      globalFiles: globalFiles
+      globalFiles
     };
     
-    // 파일 데이터 검증
-    if (globalFiles.length === 0) {
-      return NextResponse.json({ message: '최소 하나 이상의 파일이 필요합니다.' }, { status: 400 });
-    }
-    
-    // 백엔드로 요청
-    const response = await axios.post('http://localhost:8080/api/v1/projects', projectData, {
+    // API 클라이언트 설정
+    const config = new Configuration({
+      basePath: apiUrl,
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': authorization
       }
     });
     
-    // 응답 데이터 가공 (필요한 정보만 추출하여 반환)
-    const { id, title, createdAt } = response.data;
+    // ScrudProjectApi 인스턴스 생성
+    const scrudProjectApi = new ScrudProjectApi(config);
     
-    return NextResponse.json({ 
-      id, 
-      title, 
-      createdAt,
-      message: '프로젝트가 성공적으로 생성되었습니다.' 
-    }, { status: 201 });
+    // API 호출
+    const response = await scrudProjectApi.createProject(createProjectRequest);
     
-  } catch (error) {
+    return NextResponse.json(response.data, { status: 201 });
+    
+  } catch (error: unknown) {
     console.error('프로젝트 생성 API 오류:', error);
     
-    // axios 에러 객체에서 응답 정보 추출
-    if (axios.isAxiosError(error) && error.response) {
-      // 백엔드 오류 메시지를 가공하여 더 사용자 친화적인 메시지로 변환
-      let errorMessage = '요청 처리 중 오류가 발생했습니다.';
-      
-      if (error.response.status === 400) {
-        errorMessage = '잘못된 요청 형식입니다. 입력 내용을 확인해주세요.';
-      } else if (error.response.status === 401 || error.response.status === 403) {
-        errorMessage = '인증에 실패했습니다. 다시 로그인해주세요.';
-      } else if (error.response.status >= 500) {
-        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    let status = 500;
+    let message = '서버 오류가 발생했습니다.';
+    
+    if (error instanceof Error) {
+      if ('status' in error) {
+        status = (error as any).status;
+        
+        if (status === 400) {
+          message = '잘못된 요청 형식입니다. 입력 내용을 확인해주세요.';
+        } else if (status === 401 || status === 403) {
+          message = '인증에 실패했습니다. 다시 로그인해주세요.';
+        }
       }
-      
-      return NextResponse.json({ 
-        message: errorMessage,
-        details: error.response.data
-      }, { status: error.response.status });
     }
     
-    return NextResponse.json(
-      { message: '서버 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message }, { status });
   }
-} 
+}
+
+// GET: 프로젝트 전체 목록 조회
+export async function GET(request: NextRequest) {
+  try {
+    // API 기본 URL 설정
+    const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
+    const authorization = request.headers.get('Authorization');
+    
+    // 인증 토큰이 없으면 401 에러 반환
+    if (!authorization) {
+      return NextResponse.json({ message: '인증 정보가 필요합니다.' }, { status: 401 });
+    }
+    
+    // URL에서 페이지네이션 파라미터 추출
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const size = parseInt(url.searchParams.get('size') || '10');
+    
+    // API 클라이언트 설정
+    const config = new Configuration({
+      basePath: apiUrl,
+      headers: {
+        'Authorization': authorization
+      }
+    });
+    
+    // ScrudProjectApi 인스턴스 생성
+    const scrudProjectApi = new ScrudProjectApi(config);
+    
+    // API 호출 (페이지네이션 포함)
+    const response = await scrudProjectApi.getAllProjects({
+      page: page,
+      size: size
+    });
+    
+    return NextResponse.json(response.data);
+    
+  } catch (error: unknown) {
+    console.error('프로젝트 조회 API 오류:', error);
+    
+    let status = 500;
+    let message = '서버 오류가 발생했습니다.';
+    
+    if (error instanceof Error) {
+      if ('status' in error) {
+        status = (error as any).status;
+        
+        if (status === 401 || status === 403) {
+          message = '인증에 실패했습니다. 다시 로그인해주세요.';
+        } else if (status === 404) {
+          message = '프로젝트를 찾을 수 없습니다.';
+        }
+      }
+    }
+    
+    return NextResponse.json({ message }, { status });
+  }
+}
