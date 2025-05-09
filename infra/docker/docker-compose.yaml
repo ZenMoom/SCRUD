@@ -73,10 +73,7 @@ services:
     ports:
       - "8081:4010"
     command: "mock -h 0.0.0.0 /tmp/openapi.yaml"
-    
-    depends_on:
-      api-compiler:
-        condition: service_completed_successfully
+
   swagger-ui:
     image: swaggerapi/swagger-ui:v5.20.2
     restart: always

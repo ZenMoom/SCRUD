@@ -5,6 +5,7 @@ import com.barcoder.scrud.global.common.error.ErrorStatus;
 import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.scrudproject.application.dto.in.AddGlobalFileIn;
 import com.barcoder.scrud.scrudproject.application.dto.in.CreateProjectIn;
+import com.barcoder.scrud.scrudproject.application.dto.in.UpdateProjectIn;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllGlobalFileOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllScrudProjectOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.GlobalFileOut;
@@ -81,7 +82,23 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         return outDto;
     }
 
-    // 3. 전역 파일 개별 추가
+    // 3. 프로젝트 설정 수정
+    @Override
+    public ScrudProjectOut updateScrudProject(UpdateProjectIn inDto) {
+
+        getUser(inDto.getUserId());
+
+        ScrudProject project = scrudProjectAssembler.toScrudProject(inDto);
+
+        ScrudProject originalProject = scrudProjectRepository.findById(project.getScrudProjectId())
+            .orElseThrow(() -> new ExceptionHandler(ErrorStatus.SCRUDPROJECT_NOT_FOUND));
+
+        originalProject.update(project);
+
+        return modelMapper.map(originalProject, ScrudProjectOut.class);
+    }
+
+    // 4. 전역 파일 개별 추가
     @Override
     public void addGlobalFile(AddGlobalFileIn inDto) {
 
@@ -95,7 +112,7 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         project.addGlobalFile(globalFile);
     }
 
-    // 4. 전역 파일 개별 삭제
+    // 5. 전역 파일 개별 삭제
     @Override
     public void deleteGlobalFile(Long projectId, Long globalFileId, UUID userId) {
         getUser(userId);
@@ -116,7 +133,7 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         project.getGlobalFileList().remove(globalFile);
     }
 
-    // 5. 해당 프로젝트의 전체 전역 설정 파일 가져오기
+    // 6. 해당 프로젝트의 전체 전역 설정 파일 가져오기
     @Override
     public AllGlobalFileOut getAllGlobalFile(Long projectId, UUID userId) {
         getUser(userId);
