@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Sidebar from "@/components/globalsetting/Sidebar"
 import ContentArea from "@/components/globalsetting/ContentArea"
 import Floatingbutton from "@/components/globalsetting/FloatingButton"
-import axios from "axios"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
 import useAuthStore from "@/app/store/useAuthStore"
 
@@ -13,18 +12,6 @@ import useAuthStore from "@/app/store/useAuthStore"
 type SettingKey = 'title' | 'description' | 'serverUrl' | 'requirementSpec' | 'erd' | 
                  'dependencyFile' | 'utilityClass' | 'errorCode' | 'securitySetting' | 
                  'codeConvention' | 'architectureStructure';
-
-// 파일 타입을 백엔드 API의 FileTypeEnumDto와 매핑
-const fileTypeMapping: Record<string, string> = {
-  'requirementSpec': 'REQUIREMENTS',
-  'erd': 'ERD',
-  'utilityClass': 'UTIL',
-  'codeConvention': 'CONVENTION',
-  'dependencyFile': 'DEPENDENCY',
-  'errorCode': 'ERROR_CODE',
-  'securitySetting': 'SECURITY',
-  'architectureStructure': 'ARCHITECTURE_DEFAULT'
-}
 
 // 토큰 처리 컴포넌트
 function TokenHandler() {
@@ -163,7 +150,7 @@ export default function GlobalSettingPage() {
     return completed.title && completed.description && completed.requirementSpec && completed.erd
   }
   
-  // 프로젝트 생성 API 호출
+  // 프로젝트 생성 버튼 클릭 핸들러
   const createProject = async () => {
     // 인증 토큰 확인
     if (!token || !isAuthenticated) {
@@ -174,36 +161,41 @@ export default function GlobalSettingPage() {
       return;
     }
     
+    console.log('클라이언트에서 사용하는 토큰:', token);
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      // 사용자 입력만 전달 (데이터 가공 없이)
-      const response = await axios.post('/api/projects', settings, {
+      // Next.js API 라우트 호출
+      console.log('API 라우트 호출 시작');
+      const response = await fetch('/api/projects', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}` // Bearer 접두어 추가
+        },
+        body: JSON.stringify(settings)
       });
       
-      console.log('프로젝트 생성 성공:', response.data);
+      console.log('함수 호출 함', `Bearer ${token}`);
+      console.log('응답 상태:', response.status);
       
-      // 성공 메시지 표시 (API에서 반환한 메시지 사용)
-      if (response.data.message) {
-        alert(response.data.message);
+      // 응답 본문 로깅 (스트림은 한 번만 읽을 수 있으므로 복제)
+      const responseClone = response.clone();
+      const responseText = await responseClone.text();
+      console.log('응답 본문:', responseText);
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || '프로젝트 생성 실패');
       }
       
-      // 프로젝트 생성 성공 후 메인 페이지로 이동
+      // 성공 시 메인 페이지로 이동
       router.push('/');
     } catch (err) {
       console.error('프로젝트 생성 오류:', err);
-      
-      // API 라우트에서 반환한 오류 메시지 사용
-      if (axios.isAxiosError(err) && err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
-      }
+      setError(err instanceof Error ? err.message : '프로젝트 생성 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }

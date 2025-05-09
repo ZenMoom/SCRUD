@@ -62,55 +62,24 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
   }
 
   const handleGithubUpload = async () => {
-    setDropdownOpen(false);
+    setDropdownOpen(false)
     
     // 1. 깃허브 토큰 확인
     const githubToken = localStorage.getItem('github-token-direct');
-    
-    try {
-      if (githubToken) {
-        // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
-        console.log('GitHub 토큰 유효성 확인 중...');
-        
-        // 간단한 API 호출로 토큰 유효성 확인 - 사용자 레포지토리 목록 요청
-        const response = await fetch('/api/github/user/repos', {
-          headers: {
-            'Authorization': `Bearer ${githubToken}`
-          }
-        });
-        
-        if (response.ok) {
-          // 토큰이 유효한 경우 모달 열기
-          console.log('GitHub 토큰 유효함, 모달 열기');
-          setIsGitHubModalOpen(true);
-        } else {
-          // 토큰이 유효하지 않은 경우 (401 등)
-          console.error('GitHub 토큰이 유효하지 않음, 재인증 요청');
-          
-          // 토큰 삭제
-          localStorage.removeItem('github-token-direct');
-          
-          // 인증 요청
-          const redirectUri = 'http://localhost:3000/globalsetting';
-          const oauthUrl = getGitHubAuthUrl(redirectUri);
-          window.location.href = oauthUrl;
-        }
-      } else {
-        // 토큰이 없는 경우 바로 인증 요청
-        console.log('GitHub 토큰 없음, 인증 요청');
-        const redirectUri = 'http://localhost:3000/globalsetting';
-        const oauthUrl = getGitHubAuthUrl(redirectUri);
-        window.location.href = oauthUrl;
-      }
-    } catch (error) {
-      console.error('GitHub 토큰 검증 중 오류 발생:', error);
-      
-      // 오류 발생시 토큰 삭제 후 재인증
-      localStorage.removeItem('github-token-direct');
+    if (!githubToken) {
+      // 명시적인 리다이렉트 URI
       const redirectUri = 'http://localhost:3000/globalsetting';
+      
+      // OAuth URL 생성
       const oauthUrl = getGitHubAuthUrl(redirectUri);
+      
+      console.log('GitHub 인증 요청:', oauthUrl);
       window.location.href = oauthUrl;
+      return;
     }
+    
+    // GitHub 모달 열기
+    setIsGitHubModalOpen(true);
   }
 
   // GitHub 파일 선택 처리
