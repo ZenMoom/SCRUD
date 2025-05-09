@@ -650,6 +650,23 @@ paths:
       tags:
       - ScrudProject
       x-spring-paginated: true
+    patch:
+      description: "프로젝트 제목, 설명, 서버url 수정"
+      operationId: updateScrudProject
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScrudProjectDto'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrudProjectDto'
+          description: 프로젝트 설정
+      tags:
+      - ScrudProject
     post:
       description: "프로젝트 생성 API. 전역 파일 추가 주의사항! 아키텍처 구조도는 사용자 선택일 경우 ARCHITECTURE_DEFAULT,\
         \ 깃허브 연동해서 올리는 경우엔 ARCHITECTURE_GITHUB 로 부탁해요! 그리고 fileContent: JSON.stringify(fileContent)\
@@ -1275,6 +1292,12 @@ components:
           schema:
             $ref: '#/components/schemas/ScrudProjectPageDto'
       description: 프로젝트 목록
+    ScrudProjectResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ScrudProjectDto'
+      description: 프로젝트 설정
     GlobalFileListResponse:
       content:
         application/json:
@@ -2796,9 +2819,13 @@ components:
       - ERD
       - UTIL
       - CONVENTION
+      - CONVENTION_DEFAULT
       - DEPENDENCY
       - ERROR_CODE
       - SECURITY
+      - SECURITY_DEFAULT_JWT
+      - SECURITY_DEFAULT_SESSION
+      - SECURITY_DEFAULT_NONE
       - ARCHITECTURE_DEFAULT
       - ARCHITECTURE_GITHUB
       type: string
