@@ -3,8 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
-import FormItem from "./form"
-import InfoModal from "./infomodal"
+import FormItem from "./Form"
+import InfoModal from "./InfoModal"
 
 interface ContentAreaProps {
   settings: Record<string, string>
@@ -63,7 +63,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
     errorCode: "file",
     securitySetting: "radio",
     codeConvention: "file",
-    architectureStructure: "radio",
+    architectureStructure: "architecture",
   }
 
   // 라디오 버튼 옵션
