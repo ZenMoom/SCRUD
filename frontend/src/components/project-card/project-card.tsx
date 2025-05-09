@@ -10,6 +10,7 @@ export interface Project {
   description: string
   createdAt: string
   emoji?: string // 이모지 필드 추가 (선택적)
+  serverUrl?: string // 서버 URL 추가
 }
 
 interface ProjectCardProps {
