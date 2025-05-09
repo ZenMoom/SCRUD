@@ -63,7 +63,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
 
   return (
     <Link
-      href={`/project/${project.id}`}
+      href={`/project/${project.id}/api`}
       className="flex flex-col p-6 h-[220px] rounded-xl text-inherit no-underline border border-gray-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
       style={{ backgroundColor }}
     >
@@ -78,8 +78,16 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
         <p className="text-sm leading-tight text-gray-600 max-h-[40px]">{truncatedDescription}</p>
       </div>
 
-      {/* 날짜 */}
-      <div className="text-xs text-gray-500 text-right mt-auto">{project.createdAt}</div>
+      {/* 날짜와 API 편집 문구 */}
+      <div className="flex justify-between items-center mt-auto">
+        <div className="text-xs text-gray-500">{project.createdAt}</div>
+        <div className="flex items-center text-sm text-blue-600 font-medium">
+          API 편집
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
     </Link>
   )
 }
