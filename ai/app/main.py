@@ -3,6 +3,8 @@ import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.api_routes import api_router
 from app.config.config import settings
 from app.infrastructure.kafka.consumer import kafka_consumer
 from app.infrastructure.kafka.producer import kafka_producer
@@ -35,7 +37,8 @@ async def lifespan(app: FastAPI):
     logger.info("Kafka clients stopped")
 
 # FastAPI 앱 생성에 lifespan 추가
-app = FastAPI(title="FastAPI Kafka Tutorial", lifespan=lifespan)
+# app = FastAPI(title="FastAPI Kafka Tutorial", lifespan=lifespan)
+app = FastAPI()
 # CORS 미들웨어 설정
 app.add_middleware(
     CORSMiddleware,
@@ -46,6 +49,7 @@ app.add_middleware(
 )
 # 라우터 포함
 app.include_router(router)
+app.include_router(api_router, prefix="/api/v1")
 
 # 직접 실행 시 서버 시작
 if __name__ == "__main__":
