@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useCallback, useEffect, useState } from "react"
 import ReactFlow, { Background, Controls, type Edge, type Node, useNodesState, useEdgesState, MiniMap, Panel } from "reactflow"
+import { Map, MapPinOffIcon as MapOff } from "lucide-react"
 import "reactflow/dist/style.css"
 import type { DiagramResponse } from "@generated/model"
 import { MethodNode } from "./nodes/MethodNode"
@@ -41,6 +42,33 @@ const METHOD_VERTICAL_SPACING = 30 // 메서드 간 수직 간격
 const CLASS_PADDING_TOP = 100 // 클래스 상단 패딩 (제목 영역)
 const CLASS_PADDING_BOTTOM = 50 // 클래스 하단 패딩
 
+// 컴포넌트 타입 정의
+interface DiagramComponent {
+  componentId: string
+  name: string
+  description?: string
+  type: "CLASS" | "INTERFACE"
+  positionX?: number
+  positionY?: number
+  methods?: DiagramMethod[]
+}
+
+// 메서드 타입 정의
+interface DiagramMethod {
+  methodId: string
+  signature: string
+  body?: string
+  description?: string
+}
+
+// 연결 타입 정의
+interface DiagramConnection {
+  connectionId: string
+  sourceMethodId: string
+  targetMethodId: string
+  type: string
+}
+
 type DiagramContainerProps = {
   diagramData: DiagramResponse | null
   loading: boolean
@@ -52,11 +80,14 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
 
+  // MiniMap 표시 여부를 제어하는 상태 추가
+  const [showMiniMap, setShowMiniMap] = useState(true)
+
   // 노드 초기 위치를 저장할 상태 추가
   const [initialNodePositions, setInitialNodePositions] = useState<Record<string, { x: number; y: number }>>({})
 
   // 메서드 노드의 위치와 클래스 노드의 크기를 계산하는 함수
-  const calculateLayout = useCallback((components: any[], expandedNodeIds: Set<string>, savedPositions: Record<string, { x: number; y: number }>) => {
+  const calculateLayout = useCallback((components: DiagramComponent[], expandedNodeIds: Set<string>, savedPositions: Record<string, { x: number; y: number }>) => {
     const newNodes: Node[] = []
     const methodIdToNodeId: Record<string, string> = {}
     const updatedPositions: Record<string, { x: number; y: number }> = { ...savedPositions }
@@ -80,7 +111,7 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
       const methodNodes: Node[] = []
 
       if (component.methods) {
-        component.methods.forEach((method: any, methodIndex: number) => {
+        component.methods.forEach((method) => {
           const methodNodeId = `method-${method.methodId}`
           methodIdToNodeId[method.methodId] = methodNodeId
 
@@ -152,7 +183,7 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
     console.log("다이어그램 데이터 처리 시작:", diagramData)
 
     // 노드 레이아웃 계산 (초기 위치 전달)
-    const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(diagramData.components, expandedNodes, initialNodePositions)
+    const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(diagramData.components as DiagramComponent[], expandedNodes, initialNodePositions)
 
     // 초기 위치가 비어있는 경우에만 업데이트 (첫 렌더링 시에만)
     if (Object.keys(initialNodePositions).length === 0) {
@@ -162,7 +193,7 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
     // 엣지 생성
     const newEdges: Edge[] = []
     if (diagramData.connections) {
-      diagramData.connections.forEach((connection) => {
+      diagramData.connections.forEach((connection: DiagramConnection) => {
         const sourceNodeId = methodIdToNodeId[connection.sourceMethodId]
         const targetNodeId = methodIdToNodeId[connection.targetMethodId]
 
@@ -229,6 +260,11 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
     }
   }, [])
 
+  // MiniMap 토글 핸들러
+  const toggleMiniMap = useCallback(() => {
+    setShowMiniMap((prev) => !prev)
+  }, [])
+
   // 로딩 상태 표시
   if (loading) {
     return (
@@ -289,8 +325,11 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
       >
         <Background />
         <Controls />
-        <MiniMap nodeStrokeWidth={3} zoomable pannable />
 
+        {/* 조건부로 MiniMap 렌더링 */}
+        {showMiniMap && <MiniMap nodeStrokeWidth={3} zoomable pannable />}
+
+        {/* 메타데이터 패널 */}
         <Panel position="top-left" className="bg-white p-4 rounded-md shadow-md max-w-md">
           <div className="flex flex-col gap-2">
             <h2 className="text-xl font-bold">{metadata.name}</h2>
@@ -300,6 +339,13 @@ export default function DiagramContainer({ diagramData, loading, error }: Diagra
               <div>마지막 수정: {new Date(metadata.lastModified).toLocaleString()}</div>
             </div>
           </div>
+        </Panel>
+
+        {/* MiniMap 토글 버튼 */}
+        <Panel position="bottom-right" className="mb-2 mr-2">
+          <button onClick={toggleMiniMap} className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors" title={showMiniMap ? "미니맵 숨기기" : "미니맵 표시"}>
+            {showMiniMap ? <MapOff size={20} className="text-gray-600" /> : <Map size={20} className="text-gray-600" />}
+          </button>
         </Panel>
       </ReactFlow>
     </div>
