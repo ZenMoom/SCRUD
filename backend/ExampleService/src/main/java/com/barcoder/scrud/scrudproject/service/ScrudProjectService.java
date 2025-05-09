@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 public interface ScrudProjectService {
-    void createProject(CreateProjectIn inDto);
+    Long createProject(CreateProjectIn inDto);
 
     AllScrudProjectOut getAllProjects(Pageable pageable, UUID userId);
 

@@ -42,9 +42,9 @@ public class ScrudProjectController implements ScrudProjectApi {
                 .build();
 
         // 이후 단계에서 반환 타입을 권선이 정해주면 프롬프팅해서 만들어줘야 할 듯
-        scrudProjectService.createProject(inDto);
+        Long projectId = scrudProjectService.createProject(inDto);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(String.valueOf(projectId));
     }
 
     /**
@@ -126,6 +126,7 @@ public class ScrudProjectController implements ScrudProjectApi {
     // 전체 전역 설정 파일의 제목과 id 만 있으면 되고,
     // 전역 파일 상세 조회하면 개별 파일 content 내용을 반환해주면 되는데
     // 어떻게 처리할 지 내일 생각해보기!
+
     /**
      * GET /api/v1/projects/{projectId}
      *
