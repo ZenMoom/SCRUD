@@ -1,7 +1,7 @@
 # Dockerfile for AI service
 
 # Base stage with common dependencies
-FROM python:3.12-slim AS base
+FROM python:3.11-alpine AS base
 
 WORKDIR /app
 
@@ -45,10 +45,6 @@ COPY --from=build /usr/local/bin /usr/local/bin
 # Copy only necessary application code
 COPY ./app ./app
 COPY ./resources ./resources
-
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
 
 # Expose port for FastAPI
 EXPOSE 8000
