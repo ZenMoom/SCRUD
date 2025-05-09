@@ -2,15 +2,11 @@ package com.barcoder.scrud.scrudproject.presentation.controller;
 
 import com.barcoder.scrud.api.ScrudProjectApi;
 import com.barcoder.scrud.global.common.util.SecurityUtil;
-import com.barcoder.scrud.model.CreateProjectRequest;
-import com.barcoder.scrud.model.GlobalFileDto;
-import com.barcoder.scrud.model.GlobalFileListDto;
-import com.barcoder.scrud.model.ScrudProjectPageDto;
-import com.barcoder.scrud.scrudproject.application.dto.in.AddGlobalFileIn;
-import com.barcoder.scrud.scrudproject.application.dto.in.CreateProjectIn;
-import com.barcoder.scrud.scrudproject.application.dto.in.GlobalFileIn;
+import com.barcoder.scrud.model.*;
+import com.barcoder.scrud.scrudproject.application.dto.in.*;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllGlobalFileOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllScrudProjectOut;
+import com.barcoder.scrud.scrudproject.application.dto.out.ScrudProjectOut;
 import com.barcoder.scrud.scrudproject.service.ScrudProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,9 +42,9 @@ public class ScrudProjectController implements ScrudProjectApi {
                 .build();
 
         // 이후 단계에서 반환 타입을 권선이 정해주면 프롬프팅해서 만들어줘야 할 듯
-        scrudProjectService.createProject(inDto);
+        Long projectId = scrudProjectService.createProject(inDto);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(String.valueOf(projectId));
     }
 
     /**
@@ -70,6 +66,33 @@ public class ScrudProjectController implements ScrudProjectApi {
         ScrudProjectPageDto outDto = modelMapper.map(allScrudProjectOut, ScrudProjectPageDto.class);
 
         log.info(outDto.toString());
+
+        return ResponseEntity.ok(outDto);
+    }
+
+    /**
+     * PATCH /api/v1/projects
+     * 프로젝트 제목, 설명, 서버url 수정
+     *
+     * @param scrudProjectDto (optional)
+     * @return ScrudProjectDto 프로젝트 설정 (status code 200)
+     */
+    @Override
+    public ResponseEntity<ScrudProjectDto> updateScrudProject(ScrudProjectDto scrudProjectDto) {
+        UUID userId = securityUtil.getCurrentUserId();
+
+        ScrudProjectIn project = modelMapper.map(scrudProjectDto, ScrudProjectIn.class);
+
+        UpdateProjectIn inDto = UpdateProjectIn.builder()
+            .scrudProjectDto(project)
+            .userId(userId)
+            .build();
+
+        log.info(scrudProjectDto.toString());
+
+        ScrudProjectOut updatedProject = scrudProjectService.updateScrudProject(inDto);
+
+        ScrudProjectDto outDto = modelMapper.map(updatedProject, ScrudProjectDto.class);
 
         return ResponseEntity.ok(outDto);
     }
@@ -103,6 +126,7 @@ public class ScrudProjectController implements ScrudProjectApi {
     // 전체 전역 설정 파일의 제목과 id 만 있으면 되고,
     // 전역 파일 상세 조회하면 개별 파일 content 내용을 반환해주면 되는데
     // 어떻게 처리할 지 내일 생각해보기!
+
     /**
      * GET /api/v1/projects/{projectId}
      *

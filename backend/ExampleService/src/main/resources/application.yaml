@@ -127,3 +127,6 @@ cors:
 #    console:
 #      enabled: true
 #      path: /h2-console      # H2 ? ?? ??
+
+webclient:
+  base_url: ${WEBCLIENT_BASE_URL}

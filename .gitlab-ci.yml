@@ -131,6 +131,36 @@ build_and_push_frontend:
       allow_failure: false
   tags:
     - ec2
+    
+# Build and push AI server image
+build_ai:
+  extends: .docker
+  stage: build
+  script:
+    - docker build -f ./ai/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-ai:latest --target production ./ai
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - ai/**/*
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
+
+build_and_push_ai:
+  extends: .docker
+  stage: build-and-push
+  before_script:
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+  script:
+    - docker build -f ./ai/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-ai:latest --target production ./ai
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-ai:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
 
 # Deploy to production server
 deploy:
@@ -139,6 +169,8 @@ deploy:
     - job: build_and_push_backend
       optional: true
     - job: build_and_push_frontend
+      optional: true
+    - job: build_and_push_ai
       optional: true
 
   image: alpine:latest
@@ -162,6 +194,7 @@ deploy:
       echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin &&
       docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-spring:latest &&
       docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-next:latest &&
+      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-ai:latest &&
       docker-compose -f docker-compose.prod.yaml down &&
       docker-compose -f docker-compose.prod.yaml up -d"
 

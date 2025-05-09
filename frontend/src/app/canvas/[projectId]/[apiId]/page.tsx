@@ -1,11 +1,11 @@
-// src/app/canvas/[projectId]/[apiId]/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import axios from "axios"
-import { DiagramResponse } from "@generated/model" // 다이어그램 타입 임포트
-import { ChatHistoryResponse } from "@generated/model"
+import type { DiagramResponse } from "@generated/model" // 다이어그램 타입 임포트
+import type { ChatHistoryResponse } from "@generated/model"
+import type { TargetNode } from "@/components/canvas/DiagramContainer" // 타겟 노드 타입 임포트
 
 // 컴포넌트 임포트
 import ChatContainer from "@/components/canvas/ChatContainer"
@@ -35,6 +35,9 @@ export default function CanvasPage() {
   const [chatData, setChatData] = useState<ChatHistoryResponse | null>(null)
   const [chatLoading, setChatLoading] = useState<boolean>(true)
   const [chatError, setChatError] = useState<string | null>(null)
+
+  // 타겟 노드 상태 추가
+  const [targetNodes, setTargetNodes] = useState<TargetNode[]>([])
 
   // 페이지 로드 시 다이어그램 데이터와 채팅 데이터 모두 가져오기
   useEffect(() => {
@@ -99,7 +102,7 @@ export default function CanvasPage() {
   // 버전 이동 처리 함수
   const handleVersionMove = () => {
     // 현재 버전을 숫자로 변환
-    const currentVersion = parseInt(currentVersionId, 10)
+    const currentVersion = Number.parseInt(currentVersionId, 10)
 
     // 다음 버전 계산
     const nextVersion = currentVersion + 1
@@ -108,6 +111,21 @@ export default function CanvasPage() {
     router.replace(`/canvas/${projectId}/${apiId}?version=${nextVersion}`, {
       scroll: false, // 스크롤 위치 유지
     })
+  }
+
+  // 타겟 노드 변경 핸들러
+  const handleTargetNodesChange = (nodes: TargetNode[]) => {
+    setTargetNodes(nodes)
+  }
+
+  // 타겟 노드 제거 핸들러
+  const handleRemoveTarget = (nodeId: string) => {
+    // DiagramContainer 컴포넌트의 removeTargetNode 함수 호출
+    const diagramContainer = document.getElementById("diagram-container")
+    if (diagramContainer) {
+      const event = new CustomEvent("removeTarget", { detail: { nodeId } })
+      diagramContainer.dispatchEvent(event)
+    }
   }
 
   return (
@@ -134,23 +152,35 @@ export default function CanvasPage() {
           </button>
         </div>
 
+        {/* 3단 레이아웃 - 비율 30:70 */}
         <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-8rem)] overflow-hidden">
-          {/* 왼쪽 섹션 (비율 20%) - 채팅 데이터 전달 */}
-          <div className="w-full md:w-[30%] min-w-0">
-            <ChatContainer
-              projectId={projectId as string}
-              apiId={apiId as string}
-              versionId={currentVersionId}
-              chatData={chatData}
-              loading={chatLoading}
-              error={chatError}
-              onRefresh={fetchChatData} // 채팅 데이터만 새로고침하는 함수 전달
-            />
+          {/* 왼쪽 섹션 (비율 30%) - 채팅 데이터 전달 */}
+          <div className="w-full md:w-[30%] min-w-0 h-full">
+            <div className="h-full">
+              <ChatContainer
+                projectId={projectId as string}
+                apiId={apiId as string}
+                versionId={currentVersionId}
+                chatData={chatData}
+                loading={chatLoading}
+                error={chatError}
+                onRefresh={fetchChatData} // 채팅 데이터만 새로고침하는 함수 전달
+                targetNodes={targetNodes} // 타겟 노드 전달
+                onRemoveTarget={handleRemoveTarget} // 타겟 제거 핸들러 전달
+              />
+            </div>
           </div>
 
-          {/* 중앙 섹션 (비율 60%) - 더미 데이터 사용 */}
-          <div className="w-full md:w-[70%] min-w-0">
-            <DiagramContainer diagramData={dummyDiagramData as DiagramResponse} loading={false} error={null} />
+          {/* 오른쪽 섹션 (비율 70%) - 더미 데이터 사용 */}
+          <div className="w-full md:w-[70%] min-w-0 h-full" id="diagram-container">
+            <div className="h-full w-full">
+              <DiagramContainer
+                diagramData={dummyDiagramData as DiagramResponse}
+                loading={false}
+                error={null}
+                onSelectionChange={handleTargetNodesChange} // 타겟 노드 변경 핸들러 전달
+              />
+            </div>
           </div>
         </div>
       </div>

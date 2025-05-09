@@ -4,6 +4,7 @@ import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
 import com.barcoder.scrud.apispec.application.service.ApiSpecVersionService;
 import com.barcoder.scrud.apispec.application.service.LatestEndpointVersionService;
+import com.barcoder.scrud.apispec.application.usecase.ApiSpecUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +14,7 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class ApiCreateFacade {
+public class ApiCreateFacade implements ApiSpecUseCase {
 
 	private final ApiSpecVersionService apiSpecVersionService;
 	private final LatestEndpointVersionService latestEndpointVersionService;
@@ -29,6 +30,7 @@ public class ApiCreateFacade {
 		return apiSpecVersionOut;
 	}
 
+	@Override
 	public void bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
 
 		// 1. API 스펙 버전 생성
