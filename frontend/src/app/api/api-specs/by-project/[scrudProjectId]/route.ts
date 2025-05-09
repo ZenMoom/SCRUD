@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { ApiSpecApi } from "@generated/api"
 import { Configuration } from "@generated/configuration"
 
-export async function GET(request: NextRequest, context: { params: { scrudProjectId: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ scrudProjectId: string }> }) {
   try {
-    // params를 비동기적으로 처리
+    // params를 Promise로 처리
     const params = await context.params
     const scrudProjectId = Number(params.scrudProjectId)
 
