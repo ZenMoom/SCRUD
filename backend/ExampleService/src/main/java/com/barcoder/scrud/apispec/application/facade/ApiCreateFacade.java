@@ -32,7 +32,7 @@ public class ApiCreateFacade {
 	public void bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
 
 		// 1. API 스펙 버전 생성
-		List<ApiSpecVersionOut> apiSpecVersionOuts = apiSpecVersionService.bulkCreateApiSpecVersion(inDtoList);
+		List<ApiSpecVersionOut> apiSpecVersionOuts = apiSpecVersionService.bulkCreateApiSpecVersion(scrudProjectId, inDtoList);
 
 		// 2. 최신 API 스펙 버전 생성
 		latestEndpointVersionService.bulkCreateLatestEndpointVersion(scrudProjectId, apiSpecVersionOuts);
