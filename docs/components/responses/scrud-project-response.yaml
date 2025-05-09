@@ -11,3 +11,10 @@ GlobalFileListResponse:
     application/json:
       schema:
         $ref: "../schemas/scrud-project-dto.yaml#/GlobalFileListDto"
+
+ScrudProjectResponse:
+  description: "프로젝트 설정"
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/scrud-project-dto.yaml#/ScrudProjectDto"

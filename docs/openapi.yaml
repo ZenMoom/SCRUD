@@ -451,10 +451,27 @@ paths:
             text/yaml:
               schema:
                 type: string
+                
+    ########################################
+    # 7. 프로젝트 설정 수정
+    ########################################
+    patch:
+      tags:
+        - ScrudProject
+      operationId: updateScrudProject
+      description: "프로젝트 제목, 설명, 서버url 수정"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components/schemas/scrud-project-dto.yaml#/ScrudProjectDto"
+      responses:
+        "200":
+          $ref: "./components/responses/scrud-project-response.yaml#/ScrudProjectResponse"
 
   /api/v1/projects/{projectId}:
     ########################################
-    # 7. 전역 파일 개별 추가
+    # 8. 전역 파일 개별 추가
     ########################################
     put:
       tags:
@@ -480,7 +497,7 @@ paths:
           $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
 
     ########################################
-    # 8. 해당 프로젝트의 전역 파일 전체 조회
+    # 9. 해당 프로젝트의 전역 파일 전체 조회
     ########################################
     get:
       tags:
@@ -501,7 +518,7 @@ paths:
           $ref: "./components/responses/exception-response.yaml#/NotFoundException"
 
     ########################################
-    # 9. 프로젝트 삭제
+    # 10. 프로젝트 삭제
     ########################################
     delete:
       tags:
@@ -521,7 +538,7 @@ paths:
           $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
 
   ########################################
-  # 10. 전역 파일 삭제
+  # 11. 전역 파일 삭제
   ########################################
   /api/v1/projects/{projectId}/{globalFileId}:
     delete:
