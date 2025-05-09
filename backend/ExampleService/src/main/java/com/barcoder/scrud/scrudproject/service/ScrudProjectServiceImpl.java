@@ -1,5 +1,6 @@
 package com.barcoder.scrud.scrudproject.service;
 
+import com.barcoder.scrud.apispec.infrastructure.event.ApiSpecGenerateEvent;
 import com.barcoder.scrud.global.common.error.ErrorStatus;
 import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.scrudproject.application.dto.in.AddGlobalFileIn;
@@ -16,6 +17,7 @@ import com.barcoder.scrud.user.infrastructure.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,10 +35,12 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
     private final UserRepository userRepository;
     private final ScrudProjectAssembler scrudProjectAssembler;
     private final ScrudProjectRepository scrudProjectRepository;
+    // event publisher
+    private final ApplicationEventPublisher eventPublisher;
 
     // 1. 프로젝트 생성하기
     @Override
-    public void createProject(CreateProjectIn inDto) {
+    public Long createProject(CreateProjectIn inDto) {
 
         getUser(inDto.getUserId());
 
@@ -51,6 +55,9 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         );
 
         scrudProjectRepository.save(project);
+        eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
+
+        return project.getScrudProjectId();
     }
 
     // 2. 프로젝트 전체 목록 반환
