@@ -3,6 +3,7 @@ package com.barcoder.scrud.scrudproject.assembler;
 import com.barcoder.scrud.model.*;
 import com.barcoder.scrud.scrudproject.application.dto.in.CreateProjectIn;
 import com.barcoder.scrud.scrudproject.application.dto.in.GlobalFileIn;
+import com.barcoder.scrud.scrudproject.application.dto.in.UpdateProjectIn;
 import com.barcoder.scrud.scrudproject.domain.entity.GlobalFile;
 import com.barcoder.scrud.scrudproject.domain.entity.ScrudProject;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,6 +31,16 @@ public class ScrudProjectAssembler {
                 .description(inDto.getScrudProjectDto().getDescription())
                 .serverUrl(inDto.getScrudProjectDto().getServerUrl())
                 .build();
+    }
+
+    public ScrudProject toScrudProject(UpdateProjectIn inDto) {
+        return ScrudProject.builder()
+            .scrudProjectId(inDto.getScrudProjectDto().getScrudProjectId())
+            .userId(inDto.getUserId())
+            .title(inDto.getScrudProjectDto().getTitle())
+            .description(inDto.getScrudProjectDto().getDescription())
+            .serverUrl(inDto.getScrudProjectDto().getServerUrl())
+            .build();
     }
 
     // 원본을 따로 보여줘야 한다면 전처리 된 파일은 프롬프팅 할 때만 활용하고, 사용자에게 보여줄 파일을 따로 저장해둬야 함. 상의해보기

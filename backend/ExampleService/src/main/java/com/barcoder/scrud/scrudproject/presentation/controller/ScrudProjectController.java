@@ -2,15 +2,11 @@ package com.barcoder.scrud.scrudproject.presentation.controller;
 
 import com.barcoder.scrud.api.ScrudProjectApi;
 import com.barcoder.scrud.global.common.util.SecurityUtil;
-import com.barcoder.scrud.model.CreateProjectRequest;
-import com.barcoder.scrud.model.GlobalFileDto;
-import com.barcoder.scrud.model.GlobalFileListDto;
-import com.barcoder.scrud.model.ScrudProjectPageDto;
-import com.barcoder.scrud.scrudproject.application.dto.in.AddGlobalFileIn;
-import com.barcoder.scrud.scrudproject.application.dto.in.CreateProjectIn;
-import com.barcoder.scrud.scrudproject.application.dto.in.GlobalFileIn;
+import com.barcoder.scrud.model.*;
+import com.barcoder.scrud.scrudproject.application.dto.in.*;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllGlobalFileOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllScrudProjectOut;
+import com.barcoder.scrud.scrudproject.application.dto.out.ScrudProjectOut;
 import com.barcoder.scrud.scrudproject.service.ScrudProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +66,33 @@ public class ScrudProjectController implements ScrudProjectApi {
         ScrudProjectPageDto outDto = modelMapper.map(allScrudProjectOut, ScrudProjectPageDto.class);
 
         log.info(outDto.toString());
+
+        return ResponseEntity.ok(outDto);
+    }
+
+    /**
+     * PATCH /api/v1/projects
+     * 프로젝트 제목, 설명, 서버url 수정
+     *
+     * @param scrudProjectDto (optional)
+     * @return ScrudProjectDto 프로젝트 설정 (status code 200)
+     */
+    @Override
+    public ResponseEntity<ScrudProjectDto> updateScrudProject(ScrudProjectDto scrudProjectDto) {
+        UUID userId = securityUtil.getCurrentUserId();
+
+        ScrudProjectIn project = modelMapper.map(scrudProjectDto, ScrudProjectIn.class);
+
+        UpdateProjectIn inDto = UpdateProjectIn.builder()
+            .scrudProjectDto(project)
+            .userId(userId)
+            .build();
+
+        log.info(scrudProjectDto.toString());
+
+        ScrudProjectOut updatedProject = scrudProjectService.updateScrudProject(inDto);
+
+        ScrudProjectDto outDto = modelMapper.map(updatedProject, ScrudProjectDto.class);
 
         return ResponseEntity.ok(outDto);
     }
