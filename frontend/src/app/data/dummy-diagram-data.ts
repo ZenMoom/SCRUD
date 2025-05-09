@@ -7,7 +7,7 @@ export const dummyDiagramData = {
       type: "CLASS",
       name: "BoardController",
       description: "게시판 컨트롤러 클래스",
-      positionX: 0,
+      positionX: -100,
       positionY: 150,
       methods: [
         {
@@ -55,7 +55,7 @@ export const dummyDiagramData = {
       type: "INTERFACE",
       name: "PostRepository",
       description: "게시글 저장소 인터페이스",
-      positionX: 800,
+      positionX: 900,
       positionY: 150,
       methods: [
         {

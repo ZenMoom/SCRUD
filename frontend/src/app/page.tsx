@@ -209,7 +209,7 @@ function HomeContent() {
   // 인증 확인
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login")
+      router.push("/startpage")
     }
   }, [isAuthenticated, router])
 

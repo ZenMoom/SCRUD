@@ -35,16 +35,6 @@ export default function Header() {
                       API 제작 페이지
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/test" className="block px-4 py-3 hover:bg-gray-100 text-gray-800 border-b border-gray-100">
-                      API 테스트 페이지
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/apis" className="block px-4 py-3 hover:bg-gray-100 text-gray-800">
-                      API 연결 확인
-                    </Link>
-                  </li>
                 </ul>
               </div>
             )}

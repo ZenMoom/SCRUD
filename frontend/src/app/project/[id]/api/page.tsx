@@ -1,15 +1,115 @@
-import ApiCreator from "@/components/api-creator/ApiCreator"
+"use client"
 
-export default function ApiPage() {
+import ApiCreator from "@/components/api-creator/ApiCreator"
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import axios from "axios"
+
+// 프로젝트 정보 인터페이스
+interface ProjectInfo {
+  id: number
+  title: string
+  description?: string
+}
+
+export default function ProjectApiPage() {
+  const params = useParams()
+  const router = useRouter()
+  const [projectInfo, setProjectInfo] = useState<ProjectInfo | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // 문자열 ID를 숫자로 변환
+  const projectId = params.id ? parseInt(params.id as string, 10) : 0
+
+  // 프로젝트 정보 로드
+  useEffect(() => {
+    const fetchProjectData = async () => {
+      if (!projectId || isNaN(projectId)) {
+        setError("유효하지 않은 프로젝트 ID입니다")
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        setIsLoading(true)
+
+        // 프로젝트 정보를 가져오는 API 호출
+        // 실제 프로젝트 API가 있다면 그것을 사용하고, 없다면 기본값 설정
+        // const response = await axios.get(`/api/projects/${projectId}`);
+        // setProjectInfo(response.data);
+
+        // API가 없는 경우 임시 데이터 설정 (실제 구현 시 이 부분을 API 호출로 대체)
+        setProjectInfo({
+          id: projectId,
+          title: `프로젝트 ${projectId}`,
+        })
+
+        // API 스펙이 존재하는지 확인 (404 에러를 방지하기 위함)
+        // 선택적으로 추가할 수 있는 코드
+        try {
+          await axios.get(`/api/api-specs/by-project/${projectId}`)
+        } catch (error) {
+          console.error("이 프로젝트의 API 스펙이 아직 없습니다. 새로 생성됩니다.", error)
+        }
+      } catch (err) {
+        console.error("프로젝트 데이터 로드 오류:", err)
+        setError("프로젝트 정보를 불러오는 중 오류가 발생했습니다")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProjectData()
+  }, [projectId])
+
+  // 로딩 중 표시
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <span className="ml-3 text-lg text-gray-700">프로젝트 정보를 불러오는 중...</span>
+      </div>
+    )
+  }
+
+  // 오류 발생 시 표시
+  if (error || !projectInfo) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <div className="text-red-600 text-xl mb-4">{error || "프로젝트를 찾을 수 없습니다"}</div>
+        <button onClick={() => router.push("/")} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+          메인으로 돌아가기
+        </button>
+      </div>
+    )
+  }
+
   return (
     <main className="p-0">
-      <div className="border-b border-gray-200 py-6 bg-gradient-to-r from-gray-50 to-white shadow-sm">
+      {/* 상단 네비게이션 바 */}
+      <div className="bg-white shadow-sm border-b mb-4">
+        <div className="max-w-full mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Link href={`/project/${projectId}`} className="text-gray-600 hover:text-gray-900 flex items-center">
+                ← {projectInfo.title} 정보로 돌아가기
+              </Link>
+            </div>
+            <div className="text-lg font-semibold text-gray-800">API 설계</div>
+          </div>
+        </div>
+      </div>
+
+      {/* 프로그레스 바 */}
+      <div className="py-6 bg-gradient-to-r white">
         <div className="max-w-full mx-auto px-6">
           <div className="relative flex items-center justify-between max-w-3xl mx-auto">
-            {/* 단계 선 (배경) - 모든 원 아래로 지나감 */}
+            {/* 단계 선 (배경) */}
             <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-gray-100 -translate-y-1/2 rounded-full"></div>
 
-            {/* 진행 바 - 모든 원 아래로 지나감 */}
+            {/* 진행 바 */}
             <div className="absolute top-1/2 left-0 w-1/2 h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500 -translate-y-1/2 rounded-full shadow-sm"></div>
 
             {/* 단계 1 - 완료 */}
