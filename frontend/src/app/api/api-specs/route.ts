@@ -1,75 +1,60 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { ApiSpecApi } from "@generated/api"
 import { Configuration } from "@generated/configuration"
 import { ApiSpecVersionCreateRequest, ApiSpecVersionCreateRequestHttpMethodEnum } from "@generated/model"
+import { AxiosError } from "axios"
 
-// API 스펙 생성하기
-export async function POST() {
+// API 스펙 생성
+export async function POST(request: NextRequest) {
   try {
+    // 클라이언트에서 전송한 데이터 파싱
+    const body = await request.json()
+
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
     })
     const apiSpecApi = new ApiSpecApi(config)
 
-    const httpMethod = "POST" as ApiSpecVersionCreateRequestHttpMethodEnum
-
-    // 기본 필수 필드
-    const apiSpecData = {
-      endpoint: "/api/v1/examples/{id}",
-      apiGroup: "example",
-      httpMethod: httpMethod,
-      scrudProjectId: 1,
-      description: "API 설명",
-      summary: "API 요약",
+    // API 스펙 생성 요청 준비
+    const apiSpecData: ApiSpecVersionCreateRequest = {
+      endpoint: body.endpoint,
+      httpMethod: body.httpMethod as ApiSpecVersionCreateRequestHttpMethodEnum,
+      scrudProjectId: body.scrudProjectId || 1, // 기본값 설정
+      summary: body.summary || "",
+      description: body.description || "",
     }
 
-    // HTTP 메소드에 따라 필요한 필드 추가
-    if (apiSpecData.httpMethod === "POST" || apiSpecData.httpMethod === "PUT") {
-      Object.assign(apiSpecData, {
-        requestBody: JSON.stringify({
-          name: "홍길동",
-        }),
-      })
+    // 선택적 필드 추가
+    if (body.requestBody) {
+      apiSpecData.requestBody = body.requestBody
     }
 
-    if (apiSpecData.httpMethod === "GET") {
-      Object.assign(apiSpecData, {
-        queryParameters: JSON.stringify({
-          page: "1",
-          size: "10",
-        }),
-      })
+    if (body.pathParameters) {
+      apiSpecData.pathParameters = body.pathParameters
     }
 
-    // 경로 매개변수가 있는 경우
-    if (apiSpecData.endpoint.includes("{")) {
-      Object.assign(apiSpecData, {
-        pathParameters: JSON.stringify({
-          id: "123",
-        }),
-      })
+    if (body.queryParameters) {
+      apiSpecData.queryParameters = body.queryParameters
     }
 
-    // 응답 정보 추가
-    Object.assign(apiSpecData, {
-      response: JSON.stringify({
-        data: {
-          id: 123,
-          name: "홍길동",
-        },
-        message: "성공",
-      }),
-    })
+    if (body.response) {
+      apiSpecData.response = body.response
+    }
 
     // API 스펙 생성 요청
     const response = await apiSpecApi.createApiSpec({
-      apiSpecVersionCreateRequest: apiSpecData as ApiSpecVersionCreateRequest,
+      apiSpecVersionCreateRequest: apiSpecData,
     })
 
     return NextResponse.json(response.data)
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("API 스펙 생성 오류:", error)
-    return NextResponse.json({ error: "API 스펙 생성 중 오류가 발생했습니다." }, { status: 500 })
+
+    // 오류 처리
+    const errorMessage = error instanceof Error ? error.message : "API 스펙 생성 중 오류가 발생했습니다."
+    const errorStatus = (error as AxiosError)?.response?.status || 500
+
+    return NextResponse.json({ error: errorMessage }, { status: errorStatus })
   }
 }

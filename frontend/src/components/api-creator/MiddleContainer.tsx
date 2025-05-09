@@ -17,6 +17,9 @@ interface ApiGroup {
 
 interface MiddleContainerProps {
   onApiSelect: (apiPath: string, apiMethod: string) => void
+  apiGroups: ApiGroup[]
+  setApiGroups: React.Dispatch<React.SetStateAction<ApiGroup[]>>
+  isLoading: boolean
 }
 
 export default function MiddleContainer({ onApiSelect }: MiddleContainerProps) {
