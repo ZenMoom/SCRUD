@@ -6,9 +6,7 @@ import { ApiSpecVersionUpdateRequest } from "@generated/model"
 // API 스펙 상세 조회
 export async function GET(request: NextRequest, context: { params: { apiSpecVersionId: string } }) {
   try {
-    // params를 비동기적으로 처리
-    const params = await context.params
-    const apiSpecVersionId = Number(params.apiSpecVersionId)
+    const apiSpecVersionId = Number(context.params.apiSpecVersionId)
 
     if (isNaN(apiSpecVersionId)) {
       return NextResponse.json({ error: "유효하지 않은 API 스펙 ID입니다." }, { status: 400 })
@@ -39,9 +37,7 @@ export async function GET(request: NextRequest, context: { params: { apiSpecVers
 // API 스펙 수정
 export async function PUT(request: NextRequest, context: { params: { apiSpecVersionId: string } }) {
   try {
-    // params를 비동기적으로 처리
-    const params = await context.params
-    const apiSpecVersionId = Number(params.apiSpecVersionId)
+    const apiSpecVersionId = Number(context.params.apiSpecVersionId)
 
     if (isNaN(apiSpecVersionId)) {
       return NextResponse.json({ error: "유효하지 않은 API 스펙 ID입니다." }, { status: 400 })
@@ -99,9 +95,7 @@ export async function PUT(request: NextRequest, context: { params: { apiSpecVers
 // API 스펙 삭제
 export async function DELETE(request: NextRequest, context: { params: { apiSpecVersionId: string } }) {
   try {
-    // params를 비동기적으로 처리
-    const params = await context.params
-    const apiSpecVersionId = Number(params.apiSpecVersionId)
+    const apiSpecVersionId = Number(context.params.apiSpecVersionId)
 
     if (isNaN(apiSpecVersionId)) {
       return NextResponse.json({ error: "유효하지 않은 API 스펙 ID입니다." }, { status: 400 })
