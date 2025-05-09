@@ -30,7 +30,7 @@ interface ContentItem {
 interface GitHubRepoBrowserProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (files: { path: string; content: string }[]) => void;
+  onSelect: (filePath: string) => void;
 }
 
 const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, onSelect }) => {
@@ -180,7 +180,10 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
 
   // 파일 선택 완료
   const handleConfirm = () => {
-    onSelect(selectedFiles);
+    if (selectedFiles.length > 0) {
+      // 첫 번째 파일의 경로만 반환
+      onSelect(selectedFiles[0].path);
+    }
     onClose();
   };
 
