@@ -32,3 +32,53 @@
     animation: slideIn 0.3s ease;
   }
 }
+/* 기존 globals.css 파일에 추가 */
+
+/* ReactFlow 관련 스타일 */
+.react-flow {
+  width: 100%;
+  height: 100%;
+}
+
+.react-flow__container {
+  width: 100%;
+  height: 100%;
+}
+
+/* 높이 관련 스타일 */
+html,
+body {
+  height: 100%;
+}
+
+/* 타겟 노드 애니메이션 */
+@keyframes targetPulse {
+  0% {
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    border-color: rgba(239, 68, 68, 1);
+  }
+  100% {
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+}
+
+@keyframes dashOffset {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 20;
+  }
+}
+
+.animate-pulse {
+  animation: targetPulse 2s infinite;
+}
+
+/* 점선 애니메이션 */
+.border-dashed {
+  border-style: dashed;
+  border-width: 2px;
+}

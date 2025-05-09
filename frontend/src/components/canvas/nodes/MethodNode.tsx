@@ -14,10 +14,12 @@ interface MethodNodeData {
   description: string
   isExpanded?: boolean
   isInterface?: boolean
+  isTargeted?: boolean // 타겟 노드 여부 추가
+  name?: string // 메서드 이름 추가
 }
 
 export const MethodNode = memo(({ id, data, selected }: NodeProps<MethodNodeData>) => {
-  const { signature, body, description, isExpanded = false, isInterface = false } = data
+  const { signature, body, description, isExpanded = false, isInterface = false, isTargeted = false } = data
   const [copied, setCopied] = useState(false)
 
   const toggleExpand = (e: React.MouseEvent) => {
@@ -46,13 +48,14 @@ export const MethodNode = memo(({ id, data, selected }: NodeProps<MethodNodeData
 
   return (
     <div
-      className={`p-2 rounded-md border ${selected ? "border-blue-500 shadow-md" : "border-gray-300"} bg-white w-[350px]`}
+      className={`p-2 rounded-md border ${isTargeted ? "border-red-500 border-dashed animate-pulse shadow-red-100" : selected ? "border-blue-500 shadow-md" : "border-gray-300"} bg-white w-[350px]`}
       style={{
-        transition: "height 0.3s ease-in-out, opacity 0.2s ease-in-out",
+        transition: "height 0.3s ease-in-out, opacity 0.2s ease-in-out, border 0.2s ease-in-out",
+        opacity: isTargeted ? 1 : 0.85, // 타겟 노드는 더 밝게
       }}
     >
       {/* 시그니처 부분 */}
-      <div className="font-mono text-sm p-2 bg-gray-100 rounded-t-md flex items-start justify-between">
+      <div className={`font-mono text-sm p-2 ${isTargeted ? "bg-red-50" : "bg-gray-100"} rounded-t-md flex items-start justify-between`}>
         <div className="flex-1 break-words">{signature}</div>
         <div className="ml-2 text-gray-500 hover:text-gray-700 group relative">
           <Info className="w-4 h-4" />
@@ -82,7 +85,7 @@ export const MethodNode = memo(({ id, data, selected }: NodeProps<MethodNodeData
 
         {!isInterface && (
           <div
-            className={`rounded-b-md border border-gray-200 overflow-hidden ${isExpanded ? "max-h-60 opacity-100" : "max-h-0 opacity-0 border-0"}`}
+            className={`rounded-b-md border ${isTargeted ? "border-red-200" : "border-gray-200"} overflow-hidden ${isExpanded ? "max-h-60 opacity-100" : "max-h-0 opacity-0 border-0"}`}
             style={{
               transition: "max-height 0.3s ease-in-out, opacity 0.2s ease-in-out, border 0.1s ease-in-out",
             }}
