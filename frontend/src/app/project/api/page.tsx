@@ -3,7 +3,7 @@ import ApiCreator from "@/components/api-creator/ApiCreator"
 export default function ApiPage() {
   return (
     <main className="p-0">
-      <div className="border-b border-gray-200 py-6 bg-gradient-to-r from-gray-50 to-white shadow-sm">
+      <div className=" py-6 bg-gradient-to-r white">
         <div className="max-w-full mx-auto px-6">
           <div className="relative flex items-center justify-between max-w-3xl mx-auto">
             {/* 단계 선 (배경) - 모든 원 아래로 지나감 */}
