@@ -81,9 +81,9 @@ public class ApiSpecVersionService {
 	 * API 스펙 버전 벌크 생성
 	 * @param inDtoList
 	 */
-	public List<ApiSpecVersionOut> bulkCreateApiSpecVersion(List<CreateApiSpecVersionIn> inDtoList) {
+	public List<ApiSpecVersionOut> bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
 		// 1. DTO -> Entity 변환
-		List<ApiSpecVersion> apiSpecVersionList = apiSpecVersionAssembler.toApiSpecVersionEntityList(inDtoList);
+		List<ApiSpecVersion> apiSpecVersionList = apiSpecVersionAssembler.toApiSpecVersionEntityList(scrudProjectId, inDtoList);
 
 		// 2. Entity -> DB 저장
 		List<ApiSpecVersion> apiSpecVersions = apiSpecVersionJpaRepository.saveAll(apiSpecVersionList);

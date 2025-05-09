@@ -2825,7 +2825,6 @@ components:
         summary: 예시 스펙입니다.
         pathParameters: "{ \"id\": \"123\" }"
         endpoint: "/api/v1/examples/{id}"
-        apiGroup: example
         queryParameters: "{ \"page\": \"1\", \"size\": \"10\" }"
         requestBody: "{ \"name\": \"홍길동\" }"
         response: JSON 응답 예시 문자열
@@ -2840,10 +2839,6 @@ components:
         endpoint:
           description: API 엔드포인트 경로
           example: "/api/v1/examples/{id}"
-          type: string
-        apiGroup:
-          description: API가 속한 그룹 이름
-          example: example
           type: string
         summary:
           description: API에 대한 간단한 설명
@@ -2883,17 +2878,14 @@ components:
           format: json
           type: string
       required:
-      - apiGroup
       - endpoint
       - httpMethod
-      - version
       type: object
     ApiSpecVersionCreateRequest:
       example:
         summary: 예시 스펙입니다.
         pathParameters: "{ \"id\": \"123\" }"
         endpoint: "/api/v1/examples/{id}"
-        apiGroup: example
         queryParameters: "{ \"page\": \"1\", \"size\": \"10\" }"
         requestBody: "{ \"name\": \"홍길동\" }"
         response: JSON 응답 예시 문자열
@@ -2908,10 +2900,6 @@ components:
         endpoint:
           description: API 엔드포인트 경로
           example: "/api/v1/examples/{id}"
-          type: string
-        apiGroup:
-          description: API가 속한 그룹 이름
-          example: example
           type: string
         summary:
           description: API에 대한 간단한 설명
@@ -2951,10 +2939,8 @@ components:
           format: json
           type: string
       required:
-      - apiGroup
       - endpoint
       - httpMethod
-      - version
       type: object
     PageDto:
       example:

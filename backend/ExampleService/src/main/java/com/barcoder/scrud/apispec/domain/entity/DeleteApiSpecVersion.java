@@ -15,5 +15,6 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class DeleteApiSpecVersion extends ApiSpecVersion {
 
+	@Column(columnDefinition = "TEXT")
 	private String pathParameters;
 }

@@ -16,9 +16,12 @@ import lombok.experimental.SuperBuilder;
 public class PostApiSpecVersion extends ApiSpecVersion {
 
 	// Request Body
+	@Column(columnDefinition = "TEXT")
 	private String requestBody;
 
+	@Column(columnDefinition = "TEXT")
 	private String queryParameters;
 
+	@Column(columnDefinition = "TEXT")
 	private String pathParameters;
 }
