@@ -1,7 +1,7 @@
 # Dockerfile for AI service
 
 # Base stage with common dependencies
-FROM python:3.11-alpine AS base
+FROM python:3.11-slim AS base
 
 WORKDIR /app
 
@@ -34,12 +34,12 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Production stage with minimal dependencies
-FROM python:3.12-slim AS production
+FROM python:3.11-slim AS production
 
 WORKDIR /app
 
 # Copy dependencies from build stage
-COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=build /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=build /usr/local/bin /usr/local/bin
 
 # Copy only necessary application code
