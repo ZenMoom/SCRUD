@@ -306,36 +306,98 @@ export default function RightContainer({ selectedApi, selectedMethod, onApiSpecC
       }
 
       // API 스펙 데이터 생성
-      const apiSpecData = {
+      const apiSpecData: Record<string, unknown> = {
         endpoint,
         summary: summary || endpoint.split("/").pop() || "API",
         description: description || "",
-        httpMethod: method,
-        scrudProjectId,
-      } as Record<string, unknown>
-
-      // 선택적 필드 추가
-      if (requestBodyJson && method !== "GET") {
-        apiSpecData["requestBody"] = requestBodyJson
+        scrud_project_id: scrudProjectId, // snake_case로 변경
       }
 
-      if (pathParametersJson) {
-        apiSpecData["pathParameters"] = pathParametersJson
+      // ID 필드 이름 변경 - apiSpecVersionId → id
+      if (apiSpecVersionId) {
+        apiSpecData.id = apiSpecVersionId
       }
 
-      if (queryParametersJson && method === "GET") {
-        apiSpecData["queryParameters"] = queryParametersJson
+      // HTTP 메서드별 차별화된 필드 추가
+      switch (method) {
+        case "GET":
+          apiSpecData.http_method = "GET"
+
+          // GET에는 query_parameters와 path_parameters만 포함
+          if (queryParametersJson) {
+            apiSpecData.query_parameters = queryParametersJson
+          }
+
+          if (pathParametersJson) {
+            apiSpecData.path_parameters = pathParametersJson
+          }
+          break
+
+        case "POST":
+          apiSpecData.http_method = "POST"
+
+          // POST에는 request_body, query_parameters, path_parameters 포함
+          if (requestBodyJson) {
+            apiSpecData.request_body = requestBodyJson
+          }
+
+          if (queryParametersJson) {
+            apiSpecData.query_parameters = queryParametersJson
+          }
+
+          if (pathParametersJson) {
+            apiSpecData.path_parameters = pathParametersJson
+          }
+          break
+
+        case "PUT":
+          apiSpecData.http_method = "PUT"
+
+          // PUT에는 request_body와 path_parameters만 포함
+          if (requestBodyJson) {
+            apiSpecData.request_body = requestBodyJson
+          }
+
+          if (pathParametersJson) {
+            apiSpecData.path_parameters = pathParametersJson
+          }
+          break
+
+        case "PATCH":
+          apiSpecData.http_method = "PATCH"
+
+          // PATCH도 request_body와 path_parameters만 포함
+          if (requestBodyJson) {
+            apiSpecData.request_body = requestBodyJson
+          }
+
+          if (pathParametersJson) {
+            apiSpecData.path_parameters = pathParametersJson
+          }
+          break
+
+        case "DELETE":
+          apiSpecData.http_method = "DELETE"
+
+          // DELETE는 path_parameters만 포함
+          if (pathParametersJson) {
+            apiSpecData.path_parameters = pathParametersJson
+          }
+          break
       }
 
+      // 응답 예시는 모든 메서드에 공통
       if (responseJsonValue) {
-        apiSpecData["response"] = responseJsonValue
+        apiSpecData.response = responseJsonValue
       }
 
       let response
 
       // 기존 API 수정 또는 새 API 생성
       if (apiSpecVersionId) {
-        // API 스펙 수정 (Next.js API 라우트로 요청)
+        // 디버깅용 로그 추가
+        console.log("API 스펙 수정 요청 데이터:", JSON.stringify(apiSpecData, null, 2))
+
         response = await axios.put<ApiSpecVersionResponse>(`/api/api-specs/${apiSpecVersionId}`, apiSpecData)
 
         // 성공 처리
@@ -372,21 +434,28 @@ export default function RightContainer({ selectedApi, selectedMethod, onApiSpecC
       onApiSpecChanged()
     } catch (error) {
       console.error("API 생성/수정 오류:", error)
-      const err = error as Error | AxiosError
 
-      // 오류 응답 처리
-      if (axios.isAxiosError(err) && err.response) {
-        setApiResponse({
-          status: err.response.status,
-          error: err.response.data?.error || "API 생성/수정 중 오류가 발생했습니다.",
+      // Axios 에러에서 더 자세한 정보 추출
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("상세 오류 정보:", {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
         })
-        showErrorNotification(`API ${apiSpecVersionId ? "수정" : "생성"} 실패: ${err.response.data?.error || "알 수 없는 오류"}`)
+
+        setApiResponse({
+          status: error.response.status,
+          error: error.response.data?.error || "API 생성/수정 중 오류가 발생했습니다.",
+        })
+
+        showErrorNotification(`API ${apiSpecVersionId ? "수정" : "생성"} 실패: ${error.response.data?.error || "알 수 없는 오류"}`)
       } else {
         setApiResponse({
           status: 500,
           error: "API 생성/수정 중 오류가 발생했습니다.",
         })
-        showErrorNotification(`API ${apiSpecVersionId ? "수정" : "생성"} 실패: ${err.message || "알 수 없는 오류"}`)
+
+        showErrorNotification(`API ${apiSpecVersionId ? "수정" : "생성"} 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}`)
       }
     } finally {
       setIsLoading(false)
