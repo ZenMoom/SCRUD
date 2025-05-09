@@ -1,0 +1,37 @@
+### 서버 상태 확인
+GET http://localhost:8000/status
+
+### 다이어그램 생성 요청 전송
+POST http://localhost:8000/diagrams/request
+Content-Type: application/json
+
+{
+ "tag": "IMPLEMENT",
+ "promptType": "BODY",
+ "message": "사용자 인증 로직을 구현해주세요. 이메일과 비밀번호를 검증하고 JWT 토큰을 발급해야 합니다.",
+ "targetMethods": [
+   {
+     "methodId": "auth-001",
+     "componentId": "comp-001"
+   },
+   {
+     "methodId": "token-002",
+     "componentId": "comp-003"
+   }
+ ]
+}
+
+### 테스트 응답 직접 전송 (개발 테스트용)
+POST http://localhost:8000/test/diagram-response
+Content-Type: application/json
+
+{
+  "systemChatId": "chat-12345",
+  "status": "MODIFIED",
+  "systemChatMessage": "메서드 구현이 완료되었습니다. 클래스 구조를 개선하고 중복 코드를 제거했습니다.",
+  "versionInfo": {
+    "newVersionId": "v1.2.3",
+    "description": "인증 시스템 리팩토링 및 기능 개선"
+  },
+  "diagramId": "diagram-001"
+}

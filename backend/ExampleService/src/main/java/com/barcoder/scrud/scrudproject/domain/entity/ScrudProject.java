@@ -37,4 +37,10 @@ public class ScrudProject extends BaseTimeEntity {
         globalFileList.add(file);
         file.setScrudProject(this);
     }
+
+    public void update(ScrudProject updateProject) {
+        this.title = updateProject.getTitle();
+        this.description = updateProject.getDescription();
+        this.serverUrl = updateProject.getServerUrl();
+    }
 }
