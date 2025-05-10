@@ -50,7 +50,6 @@ DiagramDto:
 ComponentDto:
   type: object
   required:
-    - componentId
     - type
     - name
     - methods
@@ -81,7 +80,6 @@ ComponentDto:
 MethodDto:
   type: object
   required:
-    - methodId
     - name
     - signature
   properties:
@@ -104,7 +102,6 @@ MethodDto:
 ConnectionDto:
   type: object
   required:
-    - connectionId
     - sourceMethodId
     - targetMethodId
     - type
@@ -124,7 +121,6 @@ ConnectionDto:
 DtoModelDto:
   type: object
   required:
-    - dtoId
     - name
   properties:
     dtoId:
@@ -148,6 +144,7 @@ MetadataDto:
   properties:
     metadataId:
       type: string
+      description: 메타 데이터 아이디
     version:
       type: integer
       description: 버전 번호
@@ -176,7 +173,6 @@ VersionInfoDto:
 ChatDto:
   type: object
   required:
-    - chatId
     - createdAt
   properties:
     chatId:
