@@ -8,7 +8,7 @@ export const dummyDiagramData = {
       name: "BoardController",
       description: "게시판 컨트롤러 클래스",
       positionX: -100,
-      positionY: 150,
+      positionY: 0,
       methods: [
         {
           methodId: "method-456",
@@ -32,7 +32,7 @@ export const dummyDiagramData = {
       name: "BoardService",
       description: "게시판 서비스 클래스",
       positionX: 400,
-      positionY: 150,
+      positionY: 0,
       methods: [
         {
           methodId: "method-458",
@@ -56,7 +56,7 @@ export const dummyDiagramData = {
       name: "PostRepository",
       description: "게시글 저장소 인터페이스",
       positionX: 900,
-      positionY: 150,
+      positionY: 0,
       methods: [
         {
           methodId: "method-460",
