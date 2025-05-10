@@ -1,9 +1,11 @@
 package com.barcoder.scrud.scrudproject.service;
 
+import com.barcoder.scrud.apispec.infrastructure.event.ApiSpecGenerateEvent;
 import com.barcoder.scrud.global.common.error.ErrorStatus;
 import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.scrudproject.application.dto.in.AddGlobalFileIn;
 import com.barcoder.scrud.scrudproject.application.dto.in.CreateProjectIn;
+import com.barcoder.scrud.scrudproject.application.dto.in.UpdateProjectIn;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllGlobalFileOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllScrudProjectOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.GlobalFileOut;
@@ -16,6 +18,7 @@ import com.barcoder.scrud.user.infrastructure.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,10 +36,12 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
     private final UserRepository userRepository;
     private final ScrudProjectAssembler scrudProjectAssembler;
     private final ScrudProjectRepository scrudProjectRepository;
+    // event publisher
+    private final ApplicationEventPublisher eventPublisher;
 
     // 1. 프로젝트 생성하기
     @Override
-    public void createProject(CreateProjectIn inDto) {
+    public Long createProject(CreateProjectIn inDto) {
 
         getUser(inDto.getUserId());
 
@@ -51,6 +56,9 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         );
 
         scrudProjectRepository.save(project);
+//        eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
+
+        return project.getScrudProjectId();
     }
 
     // 2. 프로젝트 전체 목록 반환
@@ -74,7 +82,23 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         return outDto;
     }
 
-    // 3. 전역 파일 개별 추가
+    // 3. 프로젝트 설정 수정
+    @Override
+    public ScrudProjectOut updateScrudProject(UpdateProjectIn inDto) {
+
+        getUser(inDto.getUserId());
+
+        ScrudProject project = scrudProjectAssembler.toScrudProject(inDto);
+
+        ScrudProject originalProject = scrudProjectRepository.findById(project.getScrudProjectId())
+            .orElseThrow(() -> new ExceptionHandler(ErrorStatus.SCRUDPROJECT_NOT_FOUND));
+
+        originalProject.update(project);
+
+        return modelMapper.map(originalProject, ScrudProjectOut.class);
+    }
+
+    // 4. 전역 파일 개별 추가
     @Override
     public void addGlobalFile(AddGlobalFileIn inDto) {
 
@@ -88,7 +112,7 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         project.addGlobalFile(globalFile);
     }
 
-    // 4. 전역 파일 개별 삭제
+    // 5. 전역 파일 개별 삭제
     @Override
     public void deleteGlobalFile(Long projectId, Long globalFileId, UUID userId) {
         getUser(userId);
@@ -109,7 +133,7 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         project.getGlobalFileList().remove(globalFile);
     }
 
-    // 5. 해당 프로젝트의 전체 전역 설정 파일 가져오기
+    // 6. 해당 프로젝트의 전체 전역 설정 파일 가져오기
     @Override
     public AllGlobalFileOut getAllGlobalFile(Long projectId, UUID userId) {
         getUser(userId);
