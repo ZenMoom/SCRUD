@@ -5,8 +5,6 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import axios from "axios"
 import type { DiagramResponse } from "@generated/model"
 import type { ChatHistoryResponse } from "@generated/model"
-// import type { ApiSummaryPageResponse } from "@generated/model" // API 목록 응답 타입 추가
-
 import type { TargetNode } from "@/components/canvas/DiagramContainer"
 
 // 컴포넌트 임포트
@@ -184,11 +182,11 @@ export default function CanvasPage() {
     }
   }
 
-  // 모든 데이터를 새로고침하는 함수
-  const refreshAllData = () => {
-    fetchDiagramData()
-    fetchChatData()
-  }
+  // // 모든 데이터를 새로고침하는 함수
+  // const refreshAllData = () => {
+  //   fetchDiagramData()
+  //   fetchChatData()
+  // }
 
   // 버전 이동 처리 함수
   const handleVersionMove = () => {
@@ -228,7 +226,7 @@ export default function CanvasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 relative">
+    <div className="min-h-screen bg-gray-50 p-2 relative">
       {/* 슬라이드 패널을 위한 트리거 영역 */}
       <div className="absolute left-0 top-0 bottom-0 w-6 z-10 cursor-pointer hover:bg-gray-200 hover:bg-opacity-50 transition-colors" onMouseEnter={handleMouseEnter} />
 
@@ -238,7 +236,7 @@ export default function CanvasPage() {
         onMouseLeave={() => setApiListVisible(false)}
       >
         <div className="p-4 h-full flex flex-col">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-bold">API 목록</h2>
             <button onClick={() => setApiListVisible(false)} className="p-2 rounded-full hover:bg-gray-100">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -295,7 +293,7 @@ export default function CanvasPage() {
       </div>
 
       <div className="max-w-full mx-auto">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-2">
           <h1 className="text-2xl font-bold text-gray-800">다이어그램 캔버스</h1>
 
           <div className="flex items-center gap-2">
@@ -306,22 +304,14 @@ export default function CanvasPage() {
             <button onClick={handleVersionMove} className="px-4 py-2 bg-green-500 text-white font-medium rounded hover:bg-green-600 transition-colors" disabled={loading || chatLoading}>
               버전 이동
             </button>
+            <button onClick={completeApi} className="px-4 py-2 bg-purple-500 text-white font-medium rounded hover:bg-purple-600 transition-colors">
+              API Complete
+            </button>
           </div>
         </div>
 
-        {/* 새로고침 버튼과 API 완료 버튼 */}
-        <div className="mb-4 flex gap-2">
-          <button onClick={refreshAllData} className="px-4 py-2 bg-blue-500 text-white font-medium rounded hover:bg-blue-600 transition-colors" disabled={loading || chatLoading}>
-            {loading || chatLoading ? "로딩 중..." : "데이터 새로고침"}
-          </button>
-
-          <button onClick={completeApi} className="px-4 py-2 bg-purple-500 text-white font-medium rounded hover:bg-purple-600 transition-colors">
-            API Complete
-          </button>
-        </div>
-
         {/* 3단 레이아웃 - 비율 30:70 */}
-        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-8rem)] overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-3rem)] overflow-hidden">
           {/* 왼쪽 섹션 (비율 30%) - 채팅 데이터 전달 */}
           <div className="w-full md:w-[30%] min-w-0 h-full">
             <div className="h-full">

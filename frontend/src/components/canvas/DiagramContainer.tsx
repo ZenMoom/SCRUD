@@ -2,15 +2,17 @@
 
 import type React from "react"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
 import ReactFlow, { Background, Controls, type Edge, type Node, useNodesState, useEdgesState, MiniMap, Panel, NodeToolbar, Position } from "reactflow"
-import { Map, MapPinOffIcon as MapOff, ChevronRight, Target, X } from "lucide-react"
+import { Map, MapPinOffIcon as MapOff, Target, X, ChevronDown, ChevronUp, Code } from "lucide-react"
 import "reactflow/dist/style.css"
 import type { DiagramResponse } from "@generated/model"
 import { MethodNode } from "./nodes/MethodNode"
 import { ClassNode } from "./nodes/ClassNode"
 import { InterfaceNode } from "./nodes/InterfaceNode"
 import { CustomEdge } from "./edges/CustomEdge"
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
+import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism"
 
 // 미리 정의된 배경색 배열 추가 (파스텔톤으로 구성)
 const backgroundColors = [
@@ -38,9 +40,9 @@ const edgeTypes = {
 // 메서드 노드의 기본 높이와 확장 시 추가 높이
 const METHOD_BASE_HEIGHT = 80 // 기본 높이
 const METHOD_EXPANDED_EXTRA_HEIGHT = 200 // 확장 시 추가 높이
-const METHOD_VERTICAL_SPACING = 50 // 메서드 간 수직 간격 (증가)
-const CLASS_PADDING_TOP = 120 // 클래스 상단 패딩 (제목 영역) (증가)
-const CLASS_PADDING_BOTTOM = 70 // 클래스 하단 패딩 (증가)
+const METHOD_VERTICAL_SPACING = 70 // 메서드 간 수직 간격 (증가)
+const CLASS_PADDING_TOP = 150 // 클래스 상단 패딩 (제목 영역) (증가)
+const CLASS_PADDING_BOTTOM = 90 // 클래스 하단 패딩 (증가)
 const CLASS_WIDTH = 500 // 클래스 노드 너비 (증가)
 
 // 선택 타입 정의
@@ -73,6 +75,14 @@ interface DiagramMethod {
   description?: string
 }
 
+// DTO 타입 정의
+interface DiagramDto {
+  dtoId: string
+  name: string
+  description?: string
+  body?: string
+}
+
 // 연결 타입 정의
 interface DiagramConnection {
   connectionId: string
@@ -96,13 +106,17 @@ type DiagramContainerProps = {
   onSelectionChange?: (targets: TargetNode[]) => void
 }
 
-// 명시적으로 JSX.Element 반환 타입 지정
+// 명시적으로 React.ReactElement 반환 타입 지정
 export default function DiagramContainer({ diagramData, loading, error, onSelectionChange }: DiagramContainerProps): React.ReactElement {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
   const [targetNodes, setTargetNodes] = useState<TargetNode[]>([])
   const [showToolbar, setShowToolbar] = useState<string | null>(null)
+
+  // DTO 패널 상태
+  const [showDtoPanel, setShowDtoPanel] = useState<boolean>(true)
+  const [selectedDto, setSelectedDto] = useState<string | null>(null)
 
   // 노드 관계 맵 (부모-자식 관계)
   const [nodeRelationMap, setNodeRelationMap] = useState<NodeRelationMap>({})
@@ -115,6 +129,13 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   // 현재 버전과 다음 버전 상태 추가
   const currentVersion = diagramData?.metadata?.version || "1.0.0"
+
+  // 버전 목록 상태 추가
+  const [showVersions, setShowVersions] = useState<boolean>(false)
+  const [versions, setVersions] = useState<string[]>([])
+
+  // 버전 목록 참조 (외부 클릭 감지용)
+  const versionsRef = useRef<HTMLDivElement>(null)
 
   // 노드가 이미 타겟에 있는지 확인하는 함수
   const isNodeTargeted = useCallback(
@@ -371,7 +392,27 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
     setNodes(newNodes)
     setEdges(newEdges)
-  }, [diagramData, expandedNodes, calculateLayout, setNodes, setEdges, initialNodePositions, targetNodes])
+
+    // 버전 목록 생성 (예시: 현재 버전을 기준으로 -2부터 +2까지)
+    const currentVersionNum = Number.parseFloat(currentVersion.split(".")[0] + "." + currentVersion.split(".")[1])
+    const versionList = []
+
+    for (let i = Math.max(1, Math.floor(currentVersionNum) - 2); i <= Math.floor(currentVersionNum) + 2; i++) {
+      for (let j = 0; j <= 9; j++) {
+        const version = `${i}.${j}.0`
+        if (Number.parseFloat(i + "." + j) <= currentVersionNum + 2 && Number.parseFloat(i + "." + j) >= Math.max(1, currentVersionNum - 2)) {
+          versionList.push(version)
+        }
+      }
+    }
+
+    setVersions(versionList)
+
+    // 첫 번째 DTO를 기본 선택
+    if (diagramData.dto && diagramData.dto.length > 0) {
+      setSelectedDto(diagramData.dto[0].dtoId)
+    }
+  }, [diagramData, expandedNodes, calculateLayout, setNodes, setEdges, initialNodePositions, targetNodes, currentVersion])
 
   // 메서드 확장/축소 토글 핸들러
   const toggleMethodExpand = useCallback((nodeId: string) => {
@@ -402,8 +443,16 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
       }
     }
 
+    // 버전 드롭다운 외부 클릭 감지
+    const handleClickOutside = (event: MouseEvent) => {
+      if (versionsRef.current && !versionsRef.current.contains(event.target as unknown as HTMLElement)) {
+        setShowVersions(false)
+      }
+    }
+
     // 이벤트 리스너 등록
     document.addEventListener("toggleMethodExpand", handleToggleExpand as EventListener)
+    document.addEventListener("mousedown", handleClickOutside)
 
     // 타겟 제거 이벤트 리스너 추가
     const diagramContainer = document.getElementById("diagram-container")
@@ -414,6 +463,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     // 클린업 함수
     return () => {
       document.removeEventListener("toggleMethodExpand", handleToggleExpand as EventListener)
+      document.removeEventListener("mousedown", handleClickOutside)
 
       if (diagramContainer) {
         diagramContainer.removeEventListener("removeTarget", handleRemoveTarget as EventListener)
@@ -438,18 +488,22 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   }, [])
 
   // 버전 이동 핸들러
-  const handleVersionMove = useCallback(() => {
-    // 현재 버전을 숫자로 변환
-    const versionParts = currentVersion.split(".")
-    const nextVersion = `${versionParts[0]}.${Number(versionParts[1]) + 1}.0`
+  const handleVersionMove = useCallback((version: string) => {
+    // URL에서 현재 경로 가져오기
+    const url = new URL(window.location.href)
+    const pathParts = url.pathname.split("/")
+    const projectId = pathParts[2]
+    const apiId = pathParts[3]
 
-    // 여기서는 실제 버전 이동 로직을 구현해야 합니다.
-    // 예를 들어, 부모 컴포넌트로 이벤트를 전달하거나 API 호출 등
-    console.log(`버전 이동: ${currentVersion} -> ${nextVersion}`)
+    // 쿼리 파라미터 업데이트
+    url.searchParams.set("version", version.split(".")[0] + version.split(".")[1])
 
-    // 알림 표시
-    alert(`버전 이동: ${currentVersion} -> ${nextVersion}`)
-  }, [currentVersion])
+    // 페이지 이동 (새로고침)
+    window.location.href = `/canvas/${projectId}/${apiId}?version=${version.split(".")[0] + version.split(".")[1]}`
+
+    // 버전 드롭다운 닫기
+    setShowVersions(false)
+  }, [])
 
   // 노드 클릭 핸들러
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
@@ -500,7 +554,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   }
 
   return (
-    <div id="diagram-container" style={{ width: "100%", height: "100%" }} className="bg-white rounded-lg shadow overflow-hidden">
+    <div id="diagram-container" style={{ width: "100%", height: "100%" }} className="bg-white rounded-lg shadow overflow-hidden relative">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -523,7 +577,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         selectionOnDrag
       >
         <Background />
-        <Controls />
+        <Controls position="top-left" style={{ top: "300px" }} />
 
         {/* 조건부로 MiniMap 렌더링 */}
         {showMiniMap && <MiniMap nodeStrokeWidth={3} zoomable pannable />}
@@ -552,46 +606,107 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
           </NodeToolbar>
         ))}
 
-        {/* 버전 정보 패널 (오른쪽 상단) */}
-        <Panel position="top-right" className="mr-4 mt-4">
-          <button onClick={handleVersionMove} className="flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-md hover:bg-gray-50 transition-colors">
-            <span className="text-sm font-medium">버전: {currentVersion}</span>
-            <ChevronRight size={16} className="text-gray-600" />
-          </button>
-        </Panel>
-
-        {/* 선택 정보 표시 */}
-        <Panel position="top-left" className="ml-4 mt-4">
-          <div className="bg-white px-4 py-2 rounded-md shadow-md">
-            <div className="text-sm font-medium">
-              {targetNodes.length === 0 ? (
-                "전체 API 선택됨"
-              ) : (
-                <div className="flex flex-col gap-1">
-                  <div className="text-xs text-gray-500">선택된 타겟:</div>
-                  <div className="flex flex-wrap gap-1 max-w-[300px]">
-                    {targetNodes.map((target) => (
-                      <div key={target.id} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                        {target.type === "class" && "클래스: "}
-                        {target.type === "interface" && "인터페이스: "}
-                        {target.type === "method" && "메서드: "}
-                        {target.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+        {/* API 경로 표시 (오른쪽 상단) */}
+        <Panel position="top-left" className="mr-4 mt-4">
+          <div className="bg-white px-4 py-2 rounded-md ">
+            <div className="text-sm font-medium text-gray-600">[POST] api/board/create</div>
           </div>
         </Panel>
 
-        {/* MiniMap 토글 버튼 */}
-        <Panel position="bottom-right" className="mb-2 mr-2">
+        {/* 버전 정보 패널 (오른쪽 상단) */}
+        <Panel position="top-right" className="mr-4 mt-16">
+          <div className="relative" ref={versionsRef}>
+            <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-md hover:bg-gray-50 transition-colors">
+              <span className="text-sm font-medium">버전: {currentVersion}</span>
+              <ChevronDown size={16} className={`text-gray-600 transition-transform ${showVersions ? "rotate-180" : ""}`} />
+            </button>
+
+            {/* 버전 드롭다운 */}
+            {showVersions && (
+              <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                <div className="py-1">
+                  {versions.map((version) => (
+                    <button
+                      key={version}
+                      onClick={() => handleVersionMove(version)}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${version === currentVersion ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-700"}`}
+                    >
+                      {version}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Panel>
+
+        {/* MiniMap 토글 버튼 - 위치 조정 */}
+        <Panel position="bottom-right" className="mb-72 mr-2">
           <button onClick={toggleMiniMap} className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors" title={showMiniMap ? "미니맵 숨기기" : "미니맵 표시"}>
             {showMiniMap ? <MapOff size={20} className="text-gray-600" /> : <Map size={20} className="text-gray-600" />}
           </button>
         </Panel>
       </ReactFlow>
+
+      {/* DTO 패널 */}
+      <div className={`absolute bottom-0 left-0 w-[70%] bg-white border-t border-gray-200 transition-all duration-300 rounded-md ${showDtoPanel ? "h-50" : "h-8"}`}>
+        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200 cursor-pointer rounded-md" onClick={() => setShowDtoPanel(!showDtoPanel)}>
+          <div className="flex items-center gap-2">
+            <Code size={16} className="text-gray-600" />
+            <h3 className="font-medium text-gray-700">DTO 정보</h3>
+          </div>
+          <button className="text-gray-500 hover:text-gray-700">{showDtoPanel ? <ChevronDown size={18} /> : <ChevronUp size={18} />}</button>
+        </div>
+
+        {showDtoPanel && diagramData.dto && diagramData.dto.length > 0 && (
+          <div className="flex h-[calc(100%-40px)]">
+            {/* DTO 목록 */}
+            <div className="w-1/4 border-r border-gray-200 overflow-y-auto">
+              <ul>
+                {diagramData.dto.map((dto: DiagramDto) => (
+                  <li
+                    key={dto.dtoId}
+                    className={`px-4 py-2 cursor-pointer hover:bg-gray-50 ${selectedDto === dto.dtoId ? "bg-blue-50 border-l-4 border-blue-500" : ""}`}
+                    onClick={() => setSelectedDto(dto.dtoId)}
+                  >
+                    <div className="font-medium">{dto.name}</div>
+                    {dto.description && <div className="text-xs text-gray-500 truncate">{dto.description}</div>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* DTO 상세 정보 */}
+            <div className="w-3/4 overflow-auto p-2">
+              {selectedDto && (
+                <div>
+                  {diagramData.dto
+                    .filter((dto: DiagramDto) => dto.dtoId === selectedDto)
+                    .map((dto: DiagramDto) => (
+                      <div key={dto.dtoId}>
+                        {dto.body && (
+                          <SyntaxHighlighter
+                            language="java"
+                            style={vscDarkPlus}
+                            customStyle={{
+                              fontSize: "12px",
+                              borderRadius: "4px",
+                              maxHeight: "140px",
+                            }}
+                          >
+                            {dto.body}
+                          </SyntaxHighlighter>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {showDtoPanel && (!diagramData.dto || diagramData.dto.length === 0) && <div className="flex items-center justify-center h-[calc(100%-40px)] text-gray-500">DTO 정보가 없습니다.</div>}
+      </div>
     </div>
   )
 }
