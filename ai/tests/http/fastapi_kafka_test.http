@@ -37,7 +37,7 @@ Content-Type: application/json
 }
 
 ### 채팅 시작 요청
-POST http://localhost:8000/chat/start
+POST http://localhost:8000/api/v1/chat/start
 Content-Type: application/json
 
 {
@@ -45,7 +45,7 @@ Content-Type: application/json
 }
 
 ### 채팅 스트림 데이터 가져오기
-GET http://localhost:8000/chat/stream/4a287028-6bb4-4ebc-8c04-bfdc09c4cbd6
+GET http://localhost:8000/api/v1/chat/stream/4a287028-6bb4-4ebc-8c04-bfdc09c4cbd6
 # stream_id는 start_chat 응답에서 받은 값으로 교체해야 합니다
 
 ### 채팅 메시지 전송 (스트림 계속)

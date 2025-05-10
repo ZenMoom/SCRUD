@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Optional, Tuple, Any
 
 from langchain.output_parsers import PydanticOutputParser
@@ -11,6 +12,10 @@ from app.core.models.prompt_models import Diagram
 from app.infrastructure.mongodb.repository.mongo_repository import MongoRepository
 from app.core.prompts.few_shot_prompt_template import DiagramPromptGenerator
 
+# 로깅 설정
+logging.basicConfig(level=logging.INFO,
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class ChatService:
     """
@@ -52,7 +57,7 @@ class ChatService:
             self.parser = PydanticOutputParser(pydantic_object=Diagram)
             return self.llm, self.parser
         except Exception as e:
-            print(f"LLM 및 파서 설정 중 오류 발생: {str(e)}")
+            logger.info(f"LLM 및 파서 설정 중 오류 발생: {str(e)}")
             raise
 
     async def generate_diagram_data(self, openapi_spec: str) -> Diagram:
@@ -74,7 +79,7 @@ class ChatService:
             prompt = template.get_prompt().format(openapi_spec=openapi_spec)
 
             # LLM으로 도식화 데이터 생성
-            print(f"[디버깅] 모델 호출 시작")
+            logger.info(f"[디버깅] 모델 호출 시작")
 
             response = await self.llm.ainvoke(
                 [
@@ -82,14 +87,14 @@ class ChatService:
                     HumanMessage(content=self.parser.get_format_instructions()),
                 ]
             )
-            print(f"[디버깅] 모델 호출 완료")
+            logger.info(f"[디버깅] 모델 호출 완료")
 
             # 파서를 통해 응답 처리
-            print(response.content)
+            logger.info(response.content)
             diagram_data = self.parser.parse(response.content)
             return diagram_data
         except Exception as e:
-            print(f"도식화 데이터 생성 중 오류 발생: {str(e)}")
+            logger.info(f"도식화 데이터 생성 중 오류 발생: {str(e)}")
             raise
 
     async def create_diagram_from_openapi(self, openapi_spec: str, response_queue: asyncio.Queue) -> Diagram:
@@ -98,6 +103,7 @@ class ChatService:
 
         Args:
             openapi_spec (str): OpenAPI 명세 데이터(YAML 또는 JSON 형식)
+            response_queue: asyncio.Queue: LLM 응답 데이터를 저장할 큐
         Returns:
             Diagram: 생성된 도식화 데이터
         """
@@ -107,14 +113,15 @@ class ChatService:
             self.setup_llm_and_parser(response_queue)
 
             # 도식화 데이터 생성
-            diagram_data = await self.generate_diagram_data(openapi_spec)
+            diagram_data: Diagram = await self.generate_diagram_data(openapi_spec)
 
             # MongoDB에 저장
             inserted_id = await self.repository.insert_one(diagram_data)
-
+            logger.info(inserted_id)
+            logger.info(diagram_data)
             # 생성된 도식화 데이터 반환
             return diagram_data
 
         except Exception as e:
-            print(f"도식화 데이터 생성 프로세스 중 오류 발생: {str(e)}")
+            logger.info(f"도식화 데이터 생성 프로세스 중 오류 발생: {str(e)}")
             raise
