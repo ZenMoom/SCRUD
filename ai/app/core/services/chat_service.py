@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional, Tuple, Any
 
 from langchain.output_parsers import PydanticOutputParser
@@ -8,6 +9,7 @@ from app.core.generator.model_generator import ModelGenerator
 # 앞서 정의한 Pydantic 모델 사용
 from app.core.models.prompt_models import Diagram
 from app.infrastructure.mongodb.repository.mongo_repository import MongoRepository
+from app.core.prompts.few_shot_prompt_template import DiagramPromptGenerator
 
 
 class ChatService:
@@ -35,7 +37,7 @@ class ChatService:
         self.llm = None
         self.parser = None
 
-    def setup_llm_and_parser(self) -> Tuple[Any, PydanticOutputParser]:
+    def setup_llm_and_parser(self, response_queue: asyncio.Queue) -> Tuple[Any, PydanticOutputParser]:
         """
         LLM 모델과 출력 파서를 설정하는 메서드
 
@@ -46,14 +48,14 @@ class ChatService:
             if not self.model_name:
                 raise ValueError("모델 이름이 설정되지 않았습니다.")
                 
-            self.llm = self.model_generator.get_chat_model(self.model_name)
+            self.llm = self.model_generator.get_chat_model(self.model_name, response_queue)
             self.parser = PydanticOutputParser(pydantic_object=Diagram)
             return self.llm, self.parser
         except Exception as e:
             print(f"LLM 및 파서 설정 중 오류 발생: {str(e)}")
             raise
 
-    def generate_diagram_data(self, openapi_spec: str) -> Diagram:
+    async def generate_diagram_data(self, openapi_spec: str) -> Diagram:
         """
         LLM을 사용하여 OpenAPI 명세로부터 도식화 데이터를 생성하는 메서드
 
@@ -65,20 +67,22 @@ class ChatService:
         """
         try:
             if not self.llm or not self.parser:
-                self.setup_llm_and_parser()
+                raise ValueError("모델이 없습니다.")
                 
             # 프롬프트 생성
-            import os
-            prompt_path = os.path.join("..", "..", "resources", "prompts", "few_shot_prompt.json")
-            prompt = load_prompt(prompt_path).format(openapi_spec=openapi_spec)
+            template = DiagramPromptGenerator()
+            prompt = template.get_prompt().format(openapi_spec=openapi_spec)
 
             # LLM으로 도식화 데이터 생성
-            response = self.llm.invoke(
+            print(f"[디버깅] 모델 호출 시작")
+
+            response = await self.llm.ainvoke(
                 [
                     HumanMessage(content=prompt),
                     HumanMessage(content=self.parser.get_format_instructions()),
                 ]
             )
+            print(f"[디버깅] 모델 호출 완료")
 
             # 파서를 통해 응답 처리
             print(response.content)
@@ -88,7 +92,7 @@ class ChatService:
             print(f"도식화 데이터 생성 중 오류 발생: {str(e)}")
             raise
 
-    def create_diagram_from_openapi(self, openapi_spec: str) -> Diagram:
+    async def create_diagram_from_openapi(self, openapi_spec: str, response_queue: asyncio.Queue) -> Diagram:
         """
         OpenAPI 명세를 입력받아 도식화 데이터(Diagram)를 생성하는 메인 메서드
 
@@ -100,13 +104,13 @@ class ChatService:
         try:
 
             # LLM 및 파서 설정
-            self.setup_llm_and_parser()
+            self.setup_llm_and_parser(response_queue)
 
             # 도식화 데이터 생성
-            diagram_data = self.generate_diagram_data(openapi_spec)
+            diagram_data = await self.generate_diagram_data(openapi_spec)
 
             # MongoDB에 저장
-            self.repository.insert_one(diagram_data)
+            inserted_id = await self.repository.insert_one(diagram_data)
 
             # 생성된 도식화 데이터 반환
             return diagram_data
