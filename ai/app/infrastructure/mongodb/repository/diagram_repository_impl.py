@@ -18,6 +18,16 @@ class DiagramRepositoryImpl(DiagramRepository):
         """
         self.repository = MongoRepositoryImpl("diagrams", Diagram)
 
+    async def find_many(self, fileter_dict: Dict[str, Any], sort: Optional[list] = None) -> list:
+        return await self.repository.find_many(fileter_dict, sort)
+
+    async def find_one(self, fileter_dict: Dict[str, Any]) -> Optional[Diagram]:
+        return await self.repository.find_one(fileter_dict)
+
+    async def insert_one(self, diagram: Diagram) -> str:
+        return await self.repository.insert_one(diagram)
+
+
     async def find_by_project_api_version(self, project_id: str, api_id: str, version: int) -> Optional[Diagram]:
         """
         프로젝트 ID, API ID, 버전 ID로 다이어그램을 조회합니다.

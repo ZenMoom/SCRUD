@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
 
@@ -8,6 +8,18 @@ class DiagramRepository(ABC):
     """
     다이어그램 데이터에 대한 데이터베이스 액세스를 추상화하는 인터페이스
     """
+
+    @abstractmethod
+    async def find_many(self, fileter_dict: Dict[str, Any], sort: Optional[list] = None) -> list:
+        pass
+
+    @abstractmethod
+    async def find_one(self, fileter_dict: Dict[str, Any]) -> Optional[Diagram]:
+        pass
+
+    @abstractmethod
+    async def insert_one(self, diagram: Diagram) -> str:
+        pass
 
     @abstractmethod
     async def find_by_project_api_version(self, project_id: str, api_id: str, version_id: int) -> Optional[Diagram]:
