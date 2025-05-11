@@ -56,15 +56,35 @@ def get_chat_service(
 #####################################################################################################
 ###############################         Controller        ###########################################
 #####################################################################################################
-from app.api.dto.diagram_dto import ChatResponse
+from app.api.dto.diagram_dto import ChatResponseList
 @chat_router.get("/projects/{project_id}/apis/{api_id}/chats")
 async def get_prompts(
         project_id: str,
         api_id: str,
         chat_service: ChatService = Depends(get_chat_service),
-) -> ChatResponse:
+) -> ChatResponseList:
+    """
+    특정 프로젝트와 API의 모든 채팅 기록을 조회합니다.
 
-    pass
+    Args:
+        project_id: 프로젝트 ID
+        api_id: API ID
+        chat_service: ChatService
+
+    Returns:
+        ChatResponseList: 채팅 기록 목록
+    """
+    logger.info(f"채팅 기록 조회 요청: project_id={project_id}, api_id={api_id}")
+
+    try:
+        # 채팅 서비스를 통해 프롬프트 조회
+        chat_responses = await chat_service.get_prompts(project_id, api_id)
+        logger.info(f"채팅 기록 조회 성공: {len(chat_responses.content)}개의 채팅")
+
+        return chat_responses
+    except Exception as e:
+        logger.error(f"채팅 기록 조회 중 오류 발생: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
 
 
 @chat_router.post("/projects/{project_id}/apis/{api_id}/chats")

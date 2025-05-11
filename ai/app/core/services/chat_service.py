@@ -1,19 +1,18 @@
 import asyncio
-import json
 import logging
-from typing import Optional, Tuple, Any, Dict
+from typing import Optional, Tuple, Any
 
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.messages import HumanMessage
 
+from app.api.dto.diagram_dto import UserChatRequest, DiagramResponse, ChatResponse, ChatResponseList
 from app.core.generator.model_generator import ModelGenerator
-
-from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
-from app.api.dto.diagram_dto import UserChatRequest, DiagramResponse
 from app.core.prompts.few_shot_prompt_template import DiagramPromptGenerator
 from app.core.services.sse_service import SSEService
 from app.infrastructure.mongodb.repository.chat_repository import ChatRepository
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
+from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
+
 
 class ChatService:
     """
@@ -260,4 +259,45 @@ class ChatService:
             # 오류 응답 전송
             await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {str(e)}")
             await self.sse_service.close_stream(response_queue)
+            raise
+
+    async def get_prompts(self, project_id: str, api_id: str) -> ChatResponseList:
+        """
+        특정 프로젝트와 API의 모든 채팅 기록을 조회합니다.
+
+        Args:
+            project_id: 프로젝트 ID
+            api_id: API ID
+
+        Returns:
+            ChatResponseList: 채팅 기록 목록
+        """
+        try:
+            self.logger.info(f"채팅 기록 조회 시작: project_id={project_id}, api_id={api_id}")
+
+            # 채팅 저장소를 통해 채팅 기록 조회
+            chats = await self.chat_repository.get_prompts(project_id, api_id)
+            self.logger.info(f"{len(chats)}개의 채팅 기록을 조회했습니다")
+
+            # 조회된 채팅을 DTO로 변환
+            chat_responses = []
+            for chat in chats:
+                # Chat 모델을 ChatResponse DTO로 변환
+                chat_response = ChatResponse(
+                    id=chat.id,
+                    chatId=chat.chatId,
+                    createdAt=chat.createdAt,
+                    userChat=ChatResponse.UserChatResponse(**chat.userChat.dict()) if chat.userChat else None,
+                    systemChat=ChatResponse.SystemChatResponse(**chat.systemChat.dict()) if chat.systemChat else None
+                )
+                chat_responses.append(chat_response)
+
+            # ChatResponseList로 래핑하여 반환
+            response = ChatResponseList(content=chat_responses)
+            self.logger.info(f"채팅 기록 조회 완료: {len(response.content)}개의 채팅")
+
+            return response
+
+        except Exception as e:
+            self.logger.error(f"채팅 기록 조회 중 오류 발생: {str(e)}", exc_info=True)
             raise
