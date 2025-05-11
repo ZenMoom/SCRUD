@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
     const scrudApiApi = new ScrudApiApi(config)
 
     // exclude 값을 쿼리로 설정
-    const excludeValues = "USER_COMPLETED,AI_GENERATED"
+    // const excludeValues = "USER_COMPLETED,AI_GENERATED"
 
     // 미완성 API 목록 조회 요청
-    const response = await scrudApiApi.getIncompleteApis({
+    const response = await scrudApiApi.searchApiStatus({
       projectId,
-      exclude: excludeValues,
+      // exclude: excludeValues,
     })
 
     return NextResponse.json(response.data)
