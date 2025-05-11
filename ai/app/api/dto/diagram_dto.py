@@ -1,38 +1,70 @@
 from typing import List, Optional, Dict, Any
 from enum import Enum
 from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
+class MethodPromptTagEnum(str, Enum):
+    EXPLAIN = "EXPLAIN"
+    REFACTORING = "REFACTORING"
+    OPTIMIZE = "OPTIMIZE"
+    DOCUMENT = "DOCUMENT"
+    CONVENTION = "CONVENTION"
+    ANALYZE = "ANALYZE"
+    IMPLEMENT = "IMPLEMENT"
+
+class MethodPromptTargetEnum(str, Enum):
+    SIGNATURE = "SIGNATURE"
+    BODY = "BODY"
+
+
 class UserChatRequest(BaseModel):
-    class MethodPromptTag(str, Enum):
-        EXPLAIN = "EXPLAIN"
-        REFACTORING = "REFACTORING"
-        OPTIMIZE = "OPTIMIZE"
-        DOCUMENT = "DOCUMENT"
-        CONVENTION = "CONVENTION"
-        ANALYZE = "ANALYZE"
-        IMPLEMENT = "IMPLEMENT"
 
-    class MethodPromptTarget(str, Enum):
-        SIGNATURE = "SIGNATURE"
-        BODY = "BODY"
-
-    tag: MethodPromptTag
-    promptType: MethodPromptTarget
+    tag: MethodPromptTagEnum
+    promptType: MethodPromptTargetEnum
     message: str
     targetMethods: list[Dict[str, str]]
 
-class DiagramResponse(BaseModel):
-    diagramId: str
-    version: int
-    metadata: dict
-    components: list[dict]
-    edges: list[dict]
-    apiId: str
-    projectId: str
+class ChatResponse(BaseModel):
 
-class Diagram(BaseModel):
+    class UserChatResponse(BaseModel):
+        id: Optional[str] = Field(default=None, alias="_id")
+        tag: MethodPromptTagEnum
+        promptType: MethodPromptTargetEnum
+        message: str
+        targetMethods: List[Dict[str, str]]  # methodId를 포함하는 사전 목록
+
+
+    class SystemChatResponse(BaseModel):
+        class PromptResponseEnum(str, Enum):
+            MODIFIED = "MODIFIED"
+            UNCHANGED = "UNCHANGED"
+            EXPLANATION = "EXPLANATION"
+            MODIFIED_WITH_NEW_COMPONENTS = "MODIFIED_WITH_NEW_COMPONENTS"
+            ERROR = "ERROR"
+
+        class VersionInfo(BaseModel):
+            newVersionId: str
+            description: Optional[str] = None
+
+        id: Optional[str] = Field(default=None, alias="_id")
+        systemChatId: Optional[str] = None
+        status: PromptResponseEnum
+        message: str
+        versionInfo: Optional[VersionInfo] = None
+        diagramId: Optional[str] = None
+
+    id: Optional[str] = Field(default=None, alias="_id")
+    chatId: Optional[str] = None
+    createdAt: datetime
+    userChat: Optional[UserChatResponse] = None
+    systemChat: Optional[SystemChatResponse] = None
+
+class ChatResponseList(BaseModel):
+    content: List[ChatResponse] = []
+
+class DiagramResponse(BaseModel):
     class MetadataResponse(BaseModel):
         metadataId: str
         version: int

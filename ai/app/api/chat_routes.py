@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import StreamingResponse
 
@@ -18,18 +19,23 @@ chat_router = APIRouter()
 # 의존성 주입을 위한 함수
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
 
+
 def get_diagram_repository() -> DiagramRepository:
     from app.infrastructure.mongodb.repository.diagram_repository_impl import DiagramRepositoryImpl
     return DiagramRepositoryImpl()
 
+
 from app.infrastructure.mongodb.repository.chat_repository import ChatRepository
+
 
 def get_chat_repository() -> ChatRepository:
     from app.infrastructure.mongodb.repository.chat_repository_impl import ChatRepositoryImpl
     return ChatRepositoryImpl()
 
+
 def get_sse_service() -> SSEService:
     return SSEService(logger=logger)
+
 
 def get_chat_service(
         diagram_repository: DiagramRepository = Depends(get_diagram_repository),
@@ -46,18 +52,29 @@ def get_chat_service(
         logger=logger,
     )
 
+
 #####################################################################################################
 ###############################         Controller        ###########################################
 #####################################################################################################
+from app.api.dto.diagram_dto import ChatResponse
+@chat_router.get("/projects/{project_id}/apis/{api_id}/chats")
+async def get_prompts(
+        project_id: str,
+        api_id: str,
+        chat_service: ChatService = Depends(get_chat_service),
+) -> ChatResponse:
+
+    pass
+
 
 @chat_router.post("/projects/{project_id}/apis/{api_id}/chats")
 async def prompt_chat(
-    project_id: str,
-    api_id: str,
-    user_chat_data: UserChatRequest,
-    background_tasks: BackgroundTasks,
-    chat_service: ChatService = Depends(get_chat_service),
-    sse_service: SSEService = Depends(get_sse_service)
+        project_id: str,
+        api_id: str,
+        user_chat_data: UserChatRequest,
+        background_tasks: BackgroundTasks,
+        chat_service: ChatService = Depends(get_chat_service),
+        sse_service: SSEService = Depends(get_sse_service)
 ):
     """
     프롬프트를 입력하여 도식화 수정을 요청하거나 설명을 요청합니다.
@@ -99,10 +116,11 @@ async def prompt_chat(
         logger.error(f"채팅 처리 중 오류 발생: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
 
+
 @chat_router.get("/sse/connect/{sse_id}")
 async def connect_sse(
-    sse_id: str,
-    sse_service: SSEService = Depends(get_sse_service)
+        sse_id: str,
+        sse_service: SSEService = Depends(get_sse_service)
 ):
     """
     SSE 연결을 설정하여 실시간 응답을 스트리밍 받습니다.
