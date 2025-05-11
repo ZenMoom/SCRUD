@@ -56,11 +56,11 @@ def get_chat_service(
 ###############################         Controller        ###########################################
 #####################################################################################################
 
-@diagram_router.get("/projects/{project_id}/apis/{api_id}/versions/{version_id}")
+@diagram_router.get("/projects/{project_id}/apis/{api_id}/versions/{version}")
 async def get_diagram(
     project_id: str,
     api_id: str,
-    version_id: str,
+    version: int,
     diagram_service: DiagramService = Depends(get_diagram_service),
 ) -> DiagramResponse:
     """
@@ -70,13 +70,13 @@ async def get_diagram(
         diagram_service: DiagramService
         project_id: 프로젝트 ID
         api_id: API ID
-        version_id: 버전 ID
+        version: 버전
 
     Returns:
         Diagram: 조회된 도식화 데이터
     """
 
-    return await diagram_service.get_diagram(project_id, api_id, version_id)
+    return await diagram_service.get_diagram(project_id, api_id, version)
 
 @diagram_router.post("/projects/{project_id}/apis/{api_id}/diagrams")
 async def create_diagram(
@@ -118,13 +118,12 @@ async def update_component_position(
     Returns:
         Component: 업데이트된 컴포넌트 정보
     """
-    result: DiagramResponse = await diagram_service.update_component_position(
+
+    return await diagram_service.update_component_position(
         project_id,
         api_id,
         component_id,
         position_data
     )
-
-    return result
 
 
