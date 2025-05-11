@@ -3,6 +3,8 @@ import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.api_routes import api_router
 from app.config.config import settings
 from app.infrastructure.kafka.consumer import kafka_consumer
 from app.infrastructure.kafka.producer import kafka_producer
@@ -47,6 +49,7 @@ app.add_middleware(
 )
 # 라우터 포함
 app.include_router(router)
+app.include_router(api_router, prefix="/api/v1")
 app.include_router(chat_router)
 
 # 직접 실행 시 서버 시작
