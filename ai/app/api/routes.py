@@ -5,9 +5,13 @@ from app.infrastructure.kafka.consumer import kafka_consumer
 from app.infrastructure.kafka.dto.user_chat_dto import UserChatRequest
 from app.infrastructure.kafka.producer import kafka_producer
 from app.config.config import settings
+from app.api.diagram_routes import router as diagram_router
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# 다이어그램 관련 라우터 등록
+router.include_router(diagram_router)
 
 
 @router.post("/diagrams/request")
