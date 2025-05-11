@@ -1,0 +1,117 @@
+###############################################
+# 다이어그램 서비스 API 테스트
+###############################################
+
+@baseUrl = http://localhost:8000
+@projectId = test-project-123
+@apiId = test-api-456
+@versionId = 1
+@componentId = test-component-789
+
+### 1. 새 다이어그램 생성 테스트
+POST {{baseUrl}}/api/v1/projects/{{projectId}}/apis/{{apiId}}/diagrams
+Content-Type: application/json
+
+### 2. 특정 버전의 다이어그램 조회 테스트
+GET {{baseUrl}}/api/v1/projects/{{projectId}}/apis/{{apiId}}/versions/{{versionId}}
+Content-Type: application/json
+
+### 3. 컴포넌트 위치 업데이트 테스트
+PUT {{baseUrl}}/api/v1/projects/{{projectId}}/apis/{{apiId}}/components/{{componentId}}/position
+Content-Type: application/json
+
+{
+  "x": 250.5,
+  "y": 180.75
+}
+
+###############################################
+# 시나리오 기반 테스트 (워크플로우 테스트)
+###############################################
+
+### 1. 새 프로젝트의 새 다이어그램 생성
+POST {{baseUrl}}/api/v1/projects/scenario-project/apis/scenario-api/diagrams
+Content-Type: application/json
+
+### 2. 생성된 다이어그램의 최신 버전 조회
+GET {{baseUrl}}/api/v1/projects/scenario-project/apis/scenario-api/versions/1
+Content-Type: application/json
+
+### 3. 다이어그램 업데이트를 위한 채팅 요청
+POST {{baseUrl}}/api/v1/projects/scenario-project/apis/scenario-api/chats
+Content-Type: application/json
+
+{
+  "tag": "IMPLEMENT",
+  "promptType": "BODY",
+  "message": "사용자 등록 및 인증을 위한 UserService 클래스와 AuthService 클래스를 생성해주세요.",
+  "targetMethods": []
+}
+
+### 4. 업데이트된 다이어그램의 컴포넌트 위치 조정
+# 주의: 실제 componentId는 이전 응답에서 확인해야 합니다.
+PUT {{baseUrl}}/api/v1/projects/scenario-project/apis/scenario-api/components/component-user-service/position
+Content-Type: application/json
+
+{
+  "x": 300.0,
+  "y": 150.0
+}
+
+### 5. 또 다른 컴포넌트 위치 조정
+# 주의: 실제 componentId는 이전 응답에서 확인해야 합니다.
+PUT {{baseUrl}}/api/v1/projects/scenario-project/apis/scenario-api/components/component-auth-service/position
+Content-Type: application/json
+
+{
+  "x": 500.0,
+  "y": 150.0
+}
+
+### 6. 채팅을 통한 다이어그램 더 업데이트하기
+POST {{baseUrl}}/api/v1/projects/scenario-project/apis/scenario-api/chats
+Content-Type: application/json
+
+{
+  "tag": "REFACTORING",
+  "promptType": "BODY",
+  "message": "UserService에 'updateUserProfile' 메서드를 추가하고, AuthService에 'validateToken' 메서드를 추가해주세요.",
+  "targetMethods": [
+    {
+      "methodId": "method-user-service-register"
+    }
+  ]
+}
+
+### 7. 새 버전의 다이어그램 조회
+GET {{baseUrl}}/api/v1/projects/scenario-project/apis/scenario-api/versions/2
+Content-Type: application/json
+
+### 8. 이전 버전의 다이어그램 조회 (버전 비교용)
+GET {{baseUrl}}/api/v1/projects/scenario-project/apis/scenario-api/versions/1
+Content-Type: application/json
+
+###############################################
+# 에러 케이스 테스트 
+###############################################
+
+### 1. 존재하지 않는 프로젝트 다이어그램 조회
+GET {{baseUrl}}/api/v1/projects/non-existent-project/apis/test-api/versions/1
+Content-Type: application/json
+
+### 2. 존재하지 않는 API 다이어그램 조회
+GET {{baseUrl}}/api/v1/projects/test-project-123/apis/non-existent-api/versions/1
+Content-Type: application/json
+
+### 3. 존재하지 않는 버전 다이어그램 조회
+GET {{baseUrl}}/api/v1/projects/test-project-123/apis/test-api-456/versions/999
+Content-Type: application/json
+
+### 4. 존재하지 않는 컴포넌트 위치 업데이트
+PUT {{baseUrl}}/api/v1/projects/test-project-123/apis/test-api-456/components/non-existent-component/position
+Content-Type: application/json
+
+{
+  "x": 250.5,
+  "y": 180.75
+}
