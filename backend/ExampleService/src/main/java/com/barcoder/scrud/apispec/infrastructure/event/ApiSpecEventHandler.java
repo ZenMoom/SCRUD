@@ -13,6 +13,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -52,7 +53,10 @@ public class ApiSpecEventHandler {
 
         log.info("ApiSpecGenerateEvent: {}", request.toString());
 
+        LocalDateTime startTime = LocalDateTime.now();
         ApiSpecGenerateResponse response = apiSpecVersionWebclient.generateApiSpec(request);
+        LocalDateTime endTime = LocalDateTime.now();
+        log.info("API Spec generation took {} ms", java.time.Duration.between(startTime, endTime).toMillis());
 
         if (response == null) {
             throw new RuntimeException("API Spec generation failed");
