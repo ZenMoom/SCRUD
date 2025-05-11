@@ -14,7 +14,7 @@ interface ApiEndpoint {
   path: string
   method: string
   status: "todo" | "progress" | "done"
-  apiSpecVersionId?: number // API 스펙 ID 추가
+  apiSpecVersionId?: number
 }
 
 // API 그룹 인터페이스

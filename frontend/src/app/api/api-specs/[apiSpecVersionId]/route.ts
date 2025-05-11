@@ -49,6 +49,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
 
     const body = await request.json()
 
+    // 디버깅을 위한 로그 추가
+    console.log("클라이언트에서 받은 요청 데이터:", body)
+
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
@@ -61,6 +64,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
       httpMethod: body.httpMethod,
       description: body.description || "",
       summary: body.summary || "",
+      // 중요: scrudProjectId 필드 추가
+      scrudProjectId: body.scrudProjectId,
     }
 
     // 선택적 필드 추가
@@ -85,10 +90,25 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
       apiSpecVersionUpdateRequest,
     }
 
+    // 백엔드로 보내는 최종 데이터 로깅
+    console.log("백엔드로 보내는 최종 요청 데이터:", {
+      apiSpecVersionId,
+      apiSpecVersionUpdateRequest,
+    })
+
     const response = await apiSpecApi.updateApiSpec(requestParameters)
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     console.error("API 스펙 수정 오류:", error)
+
+    // 오류 상세 정보 로깅
+    if (error instanceof Error) {
+      console.error("Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      })
+    }
 
     const errorMessage = error instanceof Error ? error.message : "API 스펙 수정 중 오류가 발생했습니다."
 

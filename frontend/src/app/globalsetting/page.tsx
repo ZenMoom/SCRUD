@@ -58,9 +58,9 @@ export default function GlobalSettingPage() {
     dependencyFile: "",
     utilityClass: "",
     errorCode: "",
-    securitySetting: "jwt", // 첫 번째 선택지를 기본값으로 설정
+    securitySetting: "SECURITY_DEFAULT_JWT", // 첫 번째 선택지를 기본값으로 설정
     codeConvention: "",
-    architectureStructure: "layered", // 첫 번째 선택지를 기본값으로 설정
+    architectureStructure: "ARCHITECTURE_DEFAULT_LAYERED_A", // 첫 번째 선택지를 기본값으로 설정
   })
 
   // 각 설정 항목의 완료 상태를 관리
@@ -147,7 +147,7 @@ export default function GlobalSettingPage() {
 
   // 필수 항목이 모두 완료되었는지 확인
   const isRequiredCompleted = () => {
-    return completed.title && completed.description && completed.requirementSpec && completed.erd
+    return completed.title && completed.description && completed.serverUrl && completed.requirementSpec && completed.erd
   }
   
   // 프로젝트 생성 버튼 클릭 핸들러

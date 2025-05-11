@@ -1,0 +1,125 @@
+{
+  "spec_version": {
+    "spec_version_id": 0,
+    "open_api_version": "3.0.1",
+    "description": "description"
+  },
+  "operation_field_rules": [
+    {
+      "request_rules": [
+        {
+          "content_type": "content_type",
+          "is_required": true,
+          "body_type": "body_type",
+          "supports_file": true
+        },
+        {
+          "content_type": "content_type",
+          "is_required": true,
+          "body_type": "body_type",
+          "supports_file": true
+        }
+      ],
+      "parameter_rules": [
+        {
+          "in_type": "in_type",
+          "supports_enum": true,
+          "is_required": true,
+          "supports_array": true,
+          "data_type": "data_type",
+          "is_editable": true
+        },
+        {
+          "in_type": "in_type",
+          "supports_enum": true,
+          "is_required": true,
+          "supports_array": true,
+          "data_type": "data_type",
+          "is_editable": true
+        }
+      ],
+      "operation_field_rule_id": 6,
+      "is_editable": true,
+      "field_name": "field_name",
+      "editable_sub_fields": "editable_sub_fields",
+      "response_rules": [
+        {
+          "status_code": "status_code",
+          "content_type": "content_type",
+          "description": "description",
+          "is_error": true,
+          "schema_type": "schema_type",
+          "ref_component": "ref_component"
+        },
+        {
+          "status_code": "status_code",
+          "content_type": "content_type",
+          "description": "description",
+          "is_error": true,
+          "schema_type": "schema_type",
+          "ref_component": "ref_component"
+        }
+      ]
+    },
+    {
+      "request_rules": [
+        {
+          "content_type": "content_type",
+          "is_required": true,
+          "body_type": "body_type",
+          "supports_file": true
+        },
+        {
+          "content_type": "content_type",
+          "is_required": true,
+          "body_type": "body_type",
+          "supports_file": true
+        }
+      ],
+      "parameter_rules": [
+        {
+          "in_type": "in_type",
+          "supports_enum": true,
+          "is_required": true,
+          "supports_array": true,
+          "data_type": "data_type",
+          "is_editable": true
+        },
+        {
+          "in_type": "in_type",
+          "supports_enum": true,
+          "is_required": true,
+          "supports_array": true,
+          "data_type": "data_type",
+          "is_editable": true
+        }
+      ],
+      "operation_field_rule_id": 6,
+      "is_editable": true,
+      "field_name": "field_name",
+      "editable_sub_fields": "editable_sub_fields",
+      "response_rules": [
+        {
+          "status_code": "status_code",
+          "content_type": "content_type",
+          "description": "description",
+          "is_error": true,
+          "schema_type": "schema_type",
+          "ref_component": "ref_component"
+        },
+        {
+          "status_code": "status_code",
+          "content_type": "content_type",
+          "description": "description",
+          "is_error": true,
+          "schema_type": "schema_type",
+          "ref_component": "ref_component"
+        }
+      ]
+    }
+  ],
+  "description": "description",
+  "service_spec_version_id": 1,
+  "scrud_version": "scrud_version",
+  "status": "status"
+}

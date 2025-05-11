@@ -2,7 +2,6 @@ import logging
 from app.infrastructure.kafka.dto.user_chat_dto import UserChatRequest
 from app.infrastructure.kafka.dto.system_chat_dto import SystemChatResponse
 from app.infrastructure.kafka.producer import kafka_producer
-from app.core.services.diagram_service import create_diagram
 
 logger = logging.getLogger(__name__)
 
