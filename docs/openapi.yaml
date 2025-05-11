@@ -98,158 +98,6 @@ paths:
         "404":
           $ref: "./components/responses/exception-response.yaml#/NotFoundException"
 
-  /api/sse/send:
-    post:
-      tags:
-        - Chat
-      deprecated: true
-      operationId: sendSSEEvent
-      security:
-        - bearerAuth: [ ]
-      summary: "SSE 이벤트를 전송받습니다."
-      description: "연결된 특정 클라이언트 또는 모든 클라이언트에게 이벤트를 전송합니다."
-      responses:
-        "200":
-          description: "이벤트 전송 성공"
-          content:
-            application/json:
-              schema:
-                $ref: "./components/schemas/canvas-schema.yaml#/SSEEventDto"
-        "400":
-          description: "잘못된 요청"
-        "401":
-          description: "인증되지 않은 요청"
-  /api/sse/connect:
-    get:
-      tags:
-        - Chat
-      operationId: connectSSE
-      deprecated: true
-      security:
-        - bearerAuth: [ ]
-      summary: "SSE 연결을 설정합니다."
-      description: "서버와 클라이언트 간의 SSE 연결을 설정하여 실시간 이벤트 스트림을 수신할 수 있습니다."
-      responses:
-        "200":
-          description: "SSE 연결 성공"
-          content:
-            text/event-stream:
-              schema:
-                type: string
-                description: "이벤트 스트림"
-        "401":
-          description: "인증되지 않은 요청"
-  /api/v1/projects/{projectId}/apis/{apiId}/components/{componentId}/position:
-    put:
-      tags:
-        - Component
-      operationId: updateComponentPosition
-      summary: "컴포넌트의 위치를 업데이트합니다."
-      description: "도식화에서 특정 컴포넌트의 위치 좌표를 변경합니다."
-      parameters:
-        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
-        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
-        - $ref: "./components/schemas/canvas-schema.yaml#/ComponentId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "./components/schemas/canvas-schema.yaml#/ComponentPositionUpdateRequest"
-            examples:
-              example1:
-                $ref: "./components/examples/canvas-example.yaml#/ComponentPositionUpdateRequestExample"
-      responses:
-        "200":
-          description: "컴포넌트 위치 업데이트 성공"
-          content:
-            application/json:
-              schema:
-                $ref: "./components/schemas/canvas-schema.yaml#/ComponentUpdatedResponse"
-              examples:
-                example1:
-                  $ref: "./components/examples/canvas-example.yaml#/ComponentUpdatedResponseExample"
-        "404":
-          description: "컴포넌트를 찾을 수 없음"
-          content:
-            application/json:
-              schema:
-                $ref: "./components/responses/exception-response.yaml#/NotFoundException"
-  /api/v1/projects/{projectId}/apis:
-    get:
-      tags:
-        - ScrudApi
-      operationId: getIncompleteApis
-      summary: "완료되지 않은 API 목록을 조회합니다."
-      description: |
-        현재 USER_COMPLETED 상태가 아닌(AI_GENERATED 또는 AI_VISUALIZED) 모든 API 목록을 조회합니다. 수정된 날자순으로 정렬되어 출력됩니다.
-
-      parameters:
-        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
-        - $ref: "./components/schemas/canvas-schema.yaml#/Incomplete"
-      responses:
-        "200":
-          description: "미완료 API 목록 조회 성공"
-          content:
-            application/json:
-              schema:
-                $ref: "./components/schemas/canvas-schema.yaml#/ApiSummaryPageResponse"
-              examples:
-                example1:
-                  $ref: "./components/examples/canvas-example.yaml#/ApiSummaryPageResponseExample"
-  /api/v1/projects/{projectId}/apis/{apiId}/versions/{versionId}:
-    get:
-      tags:
-        - Canvas
-      summary: 특정 버전의 도식화 데이터 조회
-      description: 특정 프로젝트의 특정 API 버전에 대한 메서드 도식화 데이터를 가져옵니다.
-      operationId: getDiagram
-      parameters:
-        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
-        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
-        - $ref: "./components/schemas/canvas-schema.yaml#/VersionId"
-      responses:
-        "200":
-          description: 성공적으로 도식화 데이터를 조회함
-          content:
-            application/json:
-              schema:
-                $ref: "./components/schemas/canvas-schema.yaml#/DiagramResponse"
-              examples:
-                example1:
-                  $ref: "./components/examples/canvas-example.yaml#/DiagramResponseExample"
-        "404":
-          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
-  /api/v1/projects/{projectId}/apis/{apiId}/status:
-    put:
-      tags:
-        - ScrudApi
-      operationId: changeApiProcessStatus
-      summary: API 처리 상태를 변경합니다.
-      description: API 처리 상태를 변경합니다.
-      parameters:
-        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
-        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
-      requestBody:
-        required: true
-        description: 처리상태
-        content:
-          application/json:
-            schema:
-              $ref: "./components/schemas/canvas-schema.yaml#/ApiProcessStateRequest"
-            examples:
-              example1:
-                $ref: "./components/examples/canvas-example.yaml#/ApiProcessStateRequestExample"
-      responses:
-        "200":
-          description: 프롬프트 처리 결과
-          content:
-            application/json:
-              schema:
-                $ref: "./components/schemas/canvas-schema.yaml#/ApiProcessStateUpdatedResponse"
-              examples:
-                example1:
-                  $ref: "./components/examples/canvas-example.yaml#/ApiProcessStateUpdatedResponseExample"
   /api/v1/projects/{projectId}/apis/{apiId}/chats:
     get:
       tags:
@@ -258,51 +106,133 @@ paths:
       description: 특정 API에 대한 프롬프트 채팅 기록을 시간순으로 조회합니다.
       operationId: getPrompts
       parameters:
-        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
-        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
+        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
+        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
       responses:
-        "200":
-          description: 프롬프트 채팅 기록 조회 결과
-          content:
-            application/json:
-              schema:
-                $ref: "./components/schemas/canvas-schema.yaml#/ChatHistoryResponse"
-              examples:
-                example1:
-                  $ref: "./components/examples/canvas-example.yaml#/ChatHistoryResponseExample"
-        "404":
-          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
-
+        '200':
+          $ref: "./components/responses/canvas-response.yaml#/GetPromptsResponse"
+        '404':
+          $ref: './components/responses/exception-response.yaml#/NotFoundException'
     post:
       tags:
         - Chat
-      summary: 프롬프트 채팅 요청
-      description: 프롬프트를 입력하여 도식화 수정을 요청하거나 설명을 요청합니다.
+      summary: SSE 기반프롬프트 채팅 요청
+      description: |
+        프롬프트를 입력하여 도식화 수정을 요청하거나 설명을 요청합니다. 응답 값으로 SSE Id를 받습니다.
+        Id 값을 /api/sse/connect/{SSEId} API에 입력하여 값을 얻을 수 있습니다.
       operationId: promptChat
       parameters:
-        - $ref: "./components/schemas/canvas-schema.yaml#/ProjectId"
-        - $ref: "./components/schemas/canvas-schema.yaml#/ApiId"
+        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
+        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "./components/schemas/canvas-schema.yaml#/UserChatRequest"
+              $ref: './components/schemas/canvas-schema.yaml#/UserChatRequest'
+            examples:
+              "예시1":
+                $ref: './components/examples/canvas-example.yaml#/UserChatRequestExample'
+      responses:
+        '200':
+          $ref: "./components/responses/canvas-response.yaml#/PromptChatResponse"
+        '404':
+          $ref: "./components/responses/exception-response.yaml#/NotFoundException"
+  /api/sse/connect/{SSEId}:
+    get:
+      tags:
+        - Chat
+      operationId: connectSSE
+      parameters:
+        - $ref: './components/schemas/canvas-schema.yaml#/SSEId'
+      security:
+        - bearerAuth: [ ]
+      summary: 'SSE 연결을 설정합니다.'
+      description: '서버와 클라이언트 간의 SSE 연결을 설정하여 실시간 이벤트 스트림을 수신할 수 있습니다.'
+      responses:
+        '200':
+          $ref: "./components/responses/canvas-response.yaml#/ConnectSSEResponse"
+        '401':
+          description: '인증되지 않은 요청'
+  /api/v1/projects/{projectId}/apis/{apiId}/components/{componentId}/position:
+    put:
+      tags:
+        - Component
+      operationId: updateComponentPosition
+      summary: '컴포넌트의 위치를 업데이트합니다.'
+      description: '도식화에서 특정 컴포넌트의 위치 좌표를 변경합니다.'
+      parameters:
+        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
+        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
+        - $ref: './components/schemas/canvas-schema.yaml#/ComponentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/schemas/canvas-schema.yaml#/ComponentPositionUpdateRequest'
             examples:
               example1:
-                $ref: "./components/examples/canvas-example.yaml#/UserChatRequestExample"
+                $ref: './components/examples/canvas-example.yaml#/ComponentPositionUpdateRequestExample'
       responses:
-        "200":
-          description: 프롬프트 처리 결과
-          content:
-            application/json:
-              schema:
-                $ref: "./components/schemas/canvas-schema.yaml#/SystemChatResponse"
-              examples:
-                example1:
-                  $ref: "./components/examples/canvas-example.yaml#/SystemChatResponseExample"
-        "404":
+        '200':
+          $ref: "./components/responses/canvas-response.yaml#/UpdateComponentPositionResponse"
+        '404':
           $ref: "./components/responses/exception-response.yaml#/NotFoundException"
+  /api/v1/projects/{projectId}/apis:
+    get:
+      tags:
+        - ScrudApi
+      operationId: searchApiStatus
+      summary: 'API 상태(USER_COMPLETED, AI_GENERATED 등)에 대해 검색합니다.'
+      description: |
+        parameter에 API의 상태(AI_GENERATED 등) 을 검색할 수 있습니다. 
+        수정된 날자순으로 정렬되어 출력됩니다.
+      parameters:
+        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
+        - $ref: './components/schemas/canvas-schema.yaml#/Include'
+      responses:
+        '200':
+          $ref: "./components/responses/canvas-response.yaml#/SearchApiStatusResponse"
+  /api/v1/projects/{projectId}/apis/{apiId}/versions/{versionId}:
+    get:
+      tags:
+        - Canvas
+      summary: 특정 버전의 도식화 데이터 조회
+      description: 특정 프로젝트의 특정 API 버전에 대한 메서드 도식화 데이터를 가져옵니다.
+      operationId: getDiagram
+      parameters:
+        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
+        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
+        - $ref: './components/schemas/canvas-schema.yaml#/VersionId'
+      responses:
+        '200':
+          $ref: "./components/responses/canvas-response.yaml#/GetDiagramResponse"
+        '404':
+          $ref: './components/responses/exception-response.yaml#/NotFoundException'
+  /api/v1/projects/{projectId}/apis/{apiId}/status:
+    put:
+      tags:
+        - ScrudApi
+      operationId: changeApiProcessStatus
+      summary: API 처리 상태를 변경합니다.
+      description: API 처리 상태를 변경합니다.
+      parameters:
+        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
+        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
+      requestBody:
+        required: true
+        description: 처리상태
+        content:
+          application/json:
+            schema:
+              $ref: './components/schemas/canvas-schema.yaml#/ApiProcessStateRequest'
+            examples:
+              example1:
+                $ref: './components/examples/canvas-example.yaml#/ApiProcessStateRequestExample'
+      responses:
+        '200':
+          $ref: "./components/responses/canvas-response.yaml#/ChangeApiProcessStatusResponse"
 
   ########################################
   # 1. 룰 조회
