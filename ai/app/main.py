@@ -38,8 +38,7 @@ async def lifespan(app: FastAPI):
     logger.info("Kafka clients stopped")
 
 # FastAPI 앱 생성에 lifespan 추가
-# app = FastAPI(title="FastAPI Kafka Tutorial", lifespan=lifespan)
-app = FastAPI()
+app = FastAPI(title="FastAPI Kafka Tutorial", lifespan=lifespan)
 # CORS 미들웨어 설정
 app.add_middleware(
     CORSMiddleware,
