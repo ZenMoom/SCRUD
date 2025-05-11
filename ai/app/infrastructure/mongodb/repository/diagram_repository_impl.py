@@ -25,6 +25,7 @@ class DiagramRepositoryImpl(MongoRepositoryImpl[Diagram], DiagramRepository):
         DiagramRepositoryImpl 초기화
         """
         super().__init__("diagrams", Diagram)
+        logging.info("DiagramRepositoryImpl 주입")
         self.chat_collection_name = "chats"
     
     async def get_diagram_by_version(self, project_id: str, api_id: str, version_id: str) -> Optional[Diagram]:

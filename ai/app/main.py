@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.api_routes import api_router
+from app.api.chat_routes import chat_router
 from app.api.diagram_routes import diagram_router
 from app.config.config import settings
 from app.infrastructure.kafka.consumer import kafka_consumer
@@ -51,6 +52,7 @@ app.add_middleware(
 )
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(diagram_router, prefix="/api/v1")
+app.include_router(chat_router, prefix="/api/v1")
 
 # 직접 실행 시 서버 시작
 if __name__ == "__main__":
