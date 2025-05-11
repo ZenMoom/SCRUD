@@ -92,10 +92,12 @@ class DiagramRepositoryImpl(MongoRepositoryImpl[Diagram], DiagramRepository):
 
         try:
             # 최신 버전의 다이어그램 조회
-            latest_diagram = await self.find_one({
+            all_diagrams = await self.find_many({
                 "projectId": project_id,
                 "apiId": api_id
             }, sort=[("metadata.version", -1)])
+
+            latest_diagram = all_diagrams[0] if all_diagrams else None
 
             if not latest_diagram:
                 logger.warning(f"다이어그램을 찾을 수 없음: project_id={project_id}, api_id={api_id}")
@@ -163,10 +165,12 @@ class DiagramRepositoryImpl(MongoRepositoryImpl[Diagram], DiagramRepository):
             chat_collection = await self._get_collection(self.chat_collection_name)
 
             # 최신 버전의 다이어그램 조회
-            latest_diagram = await self.find_one({
+            all_diagrams = await self.find_many({
                 "projectId": project_id,
                 "apiId": api_id
             }, sort=[("metadata.version", -1)])
+
+            latest_diagram = all_diagrams[0] if all_diagrams else None
 
             if latest_diagram:
                 logger.info(f"최신 다이어그램 조회: diagramId={latest_diagram.diagramId}, version={latest_diagram.metadata.version}")

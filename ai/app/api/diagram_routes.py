@@ -29,7 +29,7 @@ def get_diagram_repository() -> DiagramRepository:
 
 def get_chat_service(diagram_repository: DiagramRepository = Depends(get_diagram_repository)) -> ChatService:
     model_generator = ModelGenerator()
-    return ChatService(model_name="claude-3-haiku-20240307", model_generator=model_generator, repository=diagram_repository)
+    return ChatService(model_name="openai", model_generator=model_generator, repository=diagram_repository)
 
 # SSE 스트리밍을 위한 클라이언트 매핑
 sse_clients = {}
@@ -265,11 +265,14 @@ async def process_chat_and_diagram(
             "data": "다이어그램 처리 중..."
         }))
 
-        # 최신 다이어그램 조회
-        latest_diagram = await diagram_repository.find_one({
+        # 최신 다이어그램 조회 (가장 높은 버전)
+        # 버전에 대한 정보가 없으므로 임시로 최신 다이어그램을 가져옴
+        all_diagrams = await diagram_repository.find_many({
             "projectId": project_id,
             "apiId": api_id
         }, sort=[("metadata.version", -1)])
+
+        latest_diagram = all_diagrams[0] if all_diagrams else None
 
         if latest_diagram:
             logger.info(f"최신 다이어그램 조회: diagramId={latest_diagram.diagramId}, version={latest_diagram.metadata.version}")
@@ -282,13 +285,15 @@ async def process_chat_and_diagram(
         logger.info("다이어그램 생성/수정 처리 중")
 
         # TODO: 실제 다이어그램 생성 로직 구현
+        asyncio.create_task(chat_service.create_diagram_from_openapi(openapi_spec, response_queue))
+
         # 여기서는 간단히 LLM을 통한 처리를 생략하고 기존 다이어그램의 버전만 업데이트
 
         # 진행 상황 메시지 전송
-        await response_queue.put(json.dumps({
-            "type": "progress",
-            "data": "다이어그램 생성 완료, 저장 중..."
-        }))
+        # await response_queue.put(json.dumps({
+        #     "type": "progress",
+        #     "data": "다이어그램 생성 완료, 저장 중..."
+        # }))
 
         # 최종 응답 상태 설정
         system_chat_data["status"] = PromptResponseEnum.MODIFIED

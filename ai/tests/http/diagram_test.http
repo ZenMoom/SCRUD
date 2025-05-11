@@ -38,11 +38,8 @@ Content-Type: application/json
 }
 
 ### SSE 연결 테스트 (브라우저에서 테스트하는 것이 좋음)
-# 브라우저에서 다음 URL 사용:
-# {{baseUrl}}/api/sse/connect/{{sseId}}
-# 
-# 또는 curl 명령어 사용:
-# curl -N -H "Accept: text/event-stream" {{baseUrl}}/api/sse/connect/{{sseId}}
+GET {{baseUrl}}/api/sse/connect/e2fbee0a-77f1-424f-8f40-cfad0d95e93c
+
 
 ### 여러 데이터 샘플 만들기 - 새 다이어그램 생성
 POST {{baseUrl}}/api/v1/projects/sample-project/apis/sample-api/chats
