@@ -28,7 +28,7 @@ class ModelGenerator:
         elif model_type.lower() == "ollama":
             return ChatOllama(
                 # model="gemma3:4b-it-qat", # 로컬 30초
-                model="gemma3:4b", # 로컬 23초
+                model="gemma3:4b",  # 로컬 23초
                 streaming=True,
                 callbacks=[streaming_handler],
                 temperature=0.5,

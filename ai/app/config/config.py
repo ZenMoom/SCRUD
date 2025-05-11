@@ -1,8 +1,10 @@
 import os
+
 from dotenv import load_dotenv
 
 env_url = os.path.join("..", "..", "infra", "env", ".env.development.local")
 load_dotenv(env_url)
+
 
 class Settings:
     # 애플리케이션 설정
@@ -23,9 +25,10 @@ class Settings:
     KAFKA_TOPIC_DIAGRAM_RESPONSE: str = os.getenv("KAFKA_TOPIC_DIAGRAM_RESPONSE", "diagram-responses")
     KAFKA_TOPIC_CHAT_REQUEST: str = os.getenv("KAFKA_TOPIC_CHAT_REQUEST", "chat-requests")
     KAFKA_TOPIC_CHAT_RESPONSE: str = os.getenv("KAFKA_TOPIC_CHAT_RESPONSE", "chat-responses")
-    
+
     # MongoDB 설정
     MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
     MONGO_DB_NAME: str = os.getenv("MONGO_DB_NAME", "scrud_ai_db")
+
 
 settings = Settings()

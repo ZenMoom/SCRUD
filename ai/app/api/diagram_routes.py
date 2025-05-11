@@ -9,15 +9,15 @@ from app.core.services.diagram_service import DiagramService
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO,
-                  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # API 라우터 생성
 diagram_router = APIRouter()
 
-
 # 의존성 주입을 위한 함수
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
+
 
 def get_diagram_repository() -> DiagramRepository:
     from app.infrastructure.mongodb.repository.diagram_repository_impl import DiagramRepositoryImpl
@@ -25,6 +25,7 @@ def get_diagram_repository() -> DiagramRepository:
 
 
 from app.infrastructure.mongodb.repository.chat_repository import ChatRepository
+
 
 def get_chat_repository() -> ChatRepository:
     from app.infrastructure.mongodb.repository.chat_repository_impl import ChatRepositoryImpl
@@ -39,6 +40,7 @@ def get_diagram_service(
         logger=logger,
     )
 
+
 def get_chat_service(
         diagram_repository: DiagramRepository = Depends(get_diagram_repository),
         chat_repository: ChatRepository = Depends(get_chat_repository)
@@ -52,16 +54,17 @@ def get_chat_service(
         logger=logger,
     )
 
+
 #####################################################################################################
 ###############################         Controller        ###########################################
 #####################################################################################################
 
 @diagram_router.get("/projects/{project_id}/apis/{api_id}/versions/{version}")
 async def get_diagram(
-    project_id: str,
-    api_id: str,
-    version: int,
-    diagram_service: DiagramService = Depends(get_diagram_service),
+        project_id: str,
+        api_id: str,
+        version: int,
+        diagram_service: DiagramService = Depends(get_diagram_service),
 ) -> DiagramResponse:
     """
     특정 프로젝트의 특정 API 버전에 대한 메서드 도식화 데이터를 가져옵니다.
@@ -78,11 +81,12 @@ async def get_diagram(
 
     return await diagram_service.get_diagram(project_id, api_id, version)
 
+
 @diagram_router.post("/projects/{project_id}/apis/{api_id}/diagrams")
 async def create_diagram(
-    project_id: str,
-    api_id: str,
-    diagram_service: DiagramService = Depends(get_diagram_service),
+        project_id: str,
+        api_id: str,
+        diagram_service: DiagramService = Depends(get_diagram_service),
 ) -> DiagramResponse:
     """
     특정 프로젝트의 특정 API 버전에 대한 메서드 도식화 데이터를 가져옵니다.
@@ -98,13 +102,14 @@ async def create_diagram(
 
     return await diagram_service.create_diagram(project_id, api_id)
 
+
 @diagram_router.put("/projects/{project_id}/apis/{api_id}/components/{component_id}/position")
 async def update_component_position(
-    project_id: str,
-    api_id: str,
-    component_id: str,
-    position_data: PositionRequest,
-    diagram_service: DiagramService = Depends(get_diagram_service),
+        project_id: str,
+        api_id: str,
+        component_id: str,
+        position_data: PositionRequest,
+        diagram_service: DiagramService = Depends(get_diagram_service),
 ) -> DiagramResponse:
     """
     도식화에서 특정 컴포넌트의 위치 좌표를 변경합니다.
@@ -125,5 +130,3 @@ async def update_component_position(
         component_id,
         position_data
     )
-
-

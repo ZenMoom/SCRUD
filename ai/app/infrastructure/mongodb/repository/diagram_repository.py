@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
 
@@ -64,7 +64,8 @@ class DiagramRepository(ABC):
         pass
 
     @abstractmethod
-    async def update_component_position(self, project_id: str, api_id: str, component_id: str, x: float, y: float) -> Optional[Diagram]:
+    async def update_component_position(self, project_id: str, api_id: str, component_id: str, x: float, y: float) -> \
+    Optional[Diagram]:
         """
         특정 컴포넌트의 위치를 업데이트합니다.
 

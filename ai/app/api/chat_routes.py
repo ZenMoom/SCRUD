@@ -10,7 +10,7 @@ from app.core.services.sse_service import SSEService
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO,
-                  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # API 라우터 생성
@@ -57,6 +57,8 @@ def get_chat_service(
 ###############################         Controller        ###########################################
 #####################################################################################################
 from app.api.dto.diagram_dto import ChatResponseList
+
+
 @chat_router.get("/projects/{project_id}/apis/{api_id}/chats")
 async def get_prompts(
         project_id: str,

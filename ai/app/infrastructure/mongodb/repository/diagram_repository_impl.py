@@ -27,7 +27,6 @@ class DiagramRepositoryImpl(DiagramRepository):
     async def insert_one(self, diagram: Diagram) -> str:
         return await self.repository.insert_one(diagram)
 
-
     async def find_by_project_api_version(self, project_id: str, api_id: str, version: int) -> Optional[Diagram]:
         """
         프로젝트 ID, API ID, 버전 ID로 다이어그램을 조회합니다.
@@ -88,11 +87,11 @@ class DiagramRepositoryImpl(DiagramRepository):
             # 기존 다이어그램이 있으면 업데이트
             filter_dict = {"diagramId": diagram.diagramId}
             update_dict = diagram.model_dump()
-            
+
             # _id 필드 제거 (MongoDB가 관리)
             if "_id" in update_dict:
                 del update_dict["_id"]
-                
+
             await self.repository.update_one(filter_dict, {"$set": update_dict})
             return diagram
         else:
@@ -110,7 +109,8 @@ class DiagramRepositoryImpl(DiagramRepository):
             await self.repository.insert_one(diagram)
             return diagram
 
-    async def update_component_position(self, project_id: str, api_id: str, component_id: str, x: float, y: float) -> Optional[Diagram]:
+    async def update_component_position(self, project_id: str, api_id: str, component_id: str, x: float, y: float) -> \
+    Optional[Diagram]:
         """
         특정 컴포넌트의 위치를 업데이트합니다.
 
@@ -160,15 +160,15 @@ class DiagramRepositoryImpl(DiagramRepository):
         """
         # 새 다이어그램 생성 (기존 다이어그램 복제)
         new_diagram = Diagram(**diagram.model_dump())
-        
+
         # 새 ID 부여
         new_diagram.diagramId = str(uuid.uuid4())
-        
+
         # 메타데이터 업데이트
         new_diagram.metadata.metadataId = str(uuid.uuid4())
         new_diagram.metadata.version = diagram.metadata.version + 1
         new_diagram.metadata.lastModified = datetime.utcnow()
-        
+
         # 새 다이어그램 저장
         await self.repository.insert_one(new_diagram)
         return new_diagram

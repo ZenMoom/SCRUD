@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Dict
+from typing import Optional
 
 from app.api.dto.diagram_dto import DiagramResponse, PositionRequest
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
@@ -46,11 +46,11 @@ class DiagramService:
 
         # 다이어그램 조회
         diagram = await self.repository.find_by_project_api_version(project_id, api_id, version)
-        
+
         if not diagram:
             self.logger.error(f"다이어그램을 찾을 수 없음: project_id={project_id}, api_id={api_id}, version_id={version}")
             raise ValueError(f"다이어그램을 찾을 수 없습니다. (project_id={project_id}, api_id={api_id}, version_id={version})")
-        
+
         # 응답 데이터로 변환
         return self._convert_to_response(diagram)
 
@@ -69,11 +69,11 @@ class DiagramService:
             Exception: 다이어그램 생성 실패 시
         """
         self.logger.info(f"새 다이어그램 생성: project_id={project_id}, api_id={api_id}")
-        
+
         try:
             # 기존 다이어그램이 있는지 확인
             existing_diagram = await self.repository.find_latest_by_project_api(project_id, api_id)
-            
+
             if existing_diagram:
                 # 기존 다이어그램이 있으면 새 버전 생성
                 self.logger.info(f"기존 다이어그램을 기반으로 새 버전 생성: project_id={project_id}, api_id={api_id}")
@@ -82,21 +82,19 @@ class DiagramService:
                 # 기존 다이어그램이 없으면 새로 생성
                 self.logger.info(f"새 다이어그램 생성: project_id={project_id}, api_id={api_id}")
 
-
-
                 diagram: Diagram = self.create_dummy_diagram(project_id, api_id)
                 # 저장
                 new_diagram = await self.repository.save(diagram)
-            
+
             # 응답 데이터로 변환
             return self._convert_to_response(new_diagram)
-            
+
         except Exception as e:
             self.logger.error(f"다이어그램 생성 실패: {str(e)}")
             raise Exception(f"다이어그램 생성에 실패했습니다: {str(e)}")
 
     async def update_component_position(
-        self, project_id: str, api_id: str, component_id: str, position_data: PositionRequest
+            self, project_id: str, api_id: str, component_id: str, position_data: PositionRequest
     ) -> DiagramResponse:
         """
         도식화에서 특정 컴포넌트의 위치 좌표를 변경합니다.
@@ -117,18 +115,18 @@ class DiagramService:
             f"컴포넌트 위치 업데이트: project_id={project_id}, api_id={api_id}, "
             f"component_id={component_id}, x={position_data.x}, y={position_data.y}"
         )
-        
+
         # 컴포넌트 위치 업데이트
         updated_diagram = await self.repository.update_component_position(
             project_id, api_id, component_id, position_data.x, position_data.y
         )
-        
+
         if not updated_diagram:
             self.logger.error(
                 f"컴포넌트를 찾을 수 없음: project_id={project_id}, api_id={api_id}, component_id={component_id}"
             )
             raise ValueError(f"컴포넌트를 찾을 수 없습니다. (component_id={component_id})")
-        
+
         # 응답 데이터로 변환
         return self._convert_to_response(updated_diagram)
 

@@ -4,6 +4,7 @@ import logging
 import uuid
 from typing import Dict, Optional, ClassVar
 
+
 class SSEService:
     """
     SSE(Server-Sent Events) 스트리밍 기능을 제공하는 서비스
@@ -34,7 +35,7 @@ class SSEService:
         self.logger = logger or logging.getLogger(__name__)
         self._initialized = True
         self.logger.info("SSEService 시작")
-        
+
     def create_stream(self) -> tuple[str, asyncio.Queue]:
         """
         새로운 SSE 스트림을 생성합니다.
@@ -75,7 +76,7 @@ class SSEService:
         if stream_id in SSEService._sse_clients:
             self.logger.info(f"SSE 스트림 제거: stream_id={stream_id}")
             del SSEService._sse_clients[stream_id]
-    
+
     async def send_progress(self, response_queue: asyncio.Queue, message: str) -> None:
         """
         진행 상황 메시지를 SSE 스트림으로 전송합니다.
@@ -88,7 +89,7 @@ class SSEService:
             "type": "progress",
             "data": message
         }))
-    
+
     async def send_error(self, response_queue: asyncio.Queue, error_message: str) -> None:
         """
         오류 메시지를 SSE 스트림으로 전송합니다.
@@ -101,7 +102,7 @@ class SSEService:
             "type": "error",
             "data": error_message
         }))
-    
+
     async def send_data(self, response_queue: asyncio.Queue, data: dict) -> None:
         """
         데이터를 SSE 스트림으로 전송합니다.
@@ -114,7 +115,7 @@ class SSEService:
             "type": "data",
             "data": data
         }))
-    
+
     async def close_stream(self, response_queue: asyncio.Queue) -> None:
         """
         SSE 스트림을 종료합니다.

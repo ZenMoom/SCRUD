@@ -207,7 +207,7 @@ class ChatService:
             raise
 
     async def process_chat_and_diagram(
-        self, project_id: str, api_id: str, user_chat_data: UserChatRequest, response_queue: asyncio.Queue
+            self, project_id: str, api_id: str, user_chat_data: UserChatRequest, response_queue: asyncio.Queue
     ) -> DiagramResponse:
         """
         채팅 요청을 처리하고 필요한 경우 다이어그램을 업데이트하는 백그라운드 태스크
@@ -233,7 +233,8 @@ class ChatService:
             latest_diagram = all_diagrams[0] if all_diagrams else None
 
             if latest_diagram:
-                self.logger.info(f"최신 다이어그램 조회: diagramId={latest_diagram.diagramId}, version={latest_diagram.metadata.version}")
+                self.logger.info(
+                    f"최신 다이어그램 조회: diagramId={latest_diagram.diagramId}, version={latest_diagram.metadata.version}")
             else:
                 self.logger.info("기존 다이어그램이 없음. 첫 다이어그램 생성 필요")
 

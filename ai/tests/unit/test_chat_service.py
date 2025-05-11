@@ -1,11 +1,10 @@
-import unittest
 import logging
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.api.dto.diagram_dto import ChatResponse, ChatResponseList
+from app.api.dto.diagram_dto import ChatResponseList
 from app.core.generator.model_generator import ModelGenerator
 from app.core.services.chat_service import ChatService
 from app.core.services.sse_service import SSEService
@@ -120,7 +119,7 @@ class TestChatService:
         # 검증
         assert isinstance(result, ChatResponseList)
         assert len(result.content) == 2
-        
+
         # 첫 번째 채팅 검증
         # assert result.content[0].id == "chat_id_1"
         assert result.content[0].chatId == "chat_1"
@@ -129,7 +128,7 @@ class TestChatService:
         assert result.content[0].userChat.message == "테스트 메시지 1"
         assert result.content[0].systemChat.status == "EXPLANATION"
         assert result.content[0].systemChat.message == "시스템 응답 1"
-        
+
         # 두 번째 채팅 검증
         # assert result.content[1].id == "chat_id_2"
         assert result.content[1].chatId == "chat_2"
@@ -138,7 +137,7 @@ class TestChatService:
         assert result.content[1].userChat.message == "테스트 메시지 2"
         assert result.content[1].systemChat.status == "MODIFIED"
         assert result.content[1].systemChat.message == "시스템 응답 2"
-        
+
         # 메서드 호출 검증
         chat_repository_mock.get_prompts.assert_called_once_with(project_id, api_id)
 
@@ -169,7 +168,7 @@ class TestChatService:
         # 검증
         assert isinstance(result, ChatResponseList)
         assert len(result.content) == 0
-        
+
         # 메서드 호출 검증
         chat_repository_mock.get_prompts.assert_called_once_with(project_id, api_id)
 
@@ -198,11 +197,11 @@ class TestChatService:
         # 메서드 호출 및 예외 확인
         with pytest.raises(Exception) as excinfo:
             await chat_service.get_prompts(project_id, api_id)
-        
+
         assert str(excinfo.value) == "테스트 예외"
-        
+
         # 로깅 확인
         logger_mock.error.assert_called_once()
-        
+
         # 메서드 호출 검증
         chat_repository_mock.get_prompts.assert_called_once_with(project_id, api_id)

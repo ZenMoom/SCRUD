@@ -14,27 +14,26 @@ class MethodPromptTagEnum(str, Enum):
     ANALYZE = "ANALYZE"
     IMPLEMENT = "IMPLEMENT"
 
+
 class MethodPromptTargetEnum(str, Enum):
     SIGNATURE = "SIGNATURE"
     BODY = "BODY"
 
 
 class UserChatRequest(BaseModel):
-
     tag: MethodPromptTagEnum
     promptType: MethodPromptTargetEnum
     message: str
     targetMethods: list[Dict[str, str]]
 
-class ChatResponse(BaseModel):
 
+class ChatResponse(BaseModel):
     class UserChatResponse(BaseModel):
         id: Optional[str] = Field(default=None, alias="_id")
         tag: MethodPromptTagEnum
         promptType: MethodPromptTargetEnum
         message: str
         targetMethods: List[Dict[str, str]]  # methodId를 포함하는 사전 목록
-
 
     class SystemChatResponse(BaseModel):
         class PromptResponseEnum(str, Enum):
@@ -48,21 +47,21 @@ class ChatResponse(BaseModel):
             newVersionId: str
             description: Optional[str] = None
 
-        id: Optional[str] = Field(default=None, alias="_id")
         systemChatId: Optional[str] = None
         status: PromptResponseEnum
         message: str
         versionInfo: Optional[VersionInfo] = None
         diagramId: Optional[str] = None
 
-    id: Optional[str] = Field(default=None, alias="_id")
     chatId: Optional[str] = None
     createdAt: datetime
     userChat: Optional[UserChatResponse] = None
     systemChat: Optional[SystemChatResponse] = None
 
+
 class ChatResponseList(BaseModel):
     content: List[ChatResponse] = []
+
 
 class DiagramResponse(BaseModel):
     class MetadataResponse(BaseModel):
@@ -88,8 +87,6 @@ class DiagramResponse(BaseModel):
         targetMethodId: str
         type: MethodConnectionTypeEnum
 
-
-
     class ComponentResponse(BaseModel):
         class Method(BaseModel):
             methodId: str
@@ -110,8 +107,6 @@ class DiagramResponse(BaseModel):
         positionY: float
         methods: List[Method]
 
-
-
     projectId: str
     apiId: str
     diagramId: str
@@ -119,6 +114,7 @@ class DiagramResponse(BaseModel):
     connections: List[ConnectionResponse]
     dto: List[DtoModelResponse]
     metadata: MetadataResponse
+
 
 class PositionRequest(BaseModel):
     x: float

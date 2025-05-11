@@ -103,7 +103,7 @@ class MongoRepositoryImpl(MongoRepository[T]):
         """
         collection = await self.get_collection()
         document_dict = document.model_dump()
-        
+
         # _id가 있고 문자열이면 ObjectId로 변환
         if '_id' in document_dict and isinstance(document_dict['_id'], str):
             try:
@@ -111,7 +111,7 @@ class MongoRepositoryImpl(MongoRepository[T]):
             except:
                 # 유효한 ObjectId가 아니면 자동 생성되도록 삭제
                 del document_dict['_id']
-        
+
         result = await collection.insert_one(document_dict)
         return str(result.inserted_id)
 
@@ -127,7 +127,7 @@ class MongoRepositoryImpl(MongoRepository[T]):
         """
         collection = await self.get_collection()
         documents_dict = [doc.model_dump() for doc in documents]
-        
+
         # 각 문서의 _id 처리
         for document_dict in documents_dict:
             if '_id' in document_dict and isinstance(document_dict['_id'], str):
@@ -136,7 +136,7 @@ class MongoRepositoryImpl(MongoRepository[T]):
                 except:
                     # 유효한 ObjectId가 아니면 자동 생성되도록 삭제
                     del document_dict['_id']
-        
+
         result = await collection.insert_many(documents_dict)
         return [str(id) for id in result.inserted_ids]
 
@@ -152,15 +152,15 @@ class MongoRepositoryImpl(MongoRepository[T]):
             업데이트 성공 여부
         """
         collection = await self.get_collection()
-        
+
         # _id가 문자열이면 ObjectId로 변환
         if '_id' in filter_dict and isinstance(filter_dict['_id'], str):
             filter_dict['_id'] = ObjectId(filter_dict['_id'])
-        
+
         # 업데이트를 위해 $set 연산자 사용
         if '$set' not in update_dict:
             update_dict = {'$set': update_dict}
-            
+
         result = await collection.update_one(filter_dict, update_dict)
         return result.modified_count > 0
 
@@ -175,10 +175,10 @@ class MongoRepositoryImpl(MongoRepository[T]):
             삭제 성공 여부
         """
         collection = await self.get_collection()
-        
+
         # _id가 문자열이면 ObjectId로 변환
         if '_id' in filter_dict and isinstance(filter_dict['_id'], str):
             filter_dict['_id'] = ObjectId(filter_dict['_id'])
-            
+
         result = await collection.delete_one(filter_dict)
         return result.deleted_count > 0

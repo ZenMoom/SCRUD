@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional, TypeVar, Generic
+
 from pydantic import BaseModel
 
 # 제네릭 타입 정의 (모든 모델 타입에 사용 가능)
