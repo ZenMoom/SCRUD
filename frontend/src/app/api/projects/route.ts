@@ -38,7 +38,12 @@ export async function POST(request: NextRequest) {
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
     
     // 글로벌 파일 준비
-    const globalFiles = [];
+    const globalFiles: Array<{
+      fileName: string;
+      fileType: string;
+      fileUrl: string;
+      fileContent: string;
+    }> = [];
     
     // 파일 타입 매핑 
     const fileTypeMapping: Record<string, string> = {
@@ -52,15 +57,15 @@ export async function POST(request: NextRequest) {
     };
     
     // 아키텍처와 보안 설정을 추적하는 플래그
-    let securityAdded = false;
-    let architectureAdded = false;
+    // let securityAdded = false;
+    // let architectureAdded = false;
     
     // 파일 타입 항목들 추가
     Object.entries(settings).forEach(([key, value]) => {
       // 아키텍처와 보안 설정 특별 처리
       if (key === 'architectureStructure') {
         if (value) {
-          architectureAdded = true;
+          // architectureAdded = true;
           
           // GitHub에서 가져온 파일인 경우
           if (typeof value === 'string' && value.startsWith('github:')) {
@@ -87,7 +92,7 @@ export async function POST(request: NextRequest) {
       } 
       else if (key === 'securitySetting') {
         if (value) {
-          securityAdded = true;
+          // securityAdded = true;
           globalFiles.push({
             fileName: `Security-${value}`,
             fileType: value as string, // 선택된 값을 타입으로 사용
@@ -115,10 +120,10 @@ export async function POST(request: NextRequest) {
               }
 
               globalFiles.push({
-                fileName: fileName,
+                fileName: typeof fileName === 'string' ? fileName : String(fileName),
                 fileType: fileTypeMapping[key],
                 fileUrl: fileUrl,
-                fileContent: JSON.stringify({ content: fileItem })
+                fileContent: JSON.stringify({ content: fileItem || "" })
               });
             }
           });
@@ -137,7 +142,7 @@ export async function POST(request: NextRequest) {
           }
 
           globalFiles.push({
-            fileName: fileName,
+            fileName: typeof fileName === 'string' ? fileName : String(fileName),
             fileType: fileTypeMapping[key],
             fileUrl: fileUrl,
             fileContent: JSON.stringify({ content: value })
