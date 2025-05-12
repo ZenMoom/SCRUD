@@ -56,7 +56,9 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         );
 
         scrudProjectRepository.save(project);
-//        eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
+
+         eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
+
 
         return project.getScrudProjectId();
     }
