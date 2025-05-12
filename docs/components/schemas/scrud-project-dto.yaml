@@ -52,6 +52,9 @@ GlobalFileDto:
   description: "전역설정 파일 목록"
   type: object
   properties:
+    globalFileId:
+      type: integer
+      format: int64
     fileName:
       type: string
     fileType:

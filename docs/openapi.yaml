@@ -376,12 +376,13 @@ paths:
               $ref: "./components/schemas/scrud-project-dto.yaml#/CreateProjectRequest"
       responses:
         "201":
-          description: "API 반환"
+          description: "ProjectId 반환"
           content:
-            text/yaml:
+            application/json:
               schema:
-                type: string
-                
+                type: integer
+                format: int64
+
     ########################################
     # 7. 프로젝트 설정 수정
     ########################################

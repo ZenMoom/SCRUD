@@ -7,7 +7,7 @@ import com.barcoder.scrud.scrudproject.application.dto.in.*;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllGlobalFileOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllScrudProjectOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.ScrudProjectOut;
-import com.barcoder.scrud.scrudproject.service.ScrudProjectService;
+import com.barcoder.scrud.scrudproject.application.service.ScrudProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -33,7 +33,7 @@ public class ScrudProjectController implements ScrudProjectApi {
      * @return String API 반환 (status code 201)
      */
     @Override
-    public ResponseEntity<String> createProject(CreateProjectRequest createProjectRequest) {
+    public ResponseEntity<Long> createProject(CreateProjectRequest createProjectRequest) {
 
         UUID userId = securityUtil.getCurrentUserId();
 
@@ -44,7 +44,7 @@ public class ScrudProjectController implements ScrudProjectApi {
         // 이후 단계에서 반환 타입을 권선이 정해주면 프롬프팅해서 만들어줘야 할 듯
         Long projectId = scrudProjectService.createProject(inDto);
 
-        return ResponseEntity.ok(String.valueOf(projectId));
+        return ResponseEntity.ok(projectId);
     }
 
     /**
