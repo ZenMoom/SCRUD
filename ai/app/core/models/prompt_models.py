@@ -142,6 +142,8 @@ class SystemChat(BaseModel):
 # 채팅 모델
 class Chat(BaseModel):
     chatId: str
+    projectId: str
+    apiId: str
     createdAt: datetime
     userChat: UserChat
     systemChat: Optional[SystemChat] = None
