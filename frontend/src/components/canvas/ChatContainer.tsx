@@ -110,6 +110,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             } catch (e) {
               // JSON 파싱 실패 시 문자열 그대로 사용
               parsedData = { message: jsonStr }
+              console.log(e)
             }
           } else {
             // 일반 텍스트인 경우
@@ -119,6 +120,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             } catch (e) {
               // 파싱 실패 시 문자열 그대로 사용
               parsedData = { message: event.data }
+              console.log(e)
             }
           }
 
@@ -415,8 +417,6 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         {systemResponse && !sseConnected && (
           <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
             <div className="text-xs font-medium text-green-700 mb-1">시스템 응답:</div>
-            <div className="text-sm text-gray-800">{systemResponse.status === "MODIFIED" && systemResponse.versionInfo ? systemResponse.versionInfo.description : "처리 완료"}</div>
-            {systemResponse.versionInfo && <div className="mt-1 text-xs text-gray-500">버전: {systemResponse.versionInfo.newVersionId}</div>}
           </div>
         )}
       </div>
