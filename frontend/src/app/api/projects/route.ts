@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { Configuration } from "@generated/configuration";
 import { ScrudProjectApi } from "@generated/api";
 
+// 파일 타입 정의
+interface FileWithContent {
+  name: string;
+  content: string;
+}
+
 // POST: 프로젝트 생성
 export async function POST(request: NextRequest) {
   try {
@@ -77,7 +83,7 @@ export async function POST(request: NextRequest) {
               fileName: fileName,
               fileType: 'ARCHITECTURE_GITHUB', // GitHub에서 가져온 경우 특별 타입
               fileUrl: fileUrl,
-              fileContent: JSON.stringify({ content: value })
+              fileContent: JSON.stringify({ type: value })
             });
           } else {
             // 기본 선택 옵션인 경우 (예: ARCHITECTURE_DEFAULT_LAYERED_A)
@@ -110,20 +116,31 @@ export async function POST(request: NextRequest) {
             if (fileItem) {
               // GitHub에서 가져온 파일인 경우 URL도 추출
               let fileUrl = "";
-              let fileName = fileItem;
+              let fileName = "";
+              let fileContent = "";
 
               if (typeof fileItem === 'string' && fileItem.startsWith('github:')) {
                 // github:filepath|url 형식에서 URL 추출
                 const parts = fileItem.substring(7).split('|');
                 fileName = parts[0]; // 파일 경로
                 fileUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
+                fileContent = fileItem; // GitHub 파일의 경우 원본 문자열 사용
+              } else if (typeof fileItem === 'object' && fileItem !== null) {
+                // 클라이언트에서 파일 내용을 읽은 경우
+                const fileObj = fileItem as unknown as FileWithContent;
+                fileName = fileObj.name || "unknown";
+                fileContent = fileObj.content || "";
+              } else {
+                // 문자열인 경우 (파일 이름만 있는 경우)
+                fileName = String(fileItem);
+                fileContent = String(fileItem);
               }
 
               globalFiles.push({
-                fileName: typeof fileName === 'string' ? fileName : String(fileName),
+                fileName,
                 fileType: fileTypeMapping[key],
-                fileUrl: fileUrl,
-                fileContent: JSON.stringify({ content: fileItem || "" })
+                fileUrl,
+                fileContent
               });
             }
           });
@@ -132,20 +149,31 @@ export async function POST(request: NextRequest) {
         else if (value) {
           // GitHub에서 가져온 파일인 경우 URL도 추출
           let fileUrl = "";
-          let fileName = value;
+          let fileName = "";
+          let fileContent = "";
 
           if (typeof value === 'string' && value.startsWith('github:')) {
             // github:filepath|url 형식에서 URL 추출
             const parts = value.substring(7).split('|');
             fileName = parts[0]; // 파일 경로
             fileUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
+            fileContent = value; // GitHub 파일의 경우 원본 문자열 사용
+          } else if (typeof value === 'object' && value !== null) {
+            // 클라이언트에서 파일 내용을 읽은 경우
+            const fileObj = value as unknown as FileWithContent;
+            fileName = fileObj.name || "unknown";
+            fileContent = fileObj.content || "";
+          } else {
+            // 문자열인 경우 (파일 이름만 있는 경우)
+            fileName = String(value);
+            fileContent = String(value);
           }
 
           globalFiles.push({
-            fileName: typeof fileName === 'string' ? fileName : String(fileName),
+            fileName,
             fileType: fileTypeMapping[key],
-            fileUrl: fileUrl,
-            fileContent: JSON.stringify({ content: value })
+            fileUrl,
+            fileContent
           });
         }
       }

@@ -211,7 +211,7 @@ export default function GlobalSettingPage() {
       }
       
       // 성공 시 메인 페이지로 이동
-      router.push('/');
+      router.push(`/project/${responseText}/api`);
     } catch (err) {
       console.error('프로젝트 생성 오류:', err);
       setError(err instanceof Error ? err.message : '프로젝트 생성 중 오류가 발생했습니다.');

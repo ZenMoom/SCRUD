@@ -5,6 +5,23 @@ import type React from "react"
 import { useState } from "react"
 import FormItem from "./Form"
 import InfoModal from "./InfoModal"
+import RequirementSpecForm from "./RequirementSpecForm"
+import ERDForm from "./ERDForm"
+import DependencyFileForm from "./DependencyFileForm"
+import UtilityClassForm from "./UtilityClassForm"
+import ErrorCodeForm from "./ErrorCodeForm"
+import SecuritySettingForm from "./SecuritySettingForm"
+import CodeConventionForm from "./CodeConventionForm"
+import ArchitectureStructureForm from "./ArchitectureStructureForm"
+
+// 파일 객체 타입 정의 (다른 컴포넌트와 일치시킴)
+interface FileWithContent {
+  name: string;
+  content: string;
+}
+
+// 문자열 또는 파일 객체 타입
+type FileValue = string | FileWithContent;
 
 interface ContentAreaProps {
   settings: Record<string, string | string[]>
@@ -56,18 +73,10 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
   }
 
   // 각 설정 항목의 입력 타입
-  const inputTypes: Record<string, 'text' | 'textarea' | 'file' | 'dependency-select' | 'security-select' | 'architecture-select'> = {
+  const inputTypes: Record<string, 'text' | 'textarea'> = {
     title: "text",
     description: "textarea",
-    serverUrl: "text",
-    requirementSpec: "file",
-    erd: "file",
-    dependencyFile: "dependency-select",
-    utilityClass: "file",
-    errorCode: "file",
-    securitySetting: "security-select",
-    codeConvention: "file",
-    architectureStructure: "architecture-select"
+    serverUrl: "text"
   }
 
   // 보안 설정 라디오 버튼 옵션
@@ -92,6 +101,25 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
     }
   }
 
+  // FileValue 또는 FileValue[] 타입을 string 또는 string[] 타입으로 변환하는 헬퍼 함수
+  const convertFileValue = (value: FileValue | FileValue[]): string | string[] => {
+    if (Array.isArray(value)) {
+      return value.map(item => {
+        if (typeof item === 'string') {
+          return item;
+        }
+        // FileWithContent 객체의 경우 직렬화하여 string으로 반환
+        return JSON.stringify(item);
+      });
+    } else {
+      if (typeof value === 'string') {
+        return value;
+      }
+      // FileWithContent 객체의 경우 직렬화하여 string으로 반환
+      return JSON.stringify(value);
+    }
+  };
+
   return (
     <div className="flex-1 relative bg-[#f8f8f8] shadow-[inset_0_0_10px_rgba(0,0,0,0.02)] w-full">
       <div className="h-full overflow-y-auto p-8 md:p-12">
@@ -99,109 +127,107 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.title}
           title={`프로젝트명 ${isRequired('title') ? '(필수)' : ''}`}
           type={inputTypes.title}
-          value={settings.title}
+          value={settings.title as string}
           onChange={(value) => onSettingChange("title", value)}
           onInfoClick={() => openModal("title")}
           onFocus={() => handleItemFocus("title")}
+          isRequired={isRequired('title')}
         />
 
         <FormItem
           ref={refs.description}
           title={`프로젝트 설명 ${isRequired('description') ? '(필수)' : ''}`}
           type={inputTypes.description}
-          value={settings.description}
+          value={settings.description as string}
           onChange={(value) => onSettingChange("description", value)}
           onInfoClick={() => openModal("description")}
           onFocus={() => handleItemFocus("description")}
+          isRequired={isRequired('description')}
         />
 
         <FormItem
           ref={refs.serverUrl}
           title={`Server URL ${isRequired('serverUrl') ? '(필수)' : ''}`}
           type={inputTypes.serverUrl}
-          value={settings.serverUrl}
+          value={settings.serverUrl as string}
           onChange={(value) => onSettingChange("serverUrl", value)}
           onInfoClick={() => openModal("serverUrl")}
           onFocus={() => handleItemFocus("serverUrl")}
+          isRequired={isRequired('serverUrl')}
         />
 
-        <FormItem
+        <RequirementSpecForm
           ref={refs.requirementSpec}
           title={`요구사항 명세서 ${isRequired('requirementSpec') ? '(필수)' : ''}`}
-          type={inputTypes.requirementSpec}
           value={settings.requirementSpec}
-          onChange={(value) => onSettingChange("requirementSpec", value)}
+          onChange={(value) => onSettingChange("requirementSpec", convertFileValue(value))}
           onInfoClick={() => openModal("requirementSpec")}
           onFocus={() => handleItemFocus("requirementSpec")}
+          isRequired={isRequired('requirementSpec')}
         />
 
-        <FormItem
+        <ERDForm
           ref={refs.erd}
           title={`ERD ${isRequired('erd') ? '(필수)' : ''}`}
-          type={inputTypes.erd}
           value={settings.erd}
-          onChange={(value) => onSettingChange("erd", value)}
+          onChange={(value) => onSettingChange("erd", convertFileValue(value))}
           onInfoClick={() => openModal("erd")}
           onFocus={() => handleItemFocus("erd")}
+          isRequired={isRequired('erd')}
         />
 
-        <FormItem
+        <DependencyFileForm
           ref={refs.dependencyFile}
           title="의존성 파일"
-          type={inputTypes.dependencyFile}
           value={settings.dependencyFile}
-          onChange={(value) => onSettingChange("dependencyFile", value)}
+          onChange={(value) => onSettingChange("dependencyFile", convertFileValue(value))}
           onInfoClick={() => openModal("dependencyFile")}
           onFocus={() => handleItemFocus("dependencyFile")}
+          isRequired={isRequired('dependencyFile')}
         />
 
-        <FormItem
+        <UtilityClassForm
           ref={refs.utilityClass}
           title="유틸 클래스"
-          type={inputTypes.utilityClass}
           value={settings.utilityClass}
-          onChange={(value) => onSettingChange("utilityClass", value)}
+          onChange={(value) => onSettingChange("utilityClass", convertFileValue(value))}
           onInfoClick={() => openModal("utilityClass")}
           onFocus={() => handleItemFocus("utilityClass")}
         />
 
-        <FormItem
+        <ErrorCodeForm
           ref={refs.errorCode}
           title="에러 코드"
-          type={inputTypes.errorCode}
           value={settings.errorCode}
-          onChange={(value) => onSettingChange("errorCode", value)}
+          onChange={(value) => onSettingChange("errorCode", convertFileValue(value))}
           onInfoClick={() => openModal("errorCode")}
           onFocus={() => handleItemFocus("errorCode")}
         />
 
-        <FormItem
+        <SecuritySettingForm
           ref={refs.securitySetting}
           title="보안 설정"
-          type={inputTypes.securitySetting}
           value={settings.securitySetting}
-          onChange={(value) => onSettingChange("securitySetting", value)}
+          onChange={(value) => onSettingChange("securitySetting", convertFileValue(value))}
           onInfoClick={() => openModal("securitySetting")}
           options={securityOptions}
           onFocus={() => handleItemFocus("securitySetting")}
         />
 
-        <FormItem
+        <CodeConventionForm
           ref={refs.codeConvention}
           title="코드 컨벤션"
-          type={inputTypes.codeConvention}
           value={settings.codeConvention}
-          onChange={(value) => onSettingChange("codeConvention", value)}
+          onChange={(value) => onSettingChange("codeConvention", convertFileValue(value))}
           onInfoClick={() => openModal("codeConvention")}
           onFocus={() => handleItemFocus("codeConvention")}
         />
 
-        <FormItem
+        <ArchitectureStructureForm
           ref={refs.architectureStructure}
           title="아키텍처 구조"
-          type={inputTypes.architectureStructure}
           value={settings.architectureStructure}
-          onChange={(value) => onSettingChange("architectureStructure", value)}
+          onChange={(value) => onSettingChange("architectureStructure", convertFileValue(value))}
           onInfoClick={() => openModal("architectureStructure")}
           options={architectureOptions}
           onFocus={() => handleItemFocus("architectureStructure")}
