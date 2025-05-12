@@ -8,8 +8,8 @@ import GitHubRepoBrowser from "./GitHubRepoBrowser"
 interface FormItemProps {
   title: string
   type: 'text' | 'textarea' | 'file' | 'dependency-select' | 'security-select' | 'architecture-select'
-  value: string
-  onChange: (value: string) => void
+  value: string | string[]
+  onChange: (value: string | string[]) => void
   onInfoClick: () => void
   options?: Array<{ value: string; label: string }>
   onFocus?: () => void
@@ -33,9 +33,21 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
     if ((type as string) === 'dependency-select' && selectedDependencies.length > 0) {
       // 선택된 의존성 정보는 그대로 유지
       onChange(selectedDependencies.join(','));
-    } else {
-      // 다른 타입의 경우 기존과 동일하게 처리
-      onChange(`github:${filePath}`);
+    } else if (files.length > 0) {
+      // 모든 선택된 파일 처리
+      const githubFiles = files.map(file => {
+        // fileUrl이 있으면 fileUrl 포함, 없으면 기존 방식대로 처리
+        if (file.downloadUrl) {
+          // 파일 경로와 URL을 모두 포함해서 저장 (파이프로 구분)
+          return `github:${file.path}|${file.downloadUrl}`;
+        } else {
+          // 기존 방식 (URL 없는 경우)
+          return `github:${file.path}`;
+        }
+      });
+
+      // 배열을 결과로 반환
+      onChange(githubFiles);
     }
     setIsGitHubModalOpen(false);
   };
@@ -110,16 +122,19 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
       } else if (value === 'ARCHITECTURE_DEFAULT_LAYERED_B') {
         setLayeredSubType('B');
       }
-    } else if (value.startsWith('github:')) {
+    } else if (typeof value === 'string' && value.startsWith('github:')) {
       setInputType('github');
-    } else if (value && !value.startsWith('github:')) {
+    } else if (typeof value === 'string' && value && !value.startsWith('github:')) {
+      setInputType('file');
+    } else if (Array.isArray(value) && value.length > 0) {
+      // 배열인 경우 file 타입으로 설정
       setInputType('file');
     } else {
       setInputType('default');
     }
     
     // 의존성 값이 있으면 파싱하여 설정
-    if ((type as string) === 'dependency-select' && value) {
+    if ((type as string) === 'dependency-select' && typeof value === 'string' && value) {
       setSelectedDependencies(value.split(','));
     }
   }, [type, value]);
@@ -131,7 +146,7 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
         return (
           <input
             type="text"
-            value={value}
+            value={value as string}
             onChange={(e) => onChange(e.target.value)}
             className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder={`${title} 입력...`}
@@ -141,7 +156,7 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
       case "textarea":
         return (
           <textarea
-            value={value}
+            value={value as string}
             onChange={(e) => onChange(e.target.value)}
             className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
             placeholder={`${title} 입력...`}
@@ -218,14 +233,47 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
                     // 이 경우는 선택된 의존성 정보를 우선시
                     onChange(selectedDependencies.join(','));
                   } else {
-                    // 선택된 의존성이 없거나 다른 타입인 경우
-                    onChange(fileName);
+                    // 현재 value가 배열인 경우 새 파일을 추가
+                    if (Array.isArray(value)) {
+                      onChange([...value, fileName]);
+                    } else {
+                      // 배열이 아닌 경우 단일 항목 배열로 설정
+                      onChange([fileName]);
+                    }
                   }
                 }
               }}
             />
             
-            {value && !value.includes(',') && (type as string) !== 'dependency-select' && (
+            {/* 선택된 파일 표시 */}
+            {Array.isArray(value) && value.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
+                <div className="flex flex-col space-y-2">
+                  {value.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <File size={16} className="text-gray-500" />
+                        <span className="truncate">{file}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const newFiles = [...value];
+                          newFiles.splice(index, 1);
+                          onChange(newFiles);
+                        }}
+                        className="text-red-500 hover:text-red-700 ml-2"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 단일 값인 경우와 호환성 유지 (의존성 선택 등) */}
+            {!Array.isArray(value) && value && !value.includes(',') && (type as string) !== 'dependency-select' && (
               <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                 <File size={16} className="text-gray-500" />
                 <span>{value}</span>
@@ -333,14 +381,47 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
                         // 이 경우는 선택된 의존성 정보를 우선시
                         onChange(selectedDependencies.join(','));
                       } else {
-                        // 선택된 의존성이 없거나 다른 타입인 경우
-                        onChange(fileName);
+                        // 현재 value가 배열인 경우 새 파일을 추가
+                        if (Array.isArray(value)) {
+                          onChange([...value, fileName]);
+                        } else {
+                          // 배열이 아닌 경우 단일 항목 배열로 설정
+                          onChange([fileName]);
+                        }
                       }
                     }
                   }}
                 />
                 
-                {value && (
+                {/* 선택된 파일 표시 */}
+                {Array.isArray(value) && value.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
+                    <div className="flex flex-col space-y-2">
+                      {value.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
+                          <div className="flex items-center gap-2">
+                            <File size={16} className="text-gray-500" />
+                            <span className="truncate">{file}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const newFiles = [...value];
+                              newFiles.splice(index, 1);
+                              onChange(newFiles);
+                            }}
+                            className="text-red-500 hover:text-red-700 ml-2"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 단일 값인 경우와 호환성 유지 (의존성 선택 등) */}
+                {!Array.isArray(value) && value && !value.includes(',') && (type as string) !== 'dependency-select' && (
                   <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                     <File size={16} className="text-gray-500" />
                     <span>{value}</span>
@@ -509,14 +590,47 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
                         // 이 경우는 선택된 의존성 정보를 우선시
                         onChange(selectedDependencies.join(','));
                       } else {
-                        // 선택된 의존성이 없거나 다른 타입인 경우
-                        onChange(fileName);
+                        // 현재 value가 배열인 경우 새 파일을 추가
+                        if (Array.isArray(value)) {
+                          onChange([...value, fileName]);
+                        } else {
+                          // 배열이 아닌 경우 단일 항목 배열로 설정
+                          onChange([fileName]);
+                        }
                       }
                     }
                   }}
                 />
                 
-                {value && (
+                {/* 선택된 파일 표시 */}
+                {Array.isArray(value) && value.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
+                    <div className="flex flex-col space-y-2">
+                      {value.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
+                          <div className="flex items-center gap-2">
+                            <File size={16} className="text-gray-500" />
+                            <span className="truncate">{file}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const newFiles = [...value];
+                              newFiles.splice(index, 1);
+                              onChange(newFiles);
+                            }}
+                            className="text-red-500 hover:text-red-700 ml-2"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 단일 값인 경우와 호환성 유지 (의존성 선택 등) */}
+                {!Array.isArray(value) && value && !value.includes(',') && (type as string) !== 'dependency-select' && (
                   <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                     <File size={16} className="text-gray-500" />
                     <span>{value}</span>
@@ -663,15 +777,47 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
                         // 선택된 의존성 정보 유지
                         onChange(selectedDependencies.join(','));
                       } else {
-                        // 선택된 의존성이 없거나 다른 타입인 경우
-                        onChange(fileName);
+                        // 현재 value가 배열인 경우 새 파일을 추가
+                        if (Array.isArray(value)) {
+                          onChange([...value, fileName]);
+                        } else {
+                          // 배열이 아닌 경우 단일 항목 배열로 설정
+                          onChange([fileName]);
+                        }
                       }
                     }
                   }}
                 />
                 
-                {/* 선택된 파일 표시 - 의존성 선택 타입이 아닐 때만 표시 */}
-                {value && !value.includes(',') && (type as string) !== 'dependency-select' && (
+                {/* 선택된 파일 표시 */}
+                {Array.isArray(value) && value.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
+                    <div className="flex flex-col space-y-2">
+                      {value.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
+                          <div className="flex items-center gap-2">
+                            <File size={16} className="text-gray-500" />
+                            <span className="truncate">{file}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const newFiles = [...value];
+                              newFiles.splice(index, 1);
+                              onChange(newFiles);
+                            }}
+                            className="text-red-500 hover:text-red-700 ml-2"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 단일 값인 경우와 호환성 유지 (의존성 선택 등) */}
+                {!Array.isArray(value) && value && !value.includes(',') && (type as string) !== 'dependency-select' && (
                   <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                     <File size={16} className="text-gray-500" />
                     <span>{value}</span>
@@ -710,8 +856,13 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       // 파일 드롭 시 타입에 따른 처리
       const fileName = e.dataTransfer.files[0].name;
-      // dependency-select 타입일 때는 파일명만 변경하고 selectedDependencies는 유지
-      onChange(fileName);
+      // 드롭한 파일을 현재 값 배열에 추가
+      if (Array.isArray(value)) {
+        onChange([...value, fileName]);
+      } else {
+        // 배열이 아닌 경우 새 배열 생성
+        onChange([fileName]);
+      }
     }
   }
 

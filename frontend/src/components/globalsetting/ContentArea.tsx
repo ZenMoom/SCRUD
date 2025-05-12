@@ -7,8 +7,8 @@ import FormItem from "./Form"
 import InfoModal from "./InfoModal"
 
 interface ContentAreaProps {
-  settings: Record<string, string>
-  onSettingChange: (key: string, value: string) => void
+  settings: Record<string, string | string[]>
+  onSettingChange: (key: string, value: string | string[]) => void
   refs: {
     title: React.RefObject<HTMLDivElement | null>
     description: React.RefObject<HTMLDivElement | null>
