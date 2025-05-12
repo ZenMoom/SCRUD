@@ -99,6 +99,11 @@ security:
     requestMatchers:
       - /api/v1/rules:GET
       - /api/v1/api-specs:GET, POST, PUT
+      - /api/sse/connect/**:GET
+      - /api/sse/stream/**:GET
+      - /api/sse/status/**:GET
+      - /api/sse/count:GET
+      - /api/sse/test/**:GET, POST
     # test
     # - /api/v1/tests:GET, POST
 
