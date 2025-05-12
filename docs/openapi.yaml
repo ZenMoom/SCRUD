@@ -281,7 +281,7 @@ paths:
             format: int64
       responses:
         "200":
-          $ref: "./components/responses/api-spec-response.yaml#/ApiSpecVersionListResponse"
+          $ref: "./components/responses/api-spec-response.yaml#/ApiSpecListResponse"
 
   /api/v1/api-specs/{apiSpecVersionId}:
     get:
