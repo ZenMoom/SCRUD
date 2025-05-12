@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const apiSpecData: ApiSpecVersionCreateRequest = {
       endpoint: body.endpoint,
       httpMethod: body.httpMethod as ApiSpecVersionCreateRequestHttpMethodEnum,
-      scrudProjectId: body.scrudProjectId || 1, // 기본값 설정
+      scrudProjectId: body.scrudProjectId,
       summary: body.summary || "",
       description: body.description || "",
     }
