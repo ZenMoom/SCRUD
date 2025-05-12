@@ -38,8 +38,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         }
         log.error("Error Message: {}", errorMessage);
 
-        String redirectUri = environment.getProperty("oauth2.redirectUri") == null ?
-            "http://localhost:3000" : environment.getProperty("oauth2.redirectUri");
+        String redirectUri = environment.getProperty("oauth2.redirectUri");
 
         String encodedMessage = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)

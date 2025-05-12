@@ -170,4 +170,20 @@ paths:
       responses:
         '200':
           $ref: "./components/responses/canvas-response.yaml#/ChangeApiProcessStatusResponse"
+  /api/v1/projects/{projectId}/apis/{apiId}/diagrams:
+    post:
+      tags:
+        - Canvas
+      operationId: createDiagram
+      summary: API를 최초로 도식화 할 때 사용합니다.
+      description: 도식화를 처음 실행할 때 사용하는 API 입니다.
+      parameters:
+        - $ref: './components/schemas/canvas-schema.yaml#/ProjectId'
+        - $ref: './components/schemas/canvas-schema.yaml#/ApiId'
+      responses:
+        '200':
+          $ref: "./components/responses/canvas-response.yaml#/GetDiagramResponse"
+
+
+
 

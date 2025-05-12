@@ -13,6 +13,22 @@ type SettingKey = 'title' | 'description' | 'serverUrl' | 'requirementSpec' | 'e
                  'dependencyFile' | 'utilityClass' | 'errorCode' | 'securitySetting' | 
                  'codeConvention' | 'architectureStructure';
 
+// 프로젝트 설정 타입 정의
+interface ProjectSettings {
+  title: string;
+  description: string;
+  serverUrl: string;
+  requirementSpec: string[];
+  erd: string[];
+  dependencyFile: string[];
+  utilityClass: string[];
+  errorCode: string[];
+  securitySetting: string;
+  codeConvention: string[];
+  architectureStructure: string;
+  [key: string]: string | string[]; // 인덱스 시그니처 추가
+}
+
 // 토큰 처리 컴포넌트
 function TokenHandler() {
   const searchParams = useSearchParams();
@@ -48,18 +64,18 @@ export default function GlobalSettingPage() {
   // AuthStore에서 토큰과 인증 상태 가져오기
   const { token, isAuthenticated } = useAuthStore()
   
-  // 각 설정 항목의 상태를 관리 - 초기값은 빈 문자열로 설정
-  const [settings, setSettings] = useState({
+  // 각 설정 항목의 상태를 관리 - 파일 관련 필드는 배열로 초기화
+  const [settings, setSettings] = useState<ProjectSettings>({
     title: "",
     description: "",
     serverUrl: "",
-    requirementSpec: "",
-    erd: "",
-    dependencyFile: "",
-    utilityClass: "",
-    errorCode: "",
+    requirementSpec: [] as string[],
+    erd: [] as string[],
+    dependencyFile: [] as string[],
+    utilityClass: [] as string[],
+    errorCode: [] as string[],
     securitySetting: "SECURITY_DEFAULT_JWT", // 첫 번째 선택지를 기본값으로 설정
-    codeConvention: "",
+    codeConvention: [] as string[],
     architectureStructure: "ARCHITECTURE_DEFAULT_LAYERED_A", // 첫 번째 선택지를 기본값으로 설정
   })
 
@@ -134,11 +150,14 @@ export default function GlobalSettingPage() {
   }
 
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string) => {
+  const handleSettingChange = (key: string, value: string | string[]) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
 
-    // 값이 있으면 완료 상태로 변경
-    if (value && value.trim() !== "") {
+    // 값이 있으면 완료 상태로 변경 (문자열 또는 배열)
+    if (
+      (typeof value === 'string' && value.trim() !== "") ||
+      (Array.isArray(value) && value.length > 0)
+    ) {
       setCompleted((prev) => ({ ...prev, [key as SettingKey]: true }))
     } else {
       setCompleted((prev) => ({ ...prev, [key as SettingKey]: false }))
