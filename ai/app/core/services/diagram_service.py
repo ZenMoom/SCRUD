@@ -68,24 +68,14 @@ class DiagramService:
         Raises:
             Exception: 다이어그램 생성 실패 시
         """
-        self.logger.info(f"새 다이어그램 생성: project_id={project_id}, api_id={api_id}")
 
         try:
-            # 기존 다이어그램이 있는지 확인
-            existing_diagram = await self.repository.find_latest_by_project_api(project_id, api_id)
+            # 기존 다이어그램이 없으면 새로 생성
+            self.logger.info(f"새 다이어그램 생성: project_id={project_id}, api_id={api_id}")
 
-            if existing_diagram:
-                # 기존 다이어그램이 있으면 새 버전 생성
-                self.logger.info(f"기존 다이어그램을 기반으로 새 버전 생성: project_id={project_id}, api_id={api_id}")
-                new_diagram = await self.repository.create_new_version(existing_diagram)
-            else:
-                # 기존 다이어그램이 없으면 새로 생성
-                self.logger.info(f"새 다이어그램 생성: project_id={project_id}, api_id={api_id}")
-
-                diagram: Diagram = self.create_dummy_diagram(project_id, api_id)
-                # 저장
-                new_diagram = await self.repository.save(diagram)
-
+            diagram: Diagram = self.create_dummy_diagram(project_id, api_id)
+            # 저장
+            new_diagram = await self.repository.save(diagram)
             # 응답 데이터로 변환
             return self._convert_to_response(new_diagram)
 

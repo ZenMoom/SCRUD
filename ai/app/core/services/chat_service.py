@@ -191,9 +191,6 @@ class ChatService:
         self.logger.info(f"User request: tag={user_chat_data.tag}, promptType={user_chat_data.promptType}")
         self.logger.info(f"Target methods count: {len(user_chat_data.targetMethods)}")
 
-        # 스트리밍 모드 확인
-        use_streaming = response_queue is not None
-        self.logger.info(f"스트리밍 모드: {use_streaming}")
         try:
             # 기존 다이어그램 조회 (가장 높은 버전)
             self.logger.info(f"기존 다이어그램 조회 중: project_id={project_id}, api_id={api_id}")
@@ -213,13 +210,7 @@ class ChatService:
 
             # LLM 및 파서 설정
             self.logger.info(f"LLM 및 파서 설정 시작: model_name={self.model_name}")
-            if use_streaming:
-                # 스트리밍 모드 LLM 설정
-                self.llm, self.parser = self.setup_llm_and_parser(response_queue)
-            else:
-                # 비스트리밍 모드 LLM 설정
-                self.llm = self.model_generator.get_chat_model(self.model_name)
-                self.parser = PydanticOutputParser(pydantic_object=Diagram)
+            self.llm, self.parser = self.setup_llm_and_parser(response_queue)
 
             self.logger.info(f"LLM 및 파서 설정 완료")
 
@@ -254,10 +245,12 @@ class ChatService:
 
             # 최종 프롬프트 생성
             openapi_spec = latest_diagram.dict()  # 현재 다이어그램 데이터를 프롬프트에 포함
+            self.logger.info(f"openapi_spec: {openapi_spec}")
 
             # datetime 객체를 문자열로 변환하는 사용자 정의 JSON 인코더
             class DateTimeEncoder(json.JSONEncoder):
                 def default(self, obj):
+                    from datetime import datetime
                     if isinstance(obj, datetime):
                         return obj.isoformat()
                     return super().default(obj)
@@ -277,23 +270,14 @@ class ChatService:
 
             # LLM 호출
             self.logger.info("LLM 호출 시작")
-            if use_streaming:
-                # 스트리밍 모드 호출
-                response = await self.llm.ainvoke(
-                    [
-                        HumanMessage(content=complete_prompt),
-                        HumanMessage(content=self.parser.get_format_instructions()),
-                    ]
-                )
-            else:
-                # 비스트리밍 모드 호출
-                response = await asyncio.to_thread(
-                    self.llm.invoke,
-                    [
-                        HumanMessage(content=complete_prompt),
-                        HumanMessage(content=self.parser.get_format_instructions()),
-                    ]
-                )
+
+            response = await self.llm.ainvoke(
+                [
+                    HumanMessage(content=complete_prompt),
+                    HumanMessage(content=self.parser.get_format_instructions()),
+                ]
+            )
+
 
             self.logger.info("LLM 호출 완료")
 
@@ -351,10 +335,8 @@ class ChatService:
         except Exception as e:
             self.logger.error(f"도식화 데이터 생성 중 오류 발생: {str(e)}", exc_info=True)
 
-            # 스트리밍 모드인 경우에만 에러 응답 전송
-            if use_streaming and response_queue:
-                await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {str(e)}")
-                await self.sse_service.close_stream(response_queue)
+            await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {str(e)}")
+            await self.sse_service.close_stream(response_queue)
 
             raise
 
