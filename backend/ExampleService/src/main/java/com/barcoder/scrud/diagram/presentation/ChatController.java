@@ -5,8 +5,10 @@ import com.barcoder.scrud.diagram.infrastructure.webclient.ChatWebClient;
 import com.barcoder.scrud.model.ChatHistoryResponse;
 import com.barcoder.scrud.model.SSEIdResponse;
 import com.barcoder.scrud.model.UserChatRequest;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,30 +24,30 @@ public class ChatController implements ChatApi {
     private final ChatWebClient chatWebClient;
 
     /**
-     * GET /api/sse/connect/{SSEId} : SSE 연결을 설정합니다. 서버와 클라이언트 간의 SSE 연결을 설정하여 실시간 이벤트 스트림을 수신할 수 있습니다.
+     * GET /api/v1/sse/connect/{SSEId} : SSE 연결을 설정합니다. 서버와 클라이언트 간의 SSE 연결을 설정하여 실시간 이벤트 스트림을 수신할 수 있습니다.
      *
-     * @param ssEId SSE Id 입니다 (required)
+     * @param SSEId SSE Id 입니다 (required)
      * @return SseEmitter 객체 (실시간 이벤트 수신용) or 인증되지 않은 요청 (status code 401)
      */
     @Override
-    @GetMapping(value = "/api/sse/connect/{ssEId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<String> connectSSE(@PathVariable("ssEId") String ssEId) {
-        log.info("Received SSE connection request for streamId: {}", ssEId);
-        // This return value will be ignored since we're directly setting the response
-        // through the SseEmitter, but we need to satisfy the interface
-        return ResponseEntity.ok("SSE Connection Established");
+    public ResponseEntity<String> connectSSE(@PathVariable(name = "SSEId") String SSEId) {
+        log.info("리다이렉트 요청 감지: /api/sse/stream/{} -> /api/v1/sse/stream/{}", SSEId, SSEId);
+        URI redirectUri = URI.create("/api/v1/sse/stream/" + SSEId);
+        return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
+                .location(redirectUri)
+                .build();
     }
 
     /**
      * 실제 SSE 스트림을 설정합니다. OpenAPI 생성 인터페이스와 충돌하지 않도록 별도의 엔드포인트로 구현합니다.
      *
-     * @param ssEId SSE ID
+     * @param SSEId SSE ID
      * @return SseEmitter 객체
      */
-    @GetMapping(value = "/api/sse/stream/{ssEId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter connectSseStream(@PathVariable String ssEId) {
-        log.info("Establishing SSE stream for streamId: {}", ssEId);
-        return chatWebClient.connectSSE(ssEId);
+    @GetMapping(value = "/api/v1/sse/stream/{SSEId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter connectSseStream(@PathVariable(name = "SSEId") String SSEId) {
+        log.info("Establishing SSE stream for streamId: {}", SSEId);
+        return chatWebClient.connectSSE(SSEId);
     }
 
     /**
