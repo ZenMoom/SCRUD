@@ -5,16 +5,15 @@ import axios from "axios"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import LeftContainer from "./LeftContainer"
 import MiddleContainer from "./MiddleContainer"
-// import RightContainer from "./RightContainer"
 import RightContainer from "./right-container"
-import { ApiSpecVersionResponse } from "@generated/model"
+import { ApiProcessStateEnumDto, ApiSpecVersionResponse } from "@generated/model"
 
 // API 엔드포인트 인터페이스 (MiddleContainer에서 사용하는 형식)
 interface ApiEndpoint {
   id: string
   path: string
   method: string
-  status: "todo" | "progress" | "done"
+  status: ApiProcessStateEnumDto
   apiSpecVersionId?: number
 }
 
@@ -123,7 +122,7 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
           id: uniqueId,
           path: endpoint,
           method: spec.httpMethod || "GET",
-          status: "done", // 기본적으로 완료 상태로 설정
+          status: "AI_GENERATED" as ApiProcessStateEnumDto, // 기본적으로 완료 상태로 설정
           apiSpecVersionId: spec.apiSpecVersionId,
         }
 

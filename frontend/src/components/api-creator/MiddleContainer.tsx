@@ -2,13 +2,14 @@
 
 "use client"
 
+import { ApiProcessStateEnumDto } from "@generated/model"
 import { useState, useRef, useEffect } from "react"
 
 interface ApiEndpoint {
   id: string
   path: string
   method: string
-  status: "todo" | "progress" | "done"
+  status: ApiProcessStateEnumDto // 상태 타입 변경
   apiSpecVersionId?: number
 }
 
@@ -23,7 +24,7 @@ interface MiddleContainerProps {
   apiGroups: ApiGroup[]
   setApiGroups: React.Dispatch<React.SetStateAction<ApiGroup[]>>
   isLoading: boolean
-  scrudProjectId: number // 프로젝트 ID 추가
+  scrudProjectId: number
 }
 
 export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading, scrudProjectId }: MiddleContainerProps) {
@@ -66,7 +67,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       id: newEndpointId,
       path: `${basePath}/new`,
       method: "GET",
-      status: "todo" as const,
+      status: "AI_GENERATED" as ApiProcessStateEnumDto, // 초기 상태 변경
     }
 
     setApiGroups(
@@ -203,12 +204,13 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     setEditingEndpointId(null)
   }
 
-  // API 상태 변경 함수
-  const updateEndpointStatus = (groupId: string, endpointId: string, status: "todo" | "progress" | "done", e?: React.MouseEvent) => {
+  // API 상태 변경 함수 (수정)
+  const updateEndpointStatus = async (groupId: string, endpointId: string, status: ApiProcessStateEnumDto, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation() // 상태 변경 시 클릭 이벤트 전파 방지
     }
 
+    // 먼저 UI 상태 업데이트
     setApiGroups(
       apiGroups.map((group) => {
         if (group.id === groupId) {
@@ -228,6 +230,34 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         return group
       })
     )
+
+    // API ID 가져오기
+    const group = apiGroups.find((g) => g.id === groupId)
+    const endpoint = group?.endpoints.find((e) => e.id === endpointId)
+
+    if (endpoint && endpoint.apiSpecVersionId) {
+      // API 호출하여 상태 업데이트
+      try {
+        const response = await fetch(`/api/canvas-api/${scrudProjectId}/${endpoint.apiSpecVersionId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("API 상태 업데이트 실패:", errorData)
+          // 실패 시 에러 처리 (예: 토스트 메시지 등)
+        }
+      } catch (error) {
+        console.error("API 상태 업데이트 중 오류 발생:", error)
+        // 실패 시 에러 처리
+      }
+    } else {
+      console.warn("apiSpecVersionId가 없어 서버에 상태 업데이트를 할 수 없습니다.")
+    }
   }
 
   // 편집 취소
@@ -265,15 +295,17 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     }
   }, [editingEndpointId])
 
-  // 상태에 따른 색상 및 텍스트 표시
-  const getStatusStyle = (status: "todo" | "progress" | "done") => {
+  // 상태에 따른 색상 및 텍스트 표시 (수정)
+  const getStatusStyle = (status: ApiProcessStateEnumDto) => {
     switch (status) {
-      case "todo":
-        return "bg-gray-200 text-gray-700" // 해야할 일 - 회색
-      case "progress":
-        return "bg-blue-100 text-blue-700" // 진행 중 - 옅은 파란색
-      case "done":
-        return "bg-green-100 text-green-700" // 완료 - 초록색
+      case "AI_GENERATED":
+        return "bg-gray-200 text-gray-700" // AI 생성됨 - 회색
+      case "AI_VISUALIZED":
+        return "bg-blue-100 text-blue-700" // AI 시각화됨 - 옅은 파란색
+      case "USER_COMPLETED":
+        return "bg-green-100 text-green-700" // 사용자 완료 - 초록색
+      default:
+        return "bg-gray-200 text-gray-700" // 기본값
     }
   }
 
@@ -377,22 +409,22 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                             onClick={() => onApiSelect(endpoint.path, endpoint.method)}
                             onDoubleClick={(e) => startEditingEndpoint(group.id, endpoint.id, e)}
                           >
-                            {/* 상태 드롭다운 - 화살표와 텍스트가 겹치지 않게 수정 */}
-                            <div className="relative inline-block text-left w-20 flex-shrink-0">
+                            {/* 상태 드롭다운 - UI는 유지하되 값만 변경 */}
+                            <div className="relative inline-block text-left w-24 flex-shrink-0">
                               <select
                                 value={endpoint.status}
-                                onChange={(e) => updateEndpointStatus(group.id, endpoint.id, e.target.value as "todo" | "progress" | "done")}
-                                className={`appearance-none text-xs px-2 py-0.5 rounded w-full cursor-pointer focus:outline-none ${getStatusStyle(endpoint.status)} pr-6`} // pr-6 추가로 오른쪽 여백 확보
+                                onChange={(e) => updateEndpointStatus(group.id, endpoint.id, e.target.value as ApiProcessStateEnumDto)}
+                                className={`appearance-none text-xs px-2 py-0.5 rounded w-full cursor-pointer focus:outline-none ${getStatusStyle(endpoint.status)} pr-6`}
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <option value="todo" className="bg-white text-gray-700">
-                                  해야할 일
+                                <option value="AI_GENERATED" className="bg-white text-gray-700">
+                                  AI 생성됨
                                 </option>
-                                <option value="progress" className="bg-white text-blue-700">
-                                  진행 중
+                                <option value="AI_VISUALIZED" className="bg-white text-blue-700">
+                                  AI 시각화됨
                                 </option>
-                                <option value="done" className="bg-white text-green-700">
-                                  완료
+                                <option value="USER_COMPLETED" className="bg-white text-green-700">
+                                  사용자 완료
                                 </option>
                               </select>
                               <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center">
