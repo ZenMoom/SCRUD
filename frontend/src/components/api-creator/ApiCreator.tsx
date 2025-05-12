@@ -87,32 +87,30 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
         // API 경로에서 그룹 이름 추출
         const endpoint = spec.endpoint || ""
 
-        // 그룹화 로직 개선: /api/v1 다음에 오는 리소스 이름까지 포함
+        // 그룹화 로직 개선: 정확히 /api/v1/resource 형태로 그룹화
         const pathParts = endpoint.split("/").filter((part) => part.length > 0)
 
         // 기본 그룹 경로 설정
         let groupPath = "/"
 
-        // 경로 분석: 보통 /api/v1/resource/action 또는 /api/v1/resource/{id} 패턴
+        // 명확한 리소스 기반 그룹화: /api/v1/{resource} 패턴 강제
         if (pathParts.length >= 3) {
-          // /api/v1/resource 까지 그룹화 (3단계)
+          // 항상 3단계까지만 그룹화: /api/v1/resource
           groupPath = "/" + pathParts.slice(0, 3).join("/")
+
+          // 경로에 중괄호({})가 포함된 경우 처리
+          if (groupPath.includes("{") || groupPath.includes("}")) {
+            // 파라미터가 포함된 경우 그 이전 수준까지 그룹화
+            const parts = groupPath.split("/")
+            const cleanParts = parts.filter((part) => !part.includes("{") && !part.includes("}"))
+            groupPath = cleanParts.join("/") || "/"
+          }
         } else if (pathParts.length === 2) {
-          // /api/v1 까지만 있으면 그대로 사용
+          // /api/v1과 같은 경우
           groupPath = "/" + pathParts.join("/")
         } else if (pathParts.length === 1) {
-          // 단일 경로는 그대로 사용
+          // 단일 경로
           groupPath = "/" + pathParts[0]
-        }
-
-        // 마지막 부분에 {id}와 같은 패턴이 있는지 확인하여 그룹화에서 제외
-        const allParts = endpoint.split("/")
-        const lastPart = allParts[allParts.length - 1]
-
-        // 경로 마지막 부분이 {id}와 같은 형식이면 그 부분을 제외하고 그룹화
-        if (lastPart && (lastPart.includes("{") || lastPart.includes("}"))) {
-          // 마지막 부분을 제외한 경로를 그룹 이름으로 사용
-          groupPath = allParts.slice(0, allParts.length - 1).join("/") || "/"
         }
 
         if (!groupMap.has(groupPath)) {
@@ -153,6 +151,11 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
           const methodOrder = { GET: 1, POST: 2, PUT: 3, PATCH: 4, DELETE: 5 }
           const orderA = methodOrder[a.method as keyof typeof methodOrder] || 99
           const orderB = methodOrder[b.method as keyof typeof methodOrder] || 99
+
+          // 먼저 메서드로 정렬하고, 같은 메서드면 경로로 정렬
+          if (orderA === orderB) {
+            return a.path.localeCompare(b.path)
+          }
           return orderA - orderB
         })
 
@@ -219,7 +222,7 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
   }, [scrudProjectId, fetchApiSpecs])
 
   return (
-    <div className="flex h-[calc(100vh-152px)] overflow-hidden bg-gray-50 gap-1 relative">
+    <div className="flex h-[calc(100vh-152px)] overflow-hidden bg-gray-50 gap-1 relative py-1 mt-2">
       {/* 좌측 패널 - 접었다 펼칠 수 있게 수정 */}
       <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto`}>
         <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />

@@ -45,12 +45,12 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       ...apiGroups,
       {
         id: newGroupId,
-        name: "api/NEW",
+        name: "api/v1/new",
         endpoints: [],
       },
     ])
     setEditingGroupId(newGroupId)
-    setNewGroupName("api/NEW")
+    setNewGroupName("api/v1/new")
   }
 
   // API 엔드포인트 추가 함수
