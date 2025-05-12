@@ -3,7 +3,6 @@
 import ApiCreator from "@/components/api-creator/ApiCreator"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import axios from "axios"
 
 // 프로젝트 정보 인터페이스
@@ -88,20 +87,6 @@ export default function ProjectApiPage() {
 
   return (
     <main className="p-0">
-      {/* 상단 네비게이션 바 */}
-      <div className="bg-white shadow-sm border-b mb-4">
-        <div className="max-w-full mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href={`/project/${projectId}`} className="text-gray-600 hover:text-gray-900 flex items-center">
-                ← {projectInfo.title} 정보로 돌아가기
-              </Link>
-            </div>
-            <div className="text-lg font-semibold text-gray-800">API 설계</div>
-          </div>
-        </div>
-      </div>
-
       {/* 프로그레스 바 */}
       <div className="py-6 bg-gradient-to-r white">
         <div className="max-w-full mx-auto px-6">
@@ -140,7 +125,7 @@ export default function ProjectApiPage() {
           </div>
         </div>
       </div>
-      <ApiCreator />
+      <ApiCreator projectId={projectId} />
     </main>
   )
 }

@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   // 이전 URL 형식 지원: 쿼리 파라미터가 없으면 경로에서 찾기
   if (!versionId && pathParts.length > 5) {
     versionId = pathParts[5] // 이전 방식의 URL 지원
-  }                                
+  }
 
   // 버전 ID가 없는 경우 오류 응답
   if (!versionId) {
@@ -27,8 +27,8 @@ export async function GET(req: NextRequest) {
   }
 
   // API 기본 URL 설정
-  // const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
-  const apiUrl = "http://host.docker.internal:8000"
+  const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
+  // const apiUrl = "http://host.docker.internal:8000"
   // API 설정 구성
   const config = new Configuration({
     basePath: apiUrl,

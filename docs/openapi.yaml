@@ -138,7 +138,7 @@ paths:
           $ref: "./components/responses/canvas-response.yaml#/PromptChatResponse"
         '404':
           $ref: "./components/responses/exception-response.yaml#/NotFoundException"
-  /api/sse/connect/{SSEId}:
+  /api/v1/sse/connect/{SSEId}:
     get:
       tags:
         - Chat

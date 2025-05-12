@@ -2,9 +2,9 @@
 # 다이어그램 서비스 API 테스트
 ###############################################
 
-@baseUrl = http://localhost:8000
-@projectId = test-project-123
-@apiId = test-api-457
+@baseUrl = http://localhost:8080
+@projectId = project-123
+@apiId = api-456
 @versionId = 1
 @componentId = 8e43d0dd-f51b-4cdd-9204-6bc1f0f093ed
 

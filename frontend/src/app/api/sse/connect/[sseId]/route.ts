@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
         try {
           // API 기본 URL 설정 - 하드코딩된 URL 사용
-          const apiUrl = "http://host.docker.internal:8000"
+          const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
 
           // 변경된 SSE 연결 URL
           const sseUrl = `${apiUrl}/api/v1/sse/connect/${sseId}`

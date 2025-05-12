@@ -1,5 +1,6 @@
 package com.barcoder.scrud.apispec.application.dto.out;
 
+import com.barcoder.scrud.apispec.domain.enums.ApiSpecStatus;
 import com.barcoder.scrud.apispec.domain.enums.HttpMethod;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class ApiSpecVersionOut {
 
+	private Long apiSpecId;
 	private Long apiSpecVersionId;
 	private UUID userId;
 	private String endpoint;
@@ -26,4 +28,5 @@ public class ApiSpecVersionOut {
 	private String requestBody;
 	private String queryParameters;
 	private String pathParameters;
+	private ApiSpecStatus apiSpecStatus;
 }

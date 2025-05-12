@@ -14,8 +14,8 @@ export async function GET(req: NextRequest) {
   const apiId = pathParts[4] // /api/chat/[projectId]/[apiId]
 
   // API 기본 URL 설정
-  // const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
-  const apiUrl = "http://host.docker.internal:8000"
+  const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
+  // const apiUrl = "http://host.docker.internal:8000"
   // API 설정 구성
   const config = new Configuration({
     basePath: apiUrl,

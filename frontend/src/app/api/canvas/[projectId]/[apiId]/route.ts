@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
     }
 
     // API 기본 URL 설정
-    // const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
-    const apiUrl = "http://host.docker.internal:8000"
+    const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
+    // const apiUrl = "http://host.docker.internal:8000"
 
     // API 설정 구성
     const config = new Configuration({

@@ -6,58 +6,51 @@ import useAuthStore from "./store/useAuthStore"
 import ProjectCard from "@/components/project-card/project-card"
 import ProjectForm from "@/components/project-card/project-form"
 import { Project } from "@/components/project-card/project-card"
-import Image from "next/image"
 
 // API 요청 함수 - 실제 API 호출로 변경
 const getProjects = async (): Promise<Project[]> => {
   try {
     // 인증 토큰 가져오기
-    const { token } = useAuthStore.getState();
-    
+    const { token } = useAuthStore.getState()
+
     if (!token) {
-      console.error("인증 토큰이 없습니다.");
-      throw new Error("인증 토큰이 없습니다.");
+      console.error("인증 토큰이 없습니다.")
+      throw new Error("인증 토큰이 없습니다.")
     }
-    
+
     // API 호출
-    const response = await fetch('/api/projects', {
+    const response = await fetch("/api/projects", {
       headers: {
-        'Authorization': token
-      }
-    });
-    
+        Authorization: token,
+      },
+    })
+
     if (!response.ok) {
-      throw new Error('프로젝트 목록을 불러오는데 실패했습니다.');
+      throw new Error("프로젝트 목록을 불러오는데 실패했습니다.")
     }
-    
-    const data = await response.json();
-    
+
+    const data = await response.json()
+
     // 응답이 없거나 형식이 다른 경우 빈 배열 반환
     if (!data || !data.content) {
-      console.warn("API 응답 데이터 형식이 예상과 다릅니다:", data);
-      return [];
+      console.warn("API 응답 데이터 형식이 예상과 다릅니다:", data)
+      return []
     }
-    
+
     // API 응답 데이터를 Project 타입에 맞게 변환
-    return data.content.map((item: { 
-      scrudProjectId: number; 
-      title?: string; 
-      description?: string; 
-      updatedAt?: string;
-      serverUrl?: string;
-    }) => ({
+    return data.content.map((item: { scrudProjectId: number; title?: string; description?: string; updatedAt?: string; serverUrl?: string }) => ({
       id: item.scrudProjectId.toString(),
       title: item.title || "제목 없음",
       description: item.description || "설명 없음",
-      createdAt: new Date(item.updatedAt || Date.now()).toLocaleDateString('ko-KR'),
+      createdAt: new Date(item.updatedAt || Date.now()).toLocaleDateString("ko-KR"),
       emoji: undefined,
-      serverUrl: item.serverUrl || ""
-    }));
+      serverUrl: item.serverUrl || "",
+    }))
   } catch (error) {
-    console.error("프로젝트 목록 조회 오류:", error);
-    throw error;
+    console.error("프로젝트 목록 조회 오류:", error)
+    throw error
   }
-};
+}
 
 // 프로젝트 수정 더미 함수
 const updateProject = async (id: string, projectData: Omit<Project, "id" | "createdAt">): Promise<Project> => {
@@ -105,31 +98,31 @@ const updateProject = async (id: string, projectData: Omit<Project, "id" | "crea
 const deleteProject = async (id: string): Promise<void> => {
   try {
     // 인증 토큰 가져오기
-    const { token } = useAuthStore.getState();
-    
+    const { token } = useAuthStore.getState()
+
     if (!token) {
-      console.error("인증 토큰이 없습니다.");
-      throw new Error("인증 토큰이 없습니다.");
+      console.error("인증 토큰이 없습니다.")
+      throw new Error("인증 토큰이 없습니다.")
     }
-    
+
     // API 호출
     const response = await fetch(`/api/projects/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'Authorization': token
-      }
-    });
-    
+        Authorization: token,
+      },
+    })
+
     // 요청이 성공적이지 않을 경우 (204가 아닌 경우)
     if (response.status !== 204) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || '프로젝트 삭제에 실패했습니다.');
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || "프로젝트 삭제에 실패했습니다.")
     }
-    
-    console.log('프로젝트가 성공적으로 삭제되었습니다.');
+
+    console.log("프로젝트가 성공적으로 삭제되었습니다.")
   } catch (error) {
-    console.error("프로젝트 삭제 오류:", error);
-    throw error;
+    console.error("프로젝트 삭제 오류:", error)
+    throw error
   }
 }
 
@@ -147,7 +140,7 @@ function HomeContent() {
   // 인증 및 라우터
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { login, logout, isAuthenticated, user } = useAuthStore()
+  const { login, isAuthenticated, user } = useAuthStore()
 
   // 프로젝트 데이터 상태
   const [projects, setProjects] = useState<Project[]>([])
@@ -285,12 +278,6 @@ function HomeContent() {
     setCurrentProject(null)
   }
 
-  // 로그아웃 함수
-  const handleLogout = () => {
-    logout()
-    router.push("/login")
-  }
-
   // 인증되지 않은 경우 아무것도 렌더링하지 않음 (로그인 페이지로 리다이렉트될 때까지)
   if (!isAuthenticated) {
     return null
@@ -299,22 +286,10 @@ function HomeContent() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-8 md:py-16">
-        <div className="flex justify-between items-center mb-10">
+        <div className="mb-10">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">{user?.username || "바코드"}</span> 님의 프로젝트
           </h1>
-
-          {/* 프로필 및 로그아웃 버튼 */}
-          <div className="flex items-center">
-            {user?.profileImgUrl && (
-              <div className="w-10 h-10 rounded-full mr-3 overflow-hidden">
-                <Image src={user.profileImgUrl} alt="프로필" width={40} height={40} className="object-cover w-full h-full" />
-              </div>
-            )}
-            <button onClick={handleLogout} className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
-              로그아웃
-            </button>
-          </div>
         </div>
 
         {/* 로딩 상태 */}

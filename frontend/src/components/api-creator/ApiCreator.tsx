@@ -5,7 +5,8 @@ import axios from "axios"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import LeftContainer from "./LeftContainer"
 import MiddleContainer from "./MiddleContainer"
-import RightContainer from "./RightContainer"
+// import RightContainer from "./RightContainer"
+import RightContainer from "./right-container"
 import { ApiSpecVersionResponse } from "@generated/model"
 
 // API 엔드포인트 인터페이스 (MiddleContainer에서 사용하는 형식)
@@ -24,10 +25,14 @@ interface ApiGroup {
   endpoints: ApiEndpoint[]
 }
 
-export default function ApiCreator() {
+interface ApiCreatorProps {
+  projectId?: number // URL에서 받은 프로젝트 ID
+}
+
+export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
   const [selectedApi, setSelectedApi] = useState<string | null>(null)
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
-  const [scrudProjectId, setScrudProjectId] = useState<number>(1)
+  const [scrudProjectId, setScrudProjectId] = useState<number>(projectId) // 기본값으로 전달받은 프로젝트 ID 사용
   const [apiGroups, setApiGroups] = useState<ApiGroup[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState<boolean>(true)
@@ -46,8 +51,22 @@ export default function ApiCreator() {
     architectureStructure: false,
   })
 
+  // URL에서 프로젝트 ID가 변경될 때 상태 업데이트
+  useEffect(() => {
+    console.log("ApiCreator - projectId from props:", projectId)
+    console.log("ApiCreator - current scrudProjectId:", scrudProjectId)
+    if (projectId && projectId !== scrudProjectId) {
+      console.log("프로젝트 ID 변경:", projectId)
+      setScrudProjectId(projectId)
+      // 프로젝트 변경 시 선택된 API 초기화
+      setSelectedApi(null)
+      setSelectedMethod(null)
+    }
+  }, [projectId, scrudProjectId])
+
   // API 스펙 목록 조회 및 변환 (그룹화 로직)
-  const fetchApiSpecs = async (projectId: number) => {
+  const fetchApiSpecs = useCallback(async (projectId: number) => {
+    console.log("fetchApiSpecs 호출됨 - projectId:", projectId)
     setIsLoading(true)
     try {
       // 백엔드에서 API 스펙 목록 조회
@@ -56,7 +75,7 @@ export default function ApiCreator() {
       // 응답 데이터를 ApiGroup 형식으로 변환
       const apiSpecsList = response.data.content || []
 
-      console.log("API 스펙 목록 가져옴:", apiSpecsList)
+      console.log(`프로젝트 ${projectId}의 API 스펙 목록 가져옴:`, apiSpecsList)
 
       // 경로별로 API 그룹화
       const groupMap = new Map<string, ApiEndpoint[]>()
@@ -153,19 +172,20 @@ export default function ApiCreator() {
         })
       }
 
-      console.log("그룹화된 API 목록:", newGroups)
+      console.log(`프로젝트 ${projectId}의 그룹화된 API 목록:`, newGroups)
       setApiGroups(newGroups)
     } catch (error) {
-      console.error("API 스펙 목록 조회 오류:", error)
+      console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
-  // 처음 로드 시 API 스펙 목록 조회
+  // 처음 로드 시 API 스펙 목록 조회 및 프로젝트 ID가 변경될 때마다 다시 조회
   useEffect(() => {
+    console.log("API 스펙 목록 조회 useEffect 실행 - scrudProjectId:", scrudProjectId)
     fetchApiSpecs(scrudProjectId)
-  }, [scrudProjectId])
+  }, [scrudProjectId, fetchApiSpecs])
 
   // API 선택 핸들러
   const handleApiSelect = (apiPath: string, apiMethod: string) => {
@@ -194,16 +214,16 @@ export default function ApiCreator() {
 
   // API 스펙이 변경되었을 때 목록 새로고침
   const handleApiSpecChanged = useCallback(() => {
-    console.log("API 스펙 변경 감지: 목록 새로고침")
+    console.log("API 스펙 변경 감지: 목록 새로고침 - scrudProjectId:", scrudProjectId)
     fetchApiSpecs(scrudProjectId)
-  }, [scrudProjectId]) // scrudProjectId만 의존성으로 추가
+  }, [scrudProjectId, fetchApiSpecs])
 
   return (
     <div className="flex h-[calc(100vh-152px)] overflow-hidden bg-gray-50 gap-1 relative">
       {/* 좌측 패널 - 접었다 펼칠 수 있게 수정 */}
-      {/* <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto`}>
+      <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto`}>
         <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />
-      </div> */}
+      </div>
 
       {/* 좌측 패널 토글 버튼 - 개선된 위치 및 스타일 */}
       <div className={`absolute top-1/2 transform -translate-y-1/2 ${isLeftPanelOpen ? "left-[300px]" : "left-0"} transition-all duration-300 z-20`}>
@@ -217,17 +237,16 @@ export default function ApiCreator() {
       </div>
 
       <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[350px]"} h-full bg-white shadow-sm border-r transition-all duration-300 overflow-hidden`}>
-        <MiddleContainer onApiSelect={handleApiSelect} apiGroups={apiGroups} setApiGroups={setApiGroups} isLoading={isLoading} />
+        <MiddleContainer
+          onApiSelect={handleApiSelect}
+          apiGroups={apiGroups}
+          setApiGroups={setApiGroups}
+          isLoading={isLoading}
+          scrudProjectId={scrudProjectId} // MiddleContainer에 프로젝트 ID 전달
+        />
       </div>
       <div className="flex-1 h-full bg-white shadow-sm overflow-hidden">
-        <RightContainer
-          selectedApi={selectedApi}
-          selectedMethod={selectedMethod}
-          onToggleVersionPanel={toggleVersionPanel}
-          scrudProjectId={scrudProjectId}
-          onScrudProjectIdChange={setScrudProjectId}
-          onApiSpecChanged={handleApiSpecChanged}
-        />
+        <RightContainer selectedApi={selectedApi} selectedMethod={selectedMethod} onToggleVersionPanel={toggleVersionPanel} scrudProjectId={scrudProjectId} onApiSpecChanged={handleApiSpecChanged} />
       </div>
     </div>
   )
