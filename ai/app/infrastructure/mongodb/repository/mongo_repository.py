@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional, TypeVar, Generic
+
 from pydantic import BaseModel
 
 # 제네릭 타입 정의 (모든 모델 타입에 사용 가능)
@@ -10,12 +11,13 @@ class MongoRepository(Generic[T], ABC):
     """MongoDB 저장소의 인터페이스 클래스"""
 
     @abstractmethod
-    async def find_one(self, filter_dict: Dict[str, Any]) -> Optional[T]:
+    async def find_one(self, filter_dict: Dict[str, Any], sort: List[tuple] = None) -> Optional[T]:
         """
         조건에 맞는 단일 문서를 조회합니다.
 
         Args:
             filter_dict: 조회 필터 딕셔너리
+            sort: 정렬 조건 (예: [("field", 1)]) 1은 오름차순, -1은 내림차순
 
         Returns:
             조회된 문서 또는 없을 경우 None
@@ -23,12 +25,13 @@ class MongoRepository(Generic[T], ABC):
         pass
 
     @abstractmethod
-    async def find_many(self, filter_dict: Dict[str, Any]) -> List[T]:
+    async def find_many(self, filter_dict: Dict[str, Any], sort: List[tuple] = None) -> List[T]:
         """
         조건에 맞는 여러 문서를 조회합니다.
 
         Args:
             filter_dict: 조회 필터 딕셔너리
+            sort: 정렬 조건 (예: [("field", 1)]) 1은 오름차순, -1은 내림차순
 
         Returns:
             조회된 문서 리스트
