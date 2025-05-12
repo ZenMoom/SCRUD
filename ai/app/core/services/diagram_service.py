@@ -1,7 +1,12 @@
 import logging
 from typing import Optional
 
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_openai import ChatOpenAI
+
 from app.api.dto.diagram_dto import DiagramResponse, PositionRequest
+from app.core.generator.model_generator import ModelGenerator
+from app.core.prompts.few_shot_prompt_template import DiagramPromptGenerator
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram, Metadata, Component, DtoModel
 
@@ -73,7 +78,7 @@ class DiagramService:
             # 기존 다이어그램이 없으면 새로 생성
             self.logger.info(f"새 다이어그램 생성: project_id={project_id}, api_id={api_id}")
 
-            diagram: Diagram = self.create_dummy_diagram(project_id, api_id)
+            diagram: Diagram = await self.create_llm_diagram(project_id, api_id, {"d": "d"})
             # 저장
             new_diagram = await self.repository.save(diagram)
             # 응답 데이터로 변환
@@ -146,6 +151,57 @@ class DiagramService:
         }
 
         return DiagramResponse(**response_data)
+
+    async def create_llm_diagram(self, project_id: str, api_id: str, openapi_spec: dict) -> Diagram:
+        self.logger.info(f"LLM 다이어그램 생성 시작: project_id={project_id}, api_id={api_id}")
+
+        # 1. LLM 및 파서 설정
+        from app.config.config import settings
+        self.logger.info("LLM 및 PydanticOutputParser 설정 중")
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            api_key=settings.OPENAI_API_KEY,
+            base_url=settings.OPENAI_API_BASE,
+            temperature=0.0,
+        )
+        parser = PydanticOutputParser(pydantic_object=Diagram)
+
+        # 2. 프롬프트 생성
+        self.logger.info("프롬프트 생성 중")
+        prompt_generator = DiagramPromptGenerator()
+        import json
+        prompt = prompt_generator.get_prompt().format(openapi_spec=json.dumps(openapi_spec))
+
+        # 3. LLM 호출 및 응답 처리
+        self.logger.info("LLM 호출 실행")
+        from langchain_core.messages import HumanMessage
+        response = await llm.ainvoke([
+            HumanMessage(content=prompt),
+            HumanMessage(content=parser.get_format_instructions())
+        ])
+        self.logger.info("LLM 응답 받음, 파싱 중")
+        diagram_data = parser.parse(response.content)
+
+        # 4. ID 및 메타데이터 설정
+        self.logger.info("다이어그램 ID 및 메타데이터 설정 중")
+        import uuid
+        diagram_data.projectId = project_id
+        diagram_data.apiId = api_id
+        diagram_data.diagramId = str(uuid.uuid4())
+
+        # 5. 메타데이터 설정
+        from datetime import datetime
+        metadata = Metadata(
+            metadataId=str(uuid.uuid4()),
+            version=1,
+            lastModified=datetime.now(),
+            name=f"API {api_id}",
+            description=f"Generated diagram for API {api_id}"
+        )
+        diagram_data.metadata = metadata
+
+        self.logger.info(f"LLM 다이어그램 생성 완료: diagram_id={diagram_data.diagramId}")
+        return diagram_data
 
     def create_dummy_diagram(self, project_id: str, api_id: str) -> Diagram:
         from app.infrastructure.mongodb.repository.model.diagram_model import ComponentTypeEnum, Method, Connection, \
