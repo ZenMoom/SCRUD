@@ -1,12 +1,20 @@
 package com.barcoder.scrud.diagram.presentation;
 
 import com.barcoder.scrud.api.ChatApi;
+import com.barcoder.scrud.diagram.infrastructure.webclient.ChatWebClient;
 import com.barcoder.scrud.model.ChatHistoryResponse;
 import com.barcoder.scrud.model.SSEIdResponse;
 import com.barcoder.scrud.model.UserChatRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
+@RequiredArgsConstructor
 public class ChatController implements ChatApi {
+
+    private final ChatWebClient chatWebClient;
+
     /**
      * GET /api/sse/connect/{SSEId} : SSE 연결을 설정합니다. 서버와 클라이언트 간의 SSE 연결을 설정하여 실시간 이벤트 스트림을 수신할 수 있습니다.
      *
@@ -15,7 +23,8 @@ public class ChatController implements ChatApi {
      */
     @Override
     public ResponseEntity<String> connectSSE(String ssEId) {
-        return null;
+        String response = chatWebClient.connectSSE(ssEId);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -27,7 +36,8 @@ public class ChatController implements ChatApi {
      */
     @Override
     public ResponseEntity<ChatHistoryResponse> getPrompts(String projectId, String apiId) {
-        return null;
+        ChatHistoryResponse response = chatWebClient.getPrompts(projectId, apiId);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -41,6 +51,7 @@ public class ChatController implements ChatApi {
      */
     @Override
     public ResponseEntity<SSEIdResponse> promptChat(String projectId, String apiId, UserChatRequest userChatRequest) {
-        return null;
+        SSEIdResponse response = chatWebClient.promptChat(projectId, apiId, userChatRequest);
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,10 +1,18 @@
 package com.barcoder.scrud.diagram.presentation;
 
 import com.barcoder.scrud.api.CanvasApi;
+import com.barcoder.scrud.diagram.infrastructure.webclient.DiagramWebClient;
 import com.barcoder.scrud.model.DiagramResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
+@RequiredArgsConstructor
 public class CanvasController implements CanvasApi {
+
+    private final DiagramWebClient diagramWebClient;
+
     /**
      * POST /api/v1/projects/{projectId}/apis/{apiId}/diagrams : API를 최초로 도식화 할 때 사용합니다. 도식화를 처음 실행할 때 사용하는 API 입니다.
      *
@@ -14,7 +22,8 @@ public class CanvasController implements CanvasApi {
      */
     @Override
     public ResponseEntity<DiagramResponse> createDiagram(String projectId, String apiId) {
-        return null;
+        DiagramResponse response = diagramWebClient.createDiagram(projectId, apiId);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -28,6 +37,7 @@ public class CanvasController implements CanvasApi {
      */
     @Override
     public ResponseEntity<DiagramResponse> getDiagram(String projectId, String apiId, String versionId) {
-        return null;
+        DiagramResponse response = diagramWebClient.getDiagram(projectId, apiId, versionId);
+        return ResponseEntity.ok(response);
     }
 }

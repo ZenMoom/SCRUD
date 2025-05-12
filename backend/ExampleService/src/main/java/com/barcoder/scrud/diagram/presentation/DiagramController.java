@@ -1,11 +1,18 @@
 package com.barcoder.scrud.diagram.presentation;
 
 import com.barcoder.scrud.api.ComponentApi;
+import com.barcoder.scrud.diagram.infrastructure.webclient.ComponentWebClient;
 import com.barcoder.scrud.model.ComponentPositionUpdateRequest;
 import com.barcoder.scrud.model.ComponentUpdatedResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
+@RequiredArgsConstructor
 public class DiagramController implements ComponentApi {
+
+    private final ComponentWebClient componentWebClient;
 
     /**
      * PUT /api/v1/projects/{projectId}/apis/{apiId}/components/{componentId}/position : 컴포넌트의 위치를 업데이트합니다. 도식화에서 특정
@@ -21,6 +28,7 @@ public class DiagramController implements ComponentApi {
     public ResponseEntity<ComponentUpdatedResponse> updateComponentPosition(String projectId, String apiId,
                                                                             String componentId,
                                                                             ComponentPositionUpdateRequest componentPositionUpdateRequest) {
-        return null;
+        ComponentUpdatedResponse response = componentWebClient.updateComponentPosition(projectId, apiId, componentId, componentPositionUpdateRequest);
+        return ResponseEntity.ok(response);
     }
 }
