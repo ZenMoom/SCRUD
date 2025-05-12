@@ -171,6 +171,7 @@ class ChatService:
     async def prompt_diagram_from_openapi(
         self,
         user_chat_data: UserChatRequest,
+        latest_diagram: Diagram,
         response_queue: Optional[asyncio.Queue] = None,
         project_id: str = None,
         api_id: str = None
@@ -180,6 +181,7 @@ class ChatService:
 
         Args:
             user_chat_data (UserChatRequest): 사용자 채팅 요청 데이터
+            latest_diagram: Diagram
             response_queue (asyncio.Queue, optional): 실시간 응답을 위한 비동기 큐 (None이면 스트리밍 모드 비활성화)
             project_id (str, optional): 프로젝트 ID
             api_id (str, optional): API ID
@@ -192,35 +194,14 @@ class ChatService:
         self.logger.info(f"Target methods count: {len(user_chat_data.targetMethods)}")
 
         try:
-            # 기존 다이어그램 조회 (가장 높은 버전)
-            self.logger.info(f"기존 다이어그램 조회 중: project_id={project_id}, api_id={api_id}")
-            all_diagrams = await self.diagram_repository.find_many({
-                "projectId": project_id,
-                "apiId": api_id
-            }, sort=[("metadata.version", -1)])
-
-            latest_diagram = all_diagrams[0] if all_diagrams else None
-
-            if latest_diagram:
-                self.logger.info(f"최신 다이어그램 조회 성공: diagramId={latest_diagram.diagramId}, version={latest_diagram.metadata.version}")
-            else:
-                error_msg = f"다이어그램을 찾을 수 없습니다: project_id={project_id}, api_id={api_id}"
-                self.logger.error(error_msg)
-                raise ValueError(error_msg)
-
-            # LLM 및 파서 설정
-            self.logger.info(f"LLM 및 파서 설정 시작: model_name={self.model_name}")
-            self.llm, self.parser = self.setup_llm_and_parser(response_queue)
-
-            self.logger.info(f"LLM 및 파서 설정 완료")
 
             # 프롬프트 생성
             self.logger.info("프롬프트 생성 시작")
 
             # PromptType에 따른 프롬프트 조정
             if user_chat_data.promptType == MethodPromptTargetEnum.SIGNATURE:
-                self.logger.info("SIGNATURE 모드: 모든 메서드 시그니처 업데이트")
-                prompt_type_instruction = "모든 메서드의 시그니처를 새롭게 작성해주세요."
+                self.logger.info("SIGNATURE 모드: 메서드 시그니처 업데이트")
+                prompt_type_instruction = "메서드의 시그니처를 설명에 맞도록 업데이트 해주세요."
             else:  # BODY 모드
                 self.logger.info("BODY 모드: 특정 메서드 본문만 업데이트")
                 target_method_ids = [m.get("methodId") for m in user_chat_data.targetMethods if "methodId" in m]
@@ -361,7 +342,8 @@ class ChatService:
             # 최신 다이어그램 조회 (가장 높은 버전)
             all_diagrams = await self.diagram_repository.find_many({
                 "projectId": project_id,
-                "apiId": api_id
+                "apiId": api_id,
+                # TODO user_chat_data에서 methodId 가져오는 거 해야함
             }, sort=[("metadata.version", -1)])
 
             latest_diagram = all_diagrams[0] if all_diagrams else None
@@ -371,14 +353,16 @@ class ChatService:
                     f"최신 다이어그램 조회: diagramId={latest_diagram.diagramId}, version={latest_diagram.metadata.version}")
             else:
                 self.logger.info("기존 다이어그램이 없음. 첫 다이어그램 생성 필요")
+                raise
 
             # 사용자 채팅에 따라 다이어그램 생성 또는 수정
             self.logger.info("다이어그램 생성/수정 처리 중")
 
             # 실제 다이어그램 생성 로직 실행
             diagram = await self.prompt_diagram_from_openapi(
-                user_chat_data,
-                response_queue,
+                user_chat_data=user_chat_data,
+                latest_diagram=latest_diagram,
+                response_queue=response_queue,
                 project_id=project_id,
                 api_id=api_id
             )
