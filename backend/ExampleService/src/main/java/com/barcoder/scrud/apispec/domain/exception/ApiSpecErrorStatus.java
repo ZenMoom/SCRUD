@@ -8,9 +8,11 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
-public enum ApiSpecVersionErrorStatus implements BaseErrorCode {
+public enum ApiSpecErrorStatus implements BaseErrorCode {
 
-	API_SPEC_VERSION_NOT_FOUND(HttpStatus.NOT_FOUND, "API5001", "존재하지 않는 API 스펙입니다.");
+	API_SPEC_VERSION_NOT_FOUND(HttpStatus.NOT_FOUND, "API5001", "존재하지 않는 API 스펙입니다."),
+	API_SPEC_NOT_FOUND(HttpStatus.NOT_FOUND, "API5002", "API 스펙을 찾을 수 없습니다.")
+	;
 
 	private final HttpStatus httpStatus;
 	private final String code;

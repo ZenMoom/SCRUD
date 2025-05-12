@@ -5,7 +5,7 @@ import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
 import com.barcoder.scrud.apispec.domain.entity.ApiSpecVersion;
-import com.barcoder.scrud.apispec.domain.exception.ApiSpecVersionErrorStatus;
+import com.barcoder.scrud.apispec.domain.exception.ApiSpecErrorStatus;
 import com.barcoder.scrud.apispec.infrastructure.jpa.ApiSpecVersionJpaRepository;
 import com.barcoder.scrud.global.common.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +52,7 @@ public class ApiSpecVersionService {
 	public ApiSpecVersionOut getApiSpecVersionById(Long apiSpecVersionId) {
 		// 1. API 스펙 버전 ID로 DB 조회
 		ApiSpecVersion apiSpecVersion = apiSpecVersionJpaRepository.findById(apiSpecVersionId)
-				.orElseThrow(() -> new BaseException(ApiSpecVersionErrorStatus.API_SPEC_VERSION_NOT_FOUND));
+				.orElseThrow(() -> new BaseException(ApiSpecErrorStatus.API_SPEC_VERSION_NOT_FOUND));
 
 		// 2. Entity -> DTO 변환
 		return modelMapper.map(apiSpecVersion, ApiSpecVersionOut.class);
@@ -66,7 +66,7 @@ public class ApiSpecVersionService {
 	public ApiSpecVersionOut updateApiSpecVersion(UpdateApiSpecVersionIn inDto) {
 		// 1. entity 조회
 		ApiSpecVersion apiSpecVersion = apiSpecVersionJpaRepository.findById(inDto.getApiSpecVersionId())
-				.orElseThrow(() -> new BaseException(ApiSpecVersionErrorStatus.API_SPEC_VERSION_NOT_FOUND));
+				.orElseThrow(() -> new BaseException(ApiSpecErrorStatus.API_SPEC_VERSION_NOT_FOUND));
 
 		// 2. api 생성을 위한 dto 변환, 버전 업
 		CreateApiSpecVersionIn createIn = modelMapper.map(inDto, CreateApiSpecVersionIn.class).toBuilder()

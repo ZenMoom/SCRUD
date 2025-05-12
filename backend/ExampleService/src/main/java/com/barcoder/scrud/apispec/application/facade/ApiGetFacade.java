@@ -3,7 +3,7 @@ package com.barcoder.scrud.apispec.application.facade;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionListOut;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
 import com.barcoder.scrud.apispec.application.service.ApiSpecVersionService;
-import com.barcoder.scrud.apispec.application.service.LatestEndpointVersionService;
+import com.barcoder.scrud.apispec.application.service.ApiSpecService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,12 +16,12 @@ import java.util.List;
 public class ApiGetFacade {
 
 	private final ApiSpecVersionService apiSpecVersionService;
-	private final LatestEndpointVersionService latestEndpointVersionService;
+	private final ApiSpecService apiSpecService;
 
 	public ApiSpecVersionListOut getApiSpecVersionListByScrudProjectId(Long scrudProjectId) {
 
 		// 1. api spec 최신 버전 조회
-		List<ApiSpecVersionOut> outList = latestEndpointVersionService.getLatestApiSpecVersionListByScrudProjectId(scrudProjectId);
+		List<ApiSpecVersionOut> outList = apiSpecService.getLatestApiSpecVersionListByScrudProjectId(scrudProjectId);
 
 		// 2. api spec 최신 버전 리스트를 api spec 버전 리스트로 변환
 		return ApiSpecVersionListOut.builder()
