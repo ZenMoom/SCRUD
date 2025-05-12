@@ -281,7 +281,7 @@ paths:
             format: int64
       responses:
         "200":
-          $ref: "./components/responses/api-spec-response.yaml#/ApiSpecVersionListResponse"
+          $ref: "./components/responses/api-spec-response.yaml#/ApiSpecListResponse"
 
   /api/v1/api-specs/{apiSpecVersionId}:
     get:
@@ -355,6 +355,26 @@ paths:
       responses:
         "201":
           $ref: "./components/responses/api-spec-response.yaml#/ApiSpecCreatedResponse"
+
+  /api/v1/api-specs/api/{apiSpecId}:
+    patch:
+      tags:
+        - ApiSpec
+      summary: API 스펙 status 수정
+      description: API status 상태를 수정합니다.
+      operationId: updateApiSpecStatus
+      parameters:
+        - name: apiSpecId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        $ref: "./components/requests/api-spec-request.yaml#/ApiSpecStatusRequest"
+      responses:
+        "200":
+          $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
 
   ########################################
   # 5. Project 조회

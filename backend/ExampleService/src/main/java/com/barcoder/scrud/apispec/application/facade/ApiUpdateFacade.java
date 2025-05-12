@@ -3,7 +3,7 @@ package com.barcoder.scrud.apispec.application.facade;
 import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
 import com.barcoder.scrud.apispec.application.service.ApiSpecVersionService;
-import com.barcoder.scrud.apispec.application.service.LatestEndpointVersionService;
+import com.barcoder.scrud.apispec.application.service.ApiSpecService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ApiUpdateFacade {
 
 	private final ApiSpecVersionService apiSpecVersionService;
-	private final LatestEndpointVersionService latestEndpointVersionService;
+	private final ApiSpecService apiSpecService;
 
 	public ApiSpecVersionOut updateApiSpecVersion(UpdateApiSpecVersionIn inDto) {
 
@@ -22,7 +22,7 @@ public class ApiUpdateFacade {
 		ApiSpecVersionOut apiSpecVersionOut = apiSpecVersionService.updateApiSpecVersion(inDto);
 
 		// 2. 최신 API 스펙 버전 정보 업데이트
-		latestEndpointVersionService.updateLatestEndpointVersion(inDto, apiSpecVersionOut);
+		apiSpecService.updateLatestEndpointVersion(inDto, apiSpecVersionOut);
 
 		return apiSpecVersionOut;
 	}

@@ -53,4 +53,11 @@ public class ApiSpec extends BaseTimeEntity {
 	public void updateApiSpecVersion(ApiSpecVersion apiSpecVersion) {
 		this.apiSpecVersion = apiSpecVersion;
 	}
+
+	/**
+	 * API status 업데이트
+	 */
+	public void updateApiSpecStatus(ApiSpecStatus apiSpecStatus) {
+		this.apiSpecStatus = apiSpecStatus;
+	}
 }
