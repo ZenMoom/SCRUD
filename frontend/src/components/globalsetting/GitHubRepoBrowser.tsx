@@ -30,7 +30,7 @@ interface ContentItem {
 interface GitHubRepoBrowserProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (filePath: string) => void;
+  onSelect: (files: {path: string, downloadUrl?: string}[]) => void;
 }
 
 const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, onSelect }) => {
@@ -181,8 +181,18 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
   // 파일 선택 완료
   const handleConfirm = () => {
     if (selectedFiles.length > 0) {
-      // 첫 번째 파일의 경로만 반환
-      onSelect(selectedFiles[0].path);
+      // 모든 선택된 파일의 경로와 다운로드 URL 준비
+      const filesWithUrls = selectedFiles.map(file => {
+        // 각 파일에 대한 download_url 찾기
+        const selectedItem = contents.find(item => item.path === file.path);
+        return {
+          path: file.path,
+          downloadUrl: selectedItem?.download_url
+        };
+      });
+
+      // 모든 파일 정보 전달
+      onSelect(filesWithUrls);
     }
     onClose();
   };

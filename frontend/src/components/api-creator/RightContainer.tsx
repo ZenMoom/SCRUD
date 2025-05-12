@@ -308,45 +308,42 @@ export default function RightContainer({ selectedApi, selectedMethod, onApiSpecC
       // API 스펙 데이터 생성
       const apiSpecData: Record<string, unknown> = {
         endpoint,
+        httpMethod: method,
         summary: summary || endpoint.split("/").pop() || "API",
         description: description || "",
-        scrud_project_id: scrudProjectId, // snake_case로 변경
+        scrudProjectId: scrudProjectId,
       }
 
-      // ID 필드 이름 변경 - apiSpecVersionId → id
+      // ID 필드 이름 변경 - id → apiSpecVersionId
       if (apiSpecVersionId) {
-        apiSpecData.id = apiSpecVersionId
+        apiSpecData.apiSpecVersionId = apiSpecVersionId
       }
 
       // HTTP 메서드별 차별화된 필드 추가
       switch (method) {
         case "GET":
-          apiSpecData.http_method = "GET"
-
-          // GET에는 query_parameters와 path_parameters만 포함
+          // 필드 이름 변경 (snake_case → camelCase)
           if (queryParametersJson) {
-            apiSpecData.query_parameters = queryParametersJson
+            apiSpecData.queryParameters = queryParametersJson
           }
 
           if (pathParametersJson) {
-            apiSpecData.path_parameters = pathParametersJson
+            apiSpecData.pathParameters = pathParametersJson
           }
           break
 
         case "POST":
-          apiSpecData.http_method = "POST"
-
-          // POST에는 request_body, query_parameters, path_parameters 포함
+          // 필드 이름 변경 (snake_case → camelCase)
           if (requestBodyJson) {
-            apiSpecData.request_body = requestBodyJson
+            apiSpecData.requestBody = requestBodyJson
           }
 
           if (queryParametersJson) {
-            apiSpecData.query_parameters = queryParametersJson
+            apiSpecData.queryParameters = queryParametersJson
           }
 
           if (pathParametersJson) {
-            apiSpecData.path_parameters = pathParametersJson
+            apiSpecData.pathParameters = pathParametersJson
           }
           break
 

@@ -9,6 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GlobalFileOut {
+    private Long globalFileId;
     private String fileName;
     private FileTypeEnumDto fileType;
     private String fileUrl;

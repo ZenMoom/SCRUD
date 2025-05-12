@@ -1,8 +1,9 @@
-package com.barcoder.scrud.scrudproject.service;
+package com.barcoder.scrud.scrudproject.application.service;
 
 import com.barcoder.scrud.apispec.infrastructure.event.ApiSpecGenerateEvent;
 import com.barcoder.scrud.global.common.error.ErrorStatus;
 import com.barcoder.scrud.global.common.exception.ExceptionHandler;
+import com.barcoder.scrud.scrudproject.application.assembler.ScrudProjectAssembler;
 import com.barcoder.scrud.scrudproject.application.dto.in.AddGlobalFileIn;
 import com.barcoder.scrud.scrudproject.application.dto.in.CreateProjectIn;
 import com.barcoder.scrud.scrudproject.application.dto.in.UpdateProjectIn;
@@ -10,7 +11,6 @@ import com.barcoder.scrud.scrudproject.application.dto.out.AllGlobalFileOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.AllScrudProjectOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.GlobalFileOut;
 import com.barcoder.scrud.scrudproject.application.dto.out.ScrudProjectOut;
-import com.barcoder.scrud.scrudproject.assembler.ScrudProjectAssembler;
 import com.barcoder.scrud.scrudproject.domain.entity.GlobalFile;
 import com.barcoder.scrud.scrudproject.domain.entity.ScrudProject;
 import com.barcoder.scrud.scrudproject.repository.ScrudProjectRepository;
@@ -56,7 +56,7 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         );
 
         scrudProjectRepository.save(project);
-//        eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
+        eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
 
         return project.getScrudProjectId();
     }
