@@ -170,7 +170,6 @@ paths:
       responses:
         '200':
           $ref: "./components/responses/canvas-response.yaml#/ChangeApiProcessStatusResponse"
-
   /projects/{project_id}/apis/{api_id}/diagrams:
     post:
       tags:
