@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { CheckCircle, XCircle, Plus, Pencil, X } from "lucide-react"
 import useAuthStore from "@/app/store/useAuthStore"
 import { useParams } from "next/navigation"
@@ -69,10 +69,12 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     { id: "architectureStructure", label: "아키텍처 구조", fileType: "ARCHITECTURE_DEFAULT", isProject: false },
   ]
 
-  // 파일 항목 목록
-  const fileItems = items.filter((item): item is FileItem => !item.isProject)
+  // 파일 항목 목록 - useMemo로 메모이제이션
+  const fileItems = useMemo(() => 
+    items.filter((item): item is FileItem => !item.isProject)
+  , []);
 
-  // 파일 타입별 그룹화 함수 (useCallback 사용)
+  // 파일 타입별 그룹화 함수 (useCallback 사용) - fileItems 의존성 제거
   const groupFilesByType = useCallback((files: GlobalFile[]): GlobalFilesByType => {
     const result: GlobalFilesByType = {}
 
@@ -98,41 +100,42 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     })
 
     return result
-  }, [fileItems])
+  }, [])
 
-  // 전역 파일 데이터 로드
-  useEffect(() => {
-    const fetchGlobalFiles = async () => {
-      if (!projectId) return
+  // 전역 파일 데이터 로드 함수
+  const fetchGlobalFiles = useCallback(async () => {
+    if (!projectId) return
 
-      setLoading(true)
-      try {
-        const response = await fetch(`/api/projects/${projectId}`, {
-          headers: {
-            Authorization: token || ''
-          }
-        })
-
-        if (!response.ok) {
-          throw new Error(`Error fetching global files: ${response.status}`)
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        headers: {
+          Authorization: token || ''
         }
+      })
 
-        const data = await response.json()
-
-        // 백엔드 응답 구조에 따라 조정 필요
-        const globalFiles = data.content || data.globalFiles || []
-        setFiles(groupFilesByType(globalFiles))
-        // setError(null)
-      } catch (err) {
-        console.error('Failed to fetch global files:', err)
-        // setError('전역 파일을 불러오는 데 실패했습니다')
-      } finally {
-        setLoading(false)
+      if (!response.ok) {
+        throw new Error(`Error fetching global files: ${response.status}`)
       }
-    }
 
-    fetchGlobalFiles()
+      const data = await response.json()
+
+      // 백엔드 응답 구조에 따라 조정 필요
+      const globalFiles = data.content || data.globalFiles || []
+      setFiles(groupFilesByType(globalFiles))
+      // setError(null)
+    } catch (err) {
+      console.error('Failed to fetch global files:', err)
+      // setError('전역 파일을 불러오는 데 실패했습니다')
+    } finally {
+      setLoading(false)
+    }
   }, [projectId, token, groupFilesByType])
+
+  // 최초 로드 시에만 데이터 가져오기
+  useEffect(() => {
+    fetchGlobalFiles()
+  }, []) // 의존성 배열을 비워서 최초 마운트 시에만 실행
 
   // 전역 파일 삭제 처리 함수
   const handleDeleteFile = async (globalFileId: number | undefined, fileType: string) => {
@@ -157,12 +160,8 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
         throw new Error(`Error deleting file: ${response.status}`)
       }
 
-      // 성공적으로 삭제되면 UI에서 해당 파일 제거
-      setFiles(prev => {
-        const newFiles = { ...prev }
-        newFiles[fileType] = newFiles[fileType].filter(file => file.globalFileId !== globalFileId)
-        return newFiles
-      })
+      // 삭제 후 데이터 다시 불러오기
+      fetchGlobalFiles();
 
     } catch (err) {
       console.error('Failed to delete file:', err)
@@ -187,6 +186,8 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
   const handleAddFile = (fileType: string) => {
     console.log(`Add file to ${fileType}`)
     // 추후 API 구현 시 여기에 추가
+    // 파일 추가 후 데이터 다시 불러오기
+    fetchGlobalFiles();
   }
 
   // 프로젝트 정보 수정 핸들러 (추후 구현)

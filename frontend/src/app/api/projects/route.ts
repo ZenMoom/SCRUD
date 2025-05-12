@@ -47,14 +47,57 @@ export async function POST(request: NextRequest) {
       'utilityClass': 'UTIL',
       'codeConvention': 'CONVENTION',
       'dependencyFile': 'DEPENDENCY',
-      'errorCode': 'ERROR_CODE',
-      'securitySetting': 'SECURITY',
-      'architectureStructure': 'ARCHITECTURE_DEFAULT'
+      'errorCode': 'ERROR_CODE'
+      // securitySetting과 architectureStructure는 여기서 제외하고 특별 처리
     };
+    
+    // 아키텍처와 보안 설정을 추적하는 플래그
+    let securityAdded = false;
+    let architectureAdded = false;
     
     // 파일 타입 항목들 추가
     Object.entries(settings).forEach(([key, value]) => {
-      if (fileTypeMapping[key]) {
+      // 아키텍처와 보안 설정 특별 처리
+      if (key === 'architectureStructure') {
+        if (value) {
+          architectureAdded = true;
+          
+          // GitHub에서 가져온 파일인 경우
+          if (typeof value === 'string' && value.startsWith('github:')) {
+            const parts = value.substring(7).split('|');
+            const fileName = parts[0];
+            const fileUrl = parts.length > 1 ? parts[1] : "";
+            
+            globalFiles.push({
+              fileName: fileName,
+              fileType: 'ARCHITECTURE_GITHUB', // GitHub에서 가져온 경우 특별 타입
+              fileUrl: fileUrl,
+              fileContent: JSON.stringify({ content: value })
+            });
+          } else {
+            // 기본 선택 옵션인 경우 (예: ARCHITECTURE_DEFAULT_LAYERED_A)
+            globalFiles.push({
+              fileName: `Architecture-${value}`,
+              fileType: value as string, // 선택된 값을 타입으로 사용
+              fileUrl: "",
+              fileContent: JSON.stringify({ type: value })
+            });
+          }
+        }
+      } 
+      else if (key === 'securitySetting') {
+        if (value) {
+          securityAdded = true;
+          globalFiles.push({
+            fileName: `Security-${value}`,
+            fileType: value as string, // 선택된 값을 타입으로 사용
+            fileUrl: "",
+            fileContent: JSON.stringify({ type: value })
+          });
+        }
+      }
+      // 일반 파일 처리
+      else if (fileTypeMapping[key]) {
         // 배열로 전달된 파일 처리
         if (Array.isArray(value)) {
           // 각 파일을 개별 globalFile로 처리
@@ -80,7 +123,7 @@ export async function POST(request: NextRequest) {
             }
           });
         }
-        // 문자열로 전달된 단일 값 처리 (이전 방식과 호환성 유지)
+        // 문자열로 전달된 단일 값 처리
         else if (value) {
           // GitHub에서 가져온 파일인 경우 URL도 추출
           let fileUrl = "";
@@ -101,37 +144,6 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-    });
-    
-    // 아키텍처 구조 추가
-    let architectureValue = settings.architectureStructure;
-    let architectureUrl = "";
-
-    // github:로 시작하면 URL 분리
-    if (typeof architectureValue === 'string' && architectureValue.startsWith('github:')) {
-      const parts = architectureValue.substring(7).split('|');
-      architectureValue = parts[0]; // 파일 경로
-      architectureUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
-    }
-
-    const architectureFileType =
-      typeof architectureValue === 'string' && architectureValue.startsWith('github:')
-        ? 'ARCHITECTURE_GITHUB' 
-        : 'ARCHITECTURE_DEFAULT';
-    
-    globalFiles.push({
-      fileName: `Architecture-${architectureValue}`,
-      fileType: architectureFileType,
-      fileUrl: architectureUrl,
-      fileContent: JSON.stringify({ type: architectureValue })
-    });
-    
-    // 보안 설정 추가
-    globalFiles.push({
-      fileName: `Security-${settings.securitySetting}`,
-      fileType: 'SECURITY',
-      fileUrl: "",
-      fileContent: JSON.stringify({ type: settings.securitySetting })
     });
     
     // 프로젝트 데이터 구성
