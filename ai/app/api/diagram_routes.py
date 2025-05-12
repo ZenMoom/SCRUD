@@ -36,7 +36,7 @@ def get_diagram_service(
         diagram_repository: DiagramRepository = Depends(get_diagram_repository)
 ) -> DiagramService:
     return DiagramService(
-        repository=diagram_repository,
+        diagram_repository=diagram_repository,
         logger=logger,
     )
 

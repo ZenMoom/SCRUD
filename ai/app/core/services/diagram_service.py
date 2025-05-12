@@ -18,17 +18,17 @@ class DiagramService:
 
     def __init__(
             self,
-            repository: Optional[DiagramRepository] = None,
+            diagram_repository: Optional[DiagramRepository] = None,
             logger: Optional[logging.Logger] = None,
     ):
         """
         DiagramService 초기화
 
         Args:
-            repository: DiagramRepository - 다이어그램 저장소
+            diagram_repository: DiagramRepository - 다이어그램 저장소
             logger: Logger - 로깅 객체
         """
-        self.repository = repository
+        self.diagram_repository = diagram_repository
         self.logger = logger or logging.getLogger(__name__)
         self.logger.info("DiagramService 초기화됨")
 
@@ -50,7 +50,7 @@ class DiagramService:
         self.logger.info(f"도식화 데이터 조회: project_id={project_id}, api_id={api_id}, version_id={version}")
 
         # 다이어그램 조회
-        diagram = await self.repository.find_by_project_api_version(project_id, api_id, version)
+        diagram = await self.diagram_repository.find_by_project_api_version(project_id, api_id, version)
 
         if not diagram:
             self.logger.error(f"다이어그램을 찾을 수 없음: project_id={project_id}, api_id={api_id}, version_id={version}")
@@ -80,7 +80,7 @@ class DiagramService:
 
             diagram: Diagram = await self.create_llm_diagram(project_id, api_id, {"d": "d"})
             # 저장
-            new_diagram = await self.repository.save(diagram)
+            new_diagram = await self.diagram_repository.save(diagram)
             # 응답 데이터로 변환
             return self._convert_to_response(new_diagram)
 
@@ -112,7 +112,7 @@ class DiagramService:
         )
 
         # 컴포넌트 위치 업데이트
-        updated_diagram = await self.repository.update_component_position(
+        updated_diagram = await self.diagram_repository.update_component_position(
             project_id, api_id, component_id, position_data.x, position_data.y
         )
 
@@ -151,6 +151,71 @@ class DiagramService:
         }
 
         return DiagramResponse(**response_data)
+
+    async def create_llm_diagram2(self, project_id: str, api_id: str, openapi_spec: dict) -> Diagram:
+        self.logger.info(f"LLM 다이어그램 생성 시작: project_id={project_id}, api_id={api_id}")
+        from app.config.config import settings
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            api_key=settings.OPENAI_API_KEY,
+            base_url=settings.OPENAI_API_BASE,
+            temperature=0.0,
+        )
+
+        from langchain_core.tools import tool
+        @tool
+        def generate_uuid() -> str:
+            """generate uuid"""
+            import uuid
+            return str(uuid.uuid4())
+
+        # Agent프롬프트 생성
+        from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+        prompt = ChatPromptTemplate.from_messages(
+            # 다른 구현이 필요합니다.
+            # [
+            #     (
+            #         "system",
+            #         "You are a helpful assistant. "
+            #         "다이어그램을 제작하는 것을 도와주세요.",
+            #     ),
+            #     SystemMessage(content=parser.get_format_instructions()),
+            #     ("human", "{input}"),
+            #     ("placeholder", "{agent_scratchpad}"),
+            # ]
+        )
+
+        from langchain.agents import create_tool_calling_agent
+        from langchain.agents import AgentExecutor
+
+        # 이전에 정의한 도구 사용
+        tools = [generate_uuid]
+
+        # Agent 생성
+        agent = create_tool_calling_agent(llm, tools, prompt)
+
+        # AgentExecutor 생성
+        agent_executor = AgentExecutor(
+            agent=agent,
+            tools=tools,
+            verbose=True,
+            handle_parsing_errors=True,
+        )
+        # Agent 실행 (다른 구현이 필요합니다.
+
+        # input_msg = f"""
+        # CODE를 보고 다이어그램을 만들어주세요
+        #
+        # [CODE]
+        # {code}
+        # """
+        # # AgentExecutor 실행
+        # result = agent_executor.invoke({"input": input_msg})
+        result = agent_executor.invoke({})
+        # 결과 확인
+        diagram = result['output']
+        self.logger.info(f"생성된 다이어그램 {diagram}")
+        return await self.diagram_repository.save(diagram)
 
     async def create_llm_diagram(self, project_id: str, api_id: str, openapi_spec: dict) -> Diagram:
         self.logger.info(f"LLM 다이어그램 생성 시작: project_id={project_id}, api_id={api_id}")
