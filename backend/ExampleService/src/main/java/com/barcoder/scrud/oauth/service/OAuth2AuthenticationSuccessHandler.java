@@ -49,30 +49,27 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 Token jwtToken = jwtUtil.createAccessToken(user);
                 token = jwtToken.getAccessToken();
 
-                log.info("token = {}" , token);
                 response.setHeader("Authorization", "Bearer " + jwtToken.getAccessToken());
 
-                redirectUri = environment.getProperty("oauth2.frontRedirectUri") == null ?
-                    "http://localhost:3000" : environment.getProperty("oauth2.frontRedirectUri");
+                redirectUri = environment.getProperty("oauth2.frontRedirectUri");
 
                 break;
 
             case "github":
                 token = user.getGithubAccount().getAccessToken();
 
-                log.info("token = {}" , token);
                 // 세션에서 저장된 리다이렉트 URI 가져오기
                 redirectUri = httpSessionRepository.removeRedirectUri(request);
 
                 // 리다이렉트 URI가 없으면 기본값 사용
                 if (redirectUri == null || redirectUri.isEmpty()) {
-                    redirectUri = environment.getProperty("oauth2.frontRedirectUri") == null ?
-                        "http://localhost:3000" : environment.getProperty("oauth2.frontRedirectUri");
+                    redirectUri = environment.getProperty("oauth2.frontRedirectUri");
                 }
                 break;
         }
 
         log.info("token = {}", token);
+        log.info("redirectUri = {}", redirectUri);
 
         // 토큰과 사용자 정보를 함께 전달
         // URL 파라미터 인코딩

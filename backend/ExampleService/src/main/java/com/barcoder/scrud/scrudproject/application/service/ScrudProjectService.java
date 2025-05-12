@@ -1,4 +1,4 @@
-package com.barcoder.scrud.scrudproject.service;
+package com.barcoder.scrud.scrudproject.application.service;
 
 import com.barcoder.scrud.scrudproject.application.dto.in.AddGlobalFileIn;
 import com.barcoder.scrud.scrudproject.application.dto.in.CreateProjectIn;
