@@ -44,6 +44,21 @@ type FileItem = {
 // 사이드바 항목 타입 (프로젝트 항목 또는 파일 항목)
 type SidebarItem = ProjectItem | FileItem
 
+// 아이템 정의 - 파일 타입 카테고리는 고정이므로 컴포넌트 외부로 이동
+const ITEMS: SidebarItem[] = [
+  { id: "title", label: "프로젝트명", isProject: true },
+  { id: "description", label: "프로젝트 설명", isProject: true },
+  { id: "serverUrl", label: "Server URL", isProject: true },
+  { id: "requirementSpec", label: "요구사항 명세서", fileType: "REQUIREMENTS", isProject: false },
+  { id: "erd", label: "ERD", fileType: "ERD", isProject: false },
+  { id: "dependencyFile", label: "의존성 파일", fileType: "DEPENDENCY", isProject: false },
+  { id: "utilityClass", label: "유틸 클래스", fileType: "UTIL", isProject: false },
+  { id: "errorCode", label: "에러 코드", fileType: "ERROR_CODE", isProject: false },
+  { id: "securitySetting", label: "보안 설정", fileType: "SECURITY", isProject: false },
+  { id: "codeConvention", label: "코드 컨벤션", fileType: "CONVENTION", isProject: false },
+  { id: "architectureStructure", label: "아키텍처 구조", fileType: "ARCHITECTURE_DEFAULT", isProject: false },
+];
+
 export default function LeftContainer({ activeItem, onItemClick }: LeftContainerProps) {
   const [files, setFiles] = useState<GlobalFilesByType>({})
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
@@ -54,25 +69,10 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
   const params = useParams()
   const projectId = params.id ? parseInt(params.id as string, 10) : 0
 
-  // 아이템 정의
-  const items: SidebarItem[] = [
-    { id: "title", label: "프로젝트명", isProject: true },
-    { id: "description", label: "프로젝트 설명", isProject: true },
-    { id: "serverUrl", label: "Server URL", isProject: true },
-    { id: "requirementSpec", label: "요구사항 명세서", fileType: "REQUIREMENTS", isProject: false },
-    { id: "erd", label: "ERD", fileType: "ERD", isProject: false },
-    { id: "dependencyFile", label: "의존성 파일", fileType: "DEPENDENCY", isProject: false },
-    { id: "utilityClass", label: "유틸 클래스", fileType: "UTIL", isProject: false },
-    { id: "errorCode", label: "에러 코드", fileType: "ERROR_CODE", isProject: false },
-    { id: "securitySetting", label: "보안 설정", fileType: "SECURITY", isProject: false },
-    { id: "codeConvention", label: "코드 컨벤션", fileType: "CONVENTION", isProject: false },
-    { id: "architectureStructure", label: "아키텍처 구조", fileType: "ARCHITECTURE_DEFAULT", isProject: false },
-  ]
+  // 파일 항목 목록 - 컴포넌트 내에서 계산
+  const fileItems = ITEMS.filter((item): item is FileItem => !item.isProject);
 
-  // 파일 항목 목록
-  const fileItems = items.filter((item): item is FileItem => !item.isProject)
-
-  // 파일 타입별 그룹화 함수 (useCallback 사용)
+  // 파일 타입별 그룹화 함수
   const groupFilesByType = useCallback((files: GlobalFile[]): GlobalFilesByType => {
     const result: GlobalFilesByType = {}
 
@@ -100,42 +100,43 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     return result
   }, [fileItems])
 
-  // 전역 파일 데이터 로드
-  useEffect(() => {
-    const fetchGlobalFiles = async () => {
-      if (!projectId) return
+  // 전역 파일 데이터 로드 함수
+  const fetchGlobalFiles = useCallback(async () => {
+    if (!projectId) return
 
-      setLoading(true)
-      try {
-        const response = await fetch(`/api/projects/${projectId}`, {
-          headers: {
-            Authorization: token || ''
-          }
-        })
-
-        if (!response.ok) {
-          throw new Error(`Error fetching global files: ${response.status}`)
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        headers: {
+          Authorization: token || ''
         }
+      })
 
-        const data = await response.json()
-
-        // 백엔드 응답 구조에 따라 조정 필요
-        const globalFiles = data.content || data.globalFiles || []
-        setFiles(groupFilesByType(globalFiles))
-        // setError(null)
-      } catch (err) {
-        console.error('Failed to fetch global files:', err)
-        // setError('전역 파일을 불러오는 데 실패했습니다')
-      } finally {
-        setLoading(false)
+      if (!response.ok) {
+        throw new Error(`Error fetching global files: ${response.status}`)
       }
-    }
 
-    fetchGlobalFiles()
+      const data = await response.json()
+
+      // 백엔드 응답 구조에 따라 조정 필요
+      const globalFiles = data.content || data.globalFiles || []
+      setFiles(groupFilesByType(globalFiles))
+      // setError(null)
+    } catch (err) {
+      console.error('Failed to fetch global files:', err)
+      // setError('전역 파일을 불러오는 데 실패했습니다')
+    } finally {
+      setLoading(false)
+    }
   }, [projectId, token, groupFilesByType])
 
+  // 최초 로드 시에만 데이터 가져오기
+  useEffect(() => {
+    fetchGlobalFiles()
+  }, []) // 의존성 배열을 비워서 최초 마운트 시에만 실행
+
   // 전역 파일 삭제 처리 함수
-  const handleDeleteFile = async (globalFileId: number | undefined, fileType: string) => {
+  const handleDeleteFile = async (globalFileId: number | undefined) => {
     if (!projectId || !token) return
 
     // globalFileId가 없으면 함수 종료
@@ -157,12 +158,8 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
         throw new Error(`Error deleting file: ${response.status}`)
       }
 
-      // 성공적으로 삭제되면 UI에서 해당 파일 제거
-      setFiles(prev => {
-        const newFiles = { ...prev }
-        newFiles[fileType] = newFiles[fileType].filter(file => file.globalFileId !== globalFileId)
-        return newFiles
-      })
+      // 삭제 후 데이터 다시 불러오기
+      fetchGlobalFiles();
 
     } catch (err) {
       console.error('Failed to delete file:', err)
@@ -187,6 +184,8 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
   const handleAddFile = (fileType: string) => {
     console.log(`Add file to ${fileType}`)
     // 추후 API 구현 시 여기에 추가
+    // 파일 추가 후 데이터 다시 불러오기
+    fetchGlobalFiles();
   }
 
   // 프로젝트 정보 수정 핸들러 (추후 구현)
@@ -250,7 +249,7 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
                       onClick={(e) => {
                         e.stopPropagation();
                         console.log('삭제할 파일 정보:', { id: file.globalFileId, name: file.fileName, type: fileType });
-                        handleDeleteFile(file.globalFileId, fileType);
+                        handleDeleteFile(file.globalFileId);
                       }}
                     >
                       <X size={16} />
@@ -304,7 +303,7 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     <div className="w-full h-full bg-white p-6 overflow-y-auto">
       <h2 className="text-lg font-bold text-gray-800 mb-4">프로젝트 설정</h2>
       <div className="space-y-2">
-        {items.map((item) => (
+        {ITEMS.map((item) => (
           item.isProject ? renderProjectItem(item) : renderFileItem(item as FileItem)
         ))}
       </div>
