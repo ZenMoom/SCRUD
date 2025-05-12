@@ -13,3 +13,11 @@ ApiSpecUpdateRequest:
     application/json:
       schema:
         $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionUpdateRequest'
+
+ApiSpecStatusRequest:
+  description: API 스펙 상태 변경
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionStatusRequest'
