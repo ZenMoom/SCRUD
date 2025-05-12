@@ -23,11 +23,11 @@ interface MiddleContainerProps {
   apiGroups: ApiGroup[]
   setApiGroups: React.Dispatch<React.SetStateAction<ApiGroup[]>>
   isLoading: boolean
+  scrudProjectId: number // 프로젝트 ID 추가
 }
 
-export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading }: MiddleContainerProps) {
-  // 내부 상태 변수 제거 (하드코딩된 apiGroups 제거)
-  // apiGroups는 이제 props에서 받아옴
+export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading, scrudProjectId }: MiddleContainerProps) {
+  console.log("MiddleContainer 렌더링 - scrudProjectId:", scrudProjectId)
 
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null)
   const [editingEndpointId, setEditingEndpointId] = useState<string | null>(null)
@@ -39,6 +39,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
   // API 그룹 추가 함수
   const addApiGroup = () => {
+    console.log("그룹 추가 - 현재 프로젝트:", scrudProjectId)
     const newGroupId = `group-${Date.now()}`
     setApiGroups([
       ...apiGroups,
@@ -54,6 +55,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
   // API 엔드포인트 추가 함수
   const addApiEndpoint = (groupId: string) => {
+    console.log("엔드포인트 추가 - 현재 프로젝트:", scrudProjectId)
     const group = apiGroups.find((g) => g.id === groupId)
     if (!group) return
 
@@ -107,7 +109,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       setApiGroups(updatedGroups)
       setEditingEndpointId(null) // 편집 상태 초기화
 
-      console.log("엔드포인트 삭제됨:", endpointId) // 디버깅용 로그
+      console.log("엔드포인트 삭제됨:", endpointId, "프로젝트:", scrudProjectId) // 디버깅용 로그
     }
   }
 
@@ -147,6 +149,8 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   const saveGroupName = () => {
     if (!editingGroupId || !newGroupName.trim()) return
 
+    console.log("그룹명 저장 - 프로젝트:", scrudProjectId)
+
     setApiGroups(
       apiGroups.map((group) => {
         if (group.id === editingGroupId) {
@@ -173,6 +177,8 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   // API 엔드포인트 저장
   const saveEndpoint = (groupId: string) => {
     if (!editingEndpointId || !newEndpointPath.trim()) return
+
+    console.log("엔드포인트 저장 - 프로젝트:", scrudProjectId)
 
     setApiGroups(
       apiGroups.map((group) => {
