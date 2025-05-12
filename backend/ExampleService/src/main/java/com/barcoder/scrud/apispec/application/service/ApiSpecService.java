@@ -2,11 +2,12 @@ package com.barcoder.scrud.apispec.application.service;
 
 import com.barcoder.scrud.apispec.application.assembler.ApiSpecAssembler;
 import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
+import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecStatusIn;
 import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
 import com.barcoder.scrud.apispec.domain.entity.ApiSpec;
 import com.barcoder.scrud.apispec.domain.entity.ApiSpecVersion;
-import com.barcoder.scrud.apispec.domain.exception.ApiSpecVersionErrorStatus;
+import com.barcoder.scrud.apispec.domain.exception.ApiSpecErrorStatus;
 import com.barcoder.scrud.apispec.infrastructure.jpa.ApiSpecVersionJpaRepository;
 import com.barcoder.scrud.apispec.infrastructure.jpa.ApiSpecJpaRepository;
 import com.barcoder.scrud.global.common.exception.BaseException;
@@ -22,7 +23,7 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class LatestEndpointVersionService {
+public class ApiSpecService {
 
     private final ApiSpecAssembler apiSpecAssembler;
     private final ScrudProjectRepository scrudProjectRepository;
@@ -67,7 +68,7 @@ public class LatestEndpointVersionService {
 
         // 2. LatestEndpointVersion entity 조회
         ApiSpec apiSpec = apiSpecJpaRepository.findByScrudProjectAndApiSpecVersion_ApiSpecVersionId(scrudProject, inDto.getApiSpecVersionId())
-                .orElseThrow(() -> new BaseException(ApiSpecVersionErrorStatus.API_SPEC_VERSION_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(ApiSpecErrorStatus.API_SPEC_VERSION_NOT_FOUND));
 
         // 3. 최신 버전 api 스펙 버전
         ApiSpecVersion apiSpecVersion = apiSpecVersionJpaRepository.getReferenceById(apiSpecVersionOut.getApiSpecVersionId());
@@ -84,7 +85,7 @@ public class LatestEndpointVersionService {
     public void deleteLatestEndpointVersion(Long apiSpecVersionId) {
         // 1. LatestEndpointVersion entity 조회
         ApiSpec apiSpec = apiSpecJpaRepository.findByApiSpecVersion_ApiSpecVersionId(apiSpecVersionId)
-                .orElseThrow(() -> new BaseException(ApiSpecVersionErrorStatus.API_SPEC_VERSION_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(ApiSpecErrorStatus.API_SPEC_VERSION_NOT_FOUND));
 
         // 2. LatestEndpointVersion entity 삭제
         apiSpecJpaRepository.delete(apiSpec);
@@ -146,5 +147,15 @@ public class LatestEndpointVersionService {
                             .build();
                 })
                 .toList();
+    }
+
+    public void updateApiSpecStatus(UpdateApiSpecStatusIn inDto) {
+        // 1. api spec id로 entity 조회
+        ApiSpec apiSpec = apiSpecJpaRepository.findById(inDto.getApiSpecId())
+                .orElseThrow(() -> new BaseException(ApiSpecErrorStatus.API_SPEC_NOT_FOUND));
+
+        // 2. api spec status 변경
+        apiSpec.updateApiSpecStatus(inDto.getApiSpecStatus());
+
     }
 }

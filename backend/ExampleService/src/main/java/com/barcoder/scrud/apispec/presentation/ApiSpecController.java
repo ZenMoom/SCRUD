@@ -2,6 +2,7 @@ package com.barcoder.scrud.apispec.presentation;
 
 import com.barcoder.scrud.api.ApiSpecApi;
 import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
+import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecStatusIn;
 import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionListOut;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
@@ -9,11 +10,13 @@ import com.barcoder.scrud.apispec.application.facade.ApiCreateFacade;
 import com.barcoder.scrud.apispec.application.facade.ApiDeleteFacade;
 import com.barcoder.scrud.apispec.application.facade.ApiGetFacade;
 import com.barcoder.scrud.apispec.application.facade.ApiUpdateFacade;
+import com.barcoder.scrud.apispec.application.service.ApiSpecService;
 import com.barcoder.scrud.apispec.application.service.ApiSpecVersionService;
 import com.barcoder.scrud.model.ApiSpecVersionCreateRequest;
 import com.barcoder.scrud.model.ApiSpecVersionCreatedResponse;
 import com.barcoder.scrud.model.ApiSpecVersionListResponse;
 import com.barcoder.scrud.model.ApiSpecVersionResponse;
+import com.barcoder.scrud.model.ApiSpecVersionStatusRequest;
 import com.barcoder.scrud.model.ApiSpecVersionUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +38,7 @@ public class ApiSpecController implements ApiSpecApi {
 	private final ApiDeleteFacade apiDeleteFacade;
 	private final ApiGetFacade apiGetFacade;
 	private final ModelMapper modelMapper;
+	private final ApiSpecService apiSpecService;
 
 	/**
 	 * POST /api/v1/api-specs : API 스펙 생성
@@ -118,5 +122,24 @@ public class ApiSpecController implements ApiSpecApi {
 
 		ApiSpecVersionListResponse response = modelMapper.map(outList, ApiSpecVersionListResponse.class);
 		return ResponseEntity.ok(response);
+	}
+
+	/**
+	 * PATCH /api/v1/api-specs/api/{apiSpecId} : API 스펙 status 수정
+	 * API status 상태를 수정합니다.
+	 *
+	 * @param apiSpecId                   (required)
+	 * @param apiSpecVersionStatusRequest API 스펙 상태 변경 (required)
+	 * @return Void 성공적으로 처리되었습니다 (status code 200)
+	 */
+	@Override
+	public ResponseEntity<Void> updateApiSpecStatus(Long apiSpecId, ApiSpecVersionStatusRequest apiSpecVersionStatusRequest) {
+
+		UpdateApiSpecStatusIn inDto = modelMapper.map(apiSpecVersionStatusRequest, UpdateApiSpecStatusIn.class).toBuilder()
+				.apiSpecId(apiSpecId)
+				.build();
+
+		apiSpecService.updateApiSpecStatus(inDto);
+		return ResponseEntity.ok().build();
 	}
 }
