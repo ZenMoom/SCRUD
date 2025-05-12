@@ -6,9 +6,11 @@ interface SidebarProps {
   completed: Record<string, boolean>
   activeItem: string
   onItemClick: (item: string) => void
+  isMobile?: boolean
+  toggleSidebar?: () => void
 }
 
-export default function Sidebar({ completed, activeItem, onItemClick }: SidebarProps) {
+export default function Sidebar({ completed, activeItem, onItemClick, isMobile, toggleSidebar }: SidebarProps) {
   const items = [
     { id: "title", label: "프로젝트명" },
     { id: "description", label: "프로젝트 설명" },
@@ -24,7 +26,16 @@ export default function Sidebar({ completed, activeItem, onItemClick }: SidebarP
   ]
 
   return (
-    <div className="w-[300px] h-[90vh] bg-white p-6 overflow-y-auto shadow-md">
+    <div className={`min-w-[300px] w-[300px] h-[90vh] bg-white p-6 overflow-y-auto shadow-md transition-all duration-300 ease-in-out md:block hidden`}>
+      {isMobile && (
+        <button 
+          className="absolute top-2 right-2 p-2 rounded-full bg-gray-100 hover:bg-gray-200 md:hidden"
+          onClick={toggleSidebar}
+        >
+          <XCircle size={20} />
+        </button>
+      )}
+      
       <ul className="list-none p-0 m-0">
         {items.map((item) => (
           <li
