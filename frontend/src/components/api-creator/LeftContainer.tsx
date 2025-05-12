@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { CheckCircle, XCircle, Plus, Pencil, X } from "lucide-react"
 import useAuthStore from "@/app/store/useAuthStore"
 import { useParams } from "next/navigation"
@@ -72,8 +72,8 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
   // 파일 항목 목록
   const fileItems = items.filter((item): item is FileItem => !item.isProject)
 
-  // 파일 타입별 그룹화 함수
-  const groupFilesByType = (files: GlobalFile[]): GlobalFilesByType => {
+  // 파일 타입별 그룹화 함수 (useCallback 사용)
+  const groupFilesByType = useCallback((files: GlobalFile[]): GlobalFilesByType => {
     const result: GlobalFilesByType = {}
 
     // 초기화 - 모든 파일 타입에 대한 빈 배열 생성
@@ -98,7 +98,7 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     })
 
     return result
-  }
+  }, [fileItems])
 
   // 전역 파일 데이터 로드
   useEffect(() => {
@@ -132,7 +132,7 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     }
 
     fetchGlobalFiles()
-  }, [projectId, token])
+  }, [projectId, token, groupFilesByType])
 
   // 전역 파일 삭제 처리 함수
   const handleDeleteFile = async (globalFileId: number | undefined, fileType: string) => {

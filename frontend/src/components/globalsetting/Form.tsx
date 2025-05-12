@@ -28,7 +28,7 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
   const buttonRef = useRef<HTMLDivElement>(null)
   
   // GitHub에서 파일 선택 시 호출될 핸들러
-  const handleGitHubFileSelect = (filePath: string) => {
+  const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
     // 의존성 선택 정보 유지하면서 GitHub 파일 경로 추가
     if ((type as string) === 'dependency-select' && selectedDependencies.length > 0) {
       // 선택된 의존성 정보는 그대로 유지
