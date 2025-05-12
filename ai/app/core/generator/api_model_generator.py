@@ -1,5 +1,3 @@
-import os
-
 from openai import AsyncOpenAI
 
 from app.config.config import settings

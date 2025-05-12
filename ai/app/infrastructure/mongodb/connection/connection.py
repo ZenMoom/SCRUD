@@ -1,11 +1,14 @@
 """MongoDB 연결 관리 모듈"""
 
 import logging
+
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import ConnectionFailure
+
 from app.config.config import settings
 
 logger = logging.getLogger(__name__)
+
 
 class MongoDBConnection:
     """MongoDB 연결 관리 클래스
@@ -58,6 +61,7 @@ class MongoDBConnection:
         if cls._db is None:
             raise ConnectionError("MongoDB에 연결되어 있지 않습니다. connect() 메서드를 먼저 호출하세요.")
         return cls._db
+
 
 async def get_database():
     """애플리케이션에서 데이터베이스 인스턴스를 가져오는 유틸리티 함수"""

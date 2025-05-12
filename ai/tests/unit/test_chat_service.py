@@ -1,196 +1,207 @@
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+import logging
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from app.api.dto.diagram_dto import ChatResponseList
+from app.core.generator.model_generator import ModelGenerator
 from app.core.services.chat_service import ChatService
-from app.core.models.prompt_models import Diagram, Component, Method, Connection, DtoModel, Metadata, ComponentType, MethodConnectionType
+from app.core.services.sse_service import SSEService
+from app.infrastructure.mongodb.repository.chat_repository import ChatRepository
+from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
+from app.infrastructure.mongodb.repository.model.diagram_model import Chat, UserChat, SystemChat
 
 
+@pytest.mark.asyncio
 class TestChatService:
-    """ChatService 클래스 테스트"""
-    
+    """
+    ChatService 테스트 클래스
+    """
+
     @pytest.fixture
-    def sample_openapi_spec(self):
-        """테스트용 OpenAPI 명세를 반환하는 fixture"""
-        return """
-        openapi: 3.0.0
-        info:
-          title: Sample API
-          version: 1.0.0
-        paths:
-          /users:
-            get:
-              summary: Get all users
-              responses:
-                '200':
-                  description: Successful response
+    def setup_chat_service(self):
         """
-    
-    @pytest.fixture
-    def sample_diagram(self):
-        """테스트용 Diagram 객체를 반환하는 fixture"""
-        return Diagram(
-            diagramId="test123",
-            components=[
-                Component(
-                    componentId="comp1",
-                    type=ComponentType.CLASS,
-                    name="UserController",
-                    description="User management controller",
-                    positionX=100.0,
-                    positionY=200.0,
-                    methods=[
-                        Method(
-                            methodId="method1",
-                            name="getAllUsers",
-                            signature="getAllUsers(): List<User>",
-                            body="return userService.findAll();",
-                            description="Get all users from the system"
-                        )
-                    ]
+        테스트를 위한 ChatService 설정
+        """
+        # Mock 객체 생성
+        model_generator_mock = MagicMock(spec=ModelGenerator)
+        diagram_repository_mock = AsyncMock(spec=DiagramRepository)
+        chat_repository_mock = AsyncMock(spec=ChatRepository)
+        sse_service_mock = MagicMock(spec=SSEService)
+        logger_mock = MagicMock(spec=logging.Logger)
+
+        # ChatService 인스턴스 생성
+        chat_service = ChatService(
+            model_name="test_model",
+            model_generator=model_generator_mock,
+            diagram_repository=diagram_repository_mock,
+            chat_repository=chat_repository_mock,
+            sse_service=sse_service_mock,
+            logger=logger_mock
+        )
+
+        return (
+            chat_service,
+            model_generator_mock,
+            diagram_repository_mock,
+            chat_repository_mock,
+            sse_service_mock,
+            logger_mock
+        )
+
+    async def test_get_prompts_success(self, setup_chat_service):
+        """
+        get_prompts 메서드가 성공적으로 채팅 기록을 반환하는지 테스트
+        """
+        # 테스트 설정
+        (
+            chat_service,
+            _,
+            _,
+            chat_repository_mock,
+            _,
+            _
+        ) = setup_chat_service
+
+        # 테스트 데이터 설정
+        project_id = "test_project_id"
+        api_id = "test_api_id"
+
+        # 목업 데이터 생성
+        test_chats = [
+            Chat(
+                id="chat_id_1",
+                chatId="chat_1",
+                createdAt=datetime.now(),
+                userChat=UserChat(
+                    id="user_chat_id_1",
+                    tag="EXPLAIN",
+                    promptType="SIGNATURE",
+                    message="테스트 메시지 1",
+                    targetMethods=[{"methodId": "method_1"}]
+                ),
+                systemChat=SystemChat(
+                    id="system_chat_id_1",
+                    systemChatId="sys_chat_1",
+                    status="EXPLANATION",
+                    message="시스템 응답 1",
+                    diagramId="diagram_1"
                 )
-            ],
-            connections=[
-                Connection(
-                    connectionId="conn1",
-                    sourceMethodId="method1",
-                    targetMethodId="method2",
-                    type=MethodConnectionType.SOLID
+            ),
+            Chat(
+                id="chat_id_2",
+                chatId="chat_2",
+                createdAt=datetime.now(),
+                userChat=UserChat(
+                    id="user_chat_id_2",
+                    tag="REFACTORING",
+                    promptType="BODY",
+                    message="테스트 메시지 2",
+                    targetMethods=[{"methodId": "method_2"}]
+                ),
+                systemChat=SystemChat(
+                    id="system_chat_id_2",
+                    systemChatId="sys_chat_2",
+                    status="MODIFIED",
+                    message="시스템 응답 2",
+                    diagramId="diagram_2"
                 )
-            ],
-            dto=[
-                DtoModel(
-                    dtoId="dto1",
-                    name="UserDto",
-                    description="User data transfer object",
-                    body="class UserDto { String name; String email; }"
-                )
-            ],
-            metadata=Metadata(
-                metadataId="meta1",
-                version="1.0",
-                lastModified=datetime.now(),
-                name="User Management API",
-                description="API for managing users"
             )
-        )
-    
-    @pytest.fixture
-    def mock_model_generator(self):
-        """ModelGenerator의 목(mock) 객체를 반환하는 fixture"""
-        mock = Mock()
-        mock.get_chat_model.return_value = Mock()
-        return mock
-    
-    @pytest.fixture
-    def mock_repository(self):
-        """MongoRepositoryImpl의 목(mock) 객체를 반환하는 fixture"""
-        mock = Mock()
-        mock.insert_one.return_value = None
-        return mock
-    
-    def test_init(self, mock_model_generator, mock_repository):
-        """초기화 함수가 올바르게 동작하는지 테스트"""
-        # Given
-        model_name = "anthropic"
-        
-        # When
-        service = ChatService(
-            model_name=model_name,
-            model_generator=mock_model_generator,
-            repository=mock_repository
-        )
-        
-        # Then
-        assert service.model_name == model_name
-        assert service.model_generator == mock_model_generator
-        assert service.repository == mock_repository
-        assert service.llm is None
-        assert service.parser is None
-    
-    def test_setup_llm_and_parser(self, mock_model_generator, mock_repository):
-        """LLM 및 파서 설정 메서드가 올바르게 동작하는지 테스트"""
-        # Given
-        model_name = "anthropic"
-        mock_llm = Mock()
-        mock_model_generator.get_chat_model.return_value = mock_llm
-        
-        service = ChatService(
-            model_name=model_name,
-            model_generator=mock_model_generator,
-            repository=mock_repository
-        )
-        
-        # When
-        llm, parser = service.setup_llm_and_parser()
-        
-        # Then
-        assert llm == mock_llm
-        assert parser is not None
-        mock_model_generator.get_chat_model.assert_called_once_with(model_name)
-    
-    @patch("app.core.services.chat_service.load_prompt")
-    @patch("app.core.services.chat_service.PydanticOutputParser")
-    @patch("app.core.services.chat_service.HumanMessage")
-    def test_generate_diagram_data(self, mock_human_message, mock_parser_class, mock_load_prompt, 
-                                   mock_model_generator, mock_repository, sample_openapi_spec, sample_diagram):
-        """도식화 데이터 생성 메서드가 올바르게 동작하는지 테스트"""
-        # Given
-        model_name = "anthropic"
-        mock_llm = Mock()
-        mock_llm.invoke.return_value = Mock(content="diagram_json_data")
-        
-        mock_prompt = Mock()
-        mock_load_prompt.return_value = mock_prompt
-        mock_prompt.format.return_value = "formatted_prompt"
-        
-        mock_parser_instance = Mock()
-        mock_parser_class.return_value = mock_parser_instance
-        mock_parser_instance.get_format_instructions.return_value = "format_instructions"
-        mock_parser_instance.parse.return_value = sample_diagram
-        
-        mock_model_generator.get_chat_model.return_value = mock_llm
-        
-        mock_human_message.side_effect = lambda content: MagicMock(content=content)
-        
-        service = ChatService(
-            model_name=model_name,
-            model_generator=mock_model_generator,
-            repository=mock_repository
-        )
-        
-        # When
-        result = service.generate_diagram_data(sample_openapi_spec)
-        
-        # Then
-        assert result == sample_diagram
-        mock_model_generator.get_chat_model.assert_called_once()
-        mock_llm.invoke.assert_called_once()
-        mock_parser_instance.parse.assert_called_once_with("diagram_json_data")
-    
-    def test_create_diagram_from_openapi(self, mock_model_generator, mock_repository, 
-                                        sample_openapi_spec, sample_diagram):
-        """OpenAPI 명세로부터 도식화 데이터 생성 및 저장 메서드가 올바르게 동작하는지 테스트"""
-        # Given
-        model_name = "anthropic"
-        
-        service = ChatService(
-            model_name=model_name,
-            model_generator=mock_model_generator,
-            repository=mock_repository
-        )
-        
-        # Mock setup_llm_and_parser
-        service.setup_llm_and_parser = Mock()
-        
-        # Mock generate_diagram_data
-        service.generate_diagram_data = Mock(return_value=sample_diagram)
-        
-        # When
-        result = service.create_diagram_from_openapi(sample_openapi_spec)
-        
-        # Then
-        assert result == sample_diagram
-        service.setup_llm_and_parser.assert_called_once()
-        service.generate_diagram_data.assert_called_once_with(sample_openapi_spec)
-        mock_repository.insert_one.assert_called_once_with(sample_diagram)
+        ]
+
+        # chat_repository_mock 동작 설정
+        chat_repository_mock.get_prompts.return_value = test_chats
+
+        # 메서드 호출
+        result = await chat_service.get_prompts(project_id, api_id)
+
+        # 검증
+        assert isinstance(result, ChatResponseList)
+        assert len(result.content) == 2
+
+        # 첫 번째 채팅 검증
+        # assert result.content[0].id == "chat_id_1"
+        assert result.content[0].chatId == "chat_1"
+        assert result.content[0].userChat.tag == "EXPLAIN"
+        assert result.content[0].userChat.promptType == "SIGNATURE"
+        assert result.content[0].userChat.message == "테스트 메시지 1"
+        assert result.content[0].systemChat.status == "EXPLANATION"
+        assert result.content[0].systemChat.message == "시스템 응답 1"
+
+        # 두 번째 채팅 검증
+        # assert result.content[1].id == "chat_id_2"
+        assert result.content[1].chatId == "chat_2"
+        assert result.content[1].userChat.tag == "REFACTORING"
+        assert result.content[1].userChat.promptType == "BODY"
+        assert result.content[1].userChat.message == "테스트 메시지 2"
+        assert result.content[1].systemChat.status == "MODIFIED"
+        assert result.content[1].systemChat.message == "시스템 응답 2"
+
+        # 메서드 호출 검증
+        chat_repository_mock.get_prompts.assert_called_once_with(project_id, api_id)
+
+    async def test_get_prompts_empty_result(self, setup_chat_service):
+        """
+        채팅 기록이 없는 경우 빈 목록을 반환하는지 테스트
+        """
+        # 테스트 설정
+        (
+            chat_service,
+            _,
+            _,
+            chat_repository_mock,
+            _,
+            _
+        ) = setup_chat_service
+
+        # 테스트 데이터 설정
+        project_id = "test_project_id"
+        api_id = "test_api_id"
+
+        # chat_repository_mock 동작 설정 - 빈 목록 반환
+        chat_repository_mock.get_prompts.return_value = []
+
+        # 메서드 호출
+        result = await chat_service.get_prompts(project_id, api_id)
+
+        # 검증
+        assert isinstance(result, ChatResponseList)
+        assert len(result.content) == 0
+
+        # 메서드 호출 검증
+        chat_repository_mock.get_prompts.assert_called_once_with(project_id, api_id)
+
+    async def test_get_prompts_error_handling(self, setup_chat_service):
+        """
+        예외 발생 시 적절히 처리되는지 테스트
+        """
+        # 테스트 설정
+        (
+            chat_service,
+            _,
+            _,
+            chat_repository_mock,
+            _,
+            logger_mock
+        ) = setup_chat_service
+
+        # 테스트 데이터 설정
+        project_id = "test_project_id"
+        api_id = "test_api_id"
+
+        # chat_repository_mock 동작 설정 - 예외 발생
+        test_exception = Exception("테스트 예외")
+        chat_repository_mock.get_prompts.side_effect = test_exception
+
+        # 메서드 호출 및 예외 확인
+        with pytest.raises(Exception) as excinfo:
+            await chat_service.get_prompts(project_id, api_id)
+
+        assert str(excinfo.value) == "테스트 예외"
+
+        # 로깅 확인
+        logger_mock.error.assert_called_once()
+
+        # 메서드 호출 검증
+        chat_repository_mock.get_prompts.assert_called_once_with(project_id, api_id)
