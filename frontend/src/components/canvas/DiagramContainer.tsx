@@ -3,27 +3,26 @@
 import type React from "react"
 
 import { useCallback, useEffect, useState, useRef } from "react"
-import ReactFlow, { Background, Controls, type Edge, type Node, useNodesState, useEdgesState, MiniMap, Panel, NodeToolbar, Position } from "reactflow"
-import { Map, MapPinOffIcon as MapOff, Target, X, ChevronDown, ChevronUp, Code } from "lucide-react"
+import ReactFlow, { Background, Controls, type Edge, type Node as ReactFlowNode, useNodesState, useEdgesState, MiniMap, Panel, NodeToolbar, Position } from "reactflow"
+import { Map, MapPinOffIcon as MapOff, Target, X, ChevronDown } from "lucide-react"
 import "reactflow/dist/style.css"
-import type { DiagramResponse } from "@generated/model"
+import type { DiagramResponse, DiagramDto, ComponentDto, ConnectionDto } from "@generated/model"
 import { MethodNode } from "./nodes/MethodNode"
 import { ClassNode } from "./nodes/ClassNode"
 import { InterfaceNode } from "./nodes/InterfaceNode"
 import { CustomEdge } from "./edges/CustomEdge"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism"
+import DtoContainer from "./DtoContainer"
 
 // 미리 정의된 배경색 배열 추가 (파스텔톤으로 구성)
 const backgroundColors = [
   "rgba(255, 228, 225, 0.4)", // 연한 분홍색
   "rgba(230, 230, 250, 0.4)", // 연한 라벤더색
+  "rgba(255, 245, 238, 0.4)", // 연한 씨쉘색
   "rgba(240, 255, 240, 0.4)", // 연한 허니듀색
   "rgba(255, 250, 205, 0.4)", // 연한 레몬 쉬폰색
   "rgba(245, 255, 250, 0.4)", // 연한 민트 크림색
   "rgba(240, 248, 255, 0.4)", // 연한 앨리스 블루색
   "rgba(255, 240, 245, 0.4)", // 연한 라벤더 블러쉬색
-  "rgba(255, 245, 238, 0.4)", // 연한 씨쉘색
 ]
 
 // 노드 및 엣지 타입 정의
@@ -56,41 +55,6 @@ export interface TargetNode {
   parentId?: string // 부모 노드 ID 추가 (메소드의 경우 클래스/인터페이스 ID)
 }
 
-// 컴포넌트 타입 정의
-interface DiagramComponent {
-  componentId: string
-  name: string
-  description?: string
-  type: "CLASS" | "INTERFACE"
-  positionX?: number
-  positionY?: number
-  methods?: DiagramMethod[]
-}
-
-// 메서드 타입 정의
-interface DiagramMethod {
-  methodId: string
-  signature: string
-  body?: string
-  description?: string
-}
-
-// DTO 타입 정의
-interface DiagramDto {
-  dtoId: string
-  name: string
-  description?: string
-  body?: string
-}
-
-// 연결 타입 정의
-interface DiagramConnection {
-  connectionId: string
-  sourceMethodId: string
-  targetMethodId: string
-  type: string
-}
-
 // 노드 관계 맵 타입 정의
 interface NodeRelationMap {
   [nodeId: string]: {
@@ -106,6 +70,56 @@ type DiagramContainerProps = {
   onSelectionChange?: (targets: TargetNode[]) => void
 }
 
+// 타입 가드 함수들
+function isString(value: unknown): value is string {
+  return typeof value === "string"
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === "number"
+}
+
+// 메서드 타입 가드
+function isMethodDto(method: unknown): method is ComponentDto["methods"][number] {
+  if (!method || typeof method !== "object") return false
+  const m = method as Record<string, unknown>
+  return typeof m.methodId === "string" && typeof m.signature === "string"
+}
+
+// 컴포넌트 타입 가드
+function isComponentDto(component: unknown): component is ComponentDto {
+  if (!component || typeof component !== "object") return false
+  const c = component as Record<string, unknown>
+  return typeof c.componentId === "string" && typeof c.name === "string" && (c.type === "CLASS" || c.type === "INTERFACE") && (c.methods === undefined || Array.isArray(c.methods))
+}
+
+// 연결 타입 가드
+function isConnectionDto(connection: unknown): connection is ConnectionDto {
+  if (!connection || typeof connection !== "object") return false
+  const c = connection as Record<string, unknown>
+  return typeof c.connectionId === "string" && typeof c.sourceMethodId === "string" && typeof c.targetMethodId === "string"
+}
+
+// DiagramDto 타입 가드
+function isDiagramDto(data: unknown): data is DiagramDto {
+  if (!data || typeof data !== "object") return false
+  const d = data as Record<string, unknown>
+
+  // components 배열 확인
+  if (d.components !== undefined && !Array.isArray(d.components)) return false
+
+  // connections 배열 확인
+  if (d.connections !== undefined && !Array.isArray(d.connections)) return false
+
+  // dto 배열 확인
+  if (d.dto !== undefined && !Array.isArray(d.dto)) return false
+
+  // metadata 객체 확인
+  if (d.metadata !== undefined && typeof d.metadata !== "object") return false
+
+  return true
+}
+
 // 명시적으로 React.ReactElement 반환 타입 지정
 export default function DiagramContainer({ diagramData, loading, error, onSelectionChange }: DiagramContainerProps): React.ReactElement {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
@@ -116,7 +130,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   // DTO 패널 상태
   const [showDtoPanel, setShowDtoPanel] = useState<boolean>(true)
-  const [selectedDto, setSelectedDto] = useState<string | null>(null)
 
   // 노드 관계 맵 (부모-자식 관계)
   const [nodeRelationMap, setNodeRelationMap] = useState<NodeRelationMap>({})
@@ -128,7 +141,14 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   const [initialNodePositions, setInitialNodePositions] = useState<Record<string, { x: number; y: number }>>({})
 
   // 현재 버전과 다음 버전 상태 추가
-  const currentVersion = diagramData?.metadata?.version || "1.0.0"
+  const currentVersion = (() => {
+    if (!diagramData || !diagramData.metadata) return 1
+
+    const version = diagramData.metadata.version
+    if (isNumber(version)) return version
+    if (isString(version)) return Number.parseInt(version, 10) || 1
+    return 1
+  })()
 
   // 버전 목록 상태 추가
   const [showVersions, setShowVersions] = useState<boolean>(false)
@@ -179,7 +199,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   // 타겟 노드 추가 핸들러 (클래스/인터페이스 선택 시 자식 메소드도 추가)
   const addTargetNode = useCallback(
-    (node: Node) => {
+    (node: ReactFlowNode) => {
       setTargetNodes((prev) => {
         // 이미 타겟에 있는지 확인
         const exists = prev.some((target) => target.id === node.id)
@@ -197,7 +217,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         const newTarget: TargetNode = {
           id: node.id,
           type: nodeType,
-          name: node.data.name || node.id,
+          name: node.data?.name || node.id,
           parentId: nodeRelationMap[node.id]?.parentId,
         }
 
@@ -216,7 +236,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
                 newTargets.push({
                   id: childId,
                   type: "method",
-                  name: childNode.data.name || childId,
+                  name: childNode.data?.name || childId,
                   parentId: node.id,
                 })
               }
@@ -235,15 +255,20 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   // 메서드 노드의 위치와 클래스 노드의 크기를 계산하는 함수
   const calculateLayout = useCallback(
-    (components: DiagramComponent[], expandedNodeIds: Set<string>, savedPositions: Record<string, { x: number; y: number }>) => {
-      const newNodes: Node[] = []
+    (components: ComponentDto[], expandedNodeIds: Set<string>, savedPositions: Record<string, { x: number; y: number }>) => {
+      const newNodes: ReactFlowNode[] = []
       const methodIdToNodeId: Record<string, string> = {}
       const updatedPositions: Record<string, { x: number; y: number }> = { ...savedPositions }
       const newNodeRelationMap: NodeRelationMap = {}
 
       // 각 컴포넌트(클래스/인터페이스)에 대해 처리
       components.forEach((component, componentIndex) => {
-        const componentNodeId = `component-${component.componentId}`
+        if (!isComponentDto(component)) return
+
+        const componentId = component.componentId
+        if (!componentId) return // componentId가 없으면 처리하지 않음
+
+        const componentNodeId = `component-${componentId}`
 
         // 노드 관계 맵 초기화
         newNodeRelationMap[componentNodeId] = {
@@ -262,12 +287,18 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
         // 메서드 노드 생성 및 위치 계산
         let totalHeight = CLASS_PADDING_TOP // 시작 높이 (클래스 제목 영역)
-        const methodNodes: Node[] = []
+        const methodNodes: ReactFlowNode[] = []
 
-        if (component.methods) {
+        if (component.methods && Array.isArray(component.methods)) {
           component.methods.forEach((method) => {
-            const methodNodeId = `method-${method.methodId}`
-            methodIdToNodeId[method.methodId] = methodNodeId
+            if (!isMethodDto(method)) return
+
+            // methodId가 없으면 처리하지 않음
+            const methodId = method.methodId
+            if (!methodId) return
+
+            const methodNodeId = `method-${methodId}`
+            methodIdToNodeId[methodId] = methodNodeId
 
             // 부모-자식 관계 설정
             newNodeRelationMap[componentNodeId].childIds.push(methodNodeId)
@@ -324,7 +355,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
           position: { x: posX, y: posY },
           data: {
             label: component.name,
-            description: component.description,
+            description: component.description || "",
             backgroundColor,
             name: component.name,
             isTargeted, // 타겟 노드 여부 전달
@@ -351,15 +382,28 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   // 데이터로부터 노드와 엣지 생성
   useEffect(() => {
-    if (!diagramData || !diagramData.components) {
-      console.log("다이어그램 데이터가 없거나 components가 없습니다:", diagramData)
+    if (!diagramData) {
+      console.log("다이어그램 데이터가 없습니다:", diagramData)
+      return
+    }
+
+    if (!isDiagramDto(diagramData)) {
+      console.error("다이어그램 데이터 형식이 올바르지 않습니다:", diagramData)
+      return
+    }
+
+    if (!diagramData.components || !Array.isArray(diagramData.components) || diagramData.components.length === 0) {
+      console.log("다이어그램 컴포넌트 데이터가 없습니다:", diagramData)
       return
     }
 
     console.log("다이어그램 데이터 처리 시작:", diagramData)
 
+    // 컴포넌트 배열 필터링 (유효한 컴포넌트만 사용)
+    const validComponents = diagramData.components.filter(isComponentDto)
+
     // 노드 레이아웃 계산 (초기 위치 전달)
-    const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(diagramData.components as DiagramComponent[], expandedNodes, initialNodePositions)
+    const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(validComponents, expandedNodes, initialNodePositions)
 
     // 초기 위치가 비어있는 경우에만 업데이트 (첫 렌더링 시에만)
     if (Object.keys(initialNodePositions).length === 0) {
@@ -368,8 +412,14 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
     // 엣지 생성
     const newEdges: Edge[] = []
-    if (diagramData.connections) {
-      diagramData.connections.forEach((connection: DiagramConnection) => {
+    if (diagramData.connections && Array.isArray(diagramData.connections)) {
+      // 유효한 연결만 필터링
+      const validConnections = diagramData.connections.filter(isConnectionDto)
+
+      validConnections.forEach((connection) => {
+        // sourceMethodId와 targetMethodId가 있는지 확인
+        if (!connection.sourceMethodId || !connection.targetMethodId) return
+
         const sourceNodeId = methodIdToNodeId[connection.sourceMethodId]
         const targetNodeId = methodIdToNodeId[connection.targetMethodId]
 
@@ -393,25 +443,16 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     setNodes(newNodes)
     setEdges(newEdges)
 
-    // 버전 목록 생성 (예시: 현재 버전을 기준으로 -2부터 +2까지)
-    const currentVersionNum = Number.parseFloat(currentVersion.split(".")[0] + "." + currentVersion.split(".")[1])
+    // 버전 목록 생성 (현재 버전 기준으로 -2부터 +2까지, 단 최소값은 1)
     const versionList = []
-
-    for (let i = Math.max(1, Math.floor(currentVersionNum) - 2); i <= Math.floor(currentVersionNum) + 2; i++) {
-      for (let j = 0; j <= 9; j++) {
-        const version = `${i}.${j}.0`
-        if (Number.parseFloat(i + "." + j) <= currentVersionNum + 2 && Number.parseFloat(i + "." + j) >= Math.max(1, currentVersionNum - 2)) {
-          versionList.push(version)
-        }
-      }
+    const currentVersionNum = typeof currentVersion === "number" ? currentVersion : 1
+    const minVersion = Math.max(1, currentVersionNum - 2)
+    const maxVersion = currentVersionNum + 2
+    for (let i = minVersion; i <= maxVersion; i++) {
+      versionList.push(i.toString())
     }
 
     setVersions(versionList)
-
-    // 첫 번째 DTO를 기본 선택
-    if (diagramData.dto && diagramData.dto.length > 0) {
-      setSelectedDto(diagramData.dto[0].dtoId)
-    }
   }, [diagramData, expandedNodes, calculateLayout, setNodes, setEdges, initialNodePositions, targetNodes, currentVersion])
 
   // 메서드 확장/축소 토글 핸들러
@@ -431,21 +472,25 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   // 이벤트 리스너 등록
   useEffect(() => {
-    const handleToggleExpand = (e: CustomEvent) => {
-      console.log("이벤트 수신:", e.detail)
-      toggleMethodExpand(e.detail.nodeId)
+    const handleToggleExpand = (e: Event) => {
+      const customEvent = e as CustomEvent
+      console.log("이벤트 수신:", customEvent.detail)
+      if (customEvent.detail && customEvent.detail.nodeId) {
+        toggleMethodExpand(customEvent.detail.nodeId)
+      }
     }
 
-    const handleRemoveTarget = (e: CustomEvent) => {
-      console.log("타겟 제거 이벤트 수신:", e.detail)
-      if (e.detail && e.detail.nodeId) {
-        removeTargetNode(e.detail.nodeId)
+    const handleRemoveTarget = (e: Event) => {
+      const customEvent = e as CustomEvent
+      console.log("타겟 제거 이벤트 수신:", customEvent.detail)
+      if (customEvent.detail && customEvent.detail.nodeId) {
+        removeTargetNode(customEvent.detail.nodeId)
       }
     }
 
     // 버전 드롭다운 외부 클릭 감지
     const handleClickOutside = (event: MouseEvent) => {
-      if (versionsRef.current && !versionsRef.current.contains(event.target as unknown as HTMLElement)) {
+      if (versionsRef.current && !versionsRef.current.contains(event.target as Element)) {
         setShowVersions(false)
       }
     }
@@ -472,7 +517,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   }, [toggleMethodExpand, removeTargetNode])
 
   // 노드 위치 변경 핸들러 추가 (ReactFlow의 onNodeDragStop 이벤트에 연결)
-  const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
+  const onNodeDragStop = useCallback((event: React.MouseEvent, node: ReactFlowNode) => {
     // 클래스/인터페이스 노드만 위치 저장 (메서드 노드는 부모에 상대적)
     if (node.type === "class" || node.type === "interface") {
       setInitialNodePositions((prev) => ({
@@ -487,7 +532,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     setShowMiniMap((prev) => !prev)
   }, [])
 
-  // 버전 이동 핸들러
+  // 버전 이동 핸들러 수정 - 문자열과 숫자 비교 문제 해결
   const handleVersionMove = useCallback((version: string) => {
     // URL에서 현재 경로 가져오기
     const url = new URL(window.location.href)
@@ -495,18 +540,18 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     const projectId = pathParts[2]
     const apiId = pathParts[3]
 
-    // 쿼리 파라미터 업데이트
-    url.searchParams.set("version", version.split(".")[0] + version.split(".")[1])
+    // 쿼리 파라미터 업데이트 (버전 형식 변경)
+    url.searchParams.set("version", version)
 
     // 페이지 이동 (새로고침)
-    window.location.href = `/canvas/${projectId}/${apiId}?version=${version.split(".")[0] + version.split(".")[1]}`
+    window.location.href = `/canvas/${projectId}/${apiId}?version=${version}`
 
     // 버전 드롭다운 닫기
     setShowVersions(false)
   }, [])
 
   // 노드 클릭 핸들러
-  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+  const onNodeClick = useCallback((event: React.MouseEvent, node: ReactFlowNode) => {
     event.stopPropagation()
     setShowToolbar(node.id)
   }, [])
@@ -514,6 +559,11 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   // 배경 클릭 핸들러
   const onPaneClick = useCallback(() => {
     setShowToolbar(null)
+  }, [])
+
+  // DTO 패널 토글 핸들러
+  const toggleDtoPanel = useCallback(() => {
+    setShowDtoPanel((prev) => !prev)
   }, [])
 
   // 타겟 노드 변경 시 부모 컴포넌트에 알림
@@ -553,6 +603,18 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     )
   }
 
+  // 메타데이터 준비
+  const metadata = diagramData.metadata || {
+    metadataId: "default-metadata",
+    version: currentVersion,
+    lastModified: new Date().toISOString(),
+    name: "Unnamed Diagram",
+    description: "",
+  }
+
+  // 버전 문자열 변환
+  const versionString = typeof metadata.version === "number" ? metadata.version.toString() : metadata.version || "1"
+
   return (
     <div id="diagram-container" style={{ width: "100%", height: "100%" }} className="bg-white rounded-lg shadow overflow-hidden relative">
       <ReactFlow
@@ -577,7 +639,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         selectionOnDrag
       >
         <Background />
-        <Controls position="top-left" style={{ top: "300px" }} />
+        <Controls position="top-left" style={{ top: "70px" }} />
 
         {/* 조건부로 MiniMap 렌더링 */}
         {showMiniMap && <MiniMap nodeStrokeWidth={3} zoomable pannable />}
@@ -607,9 +669,9 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         ))}
 
         {/* API 경로 표시 (오른쪽 상단) */}
-        <Panel position="top-left" className="mr-4 mt-4">
-          <div className="bg-white px-4 py-2 rounded-md ">
-            <div className="text-sm font-medium text-gray-600">[POST] api/board/create</div>
+        <Panel position="top-right" className="mr-4 mt-4">
+          <div className="bg-white px-4 py-2 rounded-md shadow-md">
+            <div className="text-sm font-medium text-green-600">[POST] api/board/create</div>
           </div>
         </Panel>
 
@@ -617,7 +679,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         <Panel position="top-right" className="mr-4 mt-16">
           <div className="relative" ref={versionsRef}>
             <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-md hover:bg-gray-50 transition-colors">
-              <span className="text-sm font-medium">버전: {currentVersion}</span>
+              <span className="text-sm font-medium">버전: {versionString}</span>
               <ChevronDown size={16} className={`text-gray-600 transition-transform ${showVersions ? "rotate-180" : ""}`} />
             </button>
 
@@ -627,9 +689,9 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
                 <div className="py-1">
                   {versions.map((version) => (
                     <button
-                      key={version}
+                      key={`version-${version}`}
                       onClick={() => handleVersionMove(version)}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${version === currentVersion ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-700"}`}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${version === versionString ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-700"}`}
                     >
                       {version}
                     </button>
@@ -648,64 +710,9 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         </Panel>
       </ReactFlow>
 
-      {/* DTO 패널 */}
-      <div className={`absolute bottom-0 left-0 w-[70%] bg-white border-t border-gray-200 transition-all duration-300 rounded-md ${showDtoPanel ? "h-50" : "h-8"}`}>
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200 cursor-pointer rounded-md" onClick={() => setShowDtoPanel(!showDtoPanel)}>
-          <div className="flex items-center gap-2">
-            <Code size={16} className="text-gray-600" />
-            <h3 className="font-medium text-gray-700">DTO 정보</h3>
-          </div>
-          <button className="text-gray-500 hover:text-gray-700">{showDtoPanel ? <ChevronDown size={18} /> : <ChevronUp size={18} />}</button>
-        </div>
-
-        {showDtoPanel && diagramData.dto && diagramData.dto.length > 0 && (
-          <div className="flex h-[calc(100%-40px)]">
-            {/* DTO 목록 */}
-            <div className="w-1/4 border-r border-gray-200 overflow-y-auto">
-              <ul>
-                {diagramData.dto.map((dto: DiagramDto) => (
-                  <li
-                    key={dto.dtoId}
-                    className={`px-4 py-2 cursor-pointer hover:bg-gray-50 ${selectedDto === dto.dtoId ? "bg-blue-50 border-l-4 border-blue-500" : ""}`}
-                    onClick={() => setSelectedDto(dto.dtoId)}
-                  >
-                    <div className="font-medium">{dto.name}</div>
-                    {dto.description && <div className="text-xs text-gray-500 truncate">{dto.description}</div>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* DTO 상세 정보 */}
-            <div className="w-3/4 overflow-auto p-2">
-              {selectedDto && (
-                <div>
-                  {diagramData.dto
-                    .filter((dto: DiagramDto) => dto.dtoId === selectedDto)
-                    .map((dto: DiagramDto) => (
-                      <div key={dto.dtoId}>
-                        {dto.body && (
-                          <SyntaxHighlighter
-                            language="java"
-                            style={vscDarkPlus}
-                            customStyle={{
-                              fontSize: "12px",
-                              borderRadius: "4px",
-                              maxHeight: "140px",
-                            }}
-                          >
-                            {dto.body}
-                          </SyntaxHighlighter>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {showDtoPanel && (!diagramData.dto || diagramData.dto.length === 0) && <div className="flex items-center justify-center h-[calc(100%-40px)] text-gray-500">DTO 정보가 없습니다.</div>}
+      {/* DTO 패널 - DtoContainer 컴포넌트로 분리 */}
+      <div className={`absolute bottom-0 left-0 w-[70%] transition-all duration-300 ${showDtoPanel ? "h-64" : "h-10"}`}>
+        <DtoContainer diagramData={diagramData} loading={loading} isCollapsed={!showDtoPanel} onToggleCollapse={toggleDtoPanel} />
       </div>
     </div>
   )
