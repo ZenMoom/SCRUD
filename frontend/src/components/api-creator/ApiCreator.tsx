@@ -201,9 +201,9 @@ export default function ApiCreator() {
   return (
     <div className="flex h-[calc(100vh-152px)] overflow-hidden bg-gray-50 gap-1 relative">
       {/* 좌측 패널 - 접었다 펼칠 수 있게 수정 */}
-      <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto`}>
+      {/* <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto`}>
         <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />
-      </div>
+      </div> */}
 
       {/* 좌측 패널 토글 버튼 - 개선된 위치 및 스타일 */}
       <div className={`absolute top-1/2 transform -translate-y-1/2 ${isLeftPanelOpen ? "left-[300px]" : "left-0"} transition-all duration-300 z-20`}>

@@ -19,8 +19,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // API URL 가져오기
-    const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
-
+    // const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
+    const apiUrl = "http://host.docker.internal:8000"
     if (!apiUrl) {
       console.error("API_BASE_URL 환경 변수가 설정되지 않았습니다.")
       return NextResponse.json({ error: "API 서버 구성 오류" }, { status: 500 })

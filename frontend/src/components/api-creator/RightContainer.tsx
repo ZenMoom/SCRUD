@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import axios, { AxiosError } from "axios"
-import { ApiSpecVersionResponse, ApiSpecVersionListResponse, ApiSpecVersionCreatedResponse } from "@generated/model"
+import axios, { type AxiosError } from "axios"
+import type { ApiSpecVersionResponse, ApiSpecVersionListResponse, ApiSpecVersionCreatedResponse } from "@generated/model"
+import type { DiagramResponse } from "@generated/model"
+import { useRouter } from "next/navigation"
 
 interface BodyParam {
   key: string
@@ -60,6 +62,50 @@ export default function RightContainer({ selectedApi, selectedMethod, onApiSpecC
     xml: "application/xml",
     javascript: "application/javascript",
     html: "text/html",
+  }
+
+  // 다이어그램 생성 상태 추가
+  const [isCreatingDiagram, setIsCreatingDiagram] = useState(false)
+
+  // 라우터 추가
+  const router = useRouter()
+
+  // 다이어그램 생성 함수 추가 (handleSaveApi 함수 위에 추가)
+  // 다이어그램 생성 핸들러
+  const handleCreateDiagram = async () => {
+    if (!apiSpecVersionId) {
+      showWarningNotification("API를 먼저 저장해주세요.")
+      return
+    }
+
+    setIsCreatingDiagram(true)
+    try {
+      // 다이어그램 생성 API 호출
+      const response = await axios.post<DiagramResponse>(`/api/canvas/${scrudProjectId}/${apiSpecVersionId}`)
+
+      // 응답 처리
+      const diagramData = response.data
+
+      // 성공 메시지
+      showSuccessNotification("다이어그램이 성공적으로 생성되었습니다.")
+
+      // 다이어그램 버전 정보 가져오기
+      const version = diagramData.metadata?.version
+
+      // 다이어그램 페이지로 이동
+      router.push(`/canvas/${scrudProjectId}/${apiSpecVersionId}?version=${version}`)
+    } catch (error) {
+      console.error("다이어그램 생성 오류:", error)
+
+      // Axios 에러에서 더 자세한 정보 추출
+      if (axios.isAxiosError(error) && error.response) {
+        showErrorNotification(`다이어그램 생성 실패: ${error.response.data?.error || "알 수 없는 오류"}`)
+      } else {
+        showErrorNotification(`다이어그램 생성 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}`)
+      }
+    } finally {
+      setIsCreatingDiagram(false)
+    }
   }
 
   // selectedApi와 selectedMethod가 변경될 때마다 호출되는 효과
@@ -697,9 +743,25 @@ export default function RightContainer({ selectedApi, selectedMethod, onApiSpecC
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-semibold">API 편집기</h2>
           <div className="flex space-x-2">
+            {apiSpecVersionId && (
+              <button
+                onClick={handleCreateDiagram}
+                disabled={isLoading || isCreatingDiagram}
+                className="px-3 py-1.5 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 text-sm font-medium flex items-center"
+              >
+                {isCreatingDiagram ? (
+                  <span className="mr-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                  </svg>
+                )}
+                도식화 진행
+              </button>
+            )}
             <button
               onClick={handleSaveApi}
-              disabled={isLoading}
+              disabled={isLoading || isCreatingDiagram}
               className={`px-3 py-1.5 rounded text-white text-sm font-medium disabled:opacity-50 flex items-center ${
                 apiSpecVersionId ? "bg-yellow-500 hover:bg-yellow-600" : "bg-blue-500 hover:bg-blue-600"
               }`}
