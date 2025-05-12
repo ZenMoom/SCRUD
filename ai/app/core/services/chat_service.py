@@ -165,46 +165,56 @@ class ChatService:
             self.logger.error(f"도식화 데이터 생성 중 오류 발생: {str(e)}", exc_info=True)
             raise
 
-    async def create_diagram_from_openapi(self, user_chat_data: UserChatRequest, response_queue: asyncio.Queue,
+    async def prompt_diagram_from_openapi(self, user_chat_data: UserChatRequest, response_queue: asyncio.Queue,
                                           project_id: str = None, api_id: str = None) -> DiagramResponse:
         """
-        OpenAPI 명세를 입력받아 도식화 데이터(Diagram)를 생성하는 메인 메서드
+        LLM을 사용하여 OpenAPI 명세로부터 도식화 데이터를 생성하고 MongoDB에 저장하는 메서드
+
+        1. UserChatRequest에서 targetMethods 통해 methodId가 속한 diagramId를 가져온다. (targetMethods에는 methodId가 존재)
+           - user_chat_data의 targetMethods에서 methodId를 추출하고 이를 통해 diagramId를 확인합니다.
+
+        2. diagramId 를 통해 Diagram을 mongoDB에서 조회하기
+           - self.diagram_repository를 사용하여 MongoDB에서 해당 diagramId로 다이어그램을 조회합니다.
+
+        3. UserChatRequest
+            MethodPromptTarget
+            - SIGNATURE 인 경우: 모든 메서드를 새로 작성한다.
+              - 다이어그램의 모든 메서드에 대한 시그니처를 생성합니다.
+            - BODY 인 경우: 선택한 메서드만 작성한다.
+              - targetMethods에 명시된 메서드들의 구현 내용만 생성합니다.
+
+            MethodPromptTag
+            - 각 태그에 맞는 미리 준비된 프롬프트를 세팅한 후 수정한다.
+              - get_prompts 메서드를 통해 태그에 맞는 프롬프트 템플릿을 가져와 적용합니다.
+
+            message
+            - MethodPromptTarget, MethodPromptTag가 처리된 이후에 마지막에 사용자가 입력한 메시지가 작성된다.
+              - 최종 프롬프트에 사용자 메시지를 추가하여 LLM에 전송합니다.
+
+        4. 메타 데이터 설정
+            version
+            - 초기 값은 1
+            - 다이어그램 데이터 갱신 시 버전을 증가시켜 변경 이력을 관리합니다.
+
+        5. LLM을 사용하여 준비된 프롬프트로 도식화 데이터 생성
+           - self.llm을 통해 생성된 프롬프트를 전송하고 응답을 받습니다.
+
+        6. 생성된 데이터를 파싱하여 MongoDB에 저장
+           - self.parser를 사용하여 LLM 응답을 파싱하고 다이어그램 데이터로 변환합니다.
+           - 변환된 데이터를 self.diagram_repository를 통해 MongoDB에 저장합니다.
+
+        7. DiagramResponse 형태로 결과 반환
+           - 저장된 다이어그램 데이터를 DiagramResponse 형태로 가공하여 반환합니다.
 
         Args:
-            user_chat_data: UserChatRequest
-            response_queue: asyncio.Queue: LLM 응답 데이터를 저장할 큐
+            user_chat_data (UserChatRequest): 사용자 채팅 요청 데이터
             project_id (str, optional): 프로젝트 ID
             api_id (str, optional): API ID
+
         Returns:
-            DiagramResponse: 생성된 도식화 데이터
+            DiagramResponse: 생성된 다이어그램 응답 데이터
         """
-        try:
-            self.logger.info(f"도식화 데이터 생성 시작: project_id={project_id}, api_id={api_id}")
-
-            # LLM 및 파서 설정
-            self.setup_llm_and_parser(response_queue)
-
-            # 진행 상황 메시지 전송
-            await self.sse_service.send_progress(response_queue, "AI 모델이 다이어그램 생성 중...")
-
-            # 도식화 데이터 생성 및 MongoDB에 자동 저장
-            diagram_data: DiagramResponse = await self.generate_diagram_data(user_chat_data, project_id, api_id)
-
-            # 진행 상황 메시지 전송
-            await self.sse_service.send_progress(response_queue, "다이어그램 생성 완료, 데이터 반환 중...")
-
-            self.logger.info(
-                f"도식화 데이터 생성 완료: diagramId={diagram_data.diagramId if hasattr(diagram_data, 'diagramId') else 'N/A'}")
-
-            # 생성된 도식화 데이터 반환
-            return diagram_data
-
-        except Exception as e:
-            self.logger.error(f"도식화 데이터 생성 프로세스 중 오류 발생: {str(e)}", exc_info=True)
-
-            # 오류 메시지 전송
-            await self.sse_service.send_error(response_queue, f"도식화 데이터 생성 중 오류 발생: {str(e)}")
-            raise
+        pass
 
     async def process_chat_and_diagram(
             self, project_id: str, api_id: str, user_chat_data: UserChatRequest, response_queue: asyncio.Queue
@@ -242,7 +252,7 @@ class ChatService:
             self.logger.info("다이어그램 생성/수정 처리 중")
 
             # 실제 다이어그램 생성 로직 실행
-            diagram = await self.create_diagram_from_openapi(
+            diagram = await self.prompt_diagram_from_openapi(
                 user_chat_data,
                 response_queue,
                 project_id=project_id,
