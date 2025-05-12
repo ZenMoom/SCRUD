@@ -143,20 +143,16 @@ class DiagramService:
         # 모델을 딕셔너리로 변환
         diagram_dict = diagram.model_dump()
 
-        # 연결(connections)을 edges로 변환
-        edges = diagram_dict.pop("connections", [])
 
         # DiagramResponse 형식에 맞게 데이터 구성
         response_data = {
             "diagramId": diagram_dict["diagramId"],
-            "version": diagram_dict["metadata"]["version"],
             "metadata": diagram_dict["metadata"],
             "components": diagram_dict["components"],
-            "edges": edges,
+            "connections": diagram_dict["connections"],
+            "dto": diagram_dict["dto"],
             "apiId": diagram_dict["apiId"],
             "projectId": diagram_dict["projectId"],
-            "apiSpec": {},  # 필요한 경우 API 스펙 데이터 추가
-            "apiSpecUrl": "",  # 필요한 경우 API 스펙 URL 추가
         }
 
         return DiagramResponse(**response_data)
