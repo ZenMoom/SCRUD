@@ -2,10 +2,10 @@
 # 다이어그램 서비스 API 테스트
 ###############################################
 
-@baseUrl = http://localhost:8000
+@baseUrl = http://localhost:8080
 @projectId = project-123
 @apiId = api-456
-@versionId = 5
+@versionId = 1
 @componentId = 8e43d0dd-f51b-4cdd-9204-6bc1f0f093ed
 
 ### 1. 새 다이어그램 생성 테스트

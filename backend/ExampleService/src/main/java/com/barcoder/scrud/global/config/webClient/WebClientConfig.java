@@ -24,9 +24,9 @@ import java.util.concurrent.TimeUnit;
 public class WebClientConfig {
 
     // 타임아웃 설정값 (밀리초/초 단위)
-    private static final int CONNECT_TIMEOUT_MILLIS = 50000;
-    private static final int READ_TIMEOUT_SECONDS = 50;
-    private static final int WRITE_TIMEOUT_SECONDS = 50;
+    private static final int CONNECT_TIMEOUT_MILLIS = 1000 * 60 * 5;
+    private static final int READ_TIMEOUT_SECONDS = 60 * 5;
+    private static final int WRITE_TIMEOUT_SECONDS = 60 * 5;
 
     // baseUrl 설정
     @Value("${webclient.base_url}")
