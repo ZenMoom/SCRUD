@@ -43,6 +43,13 @@ spring:
       ddl-auto: ${SPRING_JPA_DDL_AUTO}
     defer-datasource-initialization: true
 
+  sql:
+    init:
+      data-locations:
+        - classpath:sql/defaultGlobalFile.sql
+
+      mode: ${SQL_INIT_MODE}
+
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?serverTimezone=UTC&useUniCode=yes&characterEncoding=UTF-8
     username: ${MYSQL_ROOT_USERNAME}
