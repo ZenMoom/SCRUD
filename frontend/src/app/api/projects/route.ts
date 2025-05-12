@@ -54,27 +54,76 @@ export async function POST(request: NextRequest) {
     
     // 파일 타입 항목들 추가
     Object.entries(settings).forEach(([key, value]) => {
-      if (fileTypeMapping[key] && value) {
-        globalFiles.push({
-          fileName: value,
-          fileType: fileTypeMapping[key],
-          fileUrl: "",
-          fileContent: JSON.stringify({ content: value })
-        });
+      if (fileTypeMapping[key]) {
+        // 배열로 전달된 파일 처리
+        if (Array.isArray(value)) {
+          // 각 파일을 개별 globalFile로 처리
+          value.forEach(fileItem => {
+            if (fileItem) {
+              // GitHub에서 가져온 파일인 경우 URL도 추출
+              let fileUrl = "";
+              let fileName = fileItem;
+
+              if (typeof fileItem === 'string' && fileItem.startsWith('github:')) {
+                // github:filepath|url 형식에서 URL 추출
+                const parts = fileItem.substring(7).split('|');
+                fileName = parts[0]; // 파일 경로
+                fileUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
+              }
+
+              globalFiles.push({
+                fileName: fileName,
+                fileType: fileTypeMapping[key],
+                fileUrl: fileUrl,
+                fileContent: JSON.stringify({ content: fileItem })
+              });
+            }
+          });
+        }
+        // 문자열로 전달된 단일 값 처리 (이전 방식과 호환성 유지)
+        else if (value) {
+          // GitHub에서 가져온 파일인 경우 URL도 추출
+          let fileUrl = "";
+          let fileName = value;
+
+          if (typeof value === 'string' && value.startsWith('github:')) {
+            // github:filepath|url 형식에서 URL 추출
+            const parts = value.substring(7).split('|');
+            fileName = parts[0]; // 파일 경로
+            fileUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
+          }
+
+          globalFiles.push({
+            fileName: fileName,
+            fileType: fileTypeMapping[key],
+            fileUrl: fileUrl,
+            fileContent: JSON.stringify({ content: value })
+          });
+        }
       }
     });
     
     // 아키텍처 구조 추가
-    const architectureFileType = 
-      settings.architectureStructure.startsWith('github:') 
+    let architectureValue = settings.architectureStructure;
+    let architectureUrl = "";
+
+    // github:로 시작하면 URL 분리
+    if (typeof architectureValue === 'string' && architectureValue.startsWith('github:')) {
+      const parts = architectureValue.substring(7).split('|');
+      architectureValue = parts[0]; // 파일 경로
+      architectureUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
+    }
+
+    const architectureFileType =
+      typeof architectureValue === 'string' && architectureValue.startsWith('github:')
         ? 'ARCHITECTURE_GITHUB' 
         : 'ARCHITECTURE_DEFAULT';
     
     globalFiles.push({
-      fileName: `Architecture-${settings.architectureStructure}`,
+      fileName: `Architecture-${architectureValue}`,
       fileType: architectureFileType,
-      fileUrl: "",
-      fileContent: JSON.stringify({ type: settings.architectureStructure })
+      fileUrl: architectureUrl,
+      fileContent: JSON.stringify({ type: architectureValue })
     });
     
     // 보안 설정 추가
