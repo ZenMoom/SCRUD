@@ -1,26 +1,26 @@
 package com.barcoder.scrud.apispec.application.assembler;
 
+import com.barcoder.scrud.apispec.domain.entity.ApiSpec;
 import com.barcoder.scrud.apispec.domain.entity.ApiSpecVersion;
-import com.barcoder.scrud.apispec.domain.entity.LatestEndpointVersion;
 import com.barcoder.scrud.scrudproject.domain.entity.ScrudProject;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class LatestEndpointVersionAssembler {
+public class ApiSpecAssembler {
 
-	public LatestEndpointVersion toLatestEndpointVersionEntity(ScrudProject scrudProject, ApiSpecVersion apiSpecVersion, String endpoint) {
-		return LatestEndpointVersion.builder()
+	public ApiSpec toLatestEndpointVersionEntity(ScrudProject scrudProject, ApiSpecVersion apiSpecVersion, String endpoint) {
+		return ApiSpec.builder()
 				.scrudProject(scrudProject)
 				.apiSpecVersion(apiSpecVersion)
 				.endpoint(endpoint)
 				.build();
 	}
 
-	public List<LatestEndpointVersion> toLatestEndpointVersionEntityList(ScrudProject scrudProject, List<ApiSpecVersion> apiSpecVersionList) {
+	public List<ApiSpec> toLatestEndpointVersionEntityList(ScrudProject scrudProject, List<ApiSpecVersion> apiSpecVersionList) {
 		return apiSpecVersionList.stream()
-				.map(apiSpecVersion -> LatestEndpointVersion.builder()
+				.map(apiSpecVersion -> ApiSpec.builder()
 						.scrudProject(scrudProject)
 						.apiSpecVersion(apiSpecVersion)
 						.endpoint(apiSpecVersion.getEndpoint())
