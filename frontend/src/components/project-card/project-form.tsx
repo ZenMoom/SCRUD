@@ -17,6 +17,7 @@ export default function ProjectForm({ project, onSubmit, onCancel, onDelete, isS
   const [title, setTitle] = useState(project?.title || "")
   const [description, setDescription] = useState(project?.description || "")
   const [emoji, setEmoji] = useState(project?.emoji || "📊")
+  const [serverUrl, setServerUrl] = useState(project?.serverUrl || "")
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // 폼 제출 처리
@@ -34,6 +35,7 @@ export default function ProjectForm({ project, onSubmit, onCancel, onDelete, isS
       title: title.trim(),
       description: description.trim(),
       emoji,
+      serverUrl: serverUrl.trim()
     }
 
     // 부모 컴포넌트의 제출 함수 호출
@@ -97,6 +99,21 @@ export default function ProjectForm({ project, onSubmit, onCancel, onDelete, isS
               maxLength={200}
             />
             <p className="mt-1 text-xs text-gray-500">{description.length}/200자 (카드에는 처음 50자만 표시됩니다)</p>
+          </div>
+
+          {/* 서버 URL */}
+          <div className="mb-6">
+            <label htmlFor="serverUrl" className="block mb-2 text-sm font-medium text-gray-700">
+              서버 URL
+            </label>
+            <input
+              type="text"
+              id="serverUrl"
+              value={serverUrl}
+              onChange={(e) => setServerUrl(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="서버 URL을 입력하세요"
+            />
           </div>
 
           {/* 버튼 그룹 */}

@@ -36,49 +36,54 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
     setModalOpen(null)
   }
 
+  // 필수 항목 구분
+  const requiredFields = ['title', 'description', 'serverUrl', 'requirementSpec', 'erd'];
+  const isRequired = (field: string) => requiredFields.includes(field);
+
   // 각 설정 항목에 대한 설명
   const descriptions: Record<string, string> = {
-    title: "프로젝트의 이름을 입력하세요.",
-    description: "프로젝트에 대한 간략한 설명을 입력하세요.",
-    serverUrl: "서버의 URL을 입력하세요.",
-    requirementSpec: "요구사항 명세서 파일을 업로드하세요.",
-    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요.",
-    dependencyFile: "의존성 파일을 업로드하세요.",
-    utilityClass: "유틸리티 클래스 정보를 업로드하세요.",
-    errorCode: "에러 코드 정의 파일을 업로드하세요.",
-    securitySetting: "보안 설정에 관한 정보를 선택하세요.",
-    codeConvention: "코드 컨벤션 파일을 업로드하세요.",
-    architectureStructure: "아키텍처 구조를 선택하세요.",
+    title: "프로젝트의 이름을 입력하세요. (필수)",
+    description: "프로젝트에 대한 간략한 설명을 입력하세요. (필수)",
+    serverUrl: "서버의 URL을 입력하세요. (필수)",
+    requirementSpec: "요구사항 명세서 파일을 업로드하세요. (필수)",
+    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요. (필수)",
+    dependencyFile: "의존성 파일을 업로드하거나 Spring 의존성 목록에서 선택하세요.",
+    utilityClass: "유틸리티 클래스 정보를 업로드하거나 GitHub에서 가져오세요.",
+    errorCode: "에러 코드 정의 파일을 업로드하거나 GitHub에서 가져오세요.",
+    securitySetting: "보안 설정에 관한 정보를 선택하거나 GitHub에서 가져오세요.",
+    codeConvention: "코드 컨벤션 파일을 업로드하거나 GitHub에서 가져오세요.",
+    architectureStructure: "아키텍처 구조를 선택하거나 GitHub에서 가져오세요.",
   }
 
   // 각 설정 항목의 입력 타입
-  const inputTypes = {
+  const inputTypes: Record<string, 'text' | 'textarea' | 'file' | 'dependency-select' | 'security-select' | 'architecture-select'> = {
     title: "text",
     description: "textarea",
     serverUrl: "text",
     requirementSpec: "file",
     erd: "file",
-    dependencyFile: "file",
+    dependencyFile: "dependency-select",
     utilityClass: "file",
     errorCode: "file",
-    securitySetting: "radio",
+    securitySetting: "security-select",
     codeConvention: "file",
-    architectureStructure: "architecture",
+    architectureStructure: "architecture-select"
   }
 
-  // 라디오 버튼 옵션
-  const radioOptions = {
-    securitySetting: [
-      { value: "jwt", label: "JWT" },
-      { value: "session", label: "세션" },
-    ],
-    architectureStructure: [
-      { value: "layered", label: "레이어드 아키텍처" },
-      { value: "clean", label: "클린 아키텍처" },
-      { value: "microservice", label: "마이크로서비스 아키텍처" },
-      { value: "event", label: "이벤트 드리븐 아키텍처" },
-    ],
-  }
+  // 보안 설정 라디오 버튼 옵션
+  const securityOptions = [
+    { value: "SECURITY_DEFAULT_JWT", label: "JWT" },
+    { value: "SECURITY_DEFAULT_SESSION", label: "세션" },
+    { value: "SECURITY_DEFAULT_NONE", label: "없음" },
+  ]
+
+  // 아키텍처 구조 옵션
+  const architectureOptions = [
+    { value: "ARCHITECTURE_DEFAULT_LAYERED", label: "레이어드 아키텍처" },
+    { value: "ARCHITECTURE_DEFAULT_CLEAN", label: "클린 아키텍처" },
+    { value: "ARCHITECTURE_DEFAULT_MSA", label: "마이크로서비스 아키텍처" },
+    { value: "ARCHITECTURE_DEFAULT_HEX", label: "헥사고날 아키텍처" },
+  ]
 
   // 항목 포커스 시 activeItem 업데이트
   const handleItemFocus = (key: string) => {
@@ -92,7 +97,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
       <div className="h-full overflow-y-auto p-8 md:p-12">
         <FormItem
           ref={refs.title}
-          title="프로젝트명"
+          title={`프로젝트명 ${isRequired('title') ? '(필수)' : ''}`}
           type={inputTypes.title}
           value={settings.title}
           onChange={(value) => onSettingChange("title", value)}
@@ -102,7 +107,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.description}
-          title="프로젝트 설명"
+          title={`프로젝트 설명 ${isRequired('description') ? '(필수)' : ''}`}
           type={inputTypes.description}
           value={settings.description}
           onChange={(value) => onSettingChange("description", value)}
@@ -112,7 +117,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.serverUrl}
-          title="Server URL"
+          title={`Server URL ${isRequired('serverUrl') ? '(필수)' : ''}`}
           type={inputTypes.serverUrl}
           value={settings.serverUrl}
           onChange={(value) => onSettingChange("serverUrl", value)}
@@ -122,7 +127,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.requirementSpec}
-          title="요구사항 명세서"
+          title={`요구사항 명세서 ${isRequired('requirementSpec') ? '(필수)' : ''}`}
           type={inputTypes.requirementSpec}
           value={settings.requirementSpec}
           onChange={(value) => onSettingChange("requirementSpec", value)}
@@ -132,7 +137,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.erd}
-          title="ERD"
+          title={`ERD ${isRequired('erd') ? '(필수)' : ''}`}
           type={inputTypes.erd}
           value={settings.erd}
           onChange={(value) => onSettingChange("erd", value)}
@@ -177,7 +182,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.securitySetting}
           onChange={(value) => onSettingChange("securitySetting", value)}
           onInfoClick={() => openModal("securitySetting")}
-          options={radioOptions.securitySetting}
+          options={securityOptions}
           onFocus={() => handleItemFocus("securitySetting")}
         />
 
@@ -198,7 +203,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.architectureStructure}
           onChange={(value) => onSettingChange("architectureStructure", value)}
           onInfoClick={() => openModal("architectureStructure")}
-          options={radioOptions.architectureStructure}
+          options={architectureOptions}
           onFocus={() => handleItemFocus("architectureStructure")}
         />
       </div>

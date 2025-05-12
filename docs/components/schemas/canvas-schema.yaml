@@ -9,11 +9,19 @@ ApiSummaryDto:
     name:
       type: string
       description: 'API의 이름'
-    status:
-      $ref: '#/ApiProcessStateEnumDto'
     description:
       type: string
       description: 'API에 대한 설명'
+    method:
+      type: string
+      description: 'API 메서드 종류'
+    endpoint:
+      type: string
+      description: 'API 엔드 포인트 정보'
+    status:
+      $ref: '#/ApiProcessStateEnumDto'
+
+
 
 DiagramDto:
   type: object
@@ -42,7 +50,6 @@ DiagramDto:
 ComponentDto:
   type: object
   required:
-    - componentId
     - type
     - name
     - methods
@@ -73,7 +80,6 @@ ComponentDto:
 MethodDto:
   type: object
   required:
-    - methodId
     - name
     - signature
   properties:
@@ -96,7 +102,6 @@ MethodDto:
 ConnectionDto:
   type: object
   required:
-    - connectionId
     - sourceMethodId
     - targetMethodId
     - type
@@ -116,7 +121,6 @@ ConnectionDto:
 DtoModelDto:
   type: object
   required:
-    - dtoId
     - name
   properties:
     dtoId:
@@ -140,8 +144,9 @@ MetadataDto:
   properties:
     metadataId:
       type: string
+      description: 메타 데이터 아이디
     version:
-      type: string
+      type: integer
       description: 버전 번호
     lastModified:
       type: string
@@ -168,7 +173,6 @@ VersionInfoDto:
 ChatDto:
   type: object
   required:
-    - chatId
     - createdAt
   properties:
     chatId:
@@ -191,10 +195,16 @@ SystemChatDto:
       type: string
     status:
       $ref: '#/PromptResponseEnumDto'
+    message:
+      type: string
+      description: LLM이 생성한 메시지
     versionInfo:
       $ref: '#/VersionInfoDto'
-    diagramData:
-      $ref: '#/DiagramDto'
+    diagramId:
+      type: string
+      description: 다이어그램 식별 id
+      # example: "507f1f77bcf86cd799439011"
+      # $ref: '#/DiagramDto'
 
 UserChatDto:
   type: object
@@ -214,6 +224,10 @@ UserChatDto:
         methodId:
           type: string
           description: 메서드 ID
+
+ObjectIdDto:
+  type: string
+  description: 데이터베이스가 식별하는 객체(다이어그램, 메서드 등) 식별 아이디
 
 #################### ENUMS ####################
 
@@ -253,10 +267,10 @@ DiagramResponse:
   allOf:
     - $ref: '#/DiagramDto'
 
-ChatResponse:
-  type: object
-  allOf:
-    - $ref: '#/ChatDto'
+#ChatResponse:
+#  type: object
+#  allOf:
+#    - $ref: '#/ChatDto'
 
 SystemChatResponse:
   type: object
@@ -318,7 +332,12 @@ ApiSummaryPageResponse:
             $ref: '#/ApiSummaryDto'
     - $ref: "./page-schema.yaml#/PageDto"
 
-
+SSEIdResponse:
+  type: object
+  description: SSE id
+  properties:
+    streamId:
+      type: string
 
 ComponentUpdatedResponse:
   type: object
@@ -338,7 +357,14 @@ ApiProcessStateUpdatedResponse:
       $ref: '#/ApiProcessStateEnumDto'
 
 #################### PARAMS ####################
-
+SSEId:
+  name: SSEId
+  in: path
+  description: "SSE Id 입니다"
+  required: true
+  schema:
+    type: string
+    example: "f99b4e6c-2c75-4868-bc05-cac827523207"
 ComponentId:
   name: componentId
   in: path
@@ -381,10 +407,10 @@ PromptId:
   required: true
   schema:
     type: string
-Incomplete:
-  name: exclude
+Include:
+  name: include
   in: query
-  description: 제외
+  description: 포함
   required: false
   schema:
     type: string

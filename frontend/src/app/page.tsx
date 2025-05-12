@@ -8,63 +8,56 @@ import ProjectForm from "@/components/project-card/project-form"
 import { Project } from "@/components/project-card/project-card"
 import Image from "next/image"
 
-// API 요청 더미 함수 (나중에 실제 API로 교체)
+// API 요청 함수 - 실제 API 호출로 변경
 const getProjects = async (): Promise<Project[]> => {
-  // 로컬 스토리지에서 프로젝트 데이터 불러오기 (개발용)
   try {
-    if (typeof window !== "undefined") {
-      const savedProjects = localStorage.getItem("projects")
-      if (savedProjects) {
-        return JSON.parse(savedProjects)
+    // 인증 토큰 가져오기
+    const { token } = useAuthStore.getState();
+    
+    if (!token) {
+      console.error("인증 토큰이 없습니다.");
+      throw new Error("인증 토큰이 없습니다.");
+    }
+    
+    // API 호출
+    const response = await fetch('/api/projects', {
+      headers: {
+        'Authorization': token
       }
+    });
+    
+    if (!response.ok) {
+      throw new Error('프로젝트 목록을 불러오는데 실패했습니다.');
     }
-  } catch (error) {
-    console.error("로컬 스토리지 접근 오류:", error)
-  }
-
-  // 기본 더미 프로젝트 데이터
-  const dummyProjects: Project[] = [
-    {
-      id: "1",
-      title: "마케팅 캠페인",
-      description: "2024년 2분기 디지털 마케팅 캠페인 기획 및 실행 프로젝트. 주요 소셜 미디어 플랫폼에서의 브랜드 인지도 향상이 목표입니다.",
-      createdAt: "2024.05.01",
-      emoji: "📊",
-    },
-    {
-      id: "2",
-      title: "모바일 앱 개발",
-      description: "사용자 피드백을 반영한 모바일 앱 리디자인 및 신규 기능 개발 프로젝트. 사용자 경험 개선에 중점을 둡니다.",
-      createdAt: "2024.04.15",
-      emoji: "📱",
-    },
-    {
-      id: "3",
-      title: "데이터 분석 대시보드",
-      description: "실시간 데이터 모니터링을 위한 대시보드 개발. 주요 비즈니스 지표를 시각화하여 의사결정에 도움을 줍니다.",
-      createdAt: "2024.04.10",
-      emoji: "📈",
-    },
-    {
-      id: "4",
-      title: "신규 서비스 론칭",
-      description: "B2B 고객을 위한 새로운 구독 서비스 론칭 준비. 시장 조사, 가격 책정, 마케팅 전략 수립 등의 작업이 포함됩니다.",
-      createdAt: "2024.03.28",
-      emoji: "🚀",
-    },
-  ]
-
-  // 로컬 스토리지에 초기 데이터 저장 (브라우저 환경일 경우만)
-  try {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("projects", JSON.stringify(dummyProjects))
+    
+    const data = await response.json();
+    
+    // 응답이 없거나 형식이 다른 경우 빈 배열 반환
+    if (!data || !data.content) {
+      console.warn("API 응답 데이터 형식이 예상과 다릅니다:", data);
+      return [];
     }
+    
+    // API 응답 데이터를 Project 타입에 맞게 변환
+    return data.content.map((item: { 
+      scrudProjectId: number; 
+      title?: string; 
+      description?: string; 
+      updatedAt?: string;
+      serverUrl?: string;
+    }) => ({
+      id: item.scrudProjectId.toString(),
+      title: item.title || "제목 없음",
+      description: item.description || "설명 없음",
+      createdAt: new Date(item.updatedAt || Date.now()).toLocaleDateString('ko-KR'),
+      emoji: undefined,
+      serverUrl: item.serverUrl || ""
+    }));
   } catch (error) {
-    console.error("로컬 스토리지 저장 오류:", error)
+    console.error("프로젝트 목록 조회 오류:", error);
+    throw error;
   }
-
-  return dummyProjects
-}
+};
 
 // 프로젝트 수정 더미 함수
 const updateProject = async (id: string, projectData: Omit<Project, "id" | "createdAt">): Promise<Project> => {
@@ -108,32 +101,35 @@ const updateProject = async (id: string, projectData: Omit<Project, "id" | "crea
   return updatedProject
 }
 
-// 프로젝트 삭제 더미 함수
+// 프로젝트 삭제 함수 - API 호출로 변경
 const deleteProject = async (id: string): Promise<void> => {
-  // 로컬 스토리지에서 기존 프로젝트 불러오기
-  let projects: Project[] = []
-
   try {
-    if (typeof window !== "undefined") {
-      const savedProjects = localStorage.getItem("projects")
-      projects = savedProjects ? JSON.parse(savedProjects) : []
+    // 인증 토큰 가져오기
+    const { token } = useAuthStore.getState();
+    
+    if (!token) {
+      console.error("인증 토큰이 없습니다.");
+      throw new Error("인증 토큰이 없습니다.");
     }
-  } catch (error) {
-    console.error("로컬 스토리지 접근 오류:", error)
-    throw new Error("프로젝트를 찾을 수 없습니다.")
-  }
-
-  // 해당 ID의 프로젝트 제외하기
-  const filteredProjects = projects.filter((p: Project) => p.id !== id)
-
-  // 업데이트된 프로젝트 저장
-  try {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("projects", JSON.stringify(filteredProjects))
+    
+    // API 호출
+    const response = await fetch(`/api/projects/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': token
+      }
+    });
+    
+    // 요청이 성공적이지 않을 경우 (204가 아닌 경우)
+    if (response.status !== 204) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || '프로젝트 삭제에 실패했습니다.');
     }
+    
+    console.log('프로젝트가 성공적으로 삭제되었습니다.');
   } catch (error) {
-    console.error("로컬 스토리지 저장 오류:", error)
-    throw new Error("프로젝트 삭제에 실패했습니다.")
+    console.error("프로젝트 삭제 오류:", error);
+    throw error;
   }
 }
 
@@ -213,7 +209,7 @@ function HomeContent() {
   // 인증 확인
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login")
+      router.push("/startpage")
     }
   }, [isAuthenticated, router])
 

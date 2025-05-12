@@ -35,3 +35,23 @@ Content-Type: application/json
   },
   "diagramId": "diagram-001"
 }
+
+### 채팅 시작 요청
+POST http://localhost:8000/chat/start
+Content-Type: application/json
+
+{
+  "message": "안녕하세요! 저는 오늘 날씨가 어떤지 궁금합니다."
+}
+
+### 채팅 스트림 데이터 가져오기
+GET http://localhost:8000/chat/stream/4a287028-6bb4-4ebc-8c04-bfdc09c4cbd6
+# stream_id는 start_chat 응답에서 받은 값으로 교체해야 합니다
+
+### 채팅 메시지 전송 (스트림 계속)
+POST http://localhost:8000/chat/message/{stream_id}
+Content-Type: application/json
+
+{
+  "message": "그리고 주말 계획은 어떻게 세우는 것이 좋을까요?"
+}

@@ -1,0 +1,219 @@
+GetPromptsResponse:
+  description: 프롬프트 채팅 기록 조회 결과
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/canvas-schema.yaml#/ChatHistoryResponse'
+      ######################
+      # 채팅 기록 응답
+      ######################
+      example:
+        content:
+          - chatId: "chat-123"
+            createdAt: "2025-04-25T10:30:00.123Z"
+            userChat:
+              tag: "IMPLEMENT"
+              promptType: "BODY"
+              message: "게시글 생성 기능을 구현해주세요."
+              targetMethods:
+                - methodId: "method-464"
+            systemChat:
+              systemChatId: "system-chat-123"
+              status: "MODIFIED"
+              message: "게시글 생성 기능을 추가했습니다. controller, service, repository 관련 클래스들을 추가 했습니다."
+              diagramId: "507f1f77bcf86cd799439011"
+              versionInfo:
+                newVersionId: "version-123"
+                description: "게시글 생성 기능 구현"
+          - chatId: "chat-124"
+            createdAt: "2025-04-25T10:45:30.123Z"
+            userChat:
+              tag: "IMPLEMENT"
+              promptType: "BODY"
+              message: "게시글 생성 기능의 버그를 고쳐주세요"
+              targetMethods:
+                - methodId: "method-462"
+            systemChat:
+              systemChatId: "system-chat-124"
+              diagramId: "507f1f77bcf86cd799439011"
+              message: "게시글 생성 버그를 수정했습니다. service 코드의 오류가 수정되었습니다."
+              status: "MODIFIED"
+              versionInfo:
+                newVersionId: "version-124"
+                description: "게시글 생성 버그 수정"
+PromptChatResponse:
+  description: 프롬프트 처리 결과
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/canvas-schema.yaml#/SSEIdResponse'
+      example:
+        streamId: "f99b4e6c-2c75-4868-bc05-cac827523207"
+
+ConnectSSEResponse:
+  description: 'SSE 연결 성공'
+  content:
+    text/event-stream:
+      schema:
+        type: string
+        description: '이벤트 스트림'
+        example: "data: {'token': '합니다'}"
+      example:
+        value: "data: {'token': '합니다'}"
+
+UpdateComponentPositionResponse:
+  description: '컴포넌트 위치 업데이트 성공'
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/canvas-schema.yaml#/ComponentUpdatedResponse'
+      example:
+        componentId: "component-123"
+        type: "CLASS"
+        name: "BoardController"
+        description: "게시판 컨트롤러 클래스"
+        positionX: 250.5
+        positionY: 150.75
+        methods:
+          - methodId: "method-456"
+            name: "getAllPosts"
+            signature: "public ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable)"
+            body: "@GetMapping\npublic ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable) {\n    return ResponseEntity.ok(boardService.getAllPosts(pageable));\n}"
+            description: "모든 게시글을 페이징하여 조회합니다."
+          - methodId: "method-457"
+            name: "getPostById"
+            signature: "public ResponseEntity<PostDto> getPostById(Long postId)"
+            body: "@GetMapping(\"/{postId}\")\npublic ResponseEntity<PostDto> getPostById(@PathVariable Long postId) {\n    return ResponseEntity.ok(boardService.getPostById(postId));\n}"
+            description: "특정 ID의 게시글을 조회합니다."
+
+SearchApiStatusResponse:
+  description: 'API 상태가 AI_VISUALIZED 인 목록 조회 성공'
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/canvas-schema.yaml#/ApiSummaryPageResponse'
+      example:
+        content:
+          - apiId: "api-123"
+            name: "게시판 생성"
+            description: "게시판 생성 API"
+            method: "POST"
+            endpoint: "/api/v1/boards"
+            status: "AI_VISUALIZED"
+          - apiId: "api-124"
+            name: "게시판 삭제"
+            description: "게시판 삭제 API"
+            method: "DELETE"
+            endpoint: "/api/v1/boards"
+            status: "AI_VISUALIZED"
+          - apiId: "api-125"
+            name: "댓글 생성"
+            description: "댓글 생성 API"
+            method: "POST"
+            endpoint: "/api/v1/boards/{boardId}/comments/{commentId}"
+            status: "AI_VISUALIZED"
+        listSize: 3
+        isFirstPage: true
+        isLastPage: true
+        totalPages: 1
+        totalElements: 3
+
+GetDiagramResponse:
+  description: 성공적으로 도식화 데이터를 조회함
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/canvas-schema.yaml#/DiagramResponse'
+      example:
+        diagramId: "diagram-123"
+        components:
+          - componentId: "component-123"
+            type: "CLASS"
+            name: "BoardController"
+            description: "게시판 컨트롤러 클래스"
+            positionX: 250.5
+            positionY: 150.75
+            methods:
+              - methodId: "method-456"
+                name: "getAllPosts"
+                signature: "public ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable)"
+                body: "@GetMapping\npublic ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable) {\n    return ResponseEntity.ok(boardService.getAllPosts(pageable));\n}"
+                description: "모든 게시글을 페이징하여 조회합니다."
+              - methodId: "method-457"
+                name: "getPostById"
+                signature: "public ResponseEntity<PostDto> getPostById(Long postId)"
+                body: "@GetMapping(\"/{postId}\")\npublic ResponseEntity<PostDto> getPostById(@PathVariable Long postId) {\n    return ResponseEntity.ok(boardService.getPostById(postId));\n}"
+                description: "특정 ID의 게시글을 조회합니다."
+          - componentId: "component-124"
+            type: "CLASS"
+            name: "BoardService"
+            description: "게시판 서비스 클래스"
+            positionX: 450.0
+            positionY: 150.0
+            methods:
+              - methodId: "method-458"
+                name: "getAllPosts"
+                signature: "public PageDto<PostDto> getAllPosts(Pageable pageable)"
+                body: "public PageDto<PostDto> getAllPosts(Pageable pageable) {\n    Page<Post> postsPage = postRepository.findAll(pageable);\n    List<PostDto> postDtos = postsPage.getContent().stream()\n        .map(this::convertToDto)\n        .collect(Collectors.toList());\n    \n    return new PageDto<>(postDtos, postsPage.getNumber(), postsPage.isFirst(), postsPage.isLast(), \n        postsPage.getTotalPages(), postsPage.getTotalElements());\n}"
+                description: "모든 게시글을 페이징하여 조회합니다."
+              - methodId: "method-459"
+                name: "getPostById"
+                signature: "public PostDto getPostById(Long postId)"
+                body: "public PostDto getPostById(Long postId) {\n    Post post = postRepository.findById(postId)\n        .orElseThrow(() -> new NotFoundException(\"Post not found with id: \" + postId));\n    return convertToDto(post);\n}"
+                description: "특정 ID의 게시글을 조회합니다."
+          - componentId: "component-125"
+            type: "INTERFACE"
+            name: "PostRepository"
+            description: "게시글 저장소 인터페이스"
+            positionX: 650.0
+            positionY: 150.0
+            methods:
+              - methodId: "method-460"
+                name: "findAll"
+                signature: "Page<Post> findAll(Pageable pageable)"
+                description: "모든 게시글을 페이징하여 조회합니다."
+              - methodId: "method-461"
+                name: "findById"
+                signature: "Optional<Post> findById(Long id)"
+                description: "ID로 게시글을 조회합니다."
+        connections:
+          - connectionId: "connection-123"
+            sourceMethodId: "method-456"
+            targetMethodId: "method-458"
+            type: "SOLID"
+          - connectionId: "connection-124"
+            sourceMethodId: "method-457"
+            targetMethodId: "method-459"
+            type: "SOLID"
+          - connectionId: "connection-125"
+            sourceMethodId: "method-458"
+            targetMethodId: "method-460"
+            type: "DOTTED"
+          - connectionId: "connection-126"
+            sourceMethodId: "method-459"
+            targetMethodId: "method-461"
+            type: "DOTTED"
+        dto:
+          - dtoId: "dto-123"
+            name: "PostDto"
+            description: "게시글 DTO"
+            body: "public class PostDto {\n    private Long id;\n    private String title;\n    private String content;\n    private String author;\n    private LocalDateTime createdAt;\n    private LocalDateTime updatedAt;\n    \n    // getters and setters\n}"
+          - dtoId: "dto-124"
+            name: "PageDto"
+            description: "페이지 DTO"
+            body: "public class PageDto<T> {\n    private List<T> content;\n    private int listSize;\n    private boolean isFirstPage;\n    private boolean isLastPage;\n    private int totalPages;\n    private long totalElements;\n    \n    // constructors, getters and setters\n}"
+        metadata:
+          metadataId: "metadata-123"
+          version: 2
+          lastModified: "2025-04-25T10:30:45.123Z"
+          name: "게시판 API"
+          description: "게시판 서비스를 위한 CRUD API 모음"
+
+ChangeApiProcessStatusResponse:
+  description: 프롬프트 처리 결과
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/canvas-schema.yaml#/ApiProcessStateUpdatedResponse'
+      example:
+        status: "USER_COMPLETED"

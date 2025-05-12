@@ -1,15 +1,52 @@
-from langchain.output_parsers import PydanticOutputParser, JsonOutputToolsParser
+from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 
 from app.core.models.prompt_models import Diagram
 
-# Pydantic 출력 파서 설정
-parser = PydanticOutputParser(pydantic_object=Diagram)
-print(parser.get_format_instructions())
-# 샘플 데이터 준비 (Few-shot learning을 위한 예시)
-examples = [
-    {
-        "openapi_spec": """
+
+class DiagramPromptGenerator:
+    """
+    OpenAPI 명세를 도식화 데이터로 변환하는 프롬프트 템플릿을 생성하는 클래스
+    """
+
+    def __init__(self):
+        """
+        DiagramPromptGenerator 클래스의 초기화 메서드
+        """
+        # Pydantic 출력 파서 설정
+        self.parser = PydanticOutputParser(pydantic_object=Diagram)
+
+        # 샘플 데이터 준비 (Few-shot learning을 위한 예시)
+        self.examples = self._prepare_examples()
+
+        # 예시 포맷터 템플릿 생성
+        self.example_formatter_template = """
+input(OpenAPI 명세):
+{openapi_spec}
+
+output(도식화 데이터):
+{diagram}
+"""
+
+        # 예시 프롬프트 템플릿 생성
+        self.example_prompt = PromptTemplate(
+            input_variables=["openapi_spec", "diagram"],
+            template=self.example_formatter_template
+        )
+
+        # FewShot 프롬프트 템플릿 생성
+        self.few_shot_prompt = self._create_few_shot_prompt()
+
+    def _prepare_examples(self):
+        """
+        Few-shot learning을 위한 예시 데이터를 준비하는 메서드
+
+        Returns:
+            list: 예시 데이터 목록
+        """
+        return [
+            {
+                "openapi_spec": """
         openapi: 3.0.0
         info:
         title: 게시판 API
@@ -40,7 +77,7 @@ examples = [
             '200':
               description: 성공
                 """,
-        "diagram": """
+                "diagram": """
 {{
     "diagramId": "diagram-001",
     "metadata": {{
@@ -233,28 +270,21 @@ examples = [
     }}
     ]
 }}
+                """
+            }
+        ]
+
+    def _create_few_shot_prompt(self):
         """
-    }
-]
+        FewShot 프롬프트 템플릿을 생성하는 메서드
 
-# FewShot 프롬프트 템플릿 생성
-example_formatter_template = """
-input(OpenAPI 명세):
-{openapi_spec}
-
-output(도식화 데이터):
-{diagram}
-"""
-
-example_prompt = PromptTemplate(
-    input_variables=["openapi_spec", "diagram"],
-    template=example_formatter_template
-)
-
-few_shot_prompt = FewShotPromptTemplate(
-    examples=examples,
-    example_prompt=example_prompt,
-    prefix="""주어진 OpenAPI 명세를 분석하여 메서드 도식화 데이터를 생성해야 합니다.
+        Returns:
+            FewShotPromptTemplate: 생성된 FewShot 프롬프트 템플릿
+        """
+        return FewShotPromptTemplate(
+            examples=self.examples,
+            example_prompt=self.example_prompt,
+            prefix="""주어진 OpenAPI 명세를 분석하여 메서드 도식화 데이터를 생성해야 합니다.
 아래는 OpenAPI 명세와 그에 해당하는 도식화 데이터의 예시입니다. 이 예시를 참고하여 새로운 OpenAPI 명세에 맞는 도식화 데이터를 생성해주세요.
 
 도식화 데이터는 다음과 같은 구성요소를 포함해야 합니다:
@@ -276,14 +306,38 @@ few_shot_prompt = FewShotPromptTemplate(
 3. Pydantic이 복잡한 중첩 모델을 JSON 스키마로 변환할 때, 모델의 타입 정의를 `$defs` 섹션에 분리하여 저장하고 메인 스키마에서는 참조를 사용합니다.
 4. 이러한 구조는 스키마의 가독성을 높이고, 중복을 줄이며, 순환 참조 문제를 해결하기 위한 설계입니다.
 """,
-    suffix="""이제 아래 OpenAPI 명세를 분석하여 도식화 데이터를 생성해주세요.
+            suffix="""이제 아래 OpenAPI 명세를 분석하여 도식화 데이터를 생성해주세요.
 
 OpenAPI 명세:
 {openapi_spec}
 
 형식에 맞게 JSON 형태로 도식화 데이터를 출력해주세요.""",
-    input_variables=["openapi_spec"]
-)
+            input_variables=["openapi_spec"]
+        )
 
-# 프롬프트 저장
-few_shot_prompt.save("few_shot_prompt.json")
+    def get_format_instructions(self):
+        """
+        포맷 지침을 출력하는 메서드
+
+        Returns:
+            str: 포맷 지침 문자열
+        """
+        return self.parser.get_format_instructions()
+
+    def get_prompt(self) -> FewShotPromptTemplate:
+        """
+        생성된 프롬프트 템플릿을 반환하는 메서드
+
+        Returns:
+            FewShotPromptTemplate: 생성된 프롬프트 템플릿
+        """
+        return self.few_shot_prompt
+
+    def save_prompt(self, filepath="few_shot_prompt.json"):
+        """
+        프롬프트 템플릿을 지정된 경로에 저장하는 메서드
+
+        Args:
+            filepath (str, optional): 저장할 파일 경로. 기본값은 "few_shot_prompt.json"
+        """
+        self.few_shot_prompt.save(filepath)
