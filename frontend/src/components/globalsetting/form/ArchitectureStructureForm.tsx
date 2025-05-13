@@ -25,6 +25,8 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
 
+    const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
+    
     // 컴포넌트 마운트 시 초기값에 따라 레이어드 아키텍처 타입 설정
     useEffect(() => {
       if (value === 'ARCHITECTURE_DEFAULT_LAYERED_A') {
@@ -119,13 +121,13 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
             localStorage.removeItem('github-token-direct');
             
             // 인증 요청
-            const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
+            const oauthUrl = getGitHubAuthUrl(`${apiUrl}/globalsetting`);
             window.location.href = oauthUrl;
           }
         } else {
           // 토큰이 없는 경우 바로 인증 요청
           console.log('GitHub 토큰 없음, 인증 요청');
-          const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
+          const oauthUrl = getGitHubAuthUrl(`${apiUrl}/globalsetting`);
           window.location.href = oauthUrl;
         }
       } catch (error) {

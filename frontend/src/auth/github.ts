@@ -4,7 +4,6 @@
 import axios from 'axios';
 import { useGitHubTokenStore } from '@/store/githubTokenStore';
 
-// 백엔드 API 기본 URL
 const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
 
 /**
@@ -12,7 +11,7 @@ const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
  * @param redirectUri - 인증 후 리다이렉트할 URI
  * @returns {string} - 인증 URL
  */
-export function getGitHubAuthUrl(redirectUri: string = 'http://localhost:3000/globalsetting'): string {
+export function getGitHubAuthUrl(redirectUri: string = `${apiUrl}/globalsetting`): string {
   return `${apiUrl}/oauth2/authorize/github?redirect_uri=${encodeURIComponent(redirectUri)}`;
 }
 
@@ -28,7 +27,7 @@ export async function exchangeCodeForToken(code: string): Promise<string> {
     // 백엔드를 통해 토큰 교환
     const response = await axios.post(`${apiUrl}/api/github/token`, { 
       code,
-      redirect_uri: 'http://localhost:3000/globalsetting' // 명시적으로 리다이렉트 URI 지정
+      redirect_uri: `${apiUrl}/globalsetting` // 명시적으로 리다이렉트 URI 지정
     });
     
     console.log("✅ [GitHub] 백엔드 토큰 교환 응답:", response.data);
