@@ -1,8 +1,7 @@
-// MiddleContainer.tsx 파일 수정
-
 "use client"
 
 import { ApiProcessStateEnumDto } from "@generated/model"
+import axios from "axios"
 import { useState, useRef, useEffect } from "react"
 
 interface ApiEndpoint {
@@ -204,7 +203,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     setEditingEndpointId(null)
   }
 
-  // API 상태 변경 함수 (수정)
+  // API 상태 변경 함수
   const updateEndpointStatus = async (groupId: string, endpointId: string, status: ApiProcessStateEnumDto, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation() // 상태 변경 시 클릭 이벤트 전파 방지
@@ -236,21 +235,13 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     const endpoint = group?.endpoints.find((e) => e.id === endpointId)
 
     if (endpoint && endpoint.apiSpecVersionId) {
-      // API 호출하여 상태 업데이트
+      // 새로운 API 엔드포인트로 상태 업데이트 (axios 사용)
       try {
-        const response = await fetch(`/api/canvas-api/${scrudProjectId}/${endpoint.apiSpecVersionId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status }),
-        })
+        console.log(`API 스펙 ID ${endpoint.apiSpecVersionId}의 상태 업데이트 요청:`, status)
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error("API 상태 업데이트 실패:", errorData)
-          // 실패 시 에러 처리 (예: 토스트 메시지 등)
-        }
+        const response = await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status })
+
+        console.log("API 상태가 성공적으로 업데이트되었습니다:", response.data)
       } catch (error) {
         console.error("API 상태 업데이트 중 오류 발생:", error)
         // 실패 시 에러 처리
