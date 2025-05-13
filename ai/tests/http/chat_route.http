@@ -2,7 +2,7 @@
 # 다이어그램 관련 API 테스트
 ###############################################
 
-@baseUrl = http://localhost:8000
+@baseUrl = http://localhost:8080
 @projectId = project-123
 @apiId = api-456
 
@@ -13,7 +13,7 @@ Content-Type: application/json
 {
   "tag": "REFACTORING",
   "promptType": "BODY",
-  "message": "선택한 메서드를 리팩토링 해주세요",
+  "message": "선택한 메서드를 리팩토링 해주세요.  `map` 함수 내에서 `sample`이라는 변수를 사용하여 가독성을 높여주세요",
   "targetMethods": [
     {
       "methodId": "fd93c6bd-b2b6-4d06-86a4-ce027da3bb85"

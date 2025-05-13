@@ -174,8 +174,6 @@ async def connect_sse(
             while True:
                 # 큐에서 데이터 대기
                 data = await response_queue.get()
-                print(data)
-                print(type(data))
                 # 종료 신호 확인
                 if data is None:
                     logger.info(f"SSE 스트림 종료: sse_id={sse_id}")
@@ -191,6 +189,7 @@ async def connect_sse(
         finally:
             # 클라이언트 연결 종료 시 정리
             logger.info(f"SSE 연결 정리: sse_id={sse_id}")
+
             sse_service.remove_stream(sse_id)
 
     logger.info(f"SSE 스트리밍 응답 시작: sse_id={sse_id}")
