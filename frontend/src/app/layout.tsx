@@ -1,12 +1,14 @@
+// app/layout.tsx
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import Header from "@/components/header/header"
+import AuthProvider from "@/components/AuthProvider"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "나의 Next.js 프로젝트",
+  title: "SCRUD",
   description: "Next.js와 TypeScript로 만든 프로젝트입니다.",
 }
 
@@ -15,7 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko">
       <body className={inter.className}>
         <Header />
-        <main>{children}</main>
+        <AuthProvider>
+          <main>{children}</main>
+        </AuthProvider>
       </body>
     </html>
   )

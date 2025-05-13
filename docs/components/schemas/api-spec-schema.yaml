@@ -22,7 +22,7 @@ ApiSpecVersionResponse:
       example: '이 API는 예시 데이터를 처리합니다.'
     httpMethod:
       type: string
-      enum: [GET, POST, PUT, PATCH, DELETE]
+      enum: [ GET, POST, PUT, PATCH, DELETE ]
       description: HTTP 메서드 (GET, POST, PUT, PATCH, DELETE)
     requestBody:
       type: string
@@ -37,13 +37,59 @@ ApiSpecVersionResponse:
       type: string
       example: '{"message":"성공"}'
 
+ApiSpecResponse:
+  type: object
+  properties:
+    apiSpecId:
+      type: integer
+      format: int64
+      example: 10
+    apiSpecVersionId:
+      type: integer
+      format: int64
+      example: 101
+    endpoint:
+      type: string
+      example: /api/v1/examples/{id}
+    apiGroup:
+      type: string
+      example: example
+    version:
+      type: integer
+      example: 1
+    summary:
+      type: string
+      example: '예시 스펙입니다.'
+    description:
+      type: string
+      example: '이 API는 예시 데이터를 처리합니다.'
+    apiSpecStatus:
+      type: string
+      enum: [ AI_GENERATED, AI_VISUALIZED, USER_COMPLETED ]
+      example: AI_GENERATED
+    httpMethod:
+      type: string
+      enum: [ GET, POST, PUT, PATCH, DELETE ]
+      description: HTTP 메서드 (GET, POST, PUT, PATCH, DELETE)
+    requestBody:
+      type: string
+      example: '{"name":"홍길동"}'
+    queryParameters:
+      type: string
+      example: '[{"name": "id", "type": "integer", "required": true}]'
+    pathParameters:
+      type: string
+      example: '[{"name": "exampleId", "type": "string", "required": true}]'
+    response:
+      type: string
+      example: '{"message":"성공"}'
 
 ApiFieldDto:
   type: object
   properties:
     field_type:
       type: string
-      enum: [path, query, request_body]
+      enum: [ path, query, request_body ]
     name:
       type: string
     data_type:
@@ -86,7 +132,7 @@ ApiSpecVersionCreateRequest:
       description: 응답 예시(JSON 형태의 문자열)
     httpMethod:
       type: string
-      enum: [GET, POST, PUT, PATCH, DELETE]
+      enum: [ GET, POST, PUT, PATCH, DELETE ]
       example: POST
       description: HTTP 메서드
     requestBody:
@@ -141,7 +187,7 @@ ApiSpecVersionUpdateRequest:
       description: 응답 예시(JSON 형태의 문자열)
     httpMethod:
       type: string
-      enum: [GET, POST, PUT, PATCH, DELETE]
+      enum: [ GET, POST, PUT, PATCH, DELETE ]
       example: POST
       description: HTTP 메서드
     requestBody:
@@ -160,10 +206,20 @@ ApiSpecVersionUpdateRequest:
       example: '{ "id": "123" }'
       description: 경로 파라미터 (JSON 형식 문자열)
 
-ApiSpecVersionListResponse:
+ApiSpecListResponse:
   type: object
   properties:
     content:
-        type: array
-        items:
-            $ref: '#/ApiSpecVersionResponse'
+      type: array
+      items:
+        $ref: '#/ApiSpecResponse'
+
+ApiSpecVersionStatusRequest:
+  type: object
+  properties:
+    apiSpecStatus:
+        type: string
+        enum: [ AI_GENERATED, AI_VISUALIZED, USER_COMPLETED ]
+        example: AI_GENERATED
+        description: API 스펙 상태 (AI_GENERATED, AI_VISUALIZED, USER_COMPLETED)
+

@@ -1,9 +1,29 @@
 FileTypeEnumDto:
   type: string
-  enum: [REQUIREMENTS, ERD, UTIL, CONVENTION, CONVENTION_DEFAULT, DEPENDENCY, ERROR_CODE, SECURITY, SECURITY_DEFAULT_JWT, SECURITY_DEFAULT_SESSION, SECURITY_DEFAULT_NONE, ARCHITECTURE_GITHUB, ARCHITECTURE_DEFAULT_LAYERED_A, ARCHITECTURE_DEFAULT_LAYERED_B, ARCHITECTURE_DEFAULT_CLEAN, ARCHITECTURE_DEFAULT_MSA, ARCHITECTURE_DEFAULT_HEX]
+
+  enum:
+    [
+      REQUIREMENTS,
+      ERD,
+      UTIL,
+      CONVENTION,
+      CONVENTION_DEFAULT,
+      DEPENDENCY,
+      ERROR_CODE,
+      SECURITY,
+      SECURITY_DEFAULT_JWT,
+      SECURITY_DEFAULT_SESSION,
+      SECURITY_DEFAULT_NONE,
+      ARCHITECTURE_GITHUB,
+      ARCHITECTURE_DEFAULT_LAYERED_A,
+      ARCHITECTURE_DEFAULT_LAYERED_B,
+      ARCHITECTURE_DEFAULT_CLEAN,
+      ARCHITECTURE_DEFAULT_MSA,
+      ARCHITECTURE_DEFAULT_HEX
+    ]
 
 ScrudProjectDto:
-  description: "프로젝트 기본 정보"  
+  description: "프로젝트 기본 정보"
   type: object
   properties:
     scrudProjectId:
@@ -59,8 +79,6 @@ GlobalFileDto:
       type: string
     fileType:
       $ref: "#/FileTypeEnumDto"
-    fileUrl:
-      type: string
     fileContent:
       type: string
 

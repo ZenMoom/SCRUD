@@ -43,6 +43,13 @@ spring:
       ddl-auto: ${SPRING_JPA_DDL_AUTO}
     defer-datasource-initialization: true
 
+  sql:
+    init:
+      data-locations:
+        - classpath:sql/defaultGlobalFile.sql
+
+      mode: ${SQL_INIT_MODE}
+
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?serverTimezone=UTC&useUniCode=yes&characterEncoding=UTF-8
     username: ${MYSQL_ROOT_USERNAME}
@@ -92,6 +99,11 @@ security:
     requestMatchers:
       - /api/v1/rules:GET
       - /api/v1/api-specs:GET, POST, PUT
+      - /api/sse/connect/**:GET
+      - /api/sse/stream/**:GET
+      - /api/sse/status/**:GET
+      - /api/sse/count:GET
+      - /api/sse/test/**:GET, POST
     # test
     # - /api/v1/tests:GET, POST
 

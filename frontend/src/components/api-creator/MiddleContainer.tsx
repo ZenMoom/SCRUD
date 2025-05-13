@@ -1,14 +1,14 @@
-// MiddleContainer.tsx 파일 수정
-
 "use client"
 
+import { ApiProcessStateEnumDto } from "@generated/model"
+import axios from "axios"
 import { useState, useRef, useEffect } from "react"
 
 interface ApiEndpoint {
   id: string
   path: string
   method: string
-  status: "todo" | "progress" | "done"
+  status: ApiProcessStateEnumDto // 상태 타입 변경
   apiSpecVersionId?: number
 }
 
@@ -23,7 +23,7 @@ interface MiddleContainerProps {
   apiGroups: ApiGroup[]
   setApiGroups: React.Dispatch<React.SetStateAction<ApiGroup[]>>
   isLoading: boolean
-  scrudProjectId: number // 프로젝트 ID 추가
+  scrudProjectId: number
 }
 
 export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading, scrudProjectId }: MiddleContainerProps) {
@@ -45,12 +45,12 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       ...apiGroups,
       {
         id: newGroupId,
-        name: "api/NEW",
+        name: "api/v1/new",
         endpoints: [],
       },
     ])
     setEditingGroupId(newGroupId)
-    setNewGroupName("api/NEW")
+    setNewGroupName("api/v1/new")
   }
 
   // API 엔드포인트 추가 함수
@@ -66,7 +66,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       id: newEndpointId,
       path: `${basePath}/new`,
       method: "GET",
-      status: "todo" as const,
+      status: "AI_GENERATED" as ApiProcessStateEnumDto, // 초기 상태 변경
     }
 
     setApiGroups(
@@ -204,11 +204,35 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   }
 
   // API 상태 변경 함수
-  const updateEndpointStatus = (groupId: string, endpointId: string, status: "todo" | "progress" | "done", e?: React.MouseEvent) => {
+  const updateEndpointStatus = async (groupId: string, endpointId: string, status: ApiProcessStateEnumDto, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation() // 상태 변경 시 클릭 이벤트 전파 방지
     }
 
+    // API ID 가져오기
+    const group = apiGroups.find((g) => g.id === groupId)
+    const endpoint = group?.endpoints.find((e) => e.id === endpointId)
+
+    if (!endpoint || !endpoint.apiSpecVersionId) {
+      console.warn("apiSpecVersionId가 없어 서버에 상태 업데이트를 할 수 없습니다.")
+      return
+    }
+
+    // 상태 변경 제한 검증
+    if (endpoint.status === "AI_GENERATED") {
+      console.warn("생성됨 상태에서는 상태를 변경할 수 없습니다.")
+      return
+    }
+
+    // "작업중" 또는 "완료" 상태에서 "생성됨" 상태로 돌아갈 수 없음
+    if ((endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED") && status === "AI_GENERATED") {
+      console.warn("작업중 또는 완료 상태에서 생성됨 상태로 돌아갈 수 없습니다.")
+      return
+    }
+
+    // 특정 로직을 추가할 자리 (여기에 필요한 로직 추가)
+
+    // 먼저 UI 상태 업데이트 (낙관적 업데이트)
     setApiGroups(
       apiGroups.map((group) => {
         if (group.id === groupId) {
@@ -228,6 +252,38 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         return group
       })
     )
+
+    // API 스펙 상태 업데이트 요청
+    try {
+      console.log(`API 스펙 ID ${endpoint.apiSpecVersionId}의 상태를 '${status}'로 업데이트 요청`)
+
+      const response = await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status })
+
+      console.log("API 상태가 성공적으로 업데이트되었습니다:", response.data)
+    } catch (error) {
+      console.error("API 상태 업데이트 중 오류 발생:", error)
+
+      // 요청 실패 시 UI 롤백 (원래 상태로 복원)
+      setApiGroups(
+        apiGroups.map((group) => {
+          if (group.id === groupId) {
+            return {
+              ...group,
+              endpoints: group.endpoints.map((ep) => {
+                if (ep.id === endpointId) {
+                  return {
+                    ...ep,
+                    status: endpoint.status, // 원래 상태로 복원
+                  }
+                }
+                return ep
+              }),
+            }
+          }
+          return group
+        })
+      )
+    }
   }
 
   // 편집 취소
@@ -265,15 +321,17 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     }
   }, [editingEndpointId])
 
-  // 상태에 따른 색상 및 텍스트 표시
-  const getStatusStyle = (status: "todo" | "progress" | "done") => {
+  // 상태에 따른 색상 및 텍스트 표시 함수
+  const getStatusStyle = (status: ApiProcessStateEnumDto) => {
     switch (status) {
-      case "todo":
-        return "bg-gray-200 text-gray-700" // 해야할 일 - 회색
-      case "progress":
-        return "bg-blue-100 text-blue-700" // 진행 중 - 옅은 파란색
-      case "done":
-        return "bg-green-100 text-green-700" // 완료 - 초록색
+      case "AI_GENERATED":
+        return "bg-gray-200 text-gray-700" // AI 생성됨 - 회색
+      case "AI_VISUALIZED":
+        return "bg-blue-100 text-blue-700" // AI 시각화됨 - 옅은 파란색
+      case "USER_COMPLETED":
+        return "bg-green-100 text-green-700" // 사용자 완료 - 초록색
+      default:
+        return "bg-gray-200 text-gray-700" // 기본값
     }
   }
 
@@ -377,21 +435,26 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                             onClick={() => onApiSelect(endpoint.path, endpoint.method)}
                             onDoubleClick={(e) => startEditingEndpoint(group.id, endpoint.id, e)}
                           >
-                            {/* 상태 드롭다운 - 화살표와 텍스트가 겹치지 않게 수정 */}
-                            <div className="relative inline-block text-left w-20 flex-shrink-0">
+                            {/* 상태 드롭다운 - 상태 변경 제한 적용 */}
+                            <div className="relative inline-block text-left w-24 flex-shrink-0">
                               <select
                                 value={endpoint.status}
-                                onChange={(e) => updateEndpointStatus(group.id, endpoint.id, e.target.value as "todo" | "progress" | "done")}
-                                className={`appearance-none text-xs px-2 py-0.5 rounded w-full cursor-pointer focus:outline-none ${getStatusStyle(endpoint.status)} pr-6`} // pr-6 추가로 오른쪽 여백 확보
+                                onChange={(e) => updateEndpointStatus(group.id, endpoint.id, e.target.value as ApiProcessStateEnumDto)}
+                                className={`appearance-none text-xs px-2 py-0.5 rounded w-full cursor-pointer focus:outline-none ${getStatusStyle(endpoint.status)} pr-6`}
                                 onClick={(e) => e.stopPropagation()}
+                                disabled={endpoint.status === "AI_GENERATED"} // 생성됨 상태일 때 드롭박스 자체를 비활성화
                               >
-                                <option value="todo" className="bg-white text-gray-700">
-                                  해야할 일
+                                <option
+                                  value="AI_GENERATED"
+                                  className="bg-white text-gray-700"
+                                  disabled={endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED"} // 작업중 또는 완료 상태에서 생성됨으로 돌아갈 수 없음
+                                >
+                                  생성됨
                                 </option>
-                                <option value="progress" className="bg-white text-blue-700">
-                                  진행 중
+                                <option value="AI_VISUALIZED" className="bg-white text-blue-700">
+                                  작업중
                                 </option>
-                                <option value="done" className="bg-white text-green-700">
+                                <option value="USER_COMPLETED" className="bg-white text-green-700">
                                   완료
                                 </option>
                               </select>

@@ -8,7 +8,7 @@ This is an AI service built with FastAPI that processes OpenAPI specifications t
 
 ## Architecture
 
-- **FastAPI Application**: Provides HTTP endpoints for chat-based interaction
+- **FastAPI Application**: Provides HTTP endpoints for chat-based interaction and diagram generation
 - **LLM Integration**: Uses LangChain to connect to different LLM providers (OpenAI, Anthropic, Ollama)
 - **Message Queue**: Kafka for asynchronous communication with other services
 - **Database**: MongoDB for storing diagram data and chat history
@@ -18,17 +18,22 @@ This is an AI service built with FastAPI that processes OpenAPI specifications t
 
 1. **Core Services**: Business logic for processing API specs and generating diagrams
    - `ChatService`: Processes OpenAPI specs using LLMs to generate diagram data
+   - `DiagramService`: Manages diagram creation, retrieval, and component positioning
+   - `SSEService`: Singleton for managing streaming connections to clients
 
 2. **Infrastructure**: External service integrations
-   - `KafkaConsumer/Producer`: Message queue integration
-   - `MongoRepository`: Database access layer with repository pattern
+   - `KafkaConsumer/Producer`: Asynchronous message queue integration with handler registration
+   - `MongoRepository`: Database access layer with generic repository pattern
 
 3. **API Layer**: FastAPI routes for HTTP endpoints
-   - `chat_routes.py`: Endpoints for chat-based interaction
+   - `api_routes.py`: API spec generation endpoints
+   - `chat_routes.py`: Chat interaction and SSE connection endpoints
+   - `diagram_routes.py`: Diagram CRUD and component positioning endpoints
 
 4. **Model Generation**: LLM provider integrations
    - `ModelGenerator`: Factory for creating LLM instances (OpenAI, Anthropic, Ollama)
-   - `SSEStreamingHandler`: Callbacks for streaming LLM responses
+   - `ApiModelGenerator`: Specialized generator for API specification analysis
+   - `StreamingHandler`: Callbacks for streaming LLM responses
 
 ## Development Commands
 
@@ -68,6 +73,11 @@ pytest -m real
 
 # Run tests with coverage report
 pytest --cov=app tests/
+
+# Test API endpoints manually with HTTP files
+# Use REST Client extension in VS Code to run:
+tests/http/chat_route.http
+tests/http/diagram_route.http
 ```
 
 ## Environment Variables
@@ -82,26 +92,41 @@ Key environment variables:
 - `ANTHROPIC_API_KEY`: Anthropic API key
 - `OLLAMA_API_URL`: URL for Ollama API
 - `KAFKA_BOOTSTRAP_SERVERS`: Kafka server addresses
+- `KAFKA_TOPIC_*`: Topic names for various Kafka message types
 - `MONGO_URI`: MongoDB connection URI
 - `MONGO_DB_NAME`: MongoDB database name
 
 ## Testing Approach
 
 The project uses pytest for unit and integration testing:
-- `test_chat_service.py`: Unit tests with mocks
-- `test_chat_service_real.py`: Integration tests with real LLM API calls (marked with `-m real`)
+- Mock-based unit tests with pytest-mock
+- Async testing with pytest-asyncio
+- Integration tests with real LLM API calls (marked with `-m real`)
+- HTTP request files for API endpoint testing
+- Test coverage reporting with pytest-cov
 
 ## Common Patterns
 
 1. **Repository Pattern**: Database access is abstracted through repositories
-   - `MongoRepository`: Interface for MongoDB operations
-   - `MongoRepositoryImpl`: Implementation with MongoDB
+   - Generic repository with type variables for type safety
+   - Specialized repositories for specific domain entities (chat, diagram)
 
 2. **Dependency Injection**: Services take dependencies as constructor parameters
+   - Makes testing easier with mock repositories and services
 
 3. **Event Streaming**: Using SSE for streaming LLM responses
-   - `SSEStreamingHandler` processes streaming tokens
+   - `SSEService` singleton manages client connections
+   - `StreamingHandler` processes streaming tokens
 
-4. **Kafka Message Handling**: Request/response handling through Kafka
+4. **Kafka Message Handling**: Asynchronous request/response handling
    - Handler registration in `main.py`
-   - Message processing in `handlers.py`
+   - Message correlation using keys
+   - Strong typing with DTOs
+
+5. **Factory Pattern**: For LLM provider creation
+   - `ModelGenerator` creates appropriate LLM instance based on configuration
+   - Supports OpenAI, Anthropic, and Ollama
+
+6. **Async/Await**: Used consistently throughout the codebase
+   - Non-blocking I/O for database and message broker operations
+   - Async context managers for resource lifecycle management
