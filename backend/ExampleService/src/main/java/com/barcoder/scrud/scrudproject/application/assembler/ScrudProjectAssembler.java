@@ -51,7 +51,6 @@ public class ScrudProjectAssembler {
 
     // 원본을 따로 보여줘야 한다면 전처리 된 파일은 프롬프팅 할 때만 활용하고, 사용자에게 보여줄 파일을 따로 저장해둬야 함. 상의해보기
     public GlobalFile toGlobalFile(GlobalFileIn globalFile) {
-        String fileName = globalFile.getFileName();
         String fileContent = globalFile.getFileContent();
 
         switch(globalFile.getFileType()) {
@@ -80,7 +79,7 @@ public class ScrudProjectAssembler {
         return GlobalFile.builder()
                 .fileName(globalFile.getFileName())
                 .fileType(globalFile.getFileType())
-                .fileContent(globalFile.getFileContent())
+                .fileContent(fileContent)
                 .build();
     }
 
