@@ -149,49 +149,6 @@ class Chat(BaseModel):
     systemChat: Optional[SystemChat] = None
 
 
-# 요청 및 응답 모델
-class ComponentPositionUpdateRequest(BaseModel):
-    x: float
-    y: float
-
-
-class ComponentUpdatedResponse(Component):
-    pass
-
-
-class ApiProcessStateRequest(BaseModel):
-    status: ApiProcessState
-
-
-class ApiProcessStateUpdatedResponse(BaseModel):
-    status: ApiProcessState
-
-
-class ApiSummaryPageResponse(PageDto):
-    content: list[ApiSummary]
-
-
-class DiagramResponse(Diagram):
-    pass
-
-
-class ChatHistoryResponse(BaseModel):
-    content: list[Chat]
-
-
-class UserChatRequest(UserChat):
-    pass
-
-
-class SystemChatResponse(SystemChat):
-    pass
-
-
-class SSEEventDto(BaseModel):
-    eventName: str
-    data: Dict[str, Any]
-
-
 # 프로젝트 관련 모델
 class Project(BaseModel):
     name: str
