@@ -6,7 +6,7 @@ import Header from "@/components/header/header"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "나의 Next.js 프로젝트",
+  title: "SCRUD",
   description: "Next.js와 TypeScript로 만든 프로젝트입니다.",
 }
 

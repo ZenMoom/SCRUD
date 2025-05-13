@@ -1,5 +1,9 @@
 FileTypeEnumDto:
   type: string
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop
   enum:
     [
       REQUIREMENTS,

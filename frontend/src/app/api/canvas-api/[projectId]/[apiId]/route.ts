@@ -9,7 +9,6 @@ export async function PUT(request: NextRequest) {
     // URL에서 직접 경로 매개변수 추출
     const url = new URL(request.url)
     const pathParts = url.pathname.split("/")
-
     // /api/canvas-api/[projectId]/[apiId] 형식의 URL에서 매개변수 추출
     const projectId = pathParts[3] // /api/canvas-api/[projectId]
     const apiId = pathParts[4] // /api/canvas-api/[projectId]/[apiId]
@@ -30,30 +29,29 @@ export async function PUT(request: NextRequest) {
     const config = new Configuration({
       basePath: apiUrl,
     })
-
     const scrudApiApi = new ScrudApiApi(config)
 
-    // 요청 바디에서 추가 데이터 가져오기 (선택 사항)
-    const requestData = await request.json().catch(() => ({}))
+    // 요청 바디에서 상태 데이터 가져오기
+    const requestData = await request.json()
     console.log("요청 데이터:", requestData)
 
     // ApiProcessStateRequest 타입에 맞게 요청 데이터 생성
     const apiProcessStateRequest: ApiProcessStateRequest = {
-      status: "USER_COMPLETED",
+      status: requestData.status, // 클라이언트에서 전송한 상태 값 사용
     }
 
     // API 처리 상태 변경 요청
     const response = await scrudApiApi.changeApiProcessStatus({
-      projectId,
-      apiId,
+      projectId: projectId, // string으로 유지
+      apiId: apiId, // string으로 유지
       apiProcessStateRequest,
     })
 
+    // 응답 데이터 그대로 반환 (content 프로퍼티가 없는 것으로 보임)
     return NextResponse.json(response.data)
   } catch (error) {
     const apiError = error as Error
     console.error("API 처리 상태 변경 실패:", apiError)
-
     return NextResponse.json({ error: "API 처리 상태 변경 중 오류가 발생했습니다: " + apiError.message }, { status: 500 })
   }
 }
