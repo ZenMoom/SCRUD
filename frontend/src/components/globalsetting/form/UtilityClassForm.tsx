@@ -28,27 +28,13 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
     const buttonRef = useRef<HTMLDivElement>(null)
 
     // GitHub에서 파일 선택 시 호출될 핸들러
-    const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
+    const handleGitHubFileSelect = (files: Array<{ path: string, content: string }>) => {
       if (files.length > 0) {
-        // 모든 선택된 파일 처리
-        const githubFiles = files.map(file => {
-          // fileUrl이 있으면 fileUrl 포함, 없으면 기존 방식대로 처리
-          if (file.downloadUrl) {
-            // 파일 경로와 URL을 모두 포함해서 저장 (파이프로 구분)
-            return {
-              name: file.path,
-              content: file.downloadUrl
-            };
-          } else {
-            // 기존 방식 (URL 없는 경우)
-            return {
-              name: file.path,
-              content: ""
-            };
-          }
-        });
-
-        // 배열을 결과로 반환
+        const githubFiles = files.map(file => ({
+          name: file.path,
+          content: file.content,
+          isGitHub: true
+        }));
         onChange(githubFiles);
       }
       setIsGitHubModalOpen(false);

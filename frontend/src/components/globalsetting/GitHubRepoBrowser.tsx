@@ -25,7 +25,7 @@ interface ContentItem {
 interface GitHubRepoBrowserProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (files: Array<{path: string, downloadUrl?: string, content?: string, fileContent?: string, fileType?: string, fileName?: string}>) => void;
+  onSelect: (files: Array<{path: string, downloadUrl?: string, content: string, fileType?: string, fileName?: string, isGitHub: boolean}>) => void;
   isArchitecture?: boolean; // 아키텍처 구조도 선택 모드인지 여부
   formType?: string; // 폼 타입 추가
 }
@@ -34,7 +34,7 @@ interface GitHubRepoBrowserProps {
 interface SelectedItem {
   path: string;
   type: 'file' | 'directory' | 'repository';
-  content?: unknown;
+  content: string;  // content를 필수 string 타입으로 변경
   downloadUrl?: string;
   repoInfo?: {
     name: string;
@@ -106,7 +106,8 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           repoInfo: {
             name: repo.name,
             owner: repo.owner.login
-          }
+          },
+          content: ''
         }]);
       } else {
         // 이미 선택된 경우 선택 취소
@@ -351,20 +352,6 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
     }
   };
   
-  // 파일 내용을 가져오는 함수 추가
-  const fetchFileContent = async (downloadUrl: string): Promise<string> => {
-    try {
-      const response = await fetch(downloadUrl);
-      if (!response.ok) {
-        throw new Error(`파일 내용 가져오기 실패: ${response.status}`);
-      }
-      return await response.text();
-    } catch (error) {
-      console.error('파일 내용 가져오기 실패:', error);
-      throw error;
-    }
-  };
-
   // 파일 타입을 결정하는 함수 추가
   const determineFileType = (formType?: string): string => {
     switch (formType) {
@@ -402,9 +389,10 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           if (selectedItems[0].content) {
             onSelect([{
               path: selectedItems[0].path,
-              fileContent: JSON.stringify(selectedItems[0].content),
+              content: JSON.stringify(selectedItems[0].content),
               fileType: 'ARCHITECTURE_GITHUB',
-              fileName: selectedItems[0].path.split('/').pop() || ''
+              fileName: selectedItems[0].path.split('/').pop() || '',
+              isGitHub: true
             }]);
             onClose();
             return;
@@ -415,26 +403,22 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
         }
         
         // 일반 파일 모드
-        const processedFiles = await Promise.all(
-          selectedItems.map(async (item) => {
-            let fileContent = '';
-            if (item.downloadUrl) {
-              try {
-                fileContent = await fetchFileContent(item.downloadUrl);
-              } catch (error) {
-                console.error(`파일 내용 가져오기 실패: ${item.path}`, error);
-                throw error;
-              }
-            }
-            
-            return {
-              path: item.path,
-              fileName: item.path.split('/').pop() || '',
-              fileContent: fileContent,
-              fileType: determineFileType(formType)
-            };
-          })
-        );
+        const processedFiles = selectedItems.map((item) => {
+          console.log('GitHub 파일 추가 시점 - 파일 정보:', {
+            path: item.path,
+            fileName: item.path.split('/').pop() || '',
+            content: item.content,
+            fileType: determineFileType(formType)
+          });
+          
+          return {
+            path: item.path,
+            fileName: item.path.split('/').pop() || '',
+            content: item.content,
+            fileType: determineFileType(formType),
+            isGitHub: true
+          };
+        });
         
         onSelect(processedFiles);
         onClose();

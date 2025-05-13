@@ -26,11 +26,12 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
     const buttonRef = useRef<HTMLDivElement>(null)
 
     // GitHub에서 파일 선택 시 호출될 핸들러
-    const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
+    const handleGitHubFileSelect = (files: Array<{ path: string, content: string }>) => {
       if (files.length > 0) {
         const githubFiles = files.map(file => ({
           name: file.path,
-          content: file.downloadUrl || ""
+          content: file.content,
+          isGitHub: true
         }));
         onChange(githubFiles);
       }

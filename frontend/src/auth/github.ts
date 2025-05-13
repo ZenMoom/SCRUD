@@ -6,16 +6,18 @@ import { useGitHubTokenStore } from '@/store/githubTokenStore';
 
 // 백엔드 API 기본 URL
 const BACKEND_API_BASE_URL = process.env.NEXT_PRIVATE_API_BASE_URL;
+console.log('BACKEND_API_BASE_URL >>>>> ', BACKEND_API_BASE_URL);
 const REDIRECT_URL = process.env.SPRING_FRONT_REDIRECT_URI;
-
+// const REDIRECT_URL = process.env.SPRING_FRONT_REDIRECT_URI;
+// 
 
 /**
  * GitHub OAuth 인증 URL 생성
  * @param redirectUri - 인증 후 리다이렉트할 URI
  * @returns {string} - 인증 URL
  */
-export function getGitHubAuthUrl(redirectUri: string = `${REDIRECT_URL}/globalsetting`): string {
-  return `${BACKEND_API_BASE_URL}/oauth2/authorize/github?redirect_uri=${encodeURIComponent(redirectUri)}`;
+export function getGitHubAuthUrl(redirectUri: string = 'http://localhost:3000/globalsetting'): string {
+  return `http://localhost:8080/oauth2/authorize/github?redirect_uri=${encodeURIComponent(redirectUri)}`;
 }
 
 /**

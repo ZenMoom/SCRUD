@@ -74,17 +74,20 @@ export async function POST(request: NextRequest) {
       console.log(`처리 중인 키: ${key}, 값 타입: ${typeof value}`);
       // 아키텍처와 보안 설정 특별 처리
       if (key === 'architectureStructure') {
-        const architectureValue = value as SelectionValue | string;
+        const architectureValue = value as SelectionValue | FileWithContent[];
         if (architectureValue) {
-          if (typeof architectureValue === 'string' && architectureValue.startsWith('github:')) {
-            const parts = architectureValue.substring(7).split('|');
-            globalFiles.push({
-              fileName: parts[0],
-              fileType: 'ARCHITECTURE_GITHUB',
-              fileUrl: parts.length > 1 ? parts[1] : "",
-              fileContent: JSON.stringify({ type: architectureValue })
+          if (Array.isArray(architectureValue)) {
+            // GitHub에서 가져온 파일 처리
+            architectureValue.forEach(file => {
+              globalFiles.push({
+                fileName: file.name,
+                fileType: 'ARCHITECTURE_GITHUB',
+                fileUrl: "",
+                fileContent: file.content
+              });
             });
-          } else if (typeof architectureValue === 'object') {
+          } else {
+            // 선택된 아키텍처 타입 처리
             globalFiles.push({
               fileName: `Architecture-${architectureValue.type}`,
               fileType: architectureValue.type,
@@ -95,27 +98,76 @@ export async function POST(request: NextRequest) {
         }
       } 
       else if (key === 'securitySetting') {
-        const securityValue = value as SelectionValue;
+        const securityValue = value as SelectionValue | FileWithContent[];
         if (securityValue) {
+          if (Array.isArray(securityValue)) {
+            // GitHub에서 가져온 파일 처리
+            securityValue.forEach(file => {
+              globalFiles.push({
+                fileName: file.name,
+                fileType: 'SECURITY_GITHUB',
+                fileUrl: "",
+                fileContent: file.content
+              });
+            });
+          } else {
+            // 선택된 보안 타입 처리
+            globalFiles.push({
+              fileName: `Security-${securityValue.type}`,
+              fileType: securityValue.type,
+              fileUrl: "",
+              fileContent: ""
+            });
+          }
+        }
+      }
+      // 의존성 파일 처리
+      else if (key === 'dependencyFile') {
+        // 선택지에서 선택한 경우 (string[])
+        if (Array.isArray(value) && typeof value[0] === 'string') {
           globalFiles.push({
-            fileName: `Security-${securityValue.type}`,
-            fileType: securityValue.type,
-            fileUrl: "",
-            fileContent: ""
+            fileName: 'dependencies.txt',
+            fileType: 'DEPENDENCY',
+            fileUrl: '',
+            fileContent: value.join('\n')
+          });
+        }
+        // 파일 업로드한 경우 (FileWithContent[])
+        else if (Array.isArray(value) && value[0]?.name) {
+          value.forEach(file => {
+            globalFiles.push({
+              fileName: file.name,
+              fileType: 'DEPENDENCY',
+              fileUrl: '',
+              fileContent: file.content
+            });
           });
         }
       }
-      // 파일 업로드 폼에서 온 데이터 처리
+      // GitHub 파일 처리
+      else if (Array.isArray(value) && value.length > 0 && value[0].isGitHub === true) {
+        const files = value as Array<FileWithContent>;
+        files.forEach(file => {
+          console.log('GitHub 파일 처리:', file);
+          globalFiles.push({
+            fileName: file.name,
+            fileType: fileTypeMapping[key],
+            fileUrl: "",
+            fileContent: file.content
+          });
+        });
+      }
+      // 일반 파일 처리
       else if (fileTypeMapping[key]) {
-        const files = value as FileWithContent[];
+        const files = value as Array<FileWithContent>;
         if (Array.isArray(files)) {
-          files.forEach(fileObj => {
-            // 이미 객체 형태이므로 직접 접근
+          files.forEach(file => {
+            console.log('일반 파일 처리:', file);
             globalFiles.push({
-              fileName: fileObj.name,
+              fileName: file.name,
               fileType: fileTypeMapping[key],
               fileUrl: "",
-              fileContent: fileObj.content
+              fileContent: file.content
             });
           });
         }
