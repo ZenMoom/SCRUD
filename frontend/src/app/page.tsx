@@ -6,8 +6,9 @@ import useAuthStore from "./store/useAuthStore"
 import ProjectCard from "@/components/project-card/project-card"
 import ProjectForm from "@/components/project-card/project-form"
 import { Project } from "@/components/project-card/project-card"
+import { isTokenExpired } from "./utils/auth"
 
-// API 요청 함수 - 실제 API 호출로 변경
+// API 요청 함수 - 다양한 오류 상황 처리 개선
 const getProjects = async (): Promise<Project[]> => {
   try {
     // 인증 토큰 가져오기
@@ -18,15 +19,60 @@ const getProjects = async (): Promise<Project[]> => {
       throw new Error("인증 토큰이 없습니다.")
     }
 
+    // 클라이언트에서 토큰 만료 여부 미리 확인
+    if (isTokenExpired(token)) {
+      console.log("클라이언트에서 토큰 만료 감지. 로그아웃 처리합니다.")
+      const { logout } = useAuthStore.getState()
+      logout()
+
+      // 브라우저 환경에서만 리다이렉트
+      if (typeof window !== "undefined") {
+        window.location.href = "/login"
+      }
+
+      throw new Error("토큰이 만료되었습니다")
+    }
+
     // API 호출
     const response = await fetch("/api/projects", {
       headers: {
-        Authorization: token,
+        Authorization: `Bearer ${token}`, // Bearer 접두사 추가 (API 요구사항에 따라 조정)
       },
     })
 
+    // 토큰 만료로 인한 인증 오류(401) 처리
+    if (response.status === 401) {
+      console.log("서버에서 토큰 만료 감지. 로그아웃 처리합니다.")
+      const { logout } = useAuthStore.getState()
+      logout()
+
+      // 브라우저 환경에서만 리다이렉트
+      if (typeof window !== "undefined") {
+        window.location.href = "/login"
+      }
+
+      throw new Error("토큰이 만료되었습니다")
+    }
+
+    // 서버 오류(500) 처리
+    if (response.status === 500) {
+      console.error("서버 내부 오류가 발생했습니다. 토큰 문제일 수 있습니다.")
+
+      // 토큰 문제로 추정하고 로그아웃 처리
+      const { logout } = useAuthStore.getState()
+      logout()
+
+      if (typeof window !== "undefined") {
+        window.location.href = "/login"
+      }
+
+      throw new Error("서버 오류가 발생했습니다. 다시 로그인해주세요.")
+    }
+
     if (!response.ok) {
-      throw new Error("프로젝트 목록을 불러오는데 실패했습니다.")
+      const errorText = await response.text().catch(() => "알 수 없는 오류")
+      console.error(`API 오류 (${response.status}): ${errorText}`)
+      throw new Error(`프로젝트 목록을 불러오는데 실패했습니다. (상태 코드: ${response.status})`)
     }
 
     const data = await response.json()
@@ -94,7 +140,7 @@ const updateProject = async (id: string, projectData: Omit<Project, "id" | "crea
   return updatedProject
 }
 
-// 프로젝트 삭제 함수 - API 호출로 변경
+// 프로젝트 삭제 함수 - 오류 처리 개선
 const deleteProject = async (id: string): Promise<void> => {
   try {
     // 인증 토큰 가져오기
@@ -105,13 +151,56 @@ const deleteProject = async (id: string): Promise<void> => {
       throw new Error("인증 토큰이 없습니다.")
     }
 
+    // 클라이언트에서 토큰 만료 여부 미리 확인
+    if (isTokenExpired(token)) {
+      console.log("클라이언트에서 토큰 만료 감지. 로그아웃 처리합니다.")
+      const { logout } = useAuthStore.getState()
+      logout()
+
+      // 브라우저 환경에서만 리다이렉트
+      if (typeof window !== "undefined") {
+        window.location.href = "/login"
+      }
+
+      throw new Error("토큰이 만료되었습니다")
+    }
+
     // API 호출
     const response = await fetch(`/api/projects/${id}`, {
       method: "DELETE",
       headers: {
-        Authorization: token,
+        Authorization: `Bearer ${token}`, // Bearer 접두사 추가 (API 요구사항에 따라 조정)
       },
     })
+
+    // 토큰 만료로 인한 인증 오류(401) 처리
+    if (response.status === 401) {
+      console.log("서버에서 토큰 만료 감지. 로그아웃 처리합니다.")
+      const { logout } = useAuthStore.getState()
+      logout()
+
+      // 브라우저 환경에서만 리다이렉트
+      if (typeof window !== "undefined") {
+        window.location.href = "/login"
+      }
+
+      throw new Error("토큰이 만료되었습니다")
+    }
+
+    // 서버 오류(500) 처리
+    if (response.status === 500) {
+      console.error("서버 내부 오류가 발생했습니다. 토큰 문제일 수 있습니다.")
+
+      // 토큰 문제로 추정하고 로그아웃 처리
+      const { logout } = useAuthStore.getState()
+      logout()
+
+      if (typeof window !== "undefined") {
+        window.location.href = "/login"
+      }
+
+      throw new Error("서버 오류가 발생했습니다. 다시 로그인해주세요.")
+    }
 
     // 요청이 성공적이지 않을 경우 (204가 아닌 경우)
     if (response.status !== 204) {
@@ -140,7 +229,7 @@ function HomeContent() {
   // 인증 및 라우터
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { login, isAuthenticated, user } = useAuthStore()
+  const { login, isAuthenticated, user } = useAuthStore() // logout 변수 제거
 
   // 프로젝트 데이터 상태
   const [projects, setProjects] = useState<Project[]>([])
@@ -214,8 +303,16 @@ function HomeContent() {
         const data = await getProjects()
         setProjects(data)
         setError(null)
-      } catch (err) {
-        setError("프로젝트를 불러오는데 실패했습니다.")
+      } catch (err: Error | unknown) {
+        // 에러 타입 체크
+        const error = err as Error
+
+        // 토큰 만료 에러인 경우 다른 메시지 표시
+        if (error.message?.includes("토큰이 만료되었습니다") || error.message?.includes("다시 로그인해주세요")) {
+          setError("세션이 만료되었습니다. 다시 로그인해주세요.")
+        } else {
+          setError("프로젝트를 불러오는데 실패했습니다.")
+        }
         console.error(err)
       } finally {
         setLoading(false)
@@ -264,9 +361,17 @@ function HomeContent() {
       setProjects(projects.filter((p) => p.id !== id))
       setShowEditModal(false)
       setCurrentProject(null)
-    } catch (err) {
+    } catch (err: Error | unknown) {
       console.error("프로젝트 삭제 오류:", err)
-      alert("프로젝트 삭제에 실패했습니다.")
+
+      const error = err as Error
+
+      // 토큰 만료 에러인 경우 다른 메시지 표시
+      if (error.message?.includes("토큰이 만료되었습니다") || error.message?.includes("다시 로그인해주세요")) {
+        alert("세션이 만료되었습니다. 다시 로그인해주세요.")
+      } else {
+        alert("프로젝트 삭제에 실패했습니다.")
+      }
     } finally {
       setIsSubmitting(false)
     }

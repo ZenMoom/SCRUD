@@ -78,8 +78,6 @@ GlobalFileDto:
       type: string
     fileType:
       $ref: "#/FileTypeEnumDto"
-    fileUrl:
-      type: string
     fileContent:
       type: string
 

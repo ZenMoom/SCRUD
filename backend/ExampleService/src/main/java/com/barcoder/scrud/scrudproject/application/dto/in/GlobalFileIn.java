@@ -11,6 +11,5 @@ import lombok.*;
 public class GlobalFileIn {
     private String fileName;
     private FileTypeEnumDto fileType;
-    private String fileUrl;
     private String fileContent;
 }
