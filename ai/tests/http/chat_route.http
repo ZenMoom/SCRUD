@@ -13,10 +13,10 @@ Content-Type: application/json
 {
   "tag": "IMPLEMENT",
   "promptType": "BODY",
-  "message": "게시글 생성 기능을 구현해주세요",
+  "message": "메서드가 잘못된것같습니다. 새로 작성해주세요",
   "targetMethods": [
     {
-      "methodId": "method-123"
+      "methodId": "fd93c6bd-b2b6-4d06-86a4-ce027da3bb85"
     }
   ]
 }
@@ -30,3 +30,6 @@ GET {{baseUrl}}/api/v1/sse/connect/{{streamId}}
 
 ### SSE 연결 테스트 (브라우저에서 테스트하는 것이 좋음)
 GET {{baseUrl}}/api/v1/sse/stream/{{streamId}}
+
+###
+GET {{baseUrl}}/api/v1/projects/{{projectId}}/apis/{{apiId}}/chats

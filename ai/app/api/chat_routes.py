@@ -101,6 +101,7 @@ async def prompt_chat(
     """
     프롬프트를 입력하여 도식화 수정을 요청하거나 설명을 요청합니다.
     응답 값으로 SSE Id를 받아 /api/sse/connect/{SSE_Id} API에 연결하여 응답을 스트리밍 받을 수 있습니다.
+    사용자의 요청은 UserChat으로, LLM의 응답은 SystemChat으로 저장되며, 이 둘은 Chat 도큐먼트로 MongoDB에 저장됩니다.
 
     Args:
         project_id: 프로젝트 ID
@@ -122,6 +123,7 @@ async def prompt_chat(
         logger.info(f"SSE 스트림 생성: stream_id={stream_id}")
 
         # 채팅 및 다이어그램 처리를 백그라운드 태스크로 실행
+        # UserChat과 SystemChat이 함께 MongoDB에 저장됩니다
         background_tasks.add_task(
             chat_service.process_chat_and_diagram,
             project_id,
