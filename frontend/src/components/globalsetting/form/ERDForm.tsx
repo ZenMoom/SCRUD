@@ -31,8 +31,6 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
 
-    const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
-    
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
       if (files.length > 0) {
@@ -110,7 +108,7 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
       
       // 1. 깃허브 토큰 확인
       const githubToken = localStorage.getItem('github-token-direct');
-      
+      const REDIRECT_URL = process.env.SPRING_FRONT_REDIRECT_URI;
       try {
         if (githubToken) {
           // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
@@ -135,13 +133,13 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
             localStorage.removeItem('github-token-direct');
             
             // 인증 요청
-            const oauthUrl = getGitHubAuthUrl(`${apiUrl}/globalsetting`);
+            const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
             window.location.href = oauthUrl;
           }
         } else {
           // 토큰이 없는 경우 바로 인증 요청
           console.log('GitHub 토큰 없음, 인증 요청');
-          const oauthUrl = getGitHubAuthUrl(`${apiUrl}/globalsetting`);
+          const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
           window.location.href = oauthUrl;
         }
       } catch (error) {

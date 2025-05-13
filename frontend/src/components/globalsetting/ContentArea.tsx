@@ -6,9 +6,9 @@ import { useState } from "react"
 import FormItem from "./Form"
 import InfoModal from "./InfoModal"
 import RequirementSpecForm from "./form/RequirementSpecForm"
-import ERDForm from "./form/ERDForm"
-import DependencyFileForm from "./form/DependencyFileForm"
-import UtilityClassForm from "./form/UtilityClassForm"
+import ERDForm from "./form//ERDForm"
+import DependencyFileForm from "./form//DependencyFileForm"
+import UtilityClassForm from "./form//UtilityClassForm"
 import ErrorCodeForm from "./form/ErrorCodeForm"
 import SecuritySettingForm from "./form/SecuritySettingForm"
 import CodeConventionForm from "./form/CodeConventionForm"
@@ -103,46 +103,19 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
   // FileValue 또는 FileValue[] 타입을 string 또는 string[] 타입으로 변환하는 헬퍼 함수
   const convertFileValue = (value: FileValue | FileValue[]): string | string[] => {
-    console.log("ContentArea - convertFileValue - 입력값:", value);
-    
-    // GitHub API 응답 JSON 문자열인지 확인 (JSON 형식이고 tree 필드가 있는지)
-    if (typeof value === 'string' && value.includes('"tree"') && value.includes('"sha"')) {
-      try {
-        // JSON 형식인지 확인 (파싱 시도)
-        JSON.parse(value);
-        console.log("ContentArea - GitHub API 응답 JSON 확인됨");
-        // 원본 JSON 문자열을 그대로 반환
-        return value;
-      } catch (e) {
-        console.error("ContentArea - JSON 파싱 오류:", e);
-      }
-    }
-    
-    // 아키텍처 GitHub 타입인 경우 특별 처리
-    if (typeof value === 'string' && value === 'ARCHITECTURE_GITHUB') {
-      console.log("ContentArea - convertFileValue - 반환값: ARCHITECTURE_GITHUB");
-      return value; // 기본값으로 'ARCHITECTURE_GITHUB' 문자열 반환
-    }
-    
-    let result;
     if (Array.isArray(value)) {
-      result = value.map(item => {
+      return value.map(item => {
         if (typeof item === 'string') {
           return item;
         }
-        // FileWithContent 객체를 문자열로 변환 (JSON 문자열 또는 파일 이름)
-        return item.name || JSON.stringify(item);
+        return item.name; // FileWithContent 객체의 경우 name만 반환
       });
-    } else if (typeof value === 'string') {
-      // 문자열 그대로 반환
-      result = value;
     } else {
-      // FileWithContent 객체를 문자열로 변환
-      result = value.name || JSON.stringify(value);
+      if (typeof value === 'string') {
+        return value;
+      }
+      return value.name; // FileWithContent 객체의 경우 name만 반환
     }
-    
-    console.log("ContentArea - convertFileValue - 반환값:", result);
-    return result;
   };
 
   return (
@@ -150,7 +123,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
       <div className="h-full overflow-y-auto p-8 md:p-12">
         <FormItem
           ref={refs.title}
-          title={`프로젝트명${isRequired('title') ? '' : ''}`}
+          title="프로젝트명"
           type={inputTypes.title}
           value={settings.title as string}
           onChange={(value) => onSettingChange("title", value)}
@@ -161,7 +134,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.description}
-          title={`프로젝트 설명${isRequired('description') ? '' : ''}`}
+          title="프로젝트 설명"
           type={inputTypes.description}
           value={settings.description as string}
           onChange={(value) => onSettingChange("description", value)}
@@ -172,7 +145,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.serverUrl}
-          title={`Server URL${isRequired('serverUrl') ? '' : ''}`}
+          title="Server URL"
           type={inputTypes.serverUrl}
           value={settings.serverUrl as string}
           onChange={(value) => onSettingChange("serverUrl", value)}
@@ -183,7 +156,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <RequirementSpecForm
           ref={refs.requirementSpec}
-          title={`요구사항 명세서 ${isRequired('requirementSpec') ? '' : ''}`}
+          title="요구사항 명세서서"
           value={settings.requirementSpec}
           onChange={(value) => onSettingChange("requirementSpec", convertFileValue(value))}
           onInfoClick={() => openModal("requirementSpec")}
@@ -193,7 +166,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <ERDForm
           ref={refs.erd}
-          title={`ERD ${isRequired('erd') ? '' : ''}`}
+          title="ERD"
           value={settings.erd}
           onChange={(value) => onSettingChange("erd", convertFileValue(value))}
           onInfoClick={() => openModal("erd")}

@@ -31,8 +31,6 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
 
-    const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
-    
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
       if (files.length > 0) {
@@ -110,7 +108,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
       
       // 1. 깃허브 토큰 확인
       const githubToken = localStorage.getItem('github-token-direct');
-      
+      const REDIRECT_URL = process.env.SPRING_FRONT_REDIRECT_URI;
       try {
         if (githubToken) {
           // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
@@ -135,13 +133,13 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
             localStorage.removeItem('github-token-direct');
             
             // 인증 요청
-            const oauthUrl = getGitHubAuthUrl(`${apiUrl}/globalsetting`);
+            const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
             window.location.href = oauthUrl;
           }
         } else {
           // 토큰이 없는 경우 바로 인증 요청
           console.log('GitHub 토큰 없음, 인증 요청');
-          const oauthUrl = getGitHubAuthUrl(`${apiUrl}/globalsetting`);
+          const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
           window.location.href = oauthUrl;
         }
       } catch (error) {
@@ -271,9 +269,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
                 {value.map((file, index) => {
                   // 파일 이름 표시 로직
                   const displayName = typeof file === 'string' 
-                    ? file.startsWith('github:') 
-                      ? file.substring(7).split('|')[0] // GitHub 경로만 추출하여 표시
-                      : file 
+                    ? file 
                     : (file as FileWithContent).name;
                     
                   return (
@@ -305,9 +301,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
               <File size={16} className="text-gray-500" />
               <span>
                 {typeof value === 'string' 
-                  ? value.startsWith('github:')
-                    ? value.substring(7).split('|')[0] // GitHub 경로만 추출하여 표시
-                    : value 
+                  ? value 
                   : (value as FileWithContent).name}
               </span>
             </div>
@@ -318,7 +312,6 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
             isOpen={isGitHubModalOpen} 
             onClose={() => setIsGitHubModalOpen(false)} 
             onSelect={handleGitHubFileSelect} 
-            isArchitecture={false}
           />
         </div>
       </div>

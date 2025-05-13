@@ -25,8 +25,6 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
 
-    const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
-    
     // 컴포넌트 마운트 시 초기값에 따라 레이어드 아키텍처 타입 설정
     useEffect(() => {
       if (value === 'ARCHITECTURE_DEFAULT_LAYERED_A') {
@@ -37,29 +35,22 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
     }, [value]);
 
     // GitHub에서 파일 선택 시 호출될 핸들러
-    const handleGitHubFileSelect = (files: Array<{ path?: string, downloadUrl?: string, content?: string, fileContent?: string, fileType?: string, fileName?: string }>) => {
+    const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
       if (files.length > 0) {
-        const file = files[0]; // 첫 번째 파일/폴더만 사용
-        
-        // ARCHITECTURE_GITHUB 타입일 경우 특별 처리
-        if (file.fileType === 'ARCHITECTURE_GITHUB') {
-          // architectureStructure 필드에는 'ARCHITECTURE_GITHUB' 문자열만 설정
-          // GitHubRepoBrowser에서 이미 JSON 데이터를 fileContent에 설정했으므로 여기서는 식별자만 전달
-          onChange('ARCHITECTURE_GITHUB');
-          
-          // 디버그용 로그
-          console.log('ArchitectureStructureForm - 아키텍처 데이터 선택됨:', {
-            path: file.path,
-            contentExists: !!file.fileContent,
-            fileName: file.fileName
-          });
-        } else if (file.downloadUrl) {
-          // 일반 파일인 경우 - downloadUrl 사용
-          onChange(`github:${file.path}|${file.downloadUrl}`);
-        } else if (file.path) {
-          // 폴더이지만 내용이 없는 경우 (예외 처리)
-          onChange(`github:${file.path}|ARCHITECTURE_GITHUB`);
-        }
+        // 모든 선택된 파일 처리
+        const githubFiles = files.map(file => {
+          // fileUrl이 있으면 fileUrl 포함, 없으면 기존 방식대로 처리
+          if (file.downloadUrl) {
+            // 파일 경로와 URL을 모두 포함해서 저장 (파이프로 구분)
+            return `github:${file.path}|${file.downloadUrl}`;
+          } else {
+            // 기존 방식 (URL 없는 경우)
+            return `github:${file.path}`;
+          }
+        });
+
+        // 첫 번째 파일만 사용 (아키텍처 설정은 단일 파일)
+        onChange(githubFiles[0]);
       }
       setIsGitHubModalOpen(false);
     };
@@ -96,6 +87,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       
       // 1. 깃허브 토큰 확인
       const githubToken = localStorage.getItem('github-token-direct');
+      const REDIRECT_URL = process.env.SPRING_FRONT_REDIRECT_URI;
       
       try {
         if (githubToken) {
@@ -121,13 +113,13 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
             localStorage.removeItem('github-token-direct');
             
             // 인증 요청
-            const oauthUrl = getGitHubAuthUrl(`${apiUrl}/globalsetting`);
+            const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
             window.location.href = oauthUrl;
           }
         } else {
           // 토큰이 없는 경우 바로 인증 요청
           console.log('GitHub 토큰 없음, 인증 요청');
-          const oauthUrl = getGitHubAuthUrl(`${apiUrl}/globalsetting`);
+          const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
           window.location.href = oauthUrl;
         }
       } catch (error) {
@@ -328,22 +320,10 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
               />
               
               {/* 선택된 파일 표시 (단일 파일) */}
-              {!Array.isArray(value) && value && typeof value === 'string' && !value.startsWith('ARCHITECTURE_DEFAULT_') && (
+              {!Array.isArray(value) && value && !value.startsWith('ARCHITECTURE_DEFAULT_') && (
                 <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                   <File size={16} className="text-gray-500" />
-                  <span className="truncate">
-                    {/* GitHub JSON 데이터인지 확인하여 다른 메시지 표시 */}
-                    {value.startsWith('{') && value.includes('"sha"') && value.includes('"tree"') ? 
-                      "GitHub 레포지토리 구조 로드됨" : value}
-                  </span>
-                </div>
-              )}
-              
-              {/* GitHub API 응답 객체인 경우 특별 표시 */}
-              {!Array.isArray(value) && value && typeof value === 'object' && (
-                <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-blue-100 rounded-lg text-sm text-blue-700">
-                  <Github size={16} className="text-blue-500" />
-                  <span className="truncate">GitHub 레포지토리 구조 로드됨</span>
+                  <span className="truncate">{value}</span>
                 </div>
               )}
               
@@ -352,7 +332,6 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                 isOpen={isGitHubModalOpen} 
                 onClose={() => setIsGitHubModalOpen(false)} 
                 onSelect={handleGitHubFileSelect} 
-                isArchitecture={true} 
               />
             </div>
           )}
