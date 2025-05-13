@@ -1,11 +1,11 @@
 "use client"
 
-import { forwardRef, useState, useRef } from "react"
+import { forwardRef, useState, useRef, useEffect } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
 import { getGitHubAuthUrl } from "@/auth/github"
-import GitHubRepoBrowser from "./GitHubRepoBrowser"
+import GitHubRepoBrowser from "../GitHubRepoBrowser"
 
-interface SecuritySettingFormProps {
+interface ArchitectureStructureFormProps {
   title: string
   value: string | string[]
   onChange: (value: string | string[]) => void
@@ -15,32 +15,49 @@ interface SecuritySettingFormProps {
   options?: Array<{ value: string; label: string }>
 }
 
-const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>(
+const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructureFormProps>(
   ({ title, value, onChange, onInfoClick, onFocus, isRequired, options }, ref) => {
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
     const [inputType, setInputType] = useState<'file' | 'github' | 'select' | 'default'>('select')
+    const [layeredSubType, setLayeredSubType] = useState<'A' | 'B'>('A')
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
 
-    // GitHub에서 파일 선택 시 호출될 핸들러
-    const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
-      if (files.length > 0) {
-        // 모든 선택된 파일 처리
-        const githubFiles = files.map(file => {
-          // fileUrl이 있으면 fileUrl 포함, 없으면 기존 방식대로 처리
-          if (file.downloadUrl) {
-            // 파일 경로와 URL을 모두 포함해서 저장 (파이프로 구분)
-            return `github:${file.path}|${file.downloadUrl}`;
-          } else {
-            // 기존 방식 (URL 없는 경우)
-            return `github:${file.path}`;
-          }
-        });
+    // 컴포넌트 마운트 시 초기값에 따라 레이어드 아키텍처 타입 설정
+    useEffect(() => {
+      if (value === 'ARCHITECTURE_DEFAULT_LAYERED_A') {
+        setLayeredSubType('A');
+      } else if (value === 'ARCHITECTURE_DEFAULT_LAYERED_B') {
+        setLayeredSubType('B');
+      }
+    }, [value]);
 
-        // 첫 번째 파일만 사용 (보안 설정은 단일 파일)
-        onChange(githubFiles[0]);
+    // GitHub에서 파일 선택 시 호출될 핸들러
+    const handleGitHubFileSelect = (files: Array<{ path?: string, downloadUrl?: string, content?: string, fileContent?: string, fileType?: string, fileName?: string }>) => {
+      if (files.length > 0) {
+        const file = files[0]; // 첫 번째 파일/폴더만 사용
+        
+        // ARCHITECTURE_GITHUB 타입일 경우 특별 처리
+        if (file.fileType === 'ARCHITECTURE_GITHUB') {
+          // architectureStructure 필드에는 'ARCHITECTURE_GITHUB' 문자열만 설정
+          // GitHubRepoBrowser에서 이미 JSON 데이터를 fileContent에 설정했으므로 여기서는 식별자만 전달
+          onChange('ARCHITECTURE_GITHUB');
+          
+          // 디버그용 로그
+          console.log('ArchitectureStructureForm - 아키텍처 데이터 선택됨:', {
+            path: file.path,
+            contentExists: !!file.fileContent,
+            fileName: file.fileName
+          });
+        } else if (file.downloadUrl) {
+          // 일반 파일인 경우 - downloadUrl 사용
+          onChange(`github:${file.path}|${file.downloadUrl}`);
+        } else if (file.path) {
+          // 폴더이지만 내용이 없는 경우 (예외 처리)
+          onChange(`github:${file.path}|ARCHITECTURE_GITHUB`);
+        }
       }
       setIsGitHubModalOpen(false);
     };
@@ -60,9 +77,8 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
       e.stopPropagation()
       setDragActive(false)
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        // 파일 드롭 시 타입에 따른 처리
+        // 파일 드롭 시 파일명 설정
         const fileName = e.dataTransfer.files[0].name;
-        // 단일 값 설정 (보안 설정은 단일 파일)
         onChange(fileName);
       }
     }
@@ -158,23 +174,84 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
 
         <div className="w-full">
           {inputType === 'select' && options && (
-            <div className="flex flex-col gap-3">
-              {options?.map((option) => (
-                <label key={option.value} className="flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-150">
-                  <input
-                    type="radio"
-                    name={title}
-                    value={option.value}
-                    checked={value === option.value}
-                    onChange={() => {
-                      onChange(option.value)
+            <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+                {options?.map((option) => (
+                  <div 
+                    key={option.value} 
+                    className={`rounded-lg border overflow-hidden cursor-pointer transition-all duration-150 hover:shadow-md ${
+                      value === option.value || 
+                      (option.value === 'ARCHITECTURE_DEFAULT_LAYERED' && 
+                        (value === 'ARCHITECTURE_DEFAULT_LAYERED_A' || value === 'ARCHITECTURE_DEFAULT_LAYERED_B'))
+                        ? 'border-blue-500 ring-2 ring-blue-200' 
+                        : 'border-gray-200'
+                    }`}
+                    onClick={() => {
+                      // 만약 레이어드 아키텍처를 선택했다면 A 타입으로 기본값 설정
+                      if (option.value === 'ARCHITECTURE_DEFAULT_LAYERED') {
+                        setLayeredSubType('A')
+                        // 기본값으로 A 타입 설정하여 전달
+                        onChange('ARCHITECTURE_DEFAULT_LAYERED_A')
+                      } else {
+                        onChange(option.value)
+                      }
                       if (onFocus) onFocus()
                     }}
-                    className="w-4 h-4 text-blue-500 focus:ring-blue-500"
-                  />
-                  <span className="ml-3 text-base">{option.label}</span>
-                </label>
-              ))}
+                  >
+                    {/* 아키텍처 영역 - 이미지 없이 텍스트만 표시 */}
+                    <div className="h-20 bg-white flex items-center justify-center p-2 border-b border-gray-200">
+                      <span className="text-gray-700 font-medium text-center">{option.label}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* 레이어드 아키텍처 선택 시 A/B 서브타입 선택 옵션 표시 */}
+              {(value === 'ARCHITECTURE_DEFAULT_LAYERED' || 
+                value === 'ARCHITECTURE_DEFAULT_LAYERED_A' || 
+                value === 'ARCHITECTURE_DEFAULT_LAYERED_B') && (
+                <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="text-sm font-medium mb-2">레이어드 아키텍처 타입 선택:</div>
+                  <div className="flex flex-col gap-4">
+                    <label className={`flex items-start cursor-pointer p-2 rounded-md ${layeredSubType === 'A' ? 'bg-blue-50' : ''}`}>
+                      <input
+                        type="radio"
+                        className="w-4 h-4 text-blue-500 mr-2 mt-1"
+                        checked={layeredSubType === 'A'}
+                        onChange={() => {
+                          setLayeredSubType('A')
+                          // 아키텍처 값 변경 시 콜백 호출
+                          onChange(`ARCHITECTURE_DEFAULT_LAYERED_A`)
+                        }}
+                      />
+                      <div>
+                        <span className="font-medium">타입 A (계층 단위)</span>
+                        <p className="text-xs text-gray-500 mt-1">
+                          계층별로 폴더를 구성합니다. (controller, service, repository, domain) 각 계층은 별도의 폴더에 있으며 계층 구조가 명확합니다.
+                        </p>
+                      </div>
+                    </label>
+                    <label className={`flex items-start cursor-pointer p-2 rounded-md ${layeredSubType === 'B' ? 'bg-blue-50' : ''}`}>
+                      <input
+                        type="radio"
+                        className="w-4 h-4 text-blue-500 mr-2 mt-1"
+                        checked={layeredSubType === 'B'}
+                        onChange={() => {
+                          setLayeredSubType('B')
+                          // 아키텍처 값 변경 시 콜백 호출
+                          onChange(`ARCHITECTURE_DEFAULT_LAYERED_B`)
+                        }}
+                      />
+                      <div>
+                        <span className="font-medium">타입 B (기능 단위)</span>
+                        <p className="text-xs text-gray-500 mt-1">
+                          기능별로 폴더를 구성합니다. (user, order 등) 각 기능 폴더 내에 관련된 컨트롤러, 서비스, 레포지토리가 함께 존재합니다.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
@@ -197,7 +274,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
               >
                 <Upload size={24} className="text-gray-400 mb-2" />
                 <p className="text-gray-500 text-center text-sm">
-                  보안 설정 파일을 드래그해서 추가하거나 <br /> 
+                  아키텍처 구조 파일을 드래그해서 추가하거나 <br /> 
                   <span className="text-blue-500">
                     업로드하세요
                   </span>
@@ -248,38 +325,23 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                 }}
               />
               
-              {/* 선택된 파일 표시 (값이 배열인 경우 대비) */}
-              {Array.isArray(value) && value.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
-                  <div className="flex flex-col space-y-2">
-                    {value.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <File size={16} className="text-gray-500" />
-                          <span className="truncate">{file}</span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const newFiles = [...value];
-                            newFiles.splice(index, 1);
-                            onChange(newFiles);
-                          }}
-                          className="text-red-500 hover:text-red-700 ml-2"
-                        >
-                          &times;
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 단일 값인 경우 */}
-              {!Array.isArray(value) && value && (
+              {/* 선택된 파일 표시 (단일 파일) */}
+              {!Array.isArray(value) && value && typeof value === 'string' && !value.startsWith('ARCHITECTURE_DEFAULT_') && (
                 <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                   <File size={16} className="text-gray-500" />
-                  <span className="truncate">{value}</span>
+                  <span className="truncate">
+                    {/* GitHub JSON 데이터인지 확인하여 다른 메시지 표시 */}
+                    {value.startsWith('{') && value.includes('"sha"') && value.includes('"tree"') ? 
+                      "GitHub 레포지토리 구조 로드됨" : value}
+                  </span>
+                </div>
+              )}
+              
+              {/* GitHub API 응답 객체인 경우 특별 표시 */}
+              {!Array.isArray(value) && value && typeof value === 'object' && (
+                <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-blue-100 rounded-lg text-sm text-blue-700">
+                  <Github size={16} className="text-blue-500" />
+                  <span className="truncate">GitHub 레포지토리 구조 로드됨</span>
                 </div>
               )}
               
@@ -288,6 +350,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                 isOpen={isGitHubModalOpen} 
                 onClose={() => setIsGitHubModalOpen(false)} 
                 onSelect={handleGitHubFileSelect} 
+                isArchitecture={true} 
               />
             </div>
           )}
@@ -297,6 +360,6 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
   }
 )
 
-SecuritySettingForm.displayName = "SecuritySettingForm"
+ArchitectureStructureForm.displayName = "ArchitectureStructureForm"
 
-export default SecuritySettingForm 
+export default ArchitectureStructureForm 

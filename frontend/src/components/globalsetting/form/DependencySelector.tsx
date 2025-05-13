@@ -74,7 +74,7 @@ export default function DependencySelector({ value, onChange }: DependencySelect
         className="w-full p-3 text-left border border-gray-300 rounded-lg flex justify-between items-center bg-white"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span>{selectedDeps.length ? `${selectedDeps.length}개 의존성 선택됨` : '의존성 선택...'}</span>
+        <span>{selectedDeps.length ? `${selectedDeps.length}개 의존성 선택됨` : '의존성 파일을 선택하세요.'}</span>
         <span className="ml-2">{isOpen ? '▲' : '▼'}</span>
       </button>
 

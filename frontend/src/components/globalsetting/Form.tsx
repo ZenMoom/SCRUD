@@ -24,7 +24,7 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
             value={value as string}
             onChange={(e) => onChange(e.target.value)}
             className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={`${title} 입력...`}
+            placeholder={`${title}을 입력하세요`}
             onFocus={onFocus}
           />
         )
@@ -34,7 +34,7 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
             value={value as string}
             onChange={(e) => onChange(e.target.value)}
             className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
-            placeholder={`${title} 입력...`}
+            placeholder={`${title}을 입력하세요`}
             onFocus={onFocus}
           />
         )

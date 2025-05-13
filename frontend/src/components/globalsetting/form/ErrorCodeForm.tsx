@@ -3,7 +3,7 @@
 import { forwardRef, useState, useRef } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
 import { getGitHubAuthUrl } from "@/auth/github"
-import GitHubRepoBrowser from "./GitHubRepoBrowser"
+import GitHubRepoBrowser from "../GitHubRepoBrowser"
 
 interface ErrorCodeFormProps {
   title: string

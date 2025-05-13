@@ -3,7 +3,7 @@
 import { forwardRef, useState, useRef } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
 import { getGitHubAuthUrl } from "@/auth/github"
-import GitHubRepoBrowser from "./GitHubRepoBrowser"
+import GitHubRepoBrowser from "../GitHubRepoBrowser"
 
 // 파일 객체 타입 정의
 interface FileWithContent {
@@ -269,7 +269,9 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
                 {value.map((file, index) => {
                   // 파일 이름 표시 로직
                   const displayName = typeof file === 'string' 
-                    ? file 
+                    ? file.startsWith('github:') 
+                      ? file.substring(7).split('|')[0] // GitHub 경로만 추출하여 표시
+                      : file 
                     : (file as FileWithContent).name;
                     
                   return (
@@ -301,7 +303,9 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
               <File size={16} className="text-gray-500" />
               <span>
                 {typeof value === 'string' 
-                  ? value 
+                  ? value.startsWith('github:')
+                    ? value.substring(7).split('|')[0] // GitHub 경로만 추출하여 표시
+                    : value 
                   : (value as FileWithContent).name}
               </span>
             </div>
@@ -312,6 +316,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
             isOpen={isGitHubModalOpen} 
             onClose={() => setIsGitHubModalOpen(false)} 
             onSelect={handleGitHubFileSelect} 
+            isArchitecture={false}
           />
         </div>
       </div>

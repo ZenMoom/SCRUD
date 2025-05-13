@@ -5,14 +5,14 @@ import type React from "react"
 import { useState } from "react"
 import FormItem from "./Form"
 import InfoModal from "./InfoModal"
-import RequirementSpecForm from "./RequirementSpecForm"
-import ERDForm from "./ERDForm"
-import DependencyFileForm from "./DependencyFileForm"
-import UtilityClassForm from "./UtilityClassForm"
-import ErrorCodeForm from "./ErrorCodeForm"
-import SecuritySettingForm from "./SecuritySettingForm"
-import CodeConventionForm from "./CodeConventionForm"
-import ArchitectureStructureForm from "./ArchitectureStructureForm"
+import RequirementSpecForm from "./form/RequirementSpecForm"
+import ERDForm from "./form/ERDForm"
+import DependencyFileForm from "./form/DependencyFileForm"
+import UtilityClassForm from "./form/UtilityClassForm"
+import ErrorCodeForm from "./form/ErrorCodeForm"
+import SecuritySettingForm from "./form/SecuritySettingForm"
+import CodeConventionForm from "./form/CodeConventionForm"
+import ArchitectureStructureForm from "./form/ArchitectureStructureForm"
 
 // 파일 객체 타입 정의 (다른 컴포넌트와 일치시킴)
 interface FileWithContent {
@@ -59,11 +59,11 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
   // 각 설정 항목에 대한 설명
   const descriptions: Record<string, string> = {
-    title: "프로젝트의 이름을 입력하세요. (필수)",
-    description: "프로젝트에 대한 간략한 설명을 입력하세요. (필수)",
-    serverUrl: "서버의 URL을 입력하세요. (필수)",
-    requirementSpec: "요구사항 명세서 파일을 업로드하세요. (필수)",
-    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요. (필수)",
+    title: "프로젝트의 이름을 입력하세요.",
+    description: "프로젝트에 대한 간략한 설명을 입력하세요.",
+    serverUrl: "서버의 URL을 입력하세요.",
+    requirementSpec: "요구사항 명세서 파일을 업로드하세요.",
+    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요.",
     dependencyFile: "의존성 파일을 업로드하거나 Spring 의존성 목록에서 선택하세요.",
     utilityClass: "유틸리티 클래스 정보를 업로드하거나 GitHub에서 가져오세요.",
     errorCode: "에러 코드 정의 파일을 업로드하거나 GitHub에서 가져오세요.",
@@ -103,21 +103,43 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
   // FileValue 또는 FileValue[] 타입을 string 또는 string[] 타입으로 변환하는 헬퍼 함수
   const convertFileValue = (value: FileValue | FileValue[]): string | string[] => {
+    console.log("ContentArea - convertFileValue - 입력값:", value);
+    
+    // GitHub API 응답 JSON 문자열인지 확인 (JSON 형식이고 tree 필드가 있는지)
+    if (typeof value === 'string' && value.includes('"tree"') && value.includes('"sha"')) {
+      try {
+        // JSON 형식인지 확인 (파싱 시도)
+        JSON.parse(value);
+        console.log("ContentArea - GitHub API 응답 JSON 확인됨");
+        // 원본 JSON 문자열을 그대로 반환
+        return value;
+      } catch (e) {
+        console.error("ContentArea - JSON 파싱 오류:", e);
+      }
+    }
+    
+    // 아키텍처 GitHub 타입인 경우 특별 처리
+    if (typeof value === 'string' && value === 'ARCHITECTURE_GITHUB') {
+      console.log("ContentArea - convertFileValue - 반환값: ARCHITECTURE_GITHUB");
+      return value; // 기본값으로 'ARCHITECTURE_GITHUB' 문자열 반환
+    }
+    
+    let result;
     if (Array.isArray(value)) {
-      return value.map(item => {
+      result = value.map(item => {
         if (typeof item === 'string') {
           return item;
         }
-        // FileWithContent 객체의 경우 직렬화하여 string으로 반환
-        return JSON.stringify(item);
+        // FileWithContent 객체를 그대로 반환
+        return item;
       });
     } else {
-      if (typeof value === 'string') {
-        return value;
-      }
-      // FileWithContent 객체의 경우 직렬화하여 string으로 반환
-      return JSON.stringify(value);
+      // 문자열이거나 객체 그대로 반환 (변환 없음)
+      result = value;
     }
+    
+    console.log("ContentArea - convertFileValue - 반환값:", result);
+    return result;
   };
 
   return (
@@ -125,7 +147,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
       <div className="h-full overflow-y-auto p-8 md:p-12">
         <FormItem
           ref={refs.title}
-          title={`프로젝트명 ${isRequired('title') ? '(필수)' : ''}`}
+          title={`프로젝트명${isRequired('title') ? '' : ''}`}
           type={inputTypes.title}
           value={settings.title as string}
           onChange={(value) => onSettingChange("title", value)}
@@ -136,7 +158,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.description}
-          title={`프로젝트 설명 ${isRequired('description') ? '(필수)' : ''}`}
+          title={`프로젝트 설명${isRequired('description') ? '' : ''}`}
           type={inputTypes.description}
           value={settings.description as string}
           onChange={(value) => onSettingChange("description", value)}
@@ -147,7 +169,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.serverUrl}
-          title={`Server URL ${isRequired('serverUrl') ? '(필수)' : ''}`}
+          title={`Server URL${isRequired('serverUrl') ? '' : ''}`}
           type={inputTypes.serverUrl}
           value={settings.serverUrl as string}
           onChange={(value) => onSettingChange("serverUrl", value)}
@@ -158,7 +180,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <RequirementSpecForm
           ref={refs.requirementSpec}
-          title={`요구사항 명세서 ${isRequired('requirementSpec') ? '(필수)' : ''}`}
+          title={`요구사항 명세서 ${isRequired('requirementSpec') ? '' : ''}`}
           value={settings.requirementSpec}
           onChange={(value) => onSettingChange("requirementSpec", convertFileValue(value))}
           onInfoClick={() => openModal("requirementSpec")}
@@ -168,7 +190,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <ERDForm
           ref={refs.erd}
-          title={`ERD ${isRequired('erd') ? '(필수)' : ''}`}
+          title={`ERD ${isRequired('erd') ? '' : ''}`}
           value={settings.erd}
           onChange={(value) => onSettingChange("erd", convertFileValue(value))}
           onInfoClick={() => openModal("erd")}

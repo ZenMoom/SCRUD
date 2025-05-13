@@ -67,15 +67,16 @@ export async function POST(request: NextRequest) {
     // let architectureAdded = false;
     
     // 파일 타입 항목들 추가
-    Object.entries(settings).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(settings)) {
       // 아키텍처와 보안 설정 특별 처리
       if (key === 'architectureStructure') {
-        if (value) {
-          // architectureAdded = true;
+        // 배열이고 요소가 있는 경우에만 처리
+        if (Array.isArray(value) && value.length > 0) {
+          const architectureValue = value[0]; // 첫 번째 요소만 사용
           
           // GitHub에서 가져온 파일인 경우
-          if (typeof value === 'string' && value.startsWith('github:')) {
-            const parts = value.substring(7).split('|');
+          if (typeof architectureValue === 'string' && architectureValue.startsWith('github:')) {
+            const parts = architectureValue.substring(7).split('|');
             const fileName = parts[0];
             const fileUrl = parts.length > 1 ? parts[1] : "";
             
@@ -83,36 +84,40 @@ export async function POST(request: NextRequest) {
               fileName: fileName,
               fileType: 'ARCHITECTURE_GITHUB', // GitHub에서 가져온 경우 특별 타입
               fileUrl: fileUrl,
-              fileContent: JSON.stringify({ type: value })
+              fileContent: JSON.stringify({ type: architectureValue })
             });
           } else {
             // 기본 선택 옵션인 경우 (예: ARCHITECTURE_DEFAULT_LAYERED_A)
             globalFiles.push({
-              fileName: `Architecture-${value}`,
-              fileType: value as string, // 선택된 값을 타입으로 사용
+              fileName: `${architectureValue}`,
+              fileType: architectureValue, // 선택된 값을 타입으로 사용
               fileUrl: "",
-              fileContent: JSON.stringify({ type: value })
+              fileContent: JSON.stringify({ type: architectureValue })
             });
           }
         }
+        // 빈 배열이면 아무것도 하지 않음 (전송하지 않음)
       } 
       else if (key === 'securitySetting') {
-        if (value) {
-          // securityAdded = true;
+        // 배열이고 요소가 있는 경우에만 처리
+        if (Array.isArray(value) && value.length > 0) {
+          const securityValue = value[0]; // 첫 번째 요소만 사용
+          
           globalFiles.push({
-            fileName: `Security-${value}`,
-            fileType: value as string, // 선택된 값을 타입으로 사용
+            fileName: `${securityValue}`,
+            fileType: securityValue, // 선택된 값을 타입으로 사용
             fileUrl: "",
-            fileContent: JSON.stringify({ type: value })
+            fileContent: JSON.stringify({ type: securityValue })
           });
         }
+        // 빈 배열이면 아무것도 하지 않음 (전송하지 않음)
       }
       // 일반 파일 처리
       else if (fileTypeMapping[key]) {
         // 배열로 전달된 파일 처리
         if (Array.isArray(value)) {
           // 각 파일을 개별 globalFile로 처리
-          value.forEach(fileItem => {
+          for (const fileItem of value) {
             if (fileItem) {
               // GitHub에서 가져온 파일인 경우 URL도 추출
               let fileUrl = "";
@@ -124,16 +129,45 @@ export async function POST(request: NextRequest) {
                 const parts = fileItem.substring(7).split('|');
                 fileName = parts[0]; // 파일 경로
                 fileUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
-                fileContent = fileItem; // GitHub 파일의 경우 원본 문자열 사용
+                
+                // 아키텍처 구조도 GitHub 폴더인 경우 특별 처리
+                if (fileUrl === "ARCHITECTURE_GITHUB") {
+                  if (parts.length > 2 && parts[2]) {
+                    // content 데이터가 포함된 경우, 세 번째 부분에서 가져옴
+                    fileContent = parts[2]; // 구조 정보가 이미 포함되어 있음
+                  } else {
+                    // 기존 방식 (content 데이터가 없는 경우)
+                    fileContent = JSON.stringify({
+                      type: "ARCHITECTURE_GITHUB",
+                      path: fileName
+                    });
+                  }
+                } else if (fileUrl) {
+                  // 일반 파일인 경우 URL에서 내용 가져오기
+                  try {
+                    // 파일 내용 가져오기
+                    const response = await fetch(fileUrl);
+                    if (response.ok) {
+                      fileContent = await response.text();
+                    } else {
+                      fileContent = `GitHub 파일 내용을 가져오지 못했습니다. (${response.status})`;
+                    }
+                  } catch (error) {
+                    console.error("GitHub 파일 내용 가져오기 실패:", error);
+                    fileContent = "GitHub 파일 내용을 가져오는 중 오류가 발생했습니다.";
+                  }
+                } else {
+                  fileContent = fileItem; // GitHub 파일의 경우 원본 문자열 사용
+                }
               } else if (typeof fileItem === 'object' && fileItem !== null) {
                 // 클라이언트에서 파일 내용을 읽은 경우
                 const fileObj = fileItem as unknown as FileWithContent;
                 fileName = fileObj.name || "unknown";
-                fileContent = fileObj.content || "";
+                fileContent = fileObj.content || ""; // 파일 내용 유지
               } else {
                 // 문자열인 경우 (파일 이름만 있는 경우)
                 fileName = String(fileItem);
-                fileContent = String(fileItem);
+                fileContent = ""; // 파일 내용은 비워두기
               }
 
               globalFiles.push({
@@ -143,7 +177,7 @@ export async function POST(request: NextRequest) {
                 fileContent
               });
             }
-          });
+          }
         }
         // 문자열로 전달된 단일 값 처리
         else if (value) {
@@ -157,16 +191,45 @@ export async function POST(request: NextRequest) {
             const parts = value.substring(7).split('|');
             fileName = parts[0]; // 파일 경로
             fileUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
-            fileContent = value; // GitHub 파일의 경우 원본 문자열 사용
+            
+            // 아키텍처 구조도 GitHub 폴더인 경우 특별 처리
+            if (fileUrl === "ARCHITECTURE_GITHUB") {
+              if (parts.length > 2 && parts[2]) {
+                // content 데이터가 포함된 경우, 세 번째 부분에서 가져옴
+                fileContent = parts[2]; // 구조 정보가 이미 포함되어 있음
+              } else {
+                // 기존 방식 (content 데이터가 없는 경우)
+                fileContent = JSON.stringify({
+                  type: "ARCHITECTURE_GITHUB",
+                  path: fileName
+                });
+              }
+            } else if (fileUrl) {
+              // 일반 파일인 경우 URL에서 내용 가져오기
+              try {
+                // 파일 내용 가져오기
+                const response = await fetch(fileUrl);
+                if (response.ok) {
+                  fileContent = await response.text();
+                } else {
+                  fileContent = `GitHub 파일 내용을 가져오지 못했습니다. (${response.status})`;
+                }
+              } catch (error) {
+                console.error("GitHub 파일 내용 가져오기 실패:", error);
+                fileContent = "GitHub 파일 내용을 가져오는 중 오류가 발생했습니다.";
+              }
+            } else {
+              fileContent = value; // GitHub 파일의 경우 원본 문자열 사용
+            }
           } else if (typeof value === 'object' && value !== null) {
             // 클라이언트에서 파일 내용을 읽은 경우
             const fileObj = value as unknown as FileWithContent;
             fileName = fileObj.name || "unknown";
-            fileContent = fileObj.content || "";
+            fileContent = fileObj.content || ""; // 파일 내용 유지
           } else {
             // 문자열인 경우 (파일 이름만 있는 경우)
             fileName = String(value);
-            fileContent = String(value);
+            fileContent = ""; // 파일 내용은 비워두기
           }
 
           globalFiles.push({
@@ -177,7 +240,7 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-    });
+    }
     
     // 프로젝트 데이터 구성
     const projectData = {
