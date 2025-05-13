@@ -218,6 +218,20 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       return
     }
 
+    // 상태 변경 제한 검증
+    if (endpoint.status === "AI_GENERATED") {
+      console.warn("생성됨 상태에서는 상태를 변경할 수 없습니다.")
+      return
+    }
+
+    // "작업중" 또는 "완료" 상태에서 "생성됨" 상태로 돌아갈 수 없음
+    if ((endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED") && status === "AI_GENERATED") {
+      console.warn("작업중 또는 완료 상태에서 생성됨 상태로 돌아갈 수 없습니다.")
+      return
+    }
+
+    // 특정 로직을 추가할 자리 (여기에 필요한 로직 추가)
+
     // 먼저 UI 상태 업데이트 (낙관적 업데이트)
     setApiGroups(
       apiGroups.map((group) => {
@@ -421,15 +435,20 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                             onClick={() => onApiSelect(endpoint.path, endpoint.method)}
                             onDoubleClick={(e) => startEditingEndpoint(group.id, endpoint.id, e)}
                           >
-                            {/* 상태 드롭다운 - UI는 유지하되 값만 변경 */}
+                            {/* 상태 드롭다운 - 상태 변경 제한 적용 */}
                             <div className="relative inline-block text-left w-24 flex-shrink-0">
                               <select
                                 value={endpoint.status}
                                 onChange={(e) => updateEndpointStatus(group.id, endpoint.id, e.target.value as ApiProcessStateEnumDto)}
                                 className={`appearance-none text-xs px-2 py-0.5 rounded w-full cursor-pointer focus:outline-none ${getStatusStyle(endpoint.status)} pr-6`}
                                 onClick={(e) => e.stopPropagation()}
+                                disabled={endpoint.status === "AI_GENERATED"} // 생성됨 상태일 때 드롭박스 자체를 비활성화
                               >
-                                <option value="AI_GENERATED" className="bg-white text-gray-700">
+                                <option
+                                  value="AI_GENERATED"
+                                  className="bg-white text-gray-700"
+                                  disabled={endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED"} // 작업중 또는 완료 상태에서 생성됨으로 돌아갈 수 없음
+                                >
                                   생성됨
                                 </option>
                                 <option value="AI_VISUALIZED" className="bg-white text-blue-700">
