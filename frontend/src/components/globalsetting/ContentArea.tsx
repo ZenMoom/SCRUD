@@ -2,17 +2,19 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import FormItem from "./Form"
 import InfoModal from "./InfoModal"
 import RequirementSpecForm from "./form/RequirementSpecForm"
-import ERDForm from "./form//ERDForm"
-import DependencyFileForm from "./form//DependencyFileForm"
-import UtilityClassForm from "./form//UtilityClassForm"
+import ERDForm from "./form/ERDForm"
+import DependencyFileForm from "./form/DependencyFileForm"
+import DependencySelector, { springDependencies } from "./form/DependencySelector"
+import UtilityClassForm from "./form/UtilityClassForm"
 import ErrorCodeForm from "./form/ErrorCodeForm"
 import SecuritySettingForm from "./form/SecuritySettingForm"
 import CodeConventionForm from "./form/CodeConventionForm"
 import ArchitectureStructureForm from "./form/ArchitectureStructureForm"
+import { HelpCircle } from "lucide-react"
 
 // 파일 객체 타입 정의 (다른 컴포넌트와 일치시킴)
 interface FileWithContent {
@@ -20,12 +22,27 @@ interface FileWithContent {
   content: string;
 }
 
-// 문자열 또는 파일 객체 타입
-type FileValue = string | FileWithContent;
+// 프로젝트 설정 타입 정의
+interface ProjectSettings {
+  title: string;
+  description: string;
+  serverUrl: string;
+  requirementSpec: FileWithContent[];
+  erd: FileWithContent[];
+  dependencyFile: string[];
+  utilityClass: FileWithContent[];
+  errorCode: FileWithContent[];
+  securitySetting: string;
+  codeConvention: FileWithContent[];
+  architectureStructure: string;
+}
+
+// FileValue 타입 정의 수정
+type FileValue = FileWithContent | FileWithContent[];
 
 interface ContentAreaProps {
-  settings: Record<string, string | string[]>
-  onSettingChange: (key: string, value: string | string[]) => void
+  settings: ProjectSettings;
+  onSettingChange: (key: string, value: string | string[] | FileWithContent | FileWithContent[]) => void;
   refs: {
     title: React.RefObject<HTMLDivElement | null>
     description: React.RefObject<HTMLDivElement | null>
@@ -44,6 +61,30 @@ interface ContentAreaProps {
 
 export default function ContentArea({ settings, onSettingChange, refs, setActiveItem }: ContentAreaProps) {
   const [modalOpen, setModalOpen] = useState<string | null>(null)
+  const [dependencyInputType, setDependencyInputType] = useState<'select' | 'file'>('select')
+  const [selectedDependencies, setSelectedDependencies] = useState<string[]>(
+    Array.isArray(settings.dependencyFile) ? settings.dependencyFile : []
+  )
+
+  // settings.dependencyFile이 변경될 때 selectedDependencies 업데이트
+  useEffect(() => {
+    if (Array.isArray(settings.dependencyFile)) {
+      setSelectedDependencies(settings.dependencyFile);
+    }
+  }, [settings.dependencyFile]);
+
+  // 의존성 입력 방식 변경 핸들러
+  const handleDependencyInputTypeChange = (type: 'select' | 'file') => {
+    setDependencyInputType(type);
+  };
+
+  // 의존성 변경 핸들러
+  const handleDependencyChange = (value: string[] | FileWithContent | FileWithContent[]) => {
+    if (Array.isArray(value)) {
+      setSelectedDependencies(value);
+    }
+    onSettingChange("dependencyFile", value);
+  };
 
   const openModal = (key: string) => {
     setModalOpen(key)
@@ -59,11 +100,11 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
   // 각 설정 항목에 대한 설명
   const descriptions: Record<string, string> = {
-    title: "프로젝트의 이름을 입력하세요.",
-    description: "프로젝트에 대한 간략한 설명을 입력하세요.",
-    serverUrl: "서버의 URL을 입력하세요.",
-    requirementSpec: "요구사항 명세서 파일을 업로드하세요.",
-    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요.",
+    title: "프로젝트의 이름을 입력하세요. (필수)",
+    description: "프로젝트에 대한 간략한 설명을 입력하세요. (필수)",
+    serverUrl: "서버의 URL을 입력하세요. (필수)",
+    requirementSpec: "요구사항 명세서 파일을 업로드하세요. (필수)",
+    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요. (필수)",
     dependencyFile: "의존성 파일을 업로드하거나 Spring 의존성 목록에서 선택하세요.",
     utilityClass: "유틸리티 클래스 정보를 업로드하거나 GitHub에서 가져오세요.",
     errorCode: "에러 코드 정의 파일을 업로드하거나 GitHub에서 가져오세요.",
@@ -101,29 +142,12 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
     }
   }
 
-  // FileValue 또는 FileValue[] 타입을 string 또는 string[] 타입으로 변환하는 헬퍼 함수
-  const convertFileValue = (value: FileValue | FileValue[]): string | string[] => {
-    if (Array.isArray(value)) {
-      return value.map(item => {
-        if (typeof item === 'string') {
-          return item;
-        }
-        return item.name; // FileWithContent 객체의 경우 name만 반환
-      });
-    } else {
-      if (typeof value === 'string') {
-        return value;
-      }
-      return value.name; // FileWithContent 객체의 경우 name만 반환
-    }
-  };
-
   return (
     <div className="flex-1 relative bg-[#f8f8f8] shadow-[inset_0_0_10px_rgba(0,0,0,0.02)] w-full">
       <div className="h-full overflow-y-auto p-8 md:p-12">
         <FormItem
           ref={refs.title}
-          title="프로젝트명"
+          title={`프로젝트명 ${isRequired('title') ? '(필수)' : ''}`}
           type={inputTypes.title}
           value={settings.title as string}
           onChange={(value) => onSettingChange("title", value)}
@@ -134,7 +158,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.description}
-          title="프로젝트 설명"
+          title={`프로젝트 설명 ${isRequired('description') ? '(필수)' : ''}`}
           type={inputTypes.description}
           value={settings.description as string}
           onChange={(value) => onSettingChange("description", value)}
@@ -145,7 +169,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.serverUrl}
-          title="Server URL"
+          title={`Server URL ${isRequired('serverUrl') ? '(필수)' : ''}`}
           type={inputTypes.serverUrl}
           value={settings.serverUrl as string}
           onChange={(value) => onSettingChange("serverUrl", value)}
@@ -156,9 +180,9 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <RequirementSpecForm
           ref={refs.requirementSpec}
-          title="요구사항 명세서서"
+          title={`요구사항 명세서 ${isRequired('requirementSpec') ? '(필수)' : ''}`}
           value={settings.requirementSpec}
-          onChange={(value) => onSettingChange("requirementSpec", convertFileValue(value))}
+          onChange={(value) => onSettingChange("requirementSpec", value as FileValue)}
           onInfoClick={() => openModal("requirementSpec")}
           onFocus={() => handleItemFocus("requirementSpec")}
           isRequired={isRequired('requirementSpec')}
@@ -166,29 +190,69 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <ERDForm
           ref={refs.erd}
-          title="ERD"
+          title={`ERD ${isRequired('erd') ? '(필수)' : ''}`}
           value={settings.erd}
-          onChange={(value) => onSettingChange("erd", convertFileValue(value))}
+          onChange={(value) => onSettingChange("erd", value as FileValue)}
           onInfoClick={() => openModal("erd")}
           onFocus={() => handleItemFocus("erd")}
           isRequired={isRequired('erd')}
         />
 
-        <DependencyFileForm
-          ref={refs.dependencyFile}
-          title="의존성 파일"
-          value={settings.dependencyFile}
-          onChange={(value) => onSettingChange("dependencyFile", convertFileValue(value))}
-          onInfoClick={() => openModal("dependencyFile")}
-          onFocus={() => handleItemFocus("dependencyFile")}
-          isRequired={isRequired('dependencyFile')}
-        />
+        <div ref={refs.dependencyFile} className="mb-10 p-10 bg-white rounded-lg">
+          <div className="flex items-center mb-4 justify-between">
+            <div className="flex items-center">
+              <h2 className="text-xl font-semibold m-0">의존성 파일 {isRequired('dependencyFile') && <span className="text-red-500">*</span>}</h2>
+              <button
+                type="button"
+                className="bg-transparent border-none text-gray-400 cursor-pointer ml-2 p-0 flex items-center justify-center transition-colors duration-200 hover:text-gray-600"
+                onClick={() => openModal("dependencyFile")}
+                aria-label="의존성 파일 정보"
+              >
+                <HelpCircle size={20} />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                className={`px-4 py-2 rounded ${dependencyInputType === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
+                onClick={() => handleDependencyInputTypeChange('select')}
+              >
+                선택
+              </button>
+              <button
+                className={`px-4 py-2 rounded ${dependencyInputType === 'file' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
+                onClick={() => handleDependencyInputTypeChange('file')}
+              >
+                파일
+              </button>
+            </div>
+          </div>
+
+          {dependencyInputType === 'select' ? (
+            <DependencySelector
+              selectedDependencies={selectedDependencies}
+              onDependencyChange={handleDependencyChange}
+            />
+          ) : (
+            <DependencyFileForm
+              title=""
+              value={{
+                name: "의존성.txt",
+                content: selectedDependencies.map(depId => {
+                  const dep = springDependencies.find(d => d.id === depId);
+                  return dep ? dep.name : depId;
+                }).join(", ")
+              }}
+              onChange={handleDependencyChange}
+              onFocus={() => handleItemFocus("dependencyFile")}
+            />
+          )}
+        </div>
 
         <UtilityClassForm
           ref={refs.utilityClass}
           title="유틸 클래스"
           value={settings.utilityClass}
-          onChange={(value) => onSettingChange("utilityClass", convertFileValue(value))}
+          onChange={(value) => onSettingChange("utilityClass", value as FileValue)}
           onInfoClick={() => openModal("utilityClass")}
           onFocus={() => handleItemFocus("utilityClass")}
         />
@@ -197,7 +261,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.errorCode}
           title="에러 코드"
           value={settings.errorCode}
-          onChange={(value) => onSettingChange("errorCode", convertFileValue(value))}
+          onChange={(value) => onSettingChange("errorCode", value as FileValue)}
           onInfoClick={() => openModal("errorCode")}
           onFocus={() => handleItemFocus("errorCode")}
         />
@@ -206,7 +270,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.securitySetting}
           title="보안 설정"
           value={settings.securitySetting}
-          onChange={(value) => onSettingChange("securitySetting", convertFileValue(value))}
+          onChange={(value) => onSettingChange("securitySetting", value)}
           onInfoClick={() => openModal("securitySetting")}
           options={securityOptions}
           onFocus={() => handleItemFocus("securitySetting")}
@@ -216,7 +280,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.codeConvention}
           title="코드 컨벤션"
           value={settings.codeConvention}
-          onChange={(value) => onSettingChange("codeConvention", convertFileValue(value))}
+          onChange={(value) => onSettingChange("codeConvention", value as FileValue)}
           onInfoClick={() => openModal("codeConvention")}
           onFocus={() => handleItemFocus("codeConvention")}
         />
@@ -225,7 +289,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.architectureStructure}
           title="아키텍처 구조"
           value={settings.architectureStructure}
-          onChange={(value) => onSettingChange("architectureStructure", convertFileValue(value))}
+          onChange={(value) => onSettingChange("architectureStructure", value)}
           onInfoClick={() => openModal("architectureStructure")}
           options={architectureOptions}
           onFocus={() => handleItemFocus("architectureStructure")}

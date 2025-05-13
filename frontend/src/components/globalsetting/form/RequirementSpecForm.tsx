@@ -16,8 +16,8 @@ type FileValue = string | FileWithContent;
 
 interface RequirementSpecFormProps {
   title: string
-  value: FileValue | FileValue[]
-  onChange: (value: FileValue | FileValue[]) => void
+  value: FileWithContent | FileWithContent[]
+  onChange: (value: FileWithContent | FileWithContent[]) => void
   onInfoClick: () => void
   onFocus?: () => void
   isRequired?: boolean
@@ -39,10 +39,16 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
           // fileUrl이 있으면 fileUrl 포함, 없으면 기존 방식대로 처리
           if (file.downloadUrl) {
             // 파일 경로와 URL을 모두 포함해서 저장 (파이프로 구분)
-            return `github:${file.path}|${file.downloadUrl}`;
+            return {
+              name: file.path,
+              content: file.downloadUrl
+            };
           } else {
             // 기존 방식 (URL 없는 경우)
-            return `github:${file.path}`;
+            return {
+              name: file.path,
+              content: ""
+            };
           }
         });
 
@@ -62,38 +68,29 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
       }
     }
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault()
       e.stopPropagation()
       setDragActive(false)
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0];
-        const fileName = file.name;
-        
-        // 파일 내용 읽기
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target && event.target.result) {
-            const fileContent = event.target.result as string;
-            
-            // 새로운 파일 객체 생성
-            const fileWithContent: FileWithContent = { 
-              name: fileName, 
-              content: fileContent 
-            };
-            
-            // 드롭한 파일을 현재 값 배열에 추가
-            if (Array.isArray(value)) {
-              onChange([...value, fileWithContent]);
-            } else {
-              // 배열이 아닌 경우 새 배열 생성
-              onChange([fileWithContent]);
-            }
-          }
+        const content = await file.text();
+        const fileWithContent = {
+          name: file.name,
+          content: content
         };
+
+        console.log('드래그 앤 드롭으로 추가된 파일:');
+        console.log('파일명:', fileWithContent.name);
+        console.log('파일 내용:', fileWithContent.content);
         
-        // 텍스트 파일로 읽기
-        reader.readAsText(file);
+        // 드롭한 파일을 현재 값 배열에 추가
+        if (Array.isArray(value)) {
+          onChange([...value, fileWithContent]);
+        } else {
+          // 배열이 아닌 경우 새 배열 생성
+          onChange([fileWithContent]);
+        }
       }
     }
 
@@ -108,7 +105,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
       
       // 1. 깃허브 토큰 확인
       const githubToken = localStorage.getItem('github-token-direct');
-      const REDIRECT_URL = process.env.SPRING_FRONT_REDIRECT_URI;
+      
       try {
         if (githubToken) {
           // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
@@ -133,13 +130,13 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
             localStorage.removeItem('github-token-direct');
             
             // 인증 요청
-            const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
+            const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
             window.location.href = oauthUrl;
           }
         } else {
           // 토큰이 없는 경우 바로 인증 요청
           console.log('GitHub 토큰 없음, 인증 요청');
-          const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
+          const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
           window.location.href = oauthUrl;
         }
       } catch (error) {
@@ -185,7 +182,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
           >
             <Upload size={24} className="text-gray-400 mb-2" />
             <p className="text-gray-500 text-center text-sm">
-              {title} 파일을 드래그해서 추가하거나 <br /> 
+              요구사항 명세서 파일을 드래그해서 추가하거나 <br /> 
               <span className="text-blue-500">
                 업로드하세요
               </span>
@@ -228,35 +225,26 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
             id={`file-upload-${title}`}
             type="file"
             className="hidden"
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
               if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
-                const fileName = file.name;
-                
-                // 파일 내용 읽기
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  if (event.target && event.target.result) {
-                    const fileContent = event.target.result as string;
-                    
-                    // 새로운 파일 객체 생성
-                    const fileWithContent: FileWithContent = { 
-                      name: fileName, 
-                      content: fileContent 
-                    };
-                    
-                    // 파일을 현재 값 배열에 추가
-                    if (Array.isArray(value)) {
-                      onChange([...value, fileWithContent]);
-                    } else {
-                      // 배열이 아닌 경우 단일 항목 배열로 설정
-                      onChange([fileWithContent]);
-                    }
-                  }
+                const content = await file.text();
+                const fileWithContent = {
+                  name: file.name,
+                  content: content
                 };
+
+                console.log('파일 업로드로 추가된 파일:');
+                console.log('파일명:', fileWithContent.name);
+                console.log('파일 내용:', fileWithContent.content);
                 
-                // 텍스트 파일로 읽기
-                reader.readAsText(file);
+                // 현재 value가 배열인 경우 새 파일을 추가
+                if (Array.isArray(value)) {
+                  onChange([...value, fileWithContent]);
+                } else {
+                  // 배열이 아닌 경우 단일 항목 배열로 설정
+                  onChange([fileWithContent]);
+                }
               }
             }}
           />
@@ -266,31 +254,24 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
             <div className="mt-4">
               <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
               <div className="flex flex-col space-y-2">
-                {value.map((file, index) => {
-                  // 파일 이름 표시 로직
-                  const displayName = typeof file === 'string' 
-                    ? file 
-                    : (file as FileWithContent).name;
-                    
-                  return (
-                    <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
-                      <div className="flex items-center gap-2">
-                        <File size={16} className="text-gray-500" />
-                        <span className="truncate">{displayName}</span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const newFiles = [...value];
-                          newFiles.splice(index, 1);
-                          onChange(newFiles);
-                        }}
-                        className="text-red-500 hover:text-red-700 ml-2"
-                      >
-                        &times;
-                      </button>
+                {value.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <File size={16} className="text-gray-500" />
+                      <span className="truncate">{file.name}</span>
                     </div>
-                  );
-                })}
+                    <button
+                      onClick={() => {
+                        const newFiles = [...value];
+                        newFiles.splice(index, 1);
+                        onChange(newFiles);
+                      }}
+                      className="text-red-500 hover:text-red-700 ml-2"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -299,11 +280,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
           {!Array.isArray(value) && value && (
             <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
               <File size={16} className="text-gray-500" />
-              <span>
-                {typeof value === 'string' 
-                  ? value 
-                  : (value as FileWithContent).name}
-              </span>
+              <span>{value.name}</span>
             </div>
           )}
           

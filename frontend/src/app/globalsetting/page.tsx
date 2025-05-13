@@ -8,6 +8,12 @@ import Floatingbutton from "@/components/globalsetting/FloatingButton"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
 import useAuthStore from "@/app/store/useAuthStore"
 
+// 파일 객체 타입 정의
+interface FileWithContent {
+  name: string;
+  content: string;
+}
+
 // 설정 항목 키 타입 정의
 type SettingKey = 'title' | 'description' | 'serverUrl' | 'requirementSpec' | 'erd' | 
                  'dependencyFile' | 'utilityClass' | 'errorCode' | 'securitySetting' | 
@@ -22,11 +28,10 @@ interface ProjectSettings {
   erd: string[];
   dependencyFile: string[];
   utilityClass: string[];
-  errorCode: string[];
+  errorCode: FileWithContent[];
   securitySetting: string;
   codeConvention: string[];
   architectureStructure: string;
-  [key: string]: string | string[]; // 인덱스 시그니처 추가
 }
 
 // 토큰 처리 컴포넌트
@@ -73,7 +78,7 @@ export default function GlobalSettingPage() {
     erd: [] as string[],
     dependencyFile: [] as string[],
     utilityClass: [] as string[],
-    errorCode: [] as string[],
+    errorCode: [] as FileWithContent[],
     securitySetting: "SECURITY_DEFAULT_JWT", // 첫 번째 선택지를 기본값으로 설정
     codeConvention: [] as string[],
     architectureStructure: "ARCHITECTURE_DEFAULT_LAYERED_A", // 첫 번째 선택지를 기본값으로 설정
@@ -150,13 +155,40 @@ export default function GlobalSettingPage() {
   }
 
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string | string[]) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
+  const handleSettingChange = (key: string, value: string | string[] | FileWithContent | FileWithContent[]) => {
+    setSettings((prev) => {
+      const newSettings = { ...prev };
+      
+      // 타입 가드를 사용하여 각 키에 맞는 값 할당
+      switch(key) {
+        case 'errorCode':
+          newSettings.errorCode = value as FileWithContent[];
+          break;
+        case 'title':
+        case 'description':
+        case 'serverUrl':
+        case 'securitySetting':
+        case 'architectureStructure':
+          newSettings[key] = value as string;
+          break;
+        case 'requirementSpec':
+        case 'erd':
+        case 'dependencyFile':
+        case 'utilityClass':
+        case 'codeConvention':
+          newSettings[key] = value as string[];
+          break;
+      }
+      
+      return newSettings;
+    });
 
-    // 값이 있으면 완료 상태로 변경 (문자열 또는 배열)
+    // 값이 있으면 완료 상태로 변경
     if (
       (typeof value === 'string' && value.trim() !== "") ||
-      (Array.isArray(value) && value.length > 0)
+      (Array.isArray(value) && value.length > 0) ||
+      (value && typeof value === 'object' && 'name' in value) ||  // FileWithContent 객체인 경우
+      (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && 'name' in value[0])  // FileWithContent 배열인 경우
     ) {
       setCompleted((prev) => ({ ...prev, [key as SettingKey]: true }))
     } else {
