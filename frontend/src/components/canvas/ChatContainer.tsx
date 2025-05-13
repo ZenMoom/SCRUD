@@ -1,12 +1,15 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
-import axios from "axios"
-import { Send, RefreshCw, X, AlertCircle } from "lucide-react"
-import type { ChatHistoryResponse, SSEIdResponse } from "@generated/model"
-import type { TargetNode } from "./DiagramContainer"
+import type React from "react"
 
-type ChatContainerProps = {
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Clock, Send, RefreshCw, X, AlertCircle } from "lucide-react"
+import type { ChatHistoryResponse } from "@generated/model"
+import type { TargetNode } from "./DiagramContainer"
+import axios from "axios"
+
+// 채팅 컨테이너 속성 타입 정의
+interface ChatContainerProps {
   projectId: string
   apiId: string
   versionId: string
@@ -16,6 +19,7 @@ type ChatContainerProps = {
   onRefresh: () => Promise<void>
   targetNodes: TargetNode[]
   onRemoveTarget: (nodeId: string) => void
+  onVersionSelect?: (versionId: string) => void // 버전 선택 콜백 추가
 }
 
 // SSE 응답 타입 정의
@@ -33,25 +37,43 @@ interface SSEResponse {
   done?: boolean
 }
 
-export default function ChatContainer({ projectId, apiId, versionId, chatData, loading, error, onRefresh, targetNodes, onRemoveTarget }: ChatContainerProps) {
-  const [systemResponse, setSystemResponse] = useState<SSEIdResponse | null>(null)
-  const [message, setMessage] = useState<string>("")
+// SSEIdResponse 인터페이스 정의를 실제 API 정의에 맞게 수정
+interface SSEIdResponse {
+  streamId?: string
+}
+
+// 채팅 메시지 타입 정의
+interface ChatMessage {
+  id: string
+  type: "user" | "system" | "version"
+  message: string
+  timestamp: string
+  versionInfo?: {
+    versionId: string
+    description: string
+  }
+  targetMethods?: Array<{ methodId: string }>
+}
+
+export default function ChatContainer({ projectId, apiId, versionId, chatData, loading, error, onRefresh, targetNodes, onRemoveTarget, onVersionSelect }: ChatContainerProps) {
+  // 상태 관리
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [newMessage, setNewMessage] = useState("")
   const [lastSentMessage, setLastSentMessage] = useState<string>("")
   const [sending, setSending] = useState<boolean>(false)
   const [sendError, setSendError] = useState<string | null>(null)
-  const chatContainerRef = useRef<HTMLDivElement>(null)
 
-  // SSE 관련 상태 추가
+  // SSE 관련 상태
   const [sseConnected, setSSEConnected] = useState<boolean>(false)
   const [currentSSEId, setCurrentSSEId] = useState<string | null>(null)
   const [sseError, setSSEError] = useState<string | null>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
 
-  // 누적 토큰을 위한 상태 추가
+  // 누적 토큰을 위한 상태
   const [accumulatedText, setAccumulatedText] = useState<string>("")
 
-  // 디버그 모드 상태 추가
-  const [debugMode, setDebugMode] = useState<boolean>(true) // 기본값을 true로 설정
+  // 디버그 모드 상태
+  const [debugMode, setDebugMode] = useState<boolean>(false)
   const [debugMessages, setDebugMessages] = useState<string[]>([])
 
   // 연결 시도 중인지 추적하는 상태
@@ -62,15 +84,21 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   const maxRetries = 5
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // 현재 메시지에 대한 연결 완료 상태 추가 (전역 상태가 아닌 현재 메시지에 대한 상태)
+  // 현재 메시지에 대한 연결 완료 상태
   const [currentMessageCompleted, setCurrentMessageCompleted] = useState<boolean>(false)
 
-  // 활성 SSE ID 추적 (현재 처리 중인 메시지의 SSE ID)
+  // 활성 SSE ID 추적
   const activeSSEIdRef = useRef<string | null>(null)
 
-  // 디버그 로그 함수 - 가장 먼저 정의
+  // 채팅 컨테이너 참조
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  // 버전 정보를 위한 상태 - systemResponse 대신 명확한 이름 사용
+  const [versionInfo, setVersionInfo] = useState<{ newVersionId: string; description: string } | null>(null)
+  console.log("버전 정보: ", versionInfo)
+  // 디버그 로그 함수
   const logDebug = useCallback(
-    (message: string, data?: any) => {
+    (message: string, data?: unknown) => {
       const timestamp = new Date().toISOString().substr(11, 8)
       const logMessage = data ? `[${timestamp}] ${message}: ${typeof data === "object" ? JSON.stringify(data) : data}` : `[${timestamp}] ${message}`
 
@@ -82,7 +110,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     [debugMode]
   )
 
-  // SSE 연결 해제 함수 - 다른 함수들보다 먼저 정의
+  // SSE 연결 해제 함수
   const disconnectSSE = useCallback(() => {
     // 재연결 타임아웃이 있으면 제거
     if (reconnectTimeoutRef.current) {
@@ -116,14 +144,13 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     }
   }, [logDebug])
 
-  // SSE 메시지 핸들러 - disconnectSSE 다음에 정의
+  // SSE 메시지 핸들러
   const handleSSEMessage = useCallback(
     (event: MessageEvent) => {
       try {
         logDebug("SSE 메시지 수신", event.data)
 
         // 현재 메시지가 이미 완료되었고 새 메시지가 시작되지 않았다면 처리하지 않음
-        // activeSSEIdRef.current가 null이 아니면 새 메시지가 시작된 것으로 간주
         if (currentMessageCompleted && !activeSSEIdRef.current) {
           logDebug("이전 메시지가 완료되었고 새 메시지가 시작되지 않음, 처리 무시")
           return
@@ -135,7 +162,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         try {
           parsedData = JSON.parse(event.data)
           logDebug("JSON 파싱 성공", parsedData)
-        } catch (e) {
+        } catch {
           logDebug("JSON 파싱 실패, 원본 데이터 사용", event.data)
 
           // data: {"token": "..."} 형식 처리 시도
@@ -192,14 +219,10 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           }
         }
 
-        // 버전 정보가 있으면 시스템 응답 업데이트
+        // 버전 정보가 있으면 버전 정보 상태 업데이트
         if (parsedData && parsedData.versionInfo) {
           logDebug("버전 정보 감지", parsedData.versionInfo)
-          setSystemResponse({
-            streamId: currentSSEId || "",
-            status: parsedData.status || "MODIFIED",
-            versionInfo: parsedData.versionInfo,
-          } as SSEIdResponse)
+          setVersionInfo(parsedData.versionInfo)
         }
 
         // 완료 메시지가 오면 연결 종료
@@ -229,10 +252,28 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         logDebug("SSE 메시지 처리 오류", err)
       }
     },
-    [currentMessageCompleted, currentSSEId, disconnectSSE, logDebug, onRefresh, activeSSEIdRef]
+    [currentMessageCompleted, currentSSEId, disconnectSSE, logDebug, onRefresh]
   )
 
-  // 재연결 처리 함수 - 순환 참조 방지를 위해 connectToSSE 함수 참조 제거
+  // 시스템 응답에서 버전 정보 감지 시 부모 컴포넌트에 알림
+  useEffect(() => {
+    // systemResponse에서 직접 versionInfo를 참조하지 않고
+    // 채팅 데이터에서 가져온 버전 정보를 사용
+    if (chatData && chatData.content && chatData.content.length > 0 && onVersionSelect) {
+      // 가장 최근의 시스템 응답에서 버전 정보 찾기
+      const latestSystemChat = [...chatData.content].reverse().find((item) => item.systemChat?.versionInfo)
+
+      if (latestSystemChat?.systemChat?.versionInfo) {
+        const newVersionId = latestSystemChat.systemChat.versionInfo.newVersionId
+        if (newVersionId) {
+          logDebug("채팅 데이터에서 버전 정보 감지, 부모 컴포넌트에 알림", latestSystemChat.systemChat.versionInfo)
+          onVersionSelect(newVersionId)
+        }
+      }
+    }
+  }, [chatData, onVersionSelect, logDebug])
+
+  // 재연결 처리 함수
   const handleReconnect = useCallback(() => {
     // 현재 메시지가 이미 완료되었다면 재연결 시도하지 않음
     if (currentMessageCompleted) {
@@ -277,12 +318,12 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         })
       }
     }, delay)
-  }, [currentMessageCompleted, currentSSEId, logDebug, maxRetries, sseConnected])
+  }, [currentMessageCompleted, currentSSEId, logDebug, sseConnected])
 
   // SSE 에러 핸들러
   const handleSSEError = useCallback(
     (err: Event) => {
-      console.error("SSE 연�� 오류:", err)
+      console.error("SSE 연결 오류:", err)
       logDebug("SSE 연결 오류", err)
 
       // 현재 메시지가 이미 완료되었다면 에러 처리하지 않음
@@ -307,7 +348,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     [currentMessageCompleted, handleReconnect, logDebug]
   )
 
-  // SSE 연결 함수 - 다른 함수들 다음에 정의
+  // SSE 연결 함수
   const connectToSSE = useCallback(
     (sseId: string) => {
       // 새로운 SSE ID로 연결 시도하는 경우 완료 상태 초기화
@@ -368,7 +409,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         handleReconnect()
       }
     },
-    [currentMessageCompleted, disconnectSSE, handleReconnect, handleSSEError, handleSSEMessage, isConnecting, logDebug, activeSSEIdRef]
+    [currentMessageCompleted, disconnectSSE, handleReconnect, handleSSEError, handleSSEMessage, isConnecting, logDebug]
   )
 
   // currentSSEId가 변경될 때 SSE 연결 처리
@@ -380,12 +421,61 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     }
   }, [connectToSSE, currentMessageCompleted, currentSSEId, isConnecting, sseConnected])
 
+  // 채팅 데이터가 변경될 때 메시지 목록 업데이트
+  useEffect(() => {
+    if (chatData && chatData.content) {
+      const formattedMessages: ChatMessage[] = []
+
+      chatData.content.forEach((item) => {
+        // 사용자 메시지 추가
+        if (item.userChat) {
+          formattedMessages.push({
+            id: `user-${item.chatId}`,
+            type: "user",
+            message: item.userChat.message || "", // null/undefined 처리
+            timestamp: item.createdAt,
+            targetMethods: item.userChat.targetMethods,
+          })
+        }
+
+        // 시스템 메시지 추가
+        if (item.systemChat) {
+          formattedMessages.push({
+            id: `system-${item.systemChat.systemChatId}`,
+            type: "system",
+            message: item.systemChat.message || "", // null/undefined 처리
+            timestamp: item.createdAt,
+          })
+
+          // 버전 정보가 있는 경우 버전 메시지 추가
+          if (item.systemChat.versionInfo) {
+            const versionId = item.systemChat.versionInfo.newVersionId || ""
+            const description = item.systemChat.versionInfo.description || ""
+
+            formattedMessages.push({
+              id: `version-${versionId}`,
+              type: "version",
+              message: description,
+              timestamp: item.createdAt,
+              versionInfo: {
+                versionId: versionId,
+                description: description,
+              },
+            })
+          }
+        }
+      })
+
+      setMessages(formattedMessages)
+    }
+  }, [chatData])
+
   // 채팅 메시지 스크롤 처리
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
-  }, [chatData, accumulatedText, debugMessages])
+  }, [messages, accumulatedText, debugMessages])
 
   // 컴포넌트 언마운트 시 SSE 연결 해제
   useEffect(() => {
@@ -396,7 +486,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
 
   // 메시지 전송 핸들러
   const handleSendMessage = async () => {
-    if (!message.trim() || sending || sseConnected || isConnecting) return
+    if (!newMessage.trim() || sending || sseConnected || isConnecting) return
 
     // 기존 SSE 연결이 있으면 먼저 종료
     if (eventSourceRef.current) {
@@ -413,7 +503,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     // 새 메시지를 위한 상태 초기화
     setCurrentMessageCompleted(false)
     setAccumulatedText("")
-    setSystemResponse(null)
+    setVersionInfo(null)
     setSSEError(null)
 
     try {
@@ -422,11 +512,11 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       setDebugMessages([]) // 디버그 메시지 초기화
 
       // 전송할 메시지 저장
-      const sentMessage = message
+      const sentMessage = newMessage
       setLastSentMessage(sentMessage)
 
       // 타겟 메서드 ID 추출
-      const targetMethods = targetNodes.length > 0 ? targetNodes.filter((target) => target.type === "method").map((target) => ({ methodId: target.id.replace("method-", "") })) : [{ methodId: "463" }] // 기본값
+      const targetMethods = targetNodes.length > 0 ? targetNodes.filter((target) => target.type === "method").map((target) => ({ methodId: target.id.replace("method-", "") })) : [{ methodId: "463" }] // 기본값 제공
 
       // 채팅 메시지 데이터 구성
       const chatMessageData = {
@@ -443,7 +533,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       })
 
       // 메시지 입력 필드 초기화 (요청 전에 초기화)
-      setMessage("")
+      setNewMessage("")
 
       // API 호출하여 채팅 메시지 전송
       const response = await axios.post<SSEIdResponse>(`/api/chat/${projectId}/${apiId}`, chatMessageData)
@@ -474,10 +564,19 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     }
   }
 
-  // 타겟 제거 핸들러
-  const handleRemoveTarget = (nodeId: string) => {
-    if (onRemoveTarget) {
-      onRemoveTarget(nodeId)
+  // 버전 클릭 핸들러 추가
+  const handleVersionClick = (versionId: string) => {
+    if (onVersionSelect) {
+      logDebug(`버전 클릭: ${versionId}`)
+      onVersionSelect(versionId)
+    }
+  }
+
+  // 엔터 키 처리
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage()
     }
   }
 
@@ -502,21 +601,18 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         <div className="p-4 bg-red-50 text-red-600 rounded-lg border-l-4 border-red-500">
           <h3 className="font-semibold mb-2">오류 발생</h3>
           <p>{error}</p>
-          <button onClick={() => onRefresh()} className="mt-2 px-3 py-1 bg-white text-red-600 rounded border border-red-300 flex items-center gap-1 text-sm">
-            <RefreshCw size={14} />
-            다시 시도
+          <button onClick={() => onRefresh()} className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors flex items-center gap-2">
+            <RefreshCw size={16} />
+            <span>다시 시도</span>
           </button>
         </div>
       </div>
     )
   }
 
-  // 채팅 항목 추출
-  const chatItems = chatData?.content || []
-
   return (
     <div className="h-full flex flex-col bg-white rounded-lg shadow overflow-hidden">
-      {/* 채팅 헤더 */}
+      {/* 헤더 */}
       <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
         <div>
           <h2 className="font-semibold">채팅</h2>
@@ -558,7 +654,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
                     {target.type === "method" && "메서드: "}
                     {target.name}
                   </span>
-                  <button onClick={() => handleRemoveTarget(target.id)} className="ml-1 p-0.5 rounded-full bg-red-200 hover:bg-red-300 transition-colors" aria-label={`${target.name} 타겟 제거`}>
+                  <button onClick={() => onRemoveTarget(target.id)} className="ml-1 p-0.5 rounded-full bg-red-200 hover:bg-red-300 transition-colors" aria-label={`${target.name} 타겟 제거`}>
                     <X size={12} className="text-red-700" />
                   </button>
                 </div>
@@ -575,32 +671,47 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       {/* 채팅 메시지 영역 */}
       <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto">
         {/* 기존 채팅 내역 */}
-        {chatItems.length > 0 ? (
-          chatItems.map((item, index) => (
-            <div key={`${item.chatId}-${index}`} className="mb-6">
-              {/* 사용자 메시지 */}
-              {item.userChat && (
-                <div className="flex justify-end mb-2">
-                  <div className="max-w-[80%] p-3 rounded-lg bg-blue-500 text-white rounded-tr-none">{item.userChat.message}</div>
-                </div>
-              )}
-
-              {/* 시스템 응답 */}
-              {item.systemChat && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] p-3 rounded-lg bg-gray-200 text-gray-800 rounded-tl-none">
-                    <div className="text-sm">{item.systemChat.versionInfo?.description || "시스템 응답"}</div>
-                    {item.systemChat.versionInfo && <div className="mt-1 text-xs text-gray-500">버전: {item.systemChat.versionInfo.newVersionId}</div>}
+        {messages.length > 0 ? (
+          messages.map((msg) => {
+            if (msg.type === "user") {
+              return (
+                <div key={msg.id} className="flex flex-col items-end mb-4">
+                  <div className="bg-blue-100 text-blue-900 rounded-lg py-2 px-4 max-w-[80%]">
+                    <p className="whitespace-pre-wrap">{msg.message}</p>
                   </div>
+                  <span className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</span>
                 </div>
-              )}
-
-              {/* 타임스탬프 */}
-              <div className="text-center mt-1 mb-4">
-                <span className="text-xs text-gray-400">{new Date(item.createdAt).toLocaleString()}</span>
-              </div>
-            </div>
-          ))
+              )
+            } else if (msg.type === "system") {
+              return (
+                <div key={msg.id} className="flex flex-col items-start mb-4">
+                  <div className="bg-gray-100 text-gray-900 rounded-lg py-2 px-4 max-w-[80%]">
+                    <p className="whitespace-pre-wrap">{msg.message}</p>
+                  </div>
+                  <span className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                </div>
+              )
+            } else if (msg.type === "version" && msg.versionInfo) {
+              // 버전 메시지 표시
+              return (
+                <div key={msg.id} className="flex justify-center my-6">
+                  <button
+                    onClick={() => handleVersionClick(msg.versionInfo!.versionId)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                      versionId === msg.versionInfo!.versionId ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                    }`}
+                  >
+                    <Clock size={16} />
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">버전 {msg.versionInfo.versionId}</span>
+                      <span className="text-xs">{msg.versionInfo.description}</span>
+                    </div>
+                  </button>
+                </div>
+              )
+            }
+            return null
+          })
         ) : (
           <div className="h-full flex items-center justify-center text-gray-500">채팅 내역이 없습니다.</div>
         )}
@@ -656,15 +767,22 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         )}
 
         {/* 최근 시스템 응답 표시 (있는 경우) */}
-        {systemResponse && !sseConnected && !isConnecting && (
+        {chatData && chatData.content && chatData.content.length > 0 && !sseConnected && !isConnecting && (
           <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-            <div className="text-xs font-medium text-green-700 mb-1">시스템 응답:</div>
-            {systemResponse.versionInfo && (
-              <div className="text-sm">
-                <p>{systemResponse.versionInfo.description}</p>
-                <p className="text-xs mt-1">버전: {systemResponse.versionInfo.newVersionId}</p>
-              </div>
-            )}
+            <div className="text-xs font-medium text-green-700 mb-1">최근 시스템 응답:</div>
+            {/* 채팅 데이터에서 최신 버전 정보 추출 */}
+            {(() => {
+              const latestSystemChat = [...chatData.content].reverse().find((item) => item.systemChat?.versionInfo)
+              if (latestSystemChat?.systemChat?.versionInfo) {
+                return (
+                  <div className="text-sm">
+                    <p>{latestSystemChat.systemChat.versionInfo.description || ""}</p>
+                    <p className="text-xs mt-1">버전: {latestSystemChat.systemChat.versionInfo.newVersionId || ""}</p>
+                  </div>
+                )
+              }
+              return null
+            })()}
           </div>
         )}
       </div>
@@ -672,21 +790,23 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       {/* 메시지 입력 영역 */}
       <div className="p-4 border-t">
         <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !sending && !sseConnected && !isConnecting && handleSendMessage()}
+          <textarea
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={sseConnected || isConnecting ? "처리 중입니다..." : "메시지를 입력하세요..."}
-            className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={3}
             disabled={sending || sseConnected || isConnecting}
           />
           <button
             onClick={handleSendMessage}
-            disabled={!message.trim() || sending || sseConnected || isConnecting}
-            className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            disabled={!newMessage.trim() || sending || sseConnected || isConnecting}
+            className={`p-3 rounded-full ${
+              sending || !newMessage.trim() || sseConnected || isConnecting ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"
+            } transition-colors`}
           >
-            {sending || isConnecting ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
+            {sending || isConnecting ? <div className="animate-spin h-5 w-5 border-2 border-white rounded-full border-t-transparent"></div> : <Send size={20} />}
           </button>
         </div>
         {(sseConnected || isConnecting) && (

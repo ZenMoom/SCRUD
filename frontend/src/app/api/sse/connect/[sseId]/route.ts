@@ -105,6 +105,7 @@ export async function GET(request: NextRequest) {
                       isCompleted = true
                     }
                   } catch (parseError) {
+                    console.log(parseError)
                     // JSON 파싱 실패는 무시
                   }
                 } catch (e) {
@@ -134,6 +135,7 @@ export async function GET(request: NextRequest) {
                     }
                   }
                 } catch (parseError) {
+                  console.log(parseError)
                   // 파싱 오류 시 텍스트로 처리
                   controller.enqueue(`data: ${JSON.stringify({ text: line })}\n\n`)
 
