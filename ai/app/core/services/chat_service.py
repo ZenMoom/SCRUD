@@ -18,7 +18,8 @@ from app.core.services.sse_service import SSEService
 from app.infrastructure.mongodb.repository.chat_repository import ChatRepository
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram, MethodPromptTagEnum, \
-    MethodPromptTargetEnum, UserChat, SystemChat, Chat, VersionInfo, PromptResponseEnum
+    MethodPromptTargetEnum, UserChat, SystemChat, Chat, VersionInfo, PromptResponseEnum, \
+    Component, Method, Connection, DtoModel, Metadata, ComponentTypeEnum, MethodConnectionTypeEnum
 
 
 class ChatService:
@@ -74,110 +75,10 @@ class ChatService:
             self.logger.info(f"LLM 및 파서 설정 중 오류 발생: {str(e)}")
             raise
 
-    async def generate_diagram_data(self, user_chat_data: UserChatRequest, project_id: str = None,
-                                    api_id: str = None) -> DiagramResponse:
-        """
-        LLM을 사용하여 OpenAPI 명세로부터 도식화 데이터를 생성하고 MongoDB에 저장하는 메서드
-
-        1. UserChatRequest에서 targetMethods 통해 methodId가 속한 diagramId를 가져온다. (targetMethods에는 methodId가 존재)
-        2. diagramId 를 통해 Diagram을 mongoDB에서 조회하기
-        3. UserChatRequest
-            MethodPromptTarget
-            - SIGNATURE 인 경우: 모든 메서드를 새로 작성한다.
-            - BODY 인 경우: 선택한 메서드만 작성한다.
-            MethodPromptTag
-            - 각 태그에 맞는 미리 준비된 프롬프트를 세팅한 후 수정한다.
-            message
-            - MethodPromptTarget, MethodPromptTag가 처리된 이후에 마지막에 사용자가 입력한 메시지가 작성된다.
-        4. 메타 데이터 설정
-            version
-        Args:
-            user_chat_data (UserChatRequest): 요청 데이터
-            project_id (str, optional): 프로젝트 ID. 저장 시 필요
-            api_id (str, optional): API ID. 저장 시 필요
-
-        Returns:
-            Diagram: 생성된 도식화 데이터
-        """
-
-        try:
-            # 프롬프트 생성
-            template = DiagramPromptGenerator()
-            prompt = template.get_prompt().format(openapi_spec=user_chat_data.promptType)
-
-            # LLM으로 도식화 데이터 생성
-            self.logger.info(f"[디버깅] 모델 호출 시작")
-
-            response = await self.llm.ainvoke(
-                [
-                    HumanMessage(content=prompt),
-                    HumanMessage(content=self.parser.get_format_instructions()),
-                ]
-            )
-            self.logger.info(f"[디버깅] 모델 호출 완료")
-
-            # 파서를 통해 응답 처리
-            self.logger.info(f"모델 응답 내용: {response.content[:500]}...")
-            diagram_data = self.parser.parse(response.content)
-
-            # 생성된 도식화 데이터에 프로젝트 ID와 API ID 설정
-            if project_id and api_id:
-                self.logger.info(f"다이어그램 메타데이터 설정: project_id={project_id}, api_id={api_id}")
-
-                # 필요한 ID 및 메타데이터 설정
-                import uuid
-                from datetime import datetime
-                from app.infrastructure.mongodb.repository.model.diagram_model import Metadata
-
-                self.logger.info("기존 다이어그램 조회 중...")
-                all_diagrams = await self.diagram_repository.find_many({
-                    "projectId": project_id,
-                    "apiId": api_id
-                }, sort=[("metadata.version", -1)])
-
-                latest_diagram = all_diagrams[0] if all_diagrams else None
-
-                # 버전 설정
-                version = 1
-                if latest_diagram:
-                    version = latest_diagram.metadata.version + 1
-                    self.logger.info(f"기존 다이어그램 발견: 버전 증가 {latest_diagram.metadata.version} -> {version}")
-                else:
-                    self.logger.info("기존 다이어그램 없음: 초기 버전 설정")
-
-                # 다이어그램 데이터 설정
-                diagram_data.projectId = project_id
-                diagram_data.apiId = api_id
-                diagram_data.diagramId = str(uuid.uuid4())
-
-                # 메타데이터 설정
-                if not hasattr(diagram_data, 'metadata') or not diagram_data.metadata:
-                    diagram_data.metadata = Metadata(
-                        metadataId=str(uuid.uuid4()),
-                        version=version,
-                        lastModified=datetime.now(),
-                        name=f"API Diagram for {api_id}",
-                        description=f"Generated from OpenAPI spec"
-                    )
-                else:
-                    diagram_data.metadata.version = version
-                    diagram_data.metadata.lastModified = datetime.now()
-
-                # MongoDB에 저장
-                self.logger.info(f"다이어그램 MongoDB에 저장 중: diagramId={diagram_data.diagramId}, version={version}")
-                inserted_id = await self.diagram_repository.insert_one(diagram_data)
-                self.logger.info(f"다이어그램 저장 완료: id={inserted_id}")
-
-            return diagram_data
-        except Exception as e:
-            self.logger.error(f"도식화 데이터 생성 중 오류 발생: {str(e)}", exc_info=True)
-            raise
-
     async def prompt_diagram_from_openapi(
         self,
         user_chat_data: UserChatRequest,
         latest_diagram: Diagram,
-        response_queue: Optional[asyncio.Queue] = None,
         project_id: str = None,
         api_id: str = None
     ) -> DiagramResponse:
@@ -187,7 +88,6 @@ class ChatService:
         Args:
             user_chat_data (UserChatRequest): 사용자 채팅 요청 데이터
             latest_diagram: Diagram
-            response_queue (asyncio.Queue, optional): 실시간 응답을 위한 비동기 큐 (None이면 스트리밍 모드 비활성화)
             project_id (str, optional): 프로젝트 ID
             api_id (str, optional): API ID
 
@@ -199,7 +99,7 @@ class ChatService:
         self.logger.info(f"Target methods count: {len(user_chat_data.targetMethods)}")
 
         try:
-            self.setup_llm_and_parser(response_queue)
+
             # 프롬프트 생성
             self.logger.info("프롬프트 생성 시작")
 
@@ -256,8 +156,16 @@ class ChatService:
 
             # LLM 호출
             self.logger.info("LLM 호출 시작")
+            from app.config.config import settings
+            from langchain_openai import ChatOpenAI
 
-            response = await self.llm.ainvoke(
+            llm = ChatOpenAI(
+                temperature=0,
+                model="gpt-4o-mini",
+                base_url=settings.OPENAI_API_BASE,
+                api_key=settings.OPENAI_API_KEY
+            )
+            response = await llm.ainvoke(
                 [
                     HumanMessage(content=complete_prompt),
                     HumanMessage(content=self.parser.get_format_instructions()),
@@ -320,10 +228,6 @@ class ChatService:
 
         except Exception as e:
             self.logger.error(f"도식화 데이터 생성 중 오류 발생: {str(e)}", exc_info=True)
-
-            await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {str(e)}")
-            await self.sse_service.close_stream(response_queue)
-
             raise
 
     async def create_diagram_async(
@@ -357,15 +261,10 @@ class ChatService:
                 self.logger.error("기존 다이어그램이 없어 도식화를 생성할 수 없습니다.")
                 return
 
-            # 임시 응답 큐 생성 (비동기 처리를 위함)
-            temp_queue = asyncio.Queue()
-            self.setup_llm_and_parser(temp_queue)
-
             # 도식화 생성 로직 실행
             diagram = await self.prompt_diagram_from_openapi(
                 user_chat_data=user_chat_data,
                 latest_diagram=latest_diagram,
-                response_queue=temp_queue,
                 project_id=project_id,
                 api_id=api_id
             )
@@ -375,7 +274,7 @@ class ChatService:
 
             # MongoDB에 저장
             await self.diagram_repository.create_new_version(
-                diagram=diagram
+                diagram=self.convert_diagram_response_to_diagram(diagram)
             )
 
             self.logger.info(f"비동기 도식화 생성 완료: diagram_id={diagram_id}")
@@ -451,6 +350,7 @@ class ChatService:
             should_generate_diagram = True
             self.logger.info(f"Agent에게 도식화 생성 여부 판단 결과: {should_generate_diagram}")
             self.logger.info(f"Agent에게 도식화 생성 여부 판단 이유: {result.reasoning}")
+            self.logger.info(f"==============================================================")
 
             # UUID 생성 (chatId)
             import uuid
@@ -470,15 +370,18 @@ class ChatService:
 
                 # 다이어그램 ID 생성
                 diagram_id = str(uuid.uuid4())
-                event = f"data: {json.dumps({
-                    'token': {'diagramId': diagram_id},
-                })}\n\n"
+
+
+                event = f"data: {json.dumps({'token': {'diagramId': diagram_id}})}\n\n"
+                response_queue.put_nowait(event)
                 self.logger.info(f"생성 이벤트 발송: {event}")
 
                 # 답변을 생성하여 클라이언트에 전송
                 response_content = await self.llm.ainvoke(
                     f"다음 내용을 검토해주세요. 수정사항이 있으면 수정해주세요. {agent_input.__str__()} 유저 메시지: {user_chat_data.message}"
                 )
+
+                await self.sse_service.close_stream(response_queue)
 
                 # 비동기로 도식화 생성 작업 시작
                 asyncio.create_task(self.create_diagram_async(
@@ -490,7 +393,7 @@ class ChatService:
 
                 # SystemChat 생성 (도식화 ID 포함)
                 version_info = VersionInfo(
-                    newVersionId=latest_diagram.metadata.version + 1,
+                    newVersionId=f"{latest_diagram.metadata.version + 1}",
                     description="생성된 버전"
                 )
 
@@ -501,11 +404,6 @@ class ChatService:
                     versionInfo=version_info,
                     diagramId=diagram_id
                 )
-
-                response_queue.put_nowait(event)
-                # 클라이언트에게 최종 응답 전송
-                await self.sse_service.close_stream(response_queue)
-
                 
                 # 저장할 데이터와 응답 데이터 준비
                 response = {
@@ -530,9 +428,6 @@ class ChatService:
                     message=response_content,
                     diagramId=None
                 )
-                
-                # 클라이언트에게 응답 전송
-                await self.sse_service.close_stream(response_queue)
                 
                 # 응답 데이터 준비
                 response = {
@@ -566,6 +461,94 @@ class ChatService:
             await self.sse_service.close_stream(response_queue)
             
             return {"error": str(e)}
+
+    def convert_diagram_response_to_diagram(self, diagram_response: DiagramResponse) -> Diagram:
+        """
+        DiagramResponse DTO를 Diagram 모델로 변환하는 메서드
+        
+        Args:
+            diagram_response: 변환할 DiagramResponse DTO
+            
+        Returns:
+            Diagram: 변환된 Diagram 모델
+        """
+        self.logger.info(f"DiagramResponse를 Diagram으로 변환 시작: diagramId={diagram_response.diagramId}")
+        
+        try:
+            # 메타데이터 변환
+            metadata = Metadata(
+                metadataId=diagram_response.metadata.metadataId,
+                version=diagram_response.metadata.version,
+                lastModified=diagram_response.metadata.lastModified,
+                name=diagram_response.metadata.name,
+                description=diagram_response.metadata.description
+            )
+            
+            # 컴포넌트 변환
+            components = []
+            for comp_resp in diagram_response.components:
+                # 각 컴포넌트의 메서드 변환
+                methods = []
+                for method_resp in comp_resp.methods:
+                    method = Method(
+                        methodId=method_resp.methodId,
+                        name=method_resp.name,
+                        signature=method_resp.signature,
+                        body=method_resp.body,
+                        description=method_resp.description
+                    )
+                    methods.append(method)
+                
+                component = Component(
+                    componentId=comp_resp.componentId,
+                    type=ComponentTypeEnum(comp_resp.type.value),
+                    name=comp_resp.name,
+                    description=comp_resp.description,
+                    positionX=comp_resp.positionX,
+                    positionY=comp_resp.positionY,
+                    methods=methods
+                )
+                components.append(component)
+            
+            # 연결 변환
+            connections = []
+            for conn_resp in diagram_response.connections:
+                connection = Connection(
+                    connectionId=conn_resp.connectionId,
+                    sourceMethodId=conn_resp.sourceMethodId,
+                    targetMethodId=conn_resp.targetMethodId,
+                    type=MethodConnectionTypeEnum(conn_resp.type.value)
+                )
+                connections.append(connection)
+            
+            # DTO 모델 변환
+            dtos = []
+            for dto_resp in diagram_response.dto:
+                dto = DtoModel(
+                    dtoId=dto_resp.dtoId,
+                    name=dto_resp.name,
+                    description=dto_resp.description,
+                    body=dto_resp.body
+                )
+                dtos.append(dto)
+            
+            # Diagram 생성
+            diagram = Diagram(
+                diagramId=diagram_response.diagramId,
+                projectId=getattr(diagram_response, 'projectId', None),  # 선택적 필드
+                apiId=getattr(diagram_response, 'apiId', None),  # 선택적 필드
+                components=components,
+                connections=connections,
+                dto=dtos,
+                metadata=metadata
+            )
+            
+            self.logger.info(f"DiagramResponse를 Diagram으로 변환 완료: {len(components)}개 컴포넌트, {len(connections)}개 연결")
+            return diagram
+            
+        except Exception as e:
+            self.logger.error(f"DiagramResponse를 Diagram으로 변환 중 오류 발생: {str(e)}", exc_info=True)
+            raise
 
     async def _get_method_details(self, latest_diagram, user_chat_data):
         # 타겟 메서드들의 본문을 수집

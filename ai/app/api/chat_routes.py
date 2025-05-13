@@ -174,13 +174,14 @@ async def connect_sse(
             while True:
                 # 큐에서 데이터 대기
                 data = await response_queue.get()
-
+                print(data)
+                print(type(data))
                 # 종료 신호 확인
                 if data is None:
                     logger.info(f"SSE 스트림 종료: sse_id={sse_id}")
                     break
 
-                logger.debug(f"SSE 데이터 전송: {data[:100]}...")
+                logger.info(f"SSE 데이터 전송: {data[:100]}...")
 
                 # SSE 형식으로 데이터 전송
                 yield f"data: {data}\n\n"
