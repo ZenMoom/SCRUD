@@ -288,7 +288,8 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
           <GitHubRepoBrowser 
             isOpen={isGitHubModalOpen} 
             onClose={() => setIsGitHubModalOpen(false)} 
-            onSelect={handleGitHubFileSelect} 
+            onSelect={handleGitHubFileSelect}
+            formType="requirementSpec"
           />
         </div>
       </div>

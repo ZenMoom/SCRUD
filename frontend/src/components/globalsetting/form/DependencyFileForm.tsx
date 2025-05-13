@@ -221,7 +221,8 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
           <GitHubRepoBrowser 
             isOpen={isGitHubModalOpen} 
             onClose={() => setIsGitHubModalOpen(false)} 
-            onSelect={handleGitHubFileSelect} 
+            onSelect={handleGitHubFileSelect}
+            formType="dependencyFile"
           />
         </div>
       </div>

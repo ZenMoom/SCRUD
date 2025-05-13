@@ -27,6 +27,7 @@ interface GitHubRepoBrowserProps {
   onClose: () => void;
   onSelect: (files: Array<{path: string, downloadUrl?: string, content?: string, fileContent?: string, fileType?: string, fileName?: string}>) => void;
   isArchitecture?: boolean; // 아키텍처 구조도 선택 모드인지 여부
+  formType?: string; // 폼 타입 추가
 }
 
 // 기존 인터페이스에 type 필드 추가
@@ -41,7 +42,7 @@ interface SelectedItem {
   };
 }
 
-const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, onSelect, isArchitecture = false }) => {
+const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, onSelect, isArchitecture = false, formType }) => {
   const { githubToken } = useGitHubTokenStore();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
@@ -350,57 +351,98 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
     }
   };
   
+  // 파일 내용을 가져오는 함수 추가
+  const fetchFileContent = async (downloadUrl: string): Promise<string> => {
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        throw new Error(`파일 내용 가져오기 실패: ${response.status}`);
+      }
+      return await response.text();
+    } catch (error) {
+      console.error('파일 내용 가져오기 실패:', error);
+      throw error;
+    }
+  };
+
+  // 파일 타입을 결정하는 함수 추가
+  const determineFileType = (formType?: string): string => {
+    switch (formType) {
+      case 'codeConvention':
+        return 'CONVENTION';
+      case 'securitySetting':
+        return 'SECURITY';
+      case 'architectureStructure':
+        return 'ARCHITECTURE_GITHUB';
+      case 'requirementSpec':
+        return 'REQUIREMENTS';
+      case 'erd':
+        return 'ERD';
+      case 'utilityClass':
+        return 'UTIL';
+      case 'dependencyFile':
+        return 'DEPENDENCY';
+      case 'errorCode':
+        return 'ERROR_CODE';
+      default:
+        return '';
+    }
+  };
+
   // 파일 선택 완료 처리 함수 수정
   const handleConfirm = async () => {
     if (selectedItems.length > 0) {
-      // 아키텍처 모드에서 레포지토리가 선택된 경우 전체 구조 가져오기
-      if (isArchitecture && selectedItems[0].type === 'repository') {
-        if (!selectedItems[0].content) {
-          // 아직 내용을 가져오지 않은 경우 전체 구조 가져오기
-          await fetchFullRepositoryStructure();
+      try {
+        // 아키텍처 모드에서 레포지토리가 선택된 경우 전체 구조 가져오기
+        if (isArchitecture && selectedItems[0].type === 'repository') {
+          if (!selectedItems[0].content) {
+            await fetchFullRepositoryStructure();
+          }
+          
+          if (selectedItems[0].content) {
+            onSelect([{
+              path: selectedItems[0].path,
+              fileContent: JSON.stringify(selectedItems[0].content),
+              fileType: 'ARCHITECTURE_GITHUB',
+              fileName: selectedItems[0].path.split('/').pop() || ''
+            }]);
+            onClose();
+            return;
+          } else {
+            setError('레포지토리 구조를 가져오지 못했습니다.');
+            return;
+          }
         }
         
-        // 선택된 항목에 내용이 있는지 다시 확인
-        if (selectedItems[0].content) {
-          // 디버그용 로그
-          console.log('백엔드로 전송할 아키텍처 데이터:', {
-            path: selectedItems[0].path,
-            contentType: typeof selectedItems[0].content,
-            contentPreview: typeof selectedItems[0].content === 'object' ? 
-              'GitHub API 응답 객체' : 'Unknown'
-          });
-          
-          // 필요한 세 가지 컬럼만 전달 (fileName, fileContent, fileType)
-          // GitHub API 응답 객체를 JSON 문자열로 변환하여 그대로 전달
-          onSelect([{
-            path: selectedItems[0].path,
-            fileContent: JSON.stringify(selectedItems[0].content), // GitHub API 응답을 JSON 문자열로 변환
-            fileType: 'ARCHITECTURE_GITHUB',
-            fileName: selectedItems[0].path.split('/').pop() || ''
-          }]);
-          onClose();
-          return;
-        } else {
-          setError('레포지토리 구조를 가져오지 못했습니다.');
-          return;
-        }
+        // 일반 파일 모드
+        const processedFiles = await Promise.all(
+          selectedItems.map(async (item) => {
+            let fileContent = '';
+            if (item.downloadUrl) {
+              try {
+                fileContent = await fetchFileContent(item.downloadUrl);
+              } catch (error) {
+                console.error(`파일 내용 가져오기 실패: ${item.path}`, error);
+                throw error;
+              }
+            }
+            
+            return {
+              path: item.path,
+              fileName: item.path.split('/').pop() || '',
+              fileContent: fileContent,
+              fileType: determineFileType(formType)
+            };
+          })
+        );
+        
+        onSelect(processedFiles);
+        onClose();
+      } catch (error) {
+        console.error('파일 처리 중 오류 발생:', error);
+        setError('파일 처리 중 오류가 발생했습니다.');
       }
-      
-      // 일반 파일 모드
-      const filesWithUrls = selectedItems.map(item => {
-        // 일반 파일인 경우
-        return {
-          path: item.path,
-          downloadUrl: item.downloadUrl,
-          content: item.content as string, // unknown 타입을 string으로 캐스팅
-          fileType: '',
-          fileName: ''
-        };
-      });
-      
-      onSelect(filesWithUrls);
     }
-    onClose();
   };
 
   if (!isOpen) return null;

@@ -288,7 +288,8 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
           <GitHubRepoBrowser 
             isOpen={isGitHubModalOpen} 
             onClose={() => setIsGitHubModalOpen(false)} 
-            onSelect={handleGitHubFileSelect} 
+            onSelect={handleGitHubFileSelect}
+            formType="codeConvention"
           />
         </div>
       </div>

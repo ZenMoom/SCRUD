@@ -284,7 +284,8 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
           <GitHubRepoBrowser 
             isOpen={isGitHubModalOpen} 
             onClose={() => setIsGitHubModalOpen(false)} 
-            onSelect={handleGitHubFileSelect} 
+            onSelect={handleGitHubFileSelect}
+            formType="utilityClass"
           />
         </div>
       </div>

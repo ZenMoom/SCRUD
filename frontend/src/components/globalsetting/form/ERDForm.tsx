@@ -288,7 +288,8 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
           <GitHubRepoBrowser 
             isOpen={isGitHubModalOpen} 
             onClose={() => setIsGitHubModalOpen(false)} 
-            onSelect={handleGitHubFileSelect} 
+            onSelect={handleGitHubFileSelect}
+            formType="erd"
           />
         </div>
       </div>

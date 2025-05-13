@@ -15,24 +15,35 @@ interface SelectionValue {
   label: string;
 }
 
+interface SecurityOption {
+  type: string;
+  label: string;
+}
+
+const securityOptions = [
+  { type: 'SECURITY_DEFAULT_JWT', label: 'JWT' },
+  { type: 'SECURITY_DEFAULT_SESSION', label: '세션' },
+  { type: 'SECURITY_DEFAULT_NONE', label: '없음' },
+];
+
 interface SecuritySettingFormProps {
   title: string
-  value: SelectionValue | FileWithContent[]
-  onChange: (value: SelectionValue | FileWithContent[]) => void
+  value: SelectionValue | FileWithContent[] | SecurityOption
+  onChange: (value: SelectionValue | FileWithContent[] | SecurityOption) => void
   onInfoClick: () => void
   onFocus?: () => void
   isRequired?: boolean
-  options: Array<{ value: string; label: string; }>
 }
 
 const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>(
-  ({ title, value, onChange, onInfoClick, onFocus, isRequired, options }, ref) => {
+  ({ title, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
     const [inputType, setInputType] = useState<'select' | 'file'>('select')
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
+    const [selectedOption, setSelectedOption] = useState<SecurityOption>(securityOptions[0]);
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
@@ -156,6 +167,11 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
       setInputType(inputType === 'select' ? 'file' : 'select');
     };
 
+    const handleOptionChange = (option: SecurityOption) => {
+      setSelectedOption(option);
+      onChange(option);
+    };
+
     return (
       <div ref={ref} className="mb-10 p-10 bg-white rounded-lg">
         <div className="flex items-center mb-4 justify-between">
@@ -187,24 +203,22 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
         </div>
 
         {inputType === 'select' ? (
-          <div className="space-y-2">
-            {options.map((option) => (
-              <label key={option.value} className="flex items-center space-x-2 p-2 rounded hover:bg-gray-50">
+          <div className="space-y-4">
+            {securityOptions.map((option) => (
+              <div key={option.type} className="flex items-center">
                 <input
                   type="radio"
-                  name="security-option"
-                  value={option.value}
-                  checked={!Array.isArray(value) && value?.type === option.value}
-                  onChange={() => {
-                    onChange({
-                      type: option.value,
-                      label: option.label
-                    });
-                  }}
-                  className="text-blue-500"
+                  id={option.type}
+                  name="security"
+                  value={option.type}
+                  checked={selectedOption.type === option.type}
+                  onChange={() => handleOptionChange(option)}
+                  className="h-4 w-4 text-blue-600"
                 />
-                <span>{option.label}</span>
-              </label>
+                <label htmlFor={option.type} className="ml-2 text-sm text-gray-700">
+                  {option.label}
+                </label>
+              </div>
             ))}
           </div>
         ) : (
@@ -332,7 +346,8 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
             <GitHubRepoBrowser 
               isOpen={isGitHubModalOpen} 
               onClose={() => setIsGitHubModalOpen(false)} 
-              onSelect={handleGitHubFileSelect} 
+              onSelect={handleGitHubFileSelect}
+              formType="securitySetting"
             />
           </div>
         )}

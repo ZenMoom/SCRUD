@@ -15,24 +15,38 @@ interface SelectionValue {
   label: string;
 }
 
+interface ArchitectureOption {
+  type: string;
+  label: string;
+  imageUrl?: string;
+}
+
+const architectureOptions = [
+  { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A', imageUrl: '/images/layered-a.png' },
+  { type: 'ARCHITECTURE_DEFAULT_LAYERED_B', label: '레이어드 아키텍처 B', imageUrl: '/images/layered-b.png' },
+  { type: 'ARCHITECTURE_DEFAULT_CLEAN', label: '클린 아키텍처', imageUrl: '/images/clean.png' },
+  { type: 'ARCHITECTURE_DEFAULT_MSA', label: '마이크로서비스 아키텍처', imageUrl: '/images/msa.png' },
+  { type: 'ARCHITECTURE_DEFAULT_HEX', label: '헥사고날 아키텍처', imageUrl: '/images/hex.png' },
+];
+
 interface ArchitectureStructureFormProps {
   title: string
-  value: SelectionValue | FileWithContent[]
-  onChange: (value: SelectionValue | FileWithContent[]) => void
+  value: SelectionValue | FileWithContent[] | ArchitectureOption
+  onChange: (value: SelectionValue | FileWithContent[] | ArchitectureOption) => void
   onInfoClick: () => void
   onFocus?: () => void
   isRequired?: boolean
-  options: Array<{ value: string; label: string; }>
 }
 
 const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructureFormProps>(
-  ({ title, value, onChange, onInfoClick, onFocus, isRequired, options }, ref) => {
+  ({ title, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
     const [inputType, setInputType] = useState<'select' | 'file'>('select')
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
+    const [selectedOption, setSelectedOption] = useState<ArchitectureOption>(architectureOptions[0]);
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
@@ -156,6 +170,11 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       setInputType(inputType === 'select' ? 'file' : 'select');
     };
 
+    const handleOptionChange = (option: ArchitectureOption) => {
+      setSelectedOption(option);
+      onChange(option);
+    };
+
     return (
       <div ref={ref} className="mb-10 p-10 bg-white rounded-lg">
         <div className="flex items-center mb-4 justify-between">
@@ -187,24 +206,31 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
         </div>
 
         {inputType === 'select' ? (
-          <div className="space-y-2">
-            {options.map((option) => (
-              <label key={option.value} className="flex items-center space-x-2 p-2 rounded hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="architecture-option"
-                  value={option.value}
-                  checked={!Array.isArray(value) && value?.type === option.value}
-                  onChange={() => {
-                    onChange({
-                      type: option.value,
-                      label: option.label
-                    });
-                  }}
-                  className="text-blue-500"
-                />
-                <span>{option.label}</span>
-              </label>
+          <div className="space-y-4">
+            {architectureOptions.map((option) => (
+              <div key={option.type} className="flex flex-col items-center">
+                <div className="flex items-center mb-2">
+                  <input
+                    type="radio"
+                    id={option.type}
+                    name="architecture"
+                    value={option.type}
+                    checked={selectedOption.type === option.type}
+                    onChange={() => handleOptionChange(option)}
+                    className="h-4 w-4 text-blue-600"
+                  />
+                  <label htmlFor={option.type} className="ml-2 text-sm text-gray-700">
+                    {option.label}
+                  </label>
+                </div>
+                {option.imageUrl && (
+                  <img 
+                    src={option.imageUrl} 
+                    alt={option.label} 
+                    className="w-full max-w-md rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                  />
+                )}
+              </div>
             ))}
           </div>
         ) : (
@@ -332,7 +358,9 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
             <GitHubRepoBrowser 
               isOpen={isGitHubModalOpen} 
               onClose={() => setIsGitHubModalOpen(false)} 
-              onSelect={handleGitHubFileSelect} 
+              onSelect={handleGitHubFileSelect}
+              formType="architectureStructure"
+              isArchitecture={true}
             />
           </div>
         )}

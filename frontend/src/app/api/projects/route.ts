@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
               fileName: `Architecture-${architectureValue.type}`,
               fileType: architectureValue.type,
               fileUrl: "",
-              fileContent: JSON.stringify({ type: architectureValue.type })
+              fileContent: ""
             });
           }
         }
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
             fileName: `Security-${securityValue.type}`,
             fileType: securityValue.type,
             fileUrl: "",
-            fileContent: JSON.stringify({ type: securityValue.type })
+            fileContent: ""
           });
         }
       }

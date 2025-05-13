@@ -278,7 +278,8 @@ const ErrorCodeForm = forwardRef<HTMLDivElement, ErrorCodeFormProps>(
           <GitHubRepoBrowser 
             isOpen={isGitHubModalOpen} 
             onClose={() => setIsGitHubModalOpen(false)} 
-            onSelect={handleGitHubFileSelect} 
+            onSelect={handleGitHubFileSelect}
+            formType="errorCode"
           />
         </div>
       </div>
