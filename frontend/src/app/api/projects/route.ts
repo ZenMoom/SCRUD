@@ -8,6 +8,12 @@ interface FileWithContent {
   content: string;
 }
 
+// 선택형 입력을 위한 타입 추가
+interface SelectionValue {
+  type: string;
+  label: string;
+}
+
 // POST: 프로젝트 생성
 export async function POST(request: NextRequest) {
   try {
@@ -68,32 +74,34 @@ export async function POST(request: NextRequest) {
       console.log(`처리 중인 키: ${key}, 값 타입: ${typeof value}`);
       // 아키텍처와 보안 설정 특별 처리
       if (key === 'architectureStructure') {
-        if (value) {
-          if (typeof value === 'string' && value.startsWith('github:')) {
-            const parts = value.substring(7).split('|');
+        const architectureValue = value as SelectionValue | string;
+        if (architectureValue) {
+          if (typeof architectureValue === 'string' && architectureValue.startsWith('github:')) {
+            const parts = architectureValue.substring(7).split('|');
             globalFiles.push({
               fileName: parts[0],
               fileType: 'ARCHITECTURE_GITHUB',
               fileUrl: parts.length > 1 ? parts[1] : "",
-              fileContent: JSON.stringify({ type: value })
+              fileContent: JSON.stringify({ type: architectureValue })
             });
-          } else {
+          } else if (typeof architectureValue === 'object') {
             globalFiles.push({
-              fileName: `Architecture-${value}`,
-              fileType: value as string,
+              fileName: `Architecture-${architectureValue.type}`,
+              fileType: architectureValue.type,
               fileUrl: "",
-              fileContent: JSON.stringify({ type: value })
+              fileContent: JSON.stringify({ type: architectureValue.type })
             });
           }
         }
       } 
       else if (key === 'securitySetting') {
-        if (value) {
+        const securityValue = value as SelectionValue;
+        if (securityValue) {
           globalFiles.push({
-            fileName: `Security-${value}`,
-            fileType: value as string,
+            fileName: `Security-${securityValue.type}`,
+            fileType: securityValue.type,
             fileUrl: "",
-            fileContent: JSON.stringify({ type: value })
+            fileContent: JSON.stringify({ type: securityValue.type })
           });
         }
       }

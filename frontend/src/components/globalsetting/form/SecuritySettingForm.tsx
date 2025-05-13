@@ -10,10 +10,15 @@ interface FileWithContent {
   content: string;
 }
 
+interface SelectionValue {
+  type: string;
+  label: string;
+}
+
 interface SecuritySettingFormProps {
   title: string
-  value: FileWithContent | FileWithContent[]
-  onChange: (value: FileWithContent | FileWithContent[]) => void
+  value: SelectionValue | FileWithContent[]
+  onChange: (value: SelectionValue | FileWithContent[]) => void
   onInfoClick: () => void
   onFocus?: () => void
   isRequired?: boolean
@@ -189,11 +194,11 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                   type="radio"
                   name="security-option"
                   value={option.value}
-                  checked={!Array.isArray(value) && value?.name === option.value}
+                  checked={!Array.isArray(value) && value?.type === option.value}
                   onChange={() => {
                     onChange({
-                      name: option.value,
-                      content: option.value
+                      type: option.value,
+                      label: option.label
                     });
                   }}
                   className="text-blue-500"
@@ -319,7 +324,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
             {!Array.isArray(value) && value && (
               <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                 <File size={16} className="text-gray-500" />
-                <span>{value.name}</span>
+                <span>{value.label}</span>
               </div>
             )}
             

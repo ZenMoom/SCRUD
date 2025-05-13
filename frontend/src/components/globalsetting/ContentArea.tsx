@@ -22,6 +22,12 @@ interface FileWithContent {
   content: string;
 }
 
+// 선택형 입력을 위한 타입 추가
+interface SelectionValue {
+  type: string;    // enum 값
+  label: string;   // 표시 텍스트
+}
+
 // 프로젝트 설정 타입 정의
 interface ProjectSettings {
   title: string;
@@ -32,17 +38,17 @@ interface ProjectSettings {
   dependencyFile: string[];
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
-  securitySetting: string;
+  securitySetting: SelectionValue;
   codeConvention: FileWithContent[];
-  architectureStructure: string;
+  architectureStructure: SelectionValue;
 }
 
-// FileValue 타입 정의 수정
+// FileValue 타입 정의 수정 - 기존 파일 업로드 컴포넌트용
 type FileValue = FileWithContent | FileWithContent[];
 
 interface ContentAreaProps {
   settings: ProjectSettings;
-  onSettingChange: (key: string, value: string | string[] | FileWithContent | FileWithContent[]) => void;
+  onSettingChange: (key: string, value: string | string[] | FileWithContent | FileWithContent[] | SelectionValue) => void;
   refs: {
     title: React.RefObject<HTMLDivElement | null>
     description: React.RefObject<HTMLDivElement | null>
