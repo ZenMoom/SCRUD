@@ -305,83 +305,12 @@ class ChatService:
         Returns:
             Diagram: 변환된 Diagram 모델
         """
-        self.logger.info(f"DiagramResponse를 Diagram으로 변환 시작: diagramId={diagram_response.diagramId}")
-        
-        try:
-            # 메타데이터 변환
-            metadata = Metadata(
-                metadataId=diagram_response.metadata.metadataId,
-                version=diagram_response.metadata.version,
-                lastModified=diagram_response.metadata.lastModified,
-                name=diagram_response.metadata.name,
-                description=diagram_response.metadata.description
-            )
-            
-            # 컴포넌트 변환
-            components = []
-            for comp_resp in diagram_response.components:
-                # 각 컴포넌트의 메서드 변환
-                methods = []
-                for method_resp in comp_resp.methods:
-                    method = Method(
-                        methodId=method_resp.methodId,
-                        name=method_resp.name,
-                        signature=method_resp.signature,
-                        body=method_resp.body,
-                        description=method_resp.description
-                    )
-                    methods.append(method)
-                
-                component = Component(
-                    componentId=comp_resp.componentId,
-                    type=ComponentTypeEnum(comp_resp.type.value),
-                    name=comp_resp.name,
-                    description=comp_resp.description,
-                    positionX=comp_resp.positionX,
-                    positionY=comp_resp.positionY,
-                    methods=methods
-                )
-                components.append(component)
-            
-            # 연결 변환
-            connections = []
-            for conn_resp in diagram_response.connections:
-                connection = Connection(
-                    connectionId=conn_resp.connectionId,
-                    sourceMethodId=conn_resp.sourceMethodId,
-                    targetMethodId=conn_resp.targetMethodId,
-                    type=MethodConnectionTypeEnum(conn_resp.type.value)
-                )
-                connections.append(connection)
-            
-            # DTO 모델 변환
-            dtos = []
-            for dto_resp in diagram_response.dto:
-                dto = DtoModel(
-                    dtoId=dto_resp.dtoId,
-                    name=dto_resp.name,
-                    description=dto_resp.description,
-                    body=dto_resp.body
-                )
-                dtos.append(dto)
-            
-            # Diagram 생성
-            diagram = Diagram(
-                diagramId=diagram_response.diagramId,
-                projectId=getattr(diagram_response, 'projectId', None),  # 선택적 필드
-                apiId=getattr(diagram_response, 'apiId', None),  # 선택적 필드
-                components=components,
-                connections=connections,
-                dto=dtos,
-                metadata=metadata
-            )
-            
-            self.logger.info(f"DiagramResponse를 Diagram으로 변환 완료: {len(components)}개 컴포넌트, {len(connections)}개 연결")
-            return diagram
-            
-        except Exception as e:
-            self.logger.error(f"DiagramResponse를 Diagram으로 변환 중 오류 발생: {str(e)}", exc_info=True)
-            raise
+        diagram_response_json = diagram_response.model_dump_json()
+        print(diagram_response_json)
+        diagram = Diagram.model_validate_json(diagram_response_json)
+        print(diagram)
+        return diagram
+
 
     async def _get_method_details(self, latest_diagram, user_chat_data):
         # 타겟 메서드들의 본문을 수집
