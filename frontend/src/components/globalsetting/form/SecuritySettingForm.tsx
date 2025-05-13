@@ -1,6 +1,6 @@
 "use client"
 
-import { forwardRef, useState, useRef } from "react"
+import { forwardRef, useState, useRef, useEffect } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
 import { getGitHubAuthUrl } from "@/auth/github"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
@@ -26,6 +26,9 @@ const securityOptions = [
   { type: 'SECURITY_DEFAULT_NONE', label: '없음' },
 ];
 
+// 기본값 설정
+const DEFAULT_SECURITY_OPTION = securityOptions[0]; // JWT를 기본값으로 설정
+
 interface SecuritySettingFormProps {
   title: string
   value: SelectionValue | FileWithContent[] | SecurityOption
@@ -43,7 +46,24 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
-    const [selectedOption, setSelectedOption] = useState<SecurityOption>(securityOptions[0]);
+    const [selectedOption, setSelectedOption] = useState<SecurityOption>(
+      // value가 있으면 value를 사용하고, 없으면 기본값 사용
+      (value as SecurityOption)?.type ? (value as SecurityOption) : DEFAULT_SECURITY_OPTION
+    );
+
+    // 컴포넌트가 마운트될 때 기본값 설정
+    useEffect(() => {
+      if (!value || !(value as SecurityOption)?.type) {
+        onChange(DEFAULT_SECURITY_OPTION);
+      }
+    }, []);
+
+    // value가 변경될 때 selectedOption 업데이트
+    useEffect(() => {
+      if ((value as SecurityOption)?.type) {
+        setSelectedOption(value as SecurityOption);
+      }
+    }, [value]);
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
