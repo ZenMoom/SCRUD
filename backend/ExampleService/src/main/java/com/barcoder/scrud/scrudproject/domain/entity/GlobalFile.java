@@ -32,8 +32,6 @@ public class GlobalFile extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private FileTypeEnumDto fileType;
 
-    private String fileUrl;
-
     @Lob
     @Column(columnDefinition = "TEXT")
     private String fileContent;

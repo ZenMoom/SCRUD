@@ -12,6 +12,5 @@ public class GlobalFileOut {
     private Long globalFileId;
     private String fileName;
     private FileTypeEnumDto fileType;
-    private String fileUrl;
     private String fileContent;
 }

@@ -8,6 +8,7 @@ import lombok.*;
 @Table(name = "default_global_files")
 @Entity
 @Getter
+@ToString
 public class DefaultGlobalFile extends BaseTimeEntity {
 
     @Id
