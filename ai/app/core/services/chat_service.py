@@ -130,8 +130,10 @@ class ChatService:
 
     async def process_chat_and_diagram(
             self, project_id: str, api_id: str, user_chat_data: UserChatRequest, response_queue: asyncio.Queue
-    ) -> Dict:
+    ) -> None:
         """
+        채팅을 처리하고 필요한 경우 다이어그램을 생성하는 함수
+
         Args:
             project_id: 프로젝트 ID
             api_id: API ID
@@ -143,140 +145,195 @@ class ChatService:
         """
         self.logger.info(f"채팅 및 다이어그램 처리 시작: project_id={project_id}, api_id={api_id}")
         self.setup_llm_and_parser(response_queue)
+
         try:
-            # 최신 다이어그램 조회 (가장 높은 버전)
-            all_diagrams = await self.diagram_repository.find_many({
-                "projectId": project_id,
-                "apiId": api_id,
-            }, sort=[("metadata.version", -1)])
-            
-            latest_diagram = all_diagrams[0] if all_diagrams else None
+            # 최신 다이어그램 조회
+            latest_diagram: Diagram = await self._get_latest_diagram(project_id, api_id, response_queue)
 
-            if not latest_diagram:
-                self.logger.error(f"다이어그램을 찾을 수 없습니다: project_id={project_id}, api_id={api_id}")
-                await self.sse_service.send_error(response_queue, "다이어그램을 찾을 수 없습니다.")
-                await self.sse_service.close_stream(response_queue)
-                return {"error": "다이어그램을 찾을 수 없습니다"}
-
+            # 메서드 상세 정보 및 다이어그램 생성 여부 평가
             target_method_details = await self._get_method_details(latest_diagram, user_chat_data)
-
             agent_input, should_generate_diagram = await self.evaluate_diagram_generate(
-                target_method_details,
-                user_chat_data
+                target_method_details, user_chat_data
             )
 
-            # UUID 생성 (chatId)
-            import uuid
-            chat_id = str(uuid.uuid4())
+            # 채팅 ID 생성 및 사용자 채팅 객체 생성
+            chat_id = self._generate_uuid()
+            user_chat = self._create_user_chat(user_chat_data)
 
-            # UserChat 객체 생성
-            user_chat = UserChat(
-                tag=user_chat_data.tag,
-                promptType=user_chat_data.promptType,
-                message=user_chat_data.message,
-                targetMethods=user_chat_data.targetMethods
+            # LLM으로 응답 생성 및 채팅 처리
+            response = await self._process_chat_response(
+                project_id, api_id, chat_id, user_chat, user_chat_data,
+                latest_diagram, agent_input, should_generate_diagram, response_queue
             )
-            
-            # 도식화가 필요한 경우와 불필요한 경우의 분기 처리
-            if should_generate_diagram:
-                self.logger.info("도식화 생성이 필요하다고 판단됨")
-
-                # 다이어그램 ID 생성
-                diagram_id = str(uuid.uuid4())
 
 
-                event = f"data: {json.dumps({'token': {'diagramId': diagram_id}})}\n\n"
-                response_queue.put_nowait(event)
-                self.logger.info(f"생성 이벤트 발송: {event}")
-
-                # 답변을 생성하여 클라이언트에 전송
-                response_content = await self.llm.ainvoke(
-                    f"다음 내용을 검토해주세요. 수정사항이 있으면 수정해주세요. {agent_input.__str__()} 유저 메시지: {user_chat_data.message}"
-                )
-                self.logger.info(f"생성된 응답 값: {response_content.content}")
-
-                await self.sse_service.close_stream(response_queue)
-
-                # 비동기로 도식화 생성 작업 시작
-                asyncio.create_task(self._create_diagram_async(
-                    project_id=project_id,
-                    api_id=api_id,
-                    user_chat_data=user_chat_data,
-                    diagram_id=diagram_id
-                ))
-
-                # SystemChat 생성 (도식화 ID 포함)
-                version_info = VersionInfo(
-                    newVersionId=f"{latest_diagram.metadata.version + 1}",
-                    description="생성된 버전"
-                )
-
-                system_chat = SystemChat(
-                    systemChatId=str(uuid.uuid4()),
-                    status=PromptResponseEnum.MODIFIED,
-                    message=response_content.content,
-                    versionInfo=version_info,
-                    diagramId=diagram_id
-                )
-                
-                # 저장할 데이터와 응답 데이터 준비
-                response = {
-                    "shouldGenerateDiagram": True,
-                    "diagramId": diagram_id,
-                    "message": response_content
-                }
-            else:
-                self.logger.info("도식화 생성이 필요하지 않다고 판단됨")
-                
-                # 실제 응답 생성을 위한 Agent 실행
-                response_content = await self.llm.ainvoke(
-                    f"다음 내용을 검토해주세요. 수정사항이 있으면 수정해주세요. {agent_input.__str__()} 유저 메시지: {user_chat_data.message}"
-                )
-                self.logger.info(f"생성된 응답 값: {response_content.content}")
-                await self.sse_service.close_stream(response_queue)
-
-                response_content = response_content.content
-                
-                # SystemChat 생성 (도식화 ID 없음)
-                system_chat = SystemChat(
-                    systemChatId=str(uuid.uuid4()),
-                    status=PromptResponseEnum.EXPLANATION,
-                    message=response_content,
-                    diagramId=None
-                )
-                
-                # 응답 데이터 준비
-                response = {
-                    "shouldGenerateDiagram": False,
-                    "diagramId": None,
-                    "message": response_content
-                }
-            
-            # Chat 객체 생성 및 MongoDB에 저장
-            chat = Chat(
-                chatId=chat_id,
-                projectId=project_id,
-                apiId=api_id,
-                userChat=user_chat,
-                systemChat=system_chat,
-                createdAt=datetime.now()
-            )
-            
-            # MongoDB에 채팅 저장
-            self.logger.info(f"채팅 저장 중: chatId={chat_id}")
-            await self.chat_repository.insert_one(chat)
-            self.logger.info(f"채팅 저장 완료: chatId={chat_id}")
-            
-            return response
-            
         except Exception as e:
-            self.logger.error(f"채팅 및 다이어그램 처리 중 오류 발생: {str(e)}", exc_info=True)
-            
-            # 오류 발생 시 클라이언트에게 알림
-            await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {str(e)}")
+            await self._handle_error(e, response_queue)
+
+    async def _get_latest_diagram(self, project_id: str, api_id: str, response_queue: asyncio.Queue) -> Diagram:
+        """최신 다이어그램을 조회하는 함수"""
+        self.logger.info(f"최신 다이어그램 조회: project_id={project_id}, api_id={api_id}")
+
+        all_diagrams = await self.diagram_repository.find_many({
+            "projectId": project_id,
+            "apiId": api_id,
+        }, sort=[("metadata.version", -1)])
+
+        latest_diagram = all_diagrams[0] if all_diagrams else None
+
+        if not latest_diagram:
+            self.logger.error(f"다이어그램을 찾을 수 없습니다: project_id={project_id}, api_id={api_id}")
+            await self.sse_service.send_error(response_queue, "다이어그램을 찾을 수 없습니다.")
             await self.sse_service.close_stream(response_queue)
-            
-            return {"error": str(e)}
+
+        return latest_diagram
+
+    def _generate_uuid(self) -> str:
+        """UUID를 생성하는 함수"""
+        import uuid
+        return str(uuid.uuid4())
+
+    def _create_user_chat(self, user_chat_data: UserChatRequest) -> UserChat:
+        """UserChat 객체를 생성하는 함수"""
+        return UserChat(
+            tag=user_chat_data.tag,
+            promptType=user_chat_data.promptType,
+            message=user_chat_data.message,
+            targetMethods=user_chat_data.targetMethods
+        )
+
+    async def _process_chat_response(
+            self, project_id: str, api_id: str, chat_id: str, user_chat: UserChat,
+            user_chat_data: UserChatRequest, latest_diagram: Diagram,
+            agent_input, should_generate_diagram: bool, response_queue: asyncio.Queue
+    ) -> None:
+        """채팅 응답을 처리하는 함수"""
+
+        if should_generate_diagram:
+            await self._handle_diagram_generation(
+                project_id, api_id, chat_id, user_chat, user_chat_data,
+                latest_diagram, agent_input, response_queue
+            )
+        else:
+            await self._handle_explanation_only(
+                project_id, api_id, chat_id, user_chat, user_chat_data,
+                agent_input, response_queue
+            )
+
+    async def _handle_diagram_generation(
+            self, project_id: str, api_id: str, chat_id: str, user_chat: UserChat,
+            user_chat_data: UserChatRequest, latest_diagram, agent_input, response_queue: asyncio.Queue
+    ):
+        """다이어그램 생성이 필요한 경우의 처리"""
+        self.logger.info("도식화 생성이 필요하다고 판단됨")
+
+        # 다이어그램 ID 생성 및 이벤트 전송
+        diagram_id = self._generate_uuid()
+        await self._send_diagram_event(diagram_id, response_queue)
+
+        # 응답 생성
+        response_content = await self._generate_llm_response(agent_input, user_chat_data.message)
+        await self.sse_service.close_stream(response_queue)
+
+        # 비동기로 도식화 생성 작업 시작
+        asyncio.create_task(self._create_diagram_async(
+            project_id=project_id,
+            api_id=api_id,
+            user_chat_data=user_chat_data,
+            diagram_id=diagram_id
+        ))
+
+        # SystemChat 생성
+        system_chat = self._create_system_chat_with_diagram(
+            latest_diagram.metadata.version, response_content.content, diagram_id
+        )
+
+        # Chat 객체 생성 및 MongoDB에 저장
+        await self._save_chat(chat_id, project_id, api_id, user_chat, system_chat)
+
+    async def _handle_explanation_only(
+            self, project_id: str, api_id: str, chat_id: str, user_chat: UserChat,
+            user_chat_data: UserChatRequest, agent_input, response_queue: asyncio.Queue
+    ) -> None:
+        """다이어그램 생성이 필요하지 않은 경우의 처리"""
+        self.logger.info("도식화 생성이 필요하지 않다고 판단됨")
+
+        # 응답 생성
+        response_content = await self._generate_llm_response(agent_input, user_chat_data.message)
+        await self.sse_service.close_stream(response_queue)
+
+        response_text = response_content.content
+
+        # SystemChat 생성
+        system_chat = self._create_system_chat_explanation(response_text)
+
+        # Chat 객체 생성 및 MongoDB에 저장
+        await self._save_chat(chat_id, project_id, api_id, user_chat, system_chat)
+
+    async def _send_diagram_event(self, diagram_id: str, response_queue: asyncio.Queue) -> None:
+        """다이어그램 생성 이벤트를 전송하는 함수"""
+        event = f"data: {json.dumps({'token': {'diagramId': diagram_id}})}\n\n"
+        response_queue.put_nowait(event)
+        self.logger.info(f"생성 이벤트 발송: {event}")
+
+    async def _generate_llm_response(self, agent_input, user_message: str):
+        """LLM을 통해 응답을 생성하는 함수"""
+        response_content = await self.llm.ainvoke(
+            f"다음 내용을 검토해주세요. 수정사항이 있으면 수정해주세요. {agent_input.__str__()} 유저 메시지: {user_message}"
+        )
+        self.logger.info(f"생성된 응답 값: {response_content.content}")
+        return response_content
+
+    def _create_system_chat_with_diagram(self, current_version: int, message: str, diagram_id: str) -> SystemChat:
+        """다이어그램 ID가 포함된 SystemChat을 생성하는 함수"""
+        version_info = VersionInfo(
+            newVersionId=f"{current_version + 1}",
+            description="생성된 버전"
+        )
+
+        return SystemChat(
+            systemChatId=self._generate_uuid(),
+            status=PromptResponseEnum.MODIFIED,
+            message=message,
+            versionInfo=version_info,
+            diagramId=diagram_id
+        )
+
+    def _create_system_chat_explanation(self, message: str) -> SystemChat:
+        """설명 전용 SystemChat을 생성하는 함수"""
+        return SystemChat(
+            systemChatId=self._generate_uuid(),
+            status=PromptResponseEnum.EXPLANATION,
+            message=message,
+            diagramId=None
+        )
+
+    async def _save_chat(self, chat_id: str, project_id: str, api_id: str, user_chat: UserChat,
+                         system_chat: SystemChat) -> None:
+        """Chat 객체를 생성하고 MongoDB에 저장하는 함수"""
+        chat = Chat(
+            chatId=chat_id,
+            projectId=project_id,
+            apiId=api_id,
+            userChat=user_chat,
+            systemChat=system_chat,
+            createdAt=datetime.now()
+        )
+
+        self.logger.info(f"채팅 저장 중: chatId={chat_id}")
+        await self.chat_repository.insert_one(chat)
+        self.logger.info(f"채팅 저장 완료: chatId={chat_id}")
+
+    async def _handle_error(self, exception: Exception, response_queue: asyncio.Queue) -> Dict:
+        """에러를 처리하는 함수"""
+        error_message = str(exception)
+        self.logger.error(f"채팅 및 다이어그램 처리 중 오류 발생: {error_message}", exc_info=True)
+
+        # 오류 발생 시 클라이언트에게 알림
+        await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {error_message}")
+        await self.sse_service.close_stream(response_queue)
+
+        return {"error": error_message}
 
     async def evaluate_diagram_generate(self, target_method_details, user_chat_data):
         # Agent에게 도식화 생성 여부를 판단하도록 요청
