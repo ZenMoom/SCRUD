@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import axios from "axios"
 import { ApiSpecVersionResponse } from "@generated/model"
+import useAuthStore from "@/app/store/useAuthStore"
 
 // 컴포넌트 임포트
 import ApiHeader from "./ApiHeader"
@@ -33,6 +34,9 @@ interface RightContainerProps {
 export default function RightContainer({ selectedApi, selectedMethod, scrudProjectId, onApiSpecChanged }: RightContainerProps) {
   console.log("RightContainer 렌더링 - 받은 scrudProjectId:", scrudProjectId)
 
+  // useAuthStore를 컴포넌트 최상위 레벨에서 호출
+  const { token } = useAuthStore()
+
   // 알림 훅 사용
   const { showSuccessNotification, showErrorNotification, showWarningNotification, showInfoNotification } = useNotification()
 
@@ -59,26 +63,33 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   const [responseJson, setResponseJson] = useState<string>('{\n  "data": {},\n  "message": "성공"\n}')
 
   // API 스펙 목록 조회 함수
-  const fetchApiSpecsByProject = useCallback(async (projectId: number): Promise<ApiSpecVersionResponse[]> => {
-    console.log("fetchApiSpecsByProject 호출됨 - projectId:", projectId)
-    setIsLoading(true)
-    try {
-      // 백엔드에서 API 스펙 목록 조회
-      const response = await axios.get<{ content: ApiSpecVersionResponse[] }>(`/api/api-specs/by-project/${projectId}`)
+  const fetchApiSpecsByProject = useCallback(
+    async (projectId: number): Promise<ApiSpecVersionResponse[]> => {
+      console.log("fetchApiSpecsByProject 호출됨 - projectId:", projectId)
+      setIsLoading(true)
+      try {
+        // 백엔드에서 API 스펙 목록 조회 - 토큰을 콜백 밖에서 가져온 것 사용
+        const response = await axios.get<{ content: ApiSpecVersionResponse[] }>(`/api/api-specs/by-project/${projectId}`, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        })
 
-      // 응답 처리
-      const specsList = response.data.content || []
-      console.log(`프로젝트 ${projectId}의 API 스펙 목록:`, specsList)
-      setApiSpecsList(specsList)
+        // 응답 처리
+        const specsList = response.data.content || []
+        console.log(`프로젝트 ${projectId}의 API 스펙 목록:`, specsList)
+        setApiSpecsList(specsList)
 
-      return specsList
-    } catch (error) {
-      console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
-      return []
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+        return specsList
+      } catch (error) {
+        console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
+        return []
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [token]
+  )
 
   // selectedApi와 selectedMethod가 변경될 때마다 호출되는 효과
   useEffect(() => {

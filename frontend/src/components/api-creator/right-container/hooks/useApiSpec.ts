@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction } from "react"
 import axios, { AxiosError } from "axios"
 import { ApiSpecVersionCreatedResponse, ApiSpecVersionResponse } from "@generated/model"
 import { BodyParam, BodyModeType, RawBodyFormatType, ApiResponseData } from "../types"
+import useAuthStore from "@/app/store/useAuthStore"
 
 interface UseApiSpecProps {
   endpoint: string
@@ -67,6 +68,9 @@ export const useApiSpec = ({
   showWarningNotification,
   showInfoNotification,
 }: UseApiSpecProps) => {
+  // useAuthStore에서 토큰 가져오기
+  const { token } = useAuthStore()
+
   // 콘텐츠 타입 매핑
   const contentTypeMap: Record<string, string> = {
     json: "application/json",
@@ -232,6 +236,12 @@ export const useApiSpec = ({
         apiSpecData.response = responseJsonValue
       }
 
+      // 헤더에 Bearer 토큰 추가
+      const headers = {
+        Authorization: token ? `Bearer ${token}` : "",
+        "Content-Type": "application/json",
+      }
+
       let response
 
       // 기존 API 수정 또는 새 API 생성
@@ -239,7 +249,7 @@ export const useApiSpec = ({
         // 디버깅용 로그 추가
         console.log("API 스펙 수정 요청 데이터:", JSON.stringify(apiSpecData, null, 2))
 
-        response = await axios.put<ApiSpecVersionResponse>(`/api/api-specs/${apiSpecVersionId}`, apiSpecData)
+        response = await axios.put<ApiSpecVersionResponse>(`/api/api-specs/${apiSpecVersionId}`, apiSpecData, { headers })
 
         // 성공 처리
         setApiResponse({
@@ -253,7 +263,7 @@ export const useApiSpec = ({
       } else {
         // API 스펙 생성 (Next.js API 라우트로 요청)
         console.log("API 스펙 생성 요청 데이터:", JSON.stringify(apiSpecData, null, 2))
-        response = await axios.post<ApiSpecVersionCreatedResponse>("/api/api-specs", apiSpecData)
+        response = await axios.post<ApiSpecVersionCreatedResponse>("/api/api-specs", apiSpecData, { headers })
 
         // 응답 처리
         setApiResponse({
@@ -319,8 +329,13 @@ export const useApiSpec = ({
     try {
       console.log(`API 삭제 시작 - apiSpecVersionId: ${apiSpecVersionId}, 프로젝트 ID: ${scrudProjectId}`)
 
+      // 헤더에 Bearer 토큰 추가
+      const headers = {
+        Authorization: token ? `Bearer ${token}` : "",
+      }
+
       // API 스펙 삭제 요청 (Next.js API 라우트로 요청)
-      const response = await axios.delete(`/api/api-specs/${apiSpecVersionId}`)
+      const response = await axios.delete(`/api/api-specs/${apiSpecVersionId}`, { headers })
 
       setApiResponse({
         status: response.status,
@@ -378,7 +393,9 @@ export const useApiSpec = ({
 
       // Body 모드에 따라 다른 요청 데이터 구성
       let requestBodyData: string | Record<string, unknown> | FormData | null = null
-      const headers: Record<string, string> = {}
+      const headers: Record<string, string> = {
+        Authorization: token ? `Bearer ${token}` : "", // Bearer 토큰 추가
+      }
 
       if (bodyMode === "raw") {
         if (rawBodyFormat === "json") {

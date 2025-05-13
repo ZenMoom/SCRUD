@@ -3,6 +3,7 @@
 import { ApiProcessStateEnumDto } from "@generated/model"
 import axios from "axios"
 import { useState, useRef, useEffect } from "react"
+import useAuthStore from "@/app/store/useAuthStore" // useAuthStore import 추가
 
 interface ApiEndpoint {
   id: string
@@ -28,6 +29,9 @@ interface MiddleContainerProps {
 
 export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading, scrudProjectId }: MiddleContainerProps) {
   console.log("MiddleContainer 렌더링 - scrudProjectId:", scrudProjectId)
+  
+  // useAuthStore에서 토큰 가져오기
+  const { token } = useAuthStore()
 
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null)
   const [editingEndpointId, setEditingEndpointId] = useState<string | null>(null)
@@ -257,7 +261,17 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     try {
       console.log(`API 스펙 ID ${endpoint.apiSpecVersionId}의 상태를 '${status}'로 업데이트 요청`)
 
-      const response = await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status })
+      // 헤더에 Bearer 토큰 추가
+      const headers = {
+        Authorization: token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json',
+      }
+
+      const response = await axios.patch(
+        `/api/api-specs/api/${endpoint.apiSpecVersionId}`, 
+        { apiSpecStatus: status },
+        { headers }
+      )
 
       console.log("API 상태가 성공적으로 업데이트되었습니다:", response.data)
     } catch (error) {
@@ -444,17 +458,23 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                                 onClick={(e) => e.stopPropagation()}
                                 disabled={endpoint.status === "AI_GENERATED"} // 생성됨 상태일 때 드롭박스 자체를 비활성화
                               >
-                                <option
-                                  value="AI_GENERATED"
+                                <option 
+                                  value="AI_GENERATED" 
                                   className="bg-white text-gray-700"
                                   disabled={endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED"} // 작업중 또는 완료 상태에서 생성됨으로 돌아갈 수 없음
                                 >
                                   생성됨
                                 </option>
-                                <option value="AI_VISUALIZED" className="bg-white text-blue-700">
+                                <option 
+                                  value="AI_VISUALIZED" 
+                                  className="bg-white text-blue-700"
+                                >
                                   작업중
                                 </option>
-                                <option value="USER_COMPLETED" className="bg-white text-green-700">
+                                <option 
+                                  value="USER_COMPLETED" 
+                                  className="bg-white text-green-700"
+                                >
                                   완료
                                 </option>
                               </select>
