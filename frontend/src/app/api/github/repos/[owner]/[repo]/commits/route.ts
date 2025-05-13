@@ -4,6 +4,18 @@ import axios from 'axios';
 // GitHub API 기본 URL
 const GITHUB_API_BASE_URL = 'https://api.github.com';
 
+// GitHub API 응답을 위한 타입 정의
+interface GitHubCommit {
+  sha: string;
+  commit: {
+    message: string;
+    author: {
+      name: string;
+      date: string;
+    }
+  }
+}
+
 /**
  * GET 요청 처리 - GitHub 레포지토리의 커밋 정보 가져오기
  */
@@ -29,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
     
     // GitHub API를 호출하여 레포지토리 커밋 정보 가져오기
-    const response = await axios.get(
+    const response = await axios.get<GitHubCommit[]>(
       `${GITHUB_API_BASE_URL}/repos/${owner}/${repo}/commits`,
       {
         headers: {
@@ -40,7 +52,7 @@ export async function GET(request: NextRequest) {
     );
     
     // 응답 데이터 가공 (필요한 정보만 추출)
-    const commits = response.data.map((commit: any) => ({
+    const commits = response.data.map((commit: GitHubCommit) => ({
       sha: commit.sha,
       message: commit.commit.message,
       author: commit.commit.author.name,

@@ -54,7 +54,7 @@ export default function CanvasPage() {
   useEffect(() => {
     fetchDiagramData()
     fetchChatData()
-  }, [projectId, apiId, currentVersionId])
+  }, [projectId, apiId, currentVersionId, fetchDiagramData, fetchChatData])
 
   // 다이어그램 데이터 가져오기 함수 수정
   const fetchDiagramData = async () => {
@@ -70,7 +70,7 @@ export default function CanvasPage() {
         // 필요한 경우 응답 데이터 구조 변환
         const processedData: DiagramResponse = {
           ...response.data,
-          // 필요한 경우 필드 변환 또는 기��값 설정
+          // 필요한 경우 필드 변환 또는 기본값 설정
           components: response.data.components || [],
           connections: response.data.connections || [],
           dto: response.data.dto || [],
