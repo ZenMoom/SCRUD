@@ -19,63 +19,167 @@ interface ApiListItem {
   description?: string
 }
 
+// 버전 정보 타입 정의 - 수정: 모든 속성이 옵셔널하지 않도록 변경
+interface VersionInfo {
+  versionId: string
+  description: string
+  timestamp: string
+}
+
 export default function CanvasPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   // URL 파라미터 가져오기
   const params = useParams()
-  const { projectId, apiId, versionId: pathVersionId } = params
+  const { projectId, apiId } = params
 
-  // 쿼리 파라미터에서 버전 ID 가져오기 또는, URL 경로에서 가져온 버전 ID 사용
-  const queryVersionId = searchParams.get("version")
-  const currentVersionId = queryVersionId || (pathVersionId as string)
+  // 쿼리 파라미터에서 버전 ID 가져오기
+  const versionParam = searchParams.get("version")
 
-  // 다이어그램 데이터 상태를 추가하고 더미 데이터 대신 실제 데이터를 사용하도록 변경
+  // 다이어그램 데이터 상태
   const [diagramData, setDiagramData] = useState<DiagramResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  // 채팅 데이터 상태 추가
+  // 채팅 데이터 상태
   const [chatData, setChatData] = useState<ChatHistoryResponse | null>(null)
   const [chatLoading, setChatLoading] = useState<boolean>(true)
   const [chatError, setChatError] = useState<string | null>(null)
 
-  // API 목록 데이터 상태 추가
+  // 버전 관련 상태
+  const [versions, setVersions] = useState<VersionInfo[]>([])
+  const [selectedVersion, setSelectedVersion] = useState<string | null>(versionParam)
+
+  // API 목록 데이터 상태
   const [apiListVisible, setApiListVisible] = useState<boolean>(false)
   const [apiListData, setApiListData] = useState<ApiListItem[]>([])
   const [apiListLoading, setApiListLoading] = useState<boolean>(false)
   const [apiListError, setApiListError] = useState<string | null>(null)
 
-  // 타겟 노드 상태 추가
+  // 타겟 노드 상태
   const [targetNodes, setTargetNodes] = useState<TargetNode[]>([])
 
-  // 페이지 로드 시 다이어그램 데이터와 채팅 데이터 모두 가져오기
+  // 페이지 로드 시 채팅 데이터 먼저 가져오기
   useEffect(() => {
-    fetchDiagramData()
     fetchChatData()
-  }, [projectId, apiId, currentVersionId])
+  }, [projectId, apiId])
 
-  // 다이어그램 데이터 가져오기 함수 수정
-  const fetchDiagramData = async () => {
+  // 채팅 데이터에서 버전 정보 추출 후 다이어그램 데이터 가져오기
+  useEffect(() => {
+    if (chatData && chatData.content) {
+      // 채팅 내역에서 버전 정보 추출
+      const extractedVersions: VersionInfo[] = []
+
+      chatData.content.forEach((item) => {
+        if (item.systemChat?.versionInfo) {
+          const { newVersionId, description } = item.systemChat.versionInfo
+
+          // null/undefined 체크 및 기본값 설정
+          const versionId = newVersionId || ""
+          const versionDesc = description || "버전 설명 없음"
+
+          // 중복 버전 체크
+          if (versionId && !extractedVersions.some((v) => v.versionId === versionId)) {
+            extractedVersions.push({
+              versionId: versionId,
+              description: versionDesc,
+              timestamp: item.createdAt,
+            })
+          }
+        }
+      })
+
+      // 시간순으로 정렬 (최신 버전이 앞에 오도록)
+      extractedVersions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+      setVersions(extractedVersions)
+
+      // URL에서 버전 파라미터가 없는 경우 처리
+      if (!versionParam) {
+        let defaultVersion = "1" // 기본값
+
+        // 채팅 내역이 있으면 가장 최신 버전(첫 번째 항목) 선택
+        if (extractedVersions.length > 0) {
+          defaultVersion = extractedVersions[0].versionId
+        }
+
+        // 상태 업데이트 및 URL 쿼리 파라미터 설정
+        setSelectedVersion(defaultVersion)
+        router.push(`/canvas/${projectId}/${apiId}?version=${defaultVersion}`, { scroll: false })
+      }
+    }
+  }, [chatData, versionParam, projectId, apiId, router])
+
+  // 선택된 버전이 변경되면 다이어그램 데이터 가져오기
+  useEffect(() => {
+    if (selectedVersion) {
+      fetchDiagramData(selectedVersion)
+    }
+  }, [selectedVersion])
+
+  // 채팅 데이터 가져오기 함수
+  const fetchChatData = async () => {
+    try {
+      setChatLoading(true)
+      setChatError(null)
+
+      // axios를 사용하여 채팅 API 호출
+      const response = await axios.get<ChatHistoryResponse>(`/api/chat/${projectId}/${apiId}`)
+
+      setChatData(response.data)
+      console.log("채팅 데이터:", response.data)
+
+      // 채팅 데이터에서 시스템 응답의 버전 정보 확인
+      if (response.data && response.data.content) {
+        // 가장 최근의 시스템 응답에서 버전 정보 찾기
+        const latestSystemChat = [...response.data.content].reverse().find((item) => item.systemChat?.versionInfo)
+
+        if (latestSystemChat?.systemChat?.versionInfo) {
+          const newVersionId = latestSystemChat.systemChat.versionInfo.newVersionId
+
+          // 현재 URL의 버전과 다르면 URL 업데이트
+          if (newVersionId && newVersionId !== versionParam) {
+            console.log(`새로운 버전 감지: ${newVersionId}, URL 업데이트`)
+            setSelectedVersion(newVersionId)
+            router.push(`/canvas/${projectId}/${apiId}?version=${newVersionId}`, { scroll: false })
+          }
+        }
+      }
+    } catch (err) {
+      console.error("채팅 데이터 가져오기 오류:", err)
+
+      if (axios.isAxiosError(err)) {
+        setChatError(err.response?.data?.error || err.message)
+      } else {
+        setChatError("채팅 데이터를 가져오는 중 오류가 발생했습니다.")
+      }
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
+  // 다이어그램 데이터 가져오기 함수 - 버전 ID를 파라미터로 받음
+  const fetchDiagramData = async (versionId: string) => {
     try {
       setLoading(true)
       setError(null)
 
-      // axios를 사용하여 API 호출
-      const response = await axios.get<DiagramResponse>(`/api/canvas/${projectId}/${apiId}/${currentVersionId}`)
+      // axios를 사용하여 API 호출 - 버전 ID를 쿼리 파라미터로 전달
+      const response = await axios.get<DiagramResponse>(`/api/canvas/${projectId}/${apiId}?version=${versionId}`)
 
       // 응답 데이터 검증 및 변환
       if (response.data) {
         // 필요한 경우 응답 데이터 구조 변환
         const processedData: DiagramResponse = {
           ...response.data,
-          // 필요한 경우 필드 변환 또는 기��값 설정
+          // 필요한 경우 필드 변환 또는 기본값 설정
           components: response.data.components || [],
           connections: response.data.connections || [],
           dto: response.data.dto || [],
           metadata: response.data.metadata || {
-            version: Number(currentVersionId),
+            // 타입 호환성을 위해 MetadataDto 형식에 맞게 수정
+            version: Number(versionId), // string을 number로 변환
             metadataId: "metadata-default",
             lastModified: new Date().toISOString(),
             name: "API",
@@ -103,31 +207,7 @@ export default function CanvasPage() {
     }
   }
 
-  // 채팅 데이터 가져오기 함수 추가
-  const fetchChatData = async () => {
-    try {
-      setChatLoading(true)
-      setChatError(null)
-
-      // axios를 사용하여 채팅 API 호출
-      const response = await axios.get<ChatHistoryResponse>(`/api/chat/${projectId}/${apiId}`)
-
-      setChatData(response.data)
-      console.log("채팅 데이터:", response.data)
-    } catch (err) {
-      console.error("채팅 데이터 가져오기 오류:", err)
-
-      if (axios.isAxiosError(err)) {
-        setChatError(err.response?.data?.error || err.message)
-      } else {
-        setChatError("채팅 데이터를 가져오는 중 오류가 발생했습니다.")
-      }
-    } finally {
-      setChatLoading(false)
-    }
-  }
-
-  // API 목록 가져오기 함수 - 경로 수정
+  // API 목록 가져오기 함수
   const fetchApiList = async () => {
     try {
       setApiListLoading(true)
@@ -139,7 +219,7 @@ export default function CanvasPage() {
         return
       }
 
-      // API 호출 - 경로 수정됨
+      // API 호출
       const response = await axios.get(`/api/canvas-api/${projectId}`)
 
       // 응답 데이터 구조 확인 및 로깅
@@ -179,7 +259,7 @@ export default function CanvasPage() {
     }
   }
 
-  // API 완료 처리 함수 - 경로 수정
+  // API 완료 처리 함수
   const completeApi = async () => {
     try {
       // 프로젝트 ID와 API ID가 필요함
@@ -188,7 +268,7 @@ export default function CanvasPage() {
         return
       }
 
-      // API 호출 - 경로 수정됨
+      // API 호출
       const response = await axios.put(`/api/canvas-api/${projectId}/${apiId}`, {
         status: "USER_COMPLETED",
       })
@@ -212,24 +292,24 @@ export default function CanvasPage() {
     }
   }
 
-  // 모든 데이터를 새로고침하는 함수 추가
-  const refreshAllData = () => {
-    fetchDiagramData()
-    fetchChatData()
+  // 모든 데이터를 새로고침하는 함수
+  const refreshAllData = async () => {
+    await fetchChatData()
+    // 다이어그램 데이터는 채팅 데이터 로드 후 자동으로 갱신됨
   }
 
-  // 버전 이동 처리 함수 수정 - 단순 정수 형태로 변경
-  const handleVersionMove = () => {
-    // 현재 버전을 숫자로 변환
-    const currentVersion = Number.parseInt(currentVersionId, 10)
+  // 버전 선택 핸들러 - 채팅 컴포넌트에서 호출됨
+  const handleVersionSelect = (versionId: string) => {
+    console.log(`버전 선택: ${versionId}`)
 
-    // 다음 버전 계산
-    const nextVersion = currentVersion + 1
+    // 이미 선택된 버전이면 무시
+    if (selectedVersion === versionId) return
 
-    // URL 업데이트 (새로고침 없이)
-    router.replace(`/canvas/${projectId}/${apiId}?version=${nextVersion}`, {
-      scroll: false, // 스크롤 위치 유지
-    })
+    // 상태 업데이트
+    setSelectedVersion(versionId)
+
+    // URL 쿼리 파라미터 업데이트 (페이지 새로고침 없이)
+    router.push(`/canvas/${projectId}/${apiId}?version=${versionId}`, { scroll: false })
   }
 
   // 타겟 노드 변경 핸들러
@@ -289,7 +369,7 @@ export default function CanvasPage() {
                 <ul className="space-y-2">
                   {apiListData.map((item, index) => {
                     // 각 항목에 고유한 키 생성
-                    const uniqueKey = `api-item-${index}-${Date.now()}`
+                    const uniqueKey = `api-item-${index}-${item.apiId}`
 
                     return (
                       <li key={uniqueKey} className="p-3 border rounded-lg hover:bg-gray-50">
@@ -327,17 +407,12 @@ export default function CanvasPage() {
           <h1 className="text-2xl font-bold text-gray-800">다이어그램 캔버스</h1>
 
           <div className="flex items-center gap-2">
+            {/* 현재 선택된 버전 표시 */}
+            {selectedVersion && <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-sm">현재 버전: {selectedVersion}</div>}
+
             {/* 새로고침 버튼 */}
             <button onClick={refreshAllData} className="px-4 py-2 bg-blue-500 text-white font-medium rounded hover:bg-blue-600 transition-colors" disabled={loading || chatLoading}>
               {loading || chatLoading ? "로딩 중..." : "새로고침"}
-            </button>
-
-            {/* 현재 버전 표시 */}
-            <span className="text-gray-600">현재 버전: {currentVersionId}</span>
-
-            {/* 버전 이동 버튼 */}
-            <button onClick={handleVersionMove} className="px-4 py-2 bg-green-500 text-white font-medium rounded hover:bg-green-600 transition-colors" disabled={loading || chatLoading}>
-              버전 이동
             </button>
 
             {/* API 완료 버튼 */}
@@ -347,37 +422,50 @@ export default function CanvasPage() {
           </div>
         </div>
 
-        {/* 새로고침 버튼과 API 완료 버튼 */}
-        <div className="mb-2 flex gap-2"></div>
+        {/* 버전 선택 버튼 그룹 */}
+        {versions.length > 0 && (
+          <div className="mb-4">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">버전 선택:</h2>
+            <div className="flex flex-wrap gap-2">
+              {versions.map((version) => (
+                <button
+                  key={version.versionId}
+                  onClick={() => handleVersionSelect(version.versionId)}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedVersion === version.versionId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-800 hover:bg-gray-200"}`}
+                  title={version.description}
+                >
+                  버전 {version.versionId}
+                  <span className="ml-2 text-xs opacity-80">{new Date(version.timestamp).toLocaleDateString()}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 3단 레이아웃 - 비율 30:70 */}
-        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-8rem)] overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-12rem)] overflow-hidden">
           {/* 왼쪽 섹션 (비율 30%) - 채팅 데이터 전달 */}
           <div className="w-full md:w-[30%] min-w-0 h-full">
             <div className="h-full">
               <ChatContainer
                 projectId={projectId as string}
                 apiId={apiId as string}
-                versionId={currentVersionId}
+                versionId={selectedVersion || ""}
                 chatData={chatData}
                 loading={chatLoading}
                 error={chatError}
-                onRefresh={fetchChatData} // 채팅 데이터만 새로고침하는 함수 전달
-                targetNodes={targetNodes} // 타겟 노드 전달
-                onRemoveTarget={handleRemoveTarget} // 타겟 제거 핸들러 전달
+                onRefresh={fetchChatData}
+                targetNodes={targetNodes}
+                onRemoveTarget={handleRemoveTarget}
+                onVersionSelect={handleVersionSelect}
               />
             </div>
           </div>
 
-          {/* 오른쪽 섹션 (비율 70%) - 더미 데이터 사용 */}
+          {/* 오른쪽 섹션 (비율 70%) - 다이어그램 데이터 전달 */}
           <div className="w-full md:w-[70%] min-w-0 h-full" id="diagram-container">
             <div className="h-full w-full">
-              <DiagramContainer
-                diagramData={diagramData}
-                loading={loading}
-                error={error}
-                onSelectionChange={handleTargetNodesChange} // 타겟 노드 변경 핸들러 전달
-              />
+              <DiagramContainer diagramData={diagramData} loading={loading} error={error} onSelectionChange={handleTargetNodesChange} selectedVersion={selectedVersion} />
             </div>
           </div>
         </div>

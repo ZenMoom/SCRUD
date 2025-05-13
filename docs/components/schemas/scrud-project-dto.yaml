@@ -1,6 +1,5 @@
 FileTypeEnumDto:
   type: string
-
   enum:
     [
       REQUIREMENTS,
