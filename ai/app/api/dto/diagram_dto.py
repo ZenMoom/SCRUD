@@ -107,8 +107,6 @@ class DiagramResponse(BaseModel):
         positionY: float
         methods: List[Method]
 
-    projectId: str
-    apiId: str
     diagramId: str
     components: List[ComponentResponse]
     connections: List[ConnectionResponse]
