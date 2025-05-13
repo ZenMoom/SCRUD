@@ -160,27 +160,10 @@ class ChatService:
 
             target_method_details = await self._get_method_details(latest_diagram, user_chat_data)
 
-            # Agent에게 도식화 생성 여부를 판단하도록 요청
-            agent_input = {
-                "tag": user_chat_data.tag.value,
-                "promptType": user_chat_data.promptType.value,
-                "message": user_chat_data.message,
-                "targetMethods": target_method_details
-            }
-
-            # Agent 설정
-            from app.core.generator.chat_request_evaluator import ChatRequestEvaulator
-            evaluator: ChatRequestEvaulator = ChatRequestEvaulator()
-            result: PropositionAnalysis = evaluator.validate(agent_input.__str__())
-
-            self.logger.info(f"Agent에게 도식화 생성 여부 판단 요청: {agent_input}")
-            
-            # Agent의 결과에서 도식화 생성 여부 추출
-            should_generate_diagram = result.is_true
-            # should_generate_diagram = True
-            self.logger.info(f"Agent에게 도식화 생성 여부 판단 결과: {should_generate_diagram}")
-            self.logger.info(f"Agent에게 도식화 생성 여부 판단 이유: {result.reasoning}")
-            self.logger.info(f"==============================================================")
+            agent_input, should_generate_diagram = await self.evaluate_diagram_generate(
+                target_method_details,
+                user_chat_data
+            )
 
             # UUID 생성 (chatId)
             import uuid
@@ -295,6 +278,27 @@ class ChatService:
             
             return {"error": str(e)}
 
+    async def evaluate_diagram_generate(self, target_method_details, user_chat_data):
+        # Agent에게 도식화 생성 여부를 판단하도록 요청
+        agent_input = {
+            "tag": user_chat_data.tag.value,
+            "promptType": user_chat_data.promptType.value,
+            "message": user_chat_data.message,
+            "targetMethods": target_method_details
+        }
+        # Agent 설정
+        from app.core.generator.chat_request_evaluator import ChatRequestEvaulator
+        evaluator: ChatRequestEvaulator = ChatRequestEvaulator()
+        result: PropositionAnalysis = evaluator.validate(agent_input.__str__())
+        self.logger.info(f"Agent에게 도식화 생성 여부 판단 요청: {agent_input}")
+        # Agent의 결과에서 도식화 생성 여부 추출
+        should_generate_diagram = result.is_true
+        # should_generate_diagram = True
+        self.logger.info(f"Agent에게 도식화 생성 여부 판단 결과: {should_generate_diagram}")
+        self.logger.info(f"Agent에게 도식화 생성 여부 판단 이유: {result.reasoning}")
+        self.logger.info(f"==============================================================")
+        return agent_input, should_generate_diagram
+
     def _convert_diagram_response_to_diagram(self, diagram_response: DiagramResponse) -> Diagram:
         """
         DiagramResponse DTO를 Diagram 모델로 변환하는 메서드
@@ -306,14 +310,13 @@ class ChatService:
             Diagram: 변환된 Diagram 모델
         """
         diagram_response_json = diagram_response.model_dump_json()
-        print(diagram_response_json)
         diagram = Diagram.model_validate_json(diagram_response_json)
-        print(diagram)
         return diagram
 
 
     async def _get_method_details(self, latest_diagram, user_chat_data):
         # 타겟 메서드들의 본문을 수집
+
         target_method_details = []
         for method_info in user_chat_data.targetMethods:
             method_id = method_info.get("methodId", "")
