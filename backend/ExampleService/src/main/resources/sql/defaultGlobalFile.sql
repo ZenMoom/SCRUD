@@ -3,7 +3,47 @@ SET SQL_SAFE_UPDATES=0;
 -- 트랜잭션 시작
 BEGIN;
 
+-- Admin 테스트 데이터
+INSERT INTO users (user_id, username, nickname, created_at, updated_at, is_github_connected) VALUES (uuid(), 'admin', '관리자 계정', now(), now(), false);
+INSERT INTO scrud_project (user_id, scrud_project_id, title, description, server_url, created_at, updated_at) VALUES (UUID_TO_BIN((select user_id from users where username = 'admin')), 1, "프로젝트 제목", "프로젝트 설명", "http://localhost:8080", now(), now());
+INSERT INTO global_files (
+    scrud_project_id,
+    global_file_id,
+    file_name,
+    file_content,
+    file_type,
+    created_at,
+    updated_at
+) VALUES (
+             1,
+             1,
+             'ERD',
+             '[Table] users\n- id           : BIGINT          PK, AUTO_INCREMENT\n- username     : VARCHAR(50)     NOT NULL, UNIQUE\n- password     : VARCHAR(255)    NOT NULL\n- email        : VARCHAR(100)    NOT NULL, UNIQUE\n- created_at   : DATETIME        DEFAULT CURRENT_TIMESTAMP\n\n[Table] posts\n- id           : BIGINT          PK, AUTO_INCREMENT\n- title        : VARCHAR(200)    NOT NULL\n- content      : TEXT            NOT NULL\n- user_id      : BIGINT          NOT NULL, FK → users(id)\n- created_at   : DATETIME        DEFAULT CURRENT_TIMESTAMP\n- updated_at   : DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n\n[Table] comments  (optional)\n- id           : BIGINT          PK, AUTO_INCREMENT\n- post_id      : BIGINT          NOT NULL, FK → posts(id)\n- user_id      : BIGINT          NOT NULL, FK → users(id)\n- content      : TEXT            NOT NULL\n- created_at   : DATETIME        DEFAULT CURRENT_TIMESTAMP\n\n[Relationship]\n- users.id      = posts.user_id      (1:N)\n- users.id      = comments.user_id   (1:N)\n- posts.id      = comments.post_id   (1:N)',
+             'ERD',
+             NOW(),
+             NOW()
+         );
 
+INSERT INTO global_files (
+    scrud_project_id,
+    global_file_id,
+    file_name,
+    file_content,
+    file_type,
+    created_at,
+    updated_at
+) VALUES (
+             1,
+             2,
+             '기본 게시판 요구사항 명세서',
+             '1. 개요\n사용자들이 글을 작성하고, 조회하고, 수정하고, 삭제할 수 있는 간단한 게시판 시스템을 구축한다.\n\n2. 기능 요구사항\n\n2.1 게시글 (Post)\n- 게시글 목록 조회 (페이징 지원)\n- 게시글 작성\n- 게시글 상세 보기\n- 게시글 수정\n- 게시글 삭제\n\n2.2 사용자 (User)\n- 회원 가입\n- 로그인 / 로그아웃\n- 작성자만 게시글 수정/삭제 가능\n- 비회원도 게시글 조회 가능\n\n2.3 댓글 (Comment) - 선택사항\n- 게시글에 대한 댓글 등록\n- 댓글 조회\n- 댓글 삭제 (본인만 가능)\n\n3. 비기능 요구사항\n- DB: MySQL 또는 PostgreSQL\n- 백엔드: Spring Boot, Java\n- 프론트: HTML, CSS, JS (기본적인 화면)\n- 인증: 세션 또는 JWT 기반 로그인',
+             'REQUIREMENTS',
+             NOW(),
+             NOW()
+         );
+
+
+-- 디폴트 전역 설정 파일
 INSERT INTO default_global_files (file_name, file_type, file_content, created_at, updated_at)
 VALUES (
            'MSA아키텍처',
