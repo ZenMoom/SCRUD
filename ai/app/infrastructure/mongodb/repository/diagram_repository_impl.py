@@ -161,9 +161,6 @@ class DiagramRepositoryImpl(DiagramRepository):
         # 새 다이어그램 생성 (기존 다이어그램 복제)
         new_diagram = Diagram(**diagram.model_dump())
 
-        # 새 ID 부여
-        new_diagram.diagramId = str(uuid.uuid4())
-
         # 메타데이터 업데이트
         new_diagram.metadata.metadataId = str(uuid.uuid4())
         new_diagram.metadata.version = diagram.metadata.version + 1
