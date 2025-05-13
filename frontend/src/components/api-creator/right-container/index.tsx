@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import axios from "axios"
-import { ApiSpecVersionResponse, ApiSpecVersionListResponse } from "@generated/model"
+import { ApiSpecVersionResponse } from "@generated/model"
 
 // 컴포넌트 임포트
 import ApiHeader from "./ApiHeader"
@@ -64,7 +64,7 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
     setIsLoading(true)
     try {
       // 백엔드에서 API 스펙 목록 조회
-      const response = await axios.get<ApiSpecVersionListResponse>(`/api/api-specs/by-project/${projectId}`)
+      const response = await axios.get<{ content: ApiSpecVersionResponse[] }>(`/api/api-specs/by-project/${projectId}`)
 
       // 응답 처리
       const specsList = response.data.content || []

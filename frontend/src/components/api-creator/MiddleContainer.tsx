@@ -209,7 +209,16 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       e.stopPropagation() // 상태 변경 시 클릭 이벤트 전파 방지
     }
 
-    // 먼저 UI 상태 업데이트
+    // API ID 가져오기
+    const group = apiGroups.find((g) => g.id === groupId)
+    const endpoint = group?.endpoints.find((e) => e.id === endpointId)
+
+    if (!endpoint || !endpoint.apiSpecVersionId) {
+      console.warn("apiSpecVersionId가 없어 서버에 상태 업데이트를 할 수 없습니다.")
+      return
+    }
+
+    // 먼저 UI 상태 업데이트 (낙관적 업데이트)
     setApiGroups(
       apiGroups.map((group) => {
         if (group.id === groupId) {
@@ -230,24 +239,36 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       })
     )
 
-    // API ID 가져오기
-    const group = apiGroups.find((g) => g.id === groupId)
-    const endpoint = group?.endpoints.find((e) => e.id === endpointId)
+    // API 스펙 상태 업데이트 요청
+    try {
+      console.log(`API 스펙 ID ${endpoint.apiSpecVersionId}의 상태를 '${status}'로 업데이트 요청`)
 
-    if (endpoint && endpoint.apiSpecVersionId) {
-      // 새로운 API 엔드포인트로 상태 업데이트 (axios 사용)
-      try {
-        console.log(`API 스펙 ID ${endpoint.apiSpecVersionId}의 상태 업데이트 요청:`, status)
+      const response = await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status })
 
-        const response = await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status })
+      console.log("API 상태가 성공적으로 업데이트되었습니다:", response.data)
+    } catch (error) {
+      console.error("API 상태 업데이트 중 오류 발생:", error)
 
-        console.log("API 상태가 성공적으로 업데이트되었습니다:", response.data)
-      } catch (error) {
-        console.error("API 상태 업데이트 중 오류 발생:", error)
-        // 실패 시 에러 처리
-      }
-    } else {
-      console.warn("apiSpecVersionId가 없어 서버에 상태 업데이트를 할 수 없습니다.")
+      // 요청 실패 시 UI 롤백 (원래 상태로 복원)
+      setApiGroups(
+        apiGroups.map((group) => {
+          if (group.id === groupId) {
+            return {
+              ...group,
+              endpoints: group.endpoints.map((ep) => {
+                if (ep.id === endpointId) {
+                  return {
+                    ...ep,
+                    status: endpoint.status, // 원래 상태로 복원
+                  }
+                }
+                return ep
+              }),
+            }
+          }
+          return group
+        })
+      )
     }
   }
 
@@ -286,7 +307,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     }
   }, [editingEndpointId])
 
-  // 상태에 따른 색상 및 텍스트 표시 (수정)
+  // 상태에 따른 색상 및 텍스트 표시 함수
   const getStatusStyle = (status: ApiProcessStateEnumDto) => {
     switch (status) {
       case "AI_GENERATED":
@@ -409,13 +430,13 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <option value="AI_GENERATED" className="bg-white text-gray-700">
-                                  AI 생성됨
+                                  생성됨
                                 </option>
                                 <option value="AI_VISUALIZED" className="bg-white text-blue-700">
-                                  AI 시각화됨
+                                  작업중
                                 </option>
                                 <option value="USER_COMPLETED" className="bg-white text-green-700">
-                                  사용자 완료
+                                  완료
                                 </option>
                               </select>
                               <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center">

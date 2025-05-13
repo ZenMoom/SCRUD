@@ -31,7 +31,7 @@ interface ApiCreatorProps {
 export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
   const [selectedApi, setSelectedApi] = useState<string | null>(null)
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
-  const [scrudProjectId, setScrudProjectId] = useState<number>(projectId) // 기본값으로 전달받은 프로젝트 ID 사용
+  const [scrudProjectId, setScrudProjectId] = useState<number>(projectId) // 기본값으로
   const [apiGroups, setApiGroups] = useState<ApiGroup[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState<boolean>(true)
@@ -116,13 +116,16 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
           groupMap.set(groupPath, [])
         }
 
+        // 타입스크립트 에러 해결을 위해 as any로 접근 후 타입 캐스팅
+        const apiStatus = (spec as { apiSpecStatus?: ApiProcessStateEnumDto }).apiSpecStatus || "AI_GENERATED"
+
         // 엔드포인트 정보 생성 - 고유 ID 보장
         const uniqueId = `endpoint-${spec.apiSpecVersionId || ""}-${baseTimestamp + index}`
         const endpointObj: ApiEndpoint = {
           id: uniqueId,
           path: endpoint,
           method: spec.httpMethod || "GET",
-          status: "AI_GENERATED" as ApiProcessStateEnumDto, // 기본적으로 완료 상태로 설정
+          status: apiStatus, // 백엔드에서 받은 상태값 사용
           apiSpecVersionId: spec.apiSpecVersionId,
         }
 

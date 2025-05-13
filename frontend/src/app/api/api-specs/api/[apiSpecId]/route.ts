@@ -28,20 +28,20 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ a
     const apiSpecApi = new ApiSpecApi(config)
 
     // API 스펙 상태 업데이트 요청 준비
-    const apiSpecStatusRequest: ApiSpecVersionStatusRequest = {
+    const apiSpecVersionStatusRequest: ApiSpecVersionStatusRequest = {
       apiSpecStatus: body.apiSpecStatus as ApiSpecVersionStatusRequestApiSpecStatusEnum,
     }
 
-    // 백엔드로 보내는 최종 데이터 로깅
+    // 백엔드로 보내는 최종 데이터 로깅 - 수정: 변수명 변경
     console.log("백엔드로 보내는 최종 요청 데이터:", {
       apiSpecId,
-      apiSpecStatusRequest,
+      apiSpecVersionStatusRequest,
     })
 
     // API 스펙 상태 업데이트 요청
     const requestParameters = {
       apiSpecId,
-      apiSpecVersionStatusRequest: apiSpecStatusRequest,
+      apiSpecVersionStatusRequest,
     }
 
     const response = await apiSpecApi.updateApiSpecStatus(requestParameters)
