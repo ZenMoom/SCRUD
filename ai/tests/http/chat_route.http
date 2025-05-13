@@ -2,7 +2,7 @@
 # 다이어그램 관련 API 테스트
 ###############################################
 
-@baseUrl = http://localhost:8080
+@baseUrl = http://localhost:8000
 @projectId = project-123
 @apiId = api-456
 
@@ -11,9 +11,9 @@ POST {{baseUrl}}/api/v1/projects/{{projectId}}/apis/{{apiId}}/chats
 Content-Type: application/json
 
 {
-  "tag": "IMPLEMENT",
+  "tag": "REFACTORING",
   "promptType": "BODY",
-  "message": "메서드가 잘못된것같습니다. 새로 작성해주세요",
+  "message": "선택한 메서드를 리팩토링 해주세요",
   "targetMethods": [
     {
       "methodId": "fd93c6bd-b2b6-4d06-86a4-ce027da3bb85"

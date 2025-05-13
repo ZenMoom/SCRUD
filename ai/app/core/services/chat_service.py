@@ -11,6 +11,7 @@ from langchain_core.tools import Tool, ToolException
 import json
 
 from app.api.dto.diagram_dto import UserChatRequest, DiagramResponse, ChatResponse, ChatResponseList
+from app.core.generator.chat_request_evaluator import PropositionAnalysis
 from app.core.generator.model_generator import ModelGenerator
 from app.core.prompts.few_shot_prompt_template import DiagramPromptGenerator
 from app.core.services.sse_service import SSEService
@@ -72,88 +73,6 @@ class ChatService:
         except Exception as e:
             self.logger.info(f"LLM 및 파서 설정 중 오류 발생: {str(e)}")
             raise
-
-    def setup_agent(self, response_queue: asyncio.Queue) -> None:
-        """
-        Langchain Agent를 설정하는 메서드
-
-        Args:
-            response_queue: 응답 큐
-        """
-        try:
-            if not self.model_name:
-                raise ValueError("모델 이름이 설정되지 않았습니다.")
-
-            # LLM 모델 설정
-            self.llm = self.model_generator.get_chat_model(self.model_name, response_queue)
-
-            # Agent를 위한 도구 정의
-            tools = [
-                Tool(
-                    name="generate_diagram",
-                    description="도식화를 생성하는 도구입니다. 사용자의 요청이 도식화 생성이나 수정을 필요로 할 때 이 도구를 사용합니다. 이 도구는 반드시 '도식화를 생성합니다' 메시지로 시작해야 합니다.",
-                    func=lambda input_str: f"도식화를 생성합니다. 이유: {input_str}"
-                ),
-                Tool(
-                    name="simple_response",
-                    description="단순히 사용자 질문에 답변만 하는 도구입니다. 도식화 생성이 필요 없을 때 사용합니다.",
-                    func=lambda input_str: input_str
-                )
-            ]
-
-            # Agent 프롬프트 템플릿 설정
-            prompt = ChatPromptTemplate.from_messages([
-                ("system", """
-                당신은 API 명세와 도식화를 생성하고 관리하는 AI 서비스의 일부입니다.
-                사용자의 요청을 분석하여 도식화 생성이 필요한지 결정한 다음, 적절한 응답을 제공해야 합니다.
-
-                # 결정 가이드라인
-                도식화 생성이 필요한 경우 (generate_diagram 도구 사용):
-                1. 코드 구현, 업데이트, 수정이 필요한 요청
-                2. 새로운 컴포넌트나 메서드 추가 요청
-                3. 성능 최적화나 코드 리팩토링 요청
-                4. 구조 변경이 필요한 요청
-                5. 사용자가 명시적으로 도식화 생성/수정을 요청하는 경우
-
-                도식화 생성이 필요 없는 경우 (simple_response 도구 사용):
-                1. 단순 정보 요청이나 설명 요청
-                2. 설명이나 분석만 필요한 경우
-                3. 코드 구현이나 변경 없이 질문에 답변만 필요한 경우
-
-                # 메시지 분석
-                1. MethodPromptTagEnum 값을 확인하세요:
-                   - IMPLEMENT, REFACTORING, OPTIMIZE는 일반적으로 도식화 생성이 필요합니다.
-                   - EXPLAIN, ANALYZE, DOCUMENT는 일반적으로 도식화 생성이 필요 없습니다.
-                   - 하지만 이것은 절대적인 규칙이 아닙니다. 메시지 내용을 우선적으로 고려하세요.
-
-                2. 메시지 내용을 더 중요하게 고려하세요:
-                   - "만들어줘", "구현해줘", "변경해줘", "추가해줘"와 같은 요청은 도식화 생성이 필요할 가능성이 높습니다.
-                   - "설명해줘", "이해하기 어려워", "왜 이렇게 되어 있어?"와 같은 질문은 도식화 생성이 필요 없을 가능성이 높습니다.
-
-                # 중요: 도식화 생성 여부를 결정할 때 반드시 명시적으로 generate_diagram 또는 simple_response 도구를 사용하세요.
-                두 도구 중 하나를 사용할 때 반드시 결정 이유를 포함해야 합니다.
-                """
-                ),
-                ("human", "{input}"),
-                MessagesPlaceholder(variable_name="agent_scratchpad"),
-            ])
-
-            # Agent 생성
-            agent = create_openai_functions_agent(self.llm, tools, prompt)
-
-            # Agent Executor 생성
-            self.agent_executor = AgentExecutor(
-                agent=agent,
-                tools=tools,
-                verbose=True,
-                handle_parsing_errors=True
-            )
-
-            self.logger.info("Agent 설정 완료")
-        except Exception as e:
-            self.logger.error(f"Agent 설정 중 오류 발생: {str(e)}", exc_info=True)
-            raise
-
 
     async def generate_diagram_data(self, user_chat_data: UserChatRequest, project_id: str = None,
                                     api_id: str = None) -> DiagramResponse:
@@ -455,9 +374,8 @@ class ChatService:
             diagram.diagramId = diagram_id
 
             # MongoDB에 저장
-            await self.diagram_repository.update_one(
-                {"diagramId": diagram_id},
-                diagram
+            await self.diagram_repository.create_new_version(
+                diagram=diagram
             )
 
             self.logger.info(f"비동기 도식화 생성 완료: diagram_id={diagram_id}")
@@ -468,9 +386,22 @@ class ChatService:
             self, project_id: str, api_id: str, user_chat_data: UserChatRequest, response_queue: asyncio.Queue
     ) -> Dict:
         """
-        채팅 요청을 처리하고 필요한 경우 다이어그램을 업데이트하는 백그라운드 태스크
-        사용자의 요청을 UserChat으로, LLM의 응답을 SystemChat으로 저장한 다음 Chat 도큐먼트로 MongoDB에 저장
-        AI가 직접 도식화 생성 여부를 판단합니다.
+          1. 모든 경우에 Chat 저장:
+            - 도식화가 필요한 경우든 일반 질문인 경우든 관계없이 모든 사용자 요청과 시스템 응답은 Chat 객체로 MongoDB에 저장됩니다.
+            - 각 Chat 객체는 UserChat(사용자 요청)과 SystemChat(시스템 응답) 두 부분을 모두 포함합니다.
+          2. 도식화가 필요한 경우:
+            - Agent가 요청을 분석하여 MethodPromptTagEnum을 기반으로 도식화 생성이 필요하다고 판단합니다.
+            - 우선 SSE로 "created" 이벤트와 함께 생성된 diagramId를 클라이언트에게 전달합니다.
+            - 그 후 비동기적으로 도식화를 생성합니다.
+            - 이 경우의 Chat 저장:
+                - UserChat에는 사용자의 원래 요청 정보가 저장됩니다 (tag, promptType, message, targetMethods 등).
+              - SystemChat에는 시스템의 응답과 함께 생성된 도식화의 ID(diagramId)와 관련 정보가 저장됩니다.
+          3. 도식화가 필요하지 않은 경우:
+            - 단순 질문/응답 형태로 처리됩니다.
+            - 이 경우에도 Chat 저장:
+                - UserChat에는 사용자의 요청 정보가 저장됩니다.
+              - SystemChat에는 시스템의 텍스트 응답만 저장되며, 도식화 관련 정보는 포함되지 않습니다(diagramId는 null).
+
 
         Args:
             project_id: 프로젝트 ID
@@ -482,27 +413,48 @@ class ChatService:
             Dict: 응답 정보 (도식화 생성 여부, 도식화 ID 등)
         """
         self.logger.info(f"채팅 및 다이어그램 처리 시작: project_id={project_id}, api_id={api_id}")
-
+        self.setup_llm_and_parser(response_queue)
         try:
             # 최신 다이어그램 조회 (가장 높은 버전)
             all_diagrams = await self.diagram_repository.find_many({
                 "projectId": project_id,
                 "apiId": api_id,
             }, sort=[("metadata.version", -1)])
-
+            
             latest_diagram = all_diagrams[0] if all_diagrams else None
 
-            if latest_diagram:
-                self.logger.info(
-                    f"최신 다이어그램 조회: diagramId={latest_diagram.diagramId}, version={latest_diagram.metadata.version}")
-            else:
-                self.logger.info("기존 다이어그램이 없음. 첫 다이어그램 생성 필요")
-                await self.sse_service.send_error(response_queue, "기존 다이어그램이 없어 처리할 수 없습니다.")
+            if not latest_diagram:
+                self.logger.error(f"다이어그램을 찾을 수 없습니다: project_id={project_id}, api_id={api_id}")
+                await self.sse_service.send_error(response_queue, "다이어그램을 찾을 수 없습니다.")
                 await self.sse_service.close_stream(response_queue)
-                return {"success": False, "error": "기존 다이어그램이 없어 처리할 수 없습니다."}
+                return {"error": "다이어그램을 찾을 수 없습니다"}
+
+            target_method_details = await self._get_method_details(latest_diagram, user_chat_data)
+
+            # Agent에게 도식화 생성 여부를 판단하도록 요청
+            agent_input = {
+                "tag": user_chat_data.tag.value,
+                "promptType": user_chat_data.promptType.value,
+                "message": user_chat_data.message,
+                "targetMethods": target_method_details
+            }
 
             # Agent 설정
-            self.setup_agent(response_queue)
+            from app.core.generator.chat_request_evaluator import ChatRequestEvaulator
+            evaluator: ChatRequestEvaulator = ChatRequestEvaulator()
+            result: PropositionAnalysis = evaluator.validate(agent_input.__str__())
+
+            self.logger.info(f"Agent에게 도식화 생성 여부 판단 요청: {agent_input}")
+            
+            # Agent의 결과에서 도식화 생성 여부 추출
+            # should_generate_diagram = result.is_true
+            should_generate_diagram = True
+            self.logger.info(f"Agent에게 도식화 생성 여부 판단 결과: {should_generate_diagram}")
+            self.logger.info(f"Agent에게 도식화 생성 여부 판단 이유: {result.reasoning}")
+
+            # UUID 생성 (chatId)
+            import uuid
+            chat_id = str(uuid.uuid4())
 
             # UserChat 객체 생성
             user_chat = UserChat(
@@ -511,99 +463,24 @@ class ChatService:
                 message=user_chat_data.message,
                 targetMethods=user_chat_data.targetMethods
             )
+            
+            # 도식화가 필요한 경우와 불필요한 경우의 분기 처리
+            if should_generate_diagram:
+                self.logger.info("도식화 생성이 필요하다고 판단됨")
 
-            # MethodPromptTagEnum 기반 초기 판단
-            initial_judgment = ""
-            if user_chat_data.tag in [MethodPromptTagEnum.IMPLEMENT, MethodPromptTagEnum.REFACTORING, MethodPromptTagEnum.OPTIMIZE]:
-                initial_judgment = "이 태그는 일반적으로 도식화 생성이 필요합니다."
-            else:
-                initial_judgment = "이 태그는 일반적으로 도식화 생성이 필요하지 않습니다."
-
-            # Langchain Agent로 응답 생성
-            agent_input = {
-                "input": f"""
-                사용자 메시지: {user_chat_data.message}
-                태그: {user_chat_data.tag}
-                메시지 타입: {user_chat_data.promptType}
-                초기 판단: {initial_judgment}
-
-                위 정보를 바탕으로 도식화 생성이 필요한지 판단하세요.
-                도식화가 필요하면 반드시 generate_diagram 도구를 사용하고, 필요하지 않으면 simple_response 도구를 사용하세요.
-                단순히 설명이나 분석만 필요한 경우는 도식화가 필요하지 않습니다.
-                구현, 리팩토링, 최적화 등 코드 변경이 필요한 경우는 도식화가 필요합니다.
-                """
-            }
-
-            self.logger.info("Agent에게 판단 요청")
-
-            # 먼저 사용자 메시지에 대한 간단한 응답 생성
-            standard_response = ""
-            if user_chat_data.tag == MethodPromptTagEnum.EXPLAIN:
-                standard_response = f"메서드에 대한 설명을 제공합니다: {user_chat_data.message}"
-            elif user_chat_data.tag == MethodPromptTagEnum.ANALYZE:
-                standard_response = f"코드 분석 결과: {user_chat_data.message}"
-            elif user_chat_data.tag == MethodPromptTagEnum.IMPLEMENT:
-                standard_response = f"구현을 진행합니다: {user_chat_data.message}"
-            else:
-                standard_response = f"요청을 처리합니다: {user_chat_data.message}"
-
-            # 태그 기반으로 간단한 판단
-            should_generate = user_chat_data.tag in [MethodPromptTagEnum.IMPLEMENT, MethodPromptTagEnum.REFACTORING, MethodPromptTagEnum.OPTIMIZE]
-
-            try:
-                agent_result = await self.agent_executor.ainvoke(agent_input)
-                self.logger.info(f"Agent 결과: {agent_result}")
-            except Exception as agent_error:
-                self.logger.error(f"Agent 오류 발생: {str(agent_error)}")
-                # 오류 발생시 간단한 대체 응답 사용
-                agent_result = {
-                    'output': standard_response,
-                    'intermediate_steps': [
-                        ({
-                            'tool': 'generate_diagram' if should_generate else 'simple_response',
-                            'tool_input': f"태그 {user_chat_data.tag}에 기반한 기본 결정"
-                        },
-                        f"도식화 {'생성' if should_generate else '미생성'} 결정: {user_chat_data.message}")
-                    ]
-                }
-            agent_response = agent_result['output']
-            tool_used = agent_result.get('intermediate_steps', [])
-
-            self.logger.info(f"Agent 응답: {agent_response}")
-            self.logger.info(f"사용된 도구: {tool_used}")
-
-            # 도구 사용 결과 분석하여 도식화 생성 여부 판단
-            should_generate = False
-            for step in tool_used:
-                action = step[0]  # AgentAction 또는 dict
-                if isinstance(action, dict):
-                    # 예외 처리 단계에서 생성된 경우
-                    if action.get('tool') == "generate_diagram":
-                        should_generate = True
-                        self.logger.info(f"도식화 생성 판단 - 이유: {action.get('tool_input')}")
-                        break
-                else:
-                    # 정상적으로 생성된 AgentAction 객체인 경우
-                    if action.tool == "generate_diagram":
-                        should_generate = True
-                        self.logger.info(f"도식화 생성 판단 - 이유: {action.tool_input}")
-                        break
-
-            # 결과 처리
-            diagram_id = None
-            message = agent_response
-
-            if should_generate:
-                self.logger.info("AI가 도식화 생성이 필요하다고 판단했습니다.")
-
-                # 새로운 도식화 ID 생성
-                import uuid
+                # 다이어그램 ID 생성
                 diagram_id = str(uuid.uuid4())
+                event = f"data: {json.dumps({
+                    'token': {'diagramId': diagram_id},
+                })}\n\n"
+                self.logger.info(f"생성 이벤트 발송: {event}")
 
-                # 클라이언트에게 도식화 ID 전송
-                await self.sse_service.send_created(response_queue, diagram_id)
+                # 답변을 생성하여 클라이언트에 전송
+                response_content = await self.llm.ainvoke(
+                    f"다음 내용을 검토해주세요. 수정사항이 있으면 수정해주세요. {agent_input.__str__()} 유저 메시지: {user_chat_data.message}"
+                )
 
-                # 비동기적으로 도식화 생성 작업 예약
+                # 비동기로 도식화 생성 작업 시작
                 asyncio.create_task(self.create_diagram_async(
                     project_id=project_id,
                     api_id=api_id,
@@ -611,100 +488,115 @@ class ChatService:
                     diagram_id=diagram_id
                 ))
 
-                status = PromptResponseEnum.MODIFIED
-                message_suffix = f"\n\n다이어그램을 생성하고 있습니다. 생성된 다이어그램 ID: {diagram_id}"
-                message = message + message_suffix if not message.endswith(message_suffix) else message
-            else:
-                self.logger.info("AI가 도식화 생성이 필요하지 않다고 판단했습니다.")
-                status = PromptResponseEnum.EXPLANATION
-
-            # SystemChat 객체 생성
-            version_info = None
-            if diagram_id:
+                # SystemChat 생성 (도식화 ID 포함)
                 version_info = VersionInfo(
-                    newVersionId=diagram_id,
-                    description=f"Updated diagram with {user_chat_data.tag} operation"
+                    newVersionId=latest_diagram.metadata.version + 1,
+                    description="생성된 버전"
                 )
 
-            import uuid
-            system_chat = SystemChat(
-                systemChatId=str(uuid.uuid4()),
-                status=status,
-                message=message,
-                versionInfo=version_info,
-                diagramId=diagram_id
-            )
+                system_chat = SystemChat(
+                    systemChatId=str(uuid.uuid4()),
+                    status=PromptResponseEnum.MODIFIED,
+                    message=response_content.content,
+                    versionInfo=version_info,
+                    diagramId=diagram_id
+                )
 
-            # Chat 객체 생성 및 저장
+                response_queue.put_nowait(event)
+                # 클라이언트에게 최종 응답 전송
+                await self.sse_service.close_stream(response_queue)
+
+                
+                # 저장할 데이터와 응답 데이터 준비
+                response = {
+                    "shouldGenerateDiagram": True,
+                    "diagramId": diagram_id,
+                    "message": response_content
+                }
+            else:
+                self.logger.info("도식화 생성이 필요하지 않다고 판단됨")
+                
+                # 실제 응답 생성을 위한 Agent 실행
+                response_content = await self.llm.ainvoke(
+                    f"다음 내용을 검토해주세요. 수정사항이 있으면 수정해주세요. {agent_input.__str__()} 유저 메시지: {user_chat_data.message}"
+                )
+                
+                response_content = response_content.content
+                
+                # SystemChat 생성 (도식화 ID 없음)
+                system_chat = SystemChat(
+                    systemChatId=str(uuid.uuid4()),
+                    status=PromptResponseEnum.EXPLANATION,
+                    message=response_content,
+                    diagramId=None
+                )
+                
+                # 클라이언트에게 응답 전송
+                await self.sse_service.close_stream(response_queue)
+                
+                # 응답 데이터 준비
+                response = {
+                    "shouldGenerateDiagram": False,
+                    "diagramId": None,
+                    "message": response_content
+                }
+            
+            # Chat 객체 생성 및 MongoDB에 저장
             chat = Chat(
-                chatId=str(uuid.uuid4()),
+                chatId=chat_id,
                 projectId=project_id,
                 apiId=api_id,
                 userChat=user_chat,
                 systemChat=system_chat,
                 createdAt=datetime.now()
             )
-
+            
             # MongoDB에 채팅 저장
-            self.logger.info(f"채팅 MongoDB에 저장 중: chatId={chat.chatId}")
-            inserted_id = await self.chat_repository.insert_one(chat)
-            self.logger.info(f"채팅 저장 완료: id={inserted_id}")
-
-            # 응답 전송
-            await self.sse_service.send_data(response_queue, {"message": message})
-
-            # 스트리밍 종료
-            await self.sse_service.close_stream(response_queue)
-            self.logger.info("SSE 스트림 종료")
-
-            return {
-                "success": True,
-                "generate_diagram": should_generate,
-                "diagram_id": diagram_id
-            }
-
+            self.logger.info(f"채팅 저장 중: chatId={chat_id}")
+            await self.chat_repository.insert_one(chat)
+            self.logger.info(f"채팅 저장 완료: chatId={chat_id}")
+            
+            return response
+            
         except Exception as e:
             self.logger.error(f"채팅 및 다이어그램 처리 중 오류 발생: {str(e)}", exc_info=True)
-
-            # 오류 정보도 채팅으로 저장
-            try:
-                # UserChat 객체 생성
-                user_chat = UserChat(
-                    tag=user_chat_data.tag,
-                    promptType=user_chat_data.promptType,
-                    message=user_chat_data.message,
-                    targetMethods=user_chat_data.targetMethods
-                )
-                import uuid
-                # 오류 발생 시 SystemChat
-                system_chat = SystemChat(
-                    systemChatId=str(uuid.uuid4()),
-                    status=PromptResponseEnum.ERROR,
-                    message=f"처리 중 오류가 발생했습니다: {str(e)}",
-                    diagramId=None
-                )
-
-                # Chat 객체 생성 및 저장
-                chat = Chat(
-                    chatId=str(uuid.uuid4()),
-                    projectId=project_id,
-                    apiId=api_id,
-                    userChat=user_chat,
-                    systemChat=system_chat,
-                    createdAt=datetime.now()
-                )
-
-                # MongoDB에 오류 채팅 저장
-                self.logger.info(f"오류 채팅 MongoDB에 저장 중: chatId={chat.chatId}")
-                await self.chat_repository.insert_one(chat)
-                self.logger.info(f"오류 채팅 저장 완료")
-            except Exception as chat_save_error:
-                self.logger.error(f"오류 채팅 저장 중 추가 오류 발생: {str(chat_save_error)}", exc_info=True)
-
-            # 오류 응답 전송
+            
+            # 오류 발생 시 클라이언트에게 알림
             await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {str(e)}")
             await self.sse_service.close_stream(response_queue)
-            return {"success": False, "error": str(e)}
+            
+            return {"error": str(e)}
+
+    async def _get_method_details(self, latest_diagram, user_chat_data):
+        # 타겟 메서드들의 본문을 수집
+        target_method_details = []
+        for method_info in user_chat_data.targetMethods:
+            method_id = method_info.get("methodId", "")
+            if not method_id:
+                continue
+
+            # 다이어그램에서 해당 메서드 찾기
+            method_body = None
+            method_signature = None
+            component_name = None
+
+            for component in latest_diagram.components:
+                for method in component.methods:
+                    if method.methodId == method_id:
+                        method_body = method.body
+                        method_signature = method.signature
+                        component_name = component.name
+                        break
+                if method_body:  # 이미 메서드를 찾은 경우 반복 중단
+                    break
+
+            target_method_details.append({
+                "methodId": method_id,
+                "componentName": component_name,
+                "signature": method_signature,
+                "body": method_body
+            })
+        return target_method_details
 
     async def get_prompts(self, project_id: str, api_id: str) -> ChatResponseList:
         """
