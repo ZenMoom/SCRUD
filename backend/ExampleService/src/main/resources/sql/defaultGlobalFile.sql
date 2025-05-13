@@ -252,4 +252,3 @@ VALUES (
 
 -- 트랜잭션 커밋
 COMMIT;
-COMMIT;
