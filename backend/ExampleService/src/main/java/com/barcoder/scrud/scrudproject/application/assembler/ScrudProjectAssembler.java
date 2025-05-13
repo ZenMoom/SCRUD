@@ -9,8 +9,10 @@ import com.barcoder.scrud.scrudproject.application.dto.in.GlobalFileIn;
 import com.barcoder.scrud.scrudproject.application.dto.in.UpdateProjectIn;
 import com.barcoder.scrud.scrudproject.domain.entity.GlobalFile;
 import com.barcoder.scrud.scrudproject.domain.entity.ScrudProject;
+import com.barcoder.scrud.scrudproject.repository.DefaultGlobalFileRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,10 @@ import java.util.Map;
 @Slf4j
 @Component
 @Transactional
+@RequiredArgsConstructor
 public class ScrudProjectAssembler {
+
+    private final DefaultGlobalFileRepository defaultGlobalFileRepository;
 
     public ScrudProject toScrudProject(CreateProjectIn inDto) {
         return ScrudProject.builder()
@@ -46,12 +51,28 @@ public class ScrudProjectAssembler {
 
     // 원본을 따로 보여줘야 한다면 전처리 된 파일은 프롬프팅 할 때만 활용하고, 사용자에게 보여줄 파일을 따로 저장해둬야 함. 상의해보기
     public GlobalFile toGlobalFile(GlobalFileIn globalFile) {
+        String fileName = globalFile.getFileName();
+        String fileContent = globalFile.getFileContent();
+
         switch(globalFile.getFileType()) {
+            case SECURITY_DEFAULT_JWT:
+            case SECURITY_DEFAULT_SESSION:
+            case SECURITY_DEFAULT_NONE:
+                fileContent = globalFile.getFileType().toString().split("_")[2].toLowerCase();
+                break;
+
             case ARCHITECTURE_GITHUB : {
                 return parsingTree(globalFile);
             }
-            case SECURITY_DEFAULT_JWT:
+            case ARCHITECTURE_DEFAULT_CLEAN:
+            case ARCHITECTURE_DEFAULT_HEX:
+            case ARCHITECTURE_DEFAULT_LAYERED_A:
+            case ARCHITECTURE_DEFAULT_LAYERED_B:
+            case ARCHITECTURE_DEFAULT_MSA:
+            case CONVENTION_DEFAULT:
+                fileContent = defaultGlobalFileRepository.findByFileType(globalFile.getFileType()).getFileContent();
                 break;
+
             default:
                 break;
         }
@@ -60,7 +81,6 @@ public class ScrudProjectAssembler {
                 .fileName(globalFile.getFileName())
                 .fileType(globalFile.getFileType())
                 .fileContent(globalFile.getFileContent())
-                .fileUrl(globalFile.getFileUrl())
                 .build();
     }
 
@@ -89,7 +109,6 @@ public class ScrudProjectAssembler {
                 .fileName(globalFile.getFileName())
                 .fileType(globalFile.getFileType())
                 .fileContent(simplifiedJson)
-                .fileUrl(globalFile.getFileUrl())
                 .build();
 
         } catch (Exception e) {
@@ -111,7 +130,6 @@ public class ScrudProjectAssembler {
                 .fileName(globalFile.getFileName())
                 .fileType(globalFile.getFileType())
                 .fileContent(globalFile.getFileContent())
-                .fileUrl(globalFile.getFileUrl())
                 .build();
     }
 
