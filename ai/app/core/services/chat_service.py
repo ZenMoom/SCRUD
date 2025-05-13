@@ -194,7 +194,7 @@ class ChatService:
         self.logger.info(f"Target methods count: {len(user_chat_data.targetMethods)}")
 
         try:
-
+            self.setup_llm_and_parser(response_queue)
             # 프롬프트 생성
             self.logger.info("프롬프트 생성 시작")
 
@@ -326,6 +326,7 @@ class ChatService:
     ) -> DiagramResponse:
         """
         채팅 요청을 처리하고 필요한 경우 다이어그램을 업데이트하는 백그라운드 태스크
+        사용자의 요청을 UserChat으로, LLM의 응답을 SystemChat으로 저장한 다음 Chat 도큐먼트로 MongoDB에 저장
 
         Args:
             project_id: 프로젝트 ID
@@ -367,6 +368,48 @@ class ChatService:
                 api_id=api_id
             )
 
+            # 채팅 내용 저장을 위한 데이터 준비
+            from app.infrastructure.mongodb.repository.model.diagram_model import UserChat, SystemChat, Chat, VersionInfo, PromptResponseEnum
+            import uuid
+            from datetime import datetime
+
+            # UserChat 객체 생성
+            user_chat = UserChat(
+                tag=user_chat_data.tag,
+                promptType=user_chat_data.promptType,
+                message=user_chat_data.message,
+                targetMethods=user_chat_data.targetMethods
+            )
+
+            # SystemChat 객체 생성
+            version_info = VersionInfo(
+                newVersionId=diagram.diagramId,
+                description=f"Updated diagram with {user_chat_data.tag} operation"
+            )
+
+            system_chat = SystemChat(
+                systemChatId=str(uuid.uuid4()),
+                status=PromptResponseEnum.MODIFIED,  # 기본적으로 수정됨 상태
+                message=f"다이어그램이 업데이트되었습니다. 버전: {diagram.metadata.version}",
+                versionInfo=version_info,
+                diagramId=diagram.diagramId
+            )
+
+            # Chat 객체 생성 및 저장
+            chat = Chat(
+                chatId=str(uuid.uuid4()),
+                projectId=project_id,
+                apiId=api_id,
+                userChat=user_chat,
+                systemChat=system_chat,
+                createdAt=datetime.now()
+            )
+
+            # MongoDB에 채팅 저장
+            self.logger.info(f"채팅 MongoDB에 저장 중: chatId={chat.chatId}")
+            inserted_id = await self.chat_repository.insert_one(chat)
+            self.logger.info(f"채팅 저장 완료: id={inserted_id}")
+
             # 스트리밍 종료
             await self.sse_service.close_stream(response_queue)
             self.logger.info("SSE 스트림 종료")
@@ -406,8 +449,8 @@ class ChatService:
                     id=chat.id,
                     chatId=chat.chatId,
                     createdAt=chat.createdAt,
-                    userChat=ChatResponse.UserChatResponse(**chat.userChat.dict()) if chat.userChat else None,
-                    systemChat=ChatResponse.SystemChatResponse(**chat.systemChat.dict()) if chat.systemChat else None
+                    userChat=ChatResponse.UserChatResponse(**chat.userChat.model_dump()) if chat.userChat else None,
+                    systemChat=ChatResponse.SystemChatResponse(**chat.systemChat.model_dump()) if chat.systemChat else None
                 )
                 chat_responses.append(chat_response)
 
