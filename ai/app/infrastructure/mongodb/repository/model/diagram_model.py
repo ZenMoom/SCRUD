@@ -183,9 +183,11 @@ class SystemChat(BaseModel):
 class Chat(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")
     chatId: Optional[str] = None
-    createdAt: datetime
+    projectId: str
+    apiId: str
     userChat: Optional[UserChat] = None
     systemChat: Optional[SystemChat] = None
+    createdAt: datetime
 
     class Config:
         populate_by_name = True

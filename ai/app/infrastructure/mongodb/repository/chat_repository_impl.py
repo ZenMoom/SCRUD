@@ -42,7 +42,7 @@ class ChatRepositoryImpl(MongoRepositoryImpl[Chat], ChatRepository):
         }
 
         # 생성 시간 기준으로 정렬 (최신순)
-        sort = [("createdAt", -1)]
+        sort = [("createdAt", 1)]
 
         # 채팅 기록 조회
         chats = await self.find_many(filter_dict, sort)

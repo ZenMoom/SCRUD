@@ -102,6 +102,15 @@ async def prompt_chat(
     프롬프트를 입력하여 도식화 수정을 요청하거나 설명을 요청합니다.
     응답 값으로 SSE Id를 받아 /api/sse/connect/{SSE_Id} API에 연결하여 응답을 스트리밍 받을 수 있습니다.
 
+    이 API는 Langchain Agent를 사용하여 다음과 같이 작동합니다:
+    1. 사용자 요청을 분석하여 MethodPromptTagEnum을 기반으로 도식화 생성 여부를 판단합니다.
+    2. 도식화 생성이 필요한 경우:
+       - SSE를 통해 "created" 이벤트로 diagramId를 클라이언트에게 전송합니다.
+       - 비동기적으로 도식화를 생성합니다.
+    3. 도식화 생성이 필요하지 않은 경우:
+       - 단순 질문/답변 형태로 처리합니다.
+    4. 모든 경우에 사용자 요청(UserChat)과 시스템 응답(SystemChat)이 Chat 도큐먼트로 MongoDB에 저장됩니다.
+
     Args:
         project_id: 프로젝트 ID
         api_id: API ID
@@ -122,6 +131,7 @@ async def prompt_chat(
         logger.info(f"SSE 스트림 생성: stream_id={stream_id}")
 
         # 채팅 및 다이어그램 처리를 백그라운드 태스크로 실행
+        # Agent가 도식화 생성 여부를 판단하고, 필요한 경우 created 이벤트로 diagramId를 제공합니다
         background_tasks.add_task(
             chat_service.process_chat_and_diagram,
             project_id,
@@ -164,13 +174,12 @@ async def connect_sse(
             while True:
                 # 큐에서 데이터 대기
                 data = await response_queue.get()
-
                 # 종료 신호 확인
                 if data is None:
                     logger.info(f"SSE 스트림 종료: sse_id={sse_id}")
                     break
 
-                logger.debug(f"SSE 데이터 전송: {data[:100]}...")
+                logger.info(f"SSE 데이터 전송: {data[:100]}...")
 
                 # SSE 형식으로 데이터 전송
                 yield f"data: {data}\n\n"
@@ -180,6 +189,7 @@ async def connect_sse(
         finally:
             # 클라이언트 연결 종료 시 정리
             logger.info(f"SSE 연결 정리: sse_id={sse_id}")
+
             sse_service.remove_stream(sse_id)
 
     logger.info(f"SSE 스트리밍 응답 시작: sse_id={sse_id}")

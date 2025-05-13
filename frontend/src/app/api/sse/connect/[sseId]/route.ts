@@ -33,11 +33,11 @@ export async function GET(request: NextRequest) {
         controller.enqueue(`data: ${JSON.stringify({ message: "SSE 연결이 시작되었습니다." })}\n\n`)
 
         try {
-          // API 기본 URL 설정
-          const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL || ""
+          // API 기본 URL 설정 - 하드코딩된 URL 사용
+          const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
 
-          // SSE 연결 URL
-          const sseUrl = `${apiUrl}/api/sse/connect/${sseId}`
+          // 변경된 SSE 연결 URL
+          const sseUrl = `${apiUrl}/api/v1/sse/connect/${sseId}`
 
           console.log(`SSE 연결 시도: ${sseUrl}`)
 
@@ -59,41 +59,100 @@ export async function GET(request: NextRequest) {
 
           // 응답 스트림 처리
           const reader = response.body.getReader()
-
-          // 텍스트 디코더 생성
           const decoder = new TextDecoder()
-          let buffer = "" // 불완전한 청크를 저장하기 위한 버퍼
+          let isCompleted = false
 
           // 스트림 읽기 루프
-          while (true) {
+          while (!isCompleted) {
             const { done, value } = await reader.read()
 
             if (done) {
-              console.log("SSE 스트림 종료")
+              console.log("SSE 스트림 종료 (done 신호 수신)")
               break
             }
 
             // 바이너리 데이터를 텍스트로 변환
             const chunk = decoder.decode(value, { stream: true })
-            buffer += chunk
+            console.log("수신된 청크:", chunk)
 
-            // 완전한 메시지 찾기 (이벤트 구분자로 분리)
-            const messages = buffer.split("\n\n")
-            buffer = messages.pop() || "" // 마지막 불완전한 메시지는 버퍼에 유지
+            // 청크를 줄 단위로 처리
+            const lines = chunk.split("\n")
+            for (const line of lines) {
+              if (!line.trim()) continue
 
-            // 완전한 메시지 처리
-            for (const message of messages) {
-              if (message.trim()) {
-                console.log("SSE 메시지 처리:", message)
-                controller.enqueue(`data: ${message}\n\n`)
+              // 토큰 추출 시도
+              if (line.includes("[디버깅] 새 토큰 수신:")) {
+                const tokenMatch = line.match(/\[디버깅\] 새 토큰 수신: (.*)/)
+                if (tokenMatch && tokenMatch[1]) {
+                  const token = tokenMatch[1].trim()
+                  console.log("토큰 추출:", token)
+                  controller.enqueue(`data: ${JSON.stringify({ token })}\n\n`)
+                }
+              } else if (line.startsWith("data:")) {
+                // SSE 형식의 데이터 라인 처리
+                try {
+                  // data: 접두사 제거 후 JSON 파싱
+                  const sseData = line.substring(5).trim()
+
+                  // 원본 SSE 데이터를 클라이언트에 그대로 전달
+                  controller.enqueue(`${line}\n\n`)
+
+                  // 완료 여부 확인을 위해 JSON 파싱 시도
+                  try {
+                    const parsedData = JSON.parse(sseData)
+                    if (parsedData.status === "COMPLETED" || (parsedData.message && parsedData.message.includes("완료")) || (parsedData.token && parsedData.token.includes("완료"))) {
+                      console.log("완료 메시지 감지 (SSE 데이터 내부)")
+                      isCompleted = true
+                    }
+                  } catch (parseError) {
+                    console.log(parseError)
+                    // JSON 파싱 실패는 무시
+                  }
+                } catch (e) {
+                  console.error("SSE 데이터 파싱 오류:", e)
+                }
+              } else {
+                // 일반 텍스트 또는 JSON 처리 시도
+                try {
+                  // JSON 형식인지 확인
+                  if (line.trim().startsWith("{") && line.trim().endsWith("}")) {
+                    const jsonData = JSON.parse(line)
+                    controller.enqueue(`data: ${JSON.stringify(jsonData)}\n\n`)
+
+                    // 완료 여부 확인
+                    if (jsonData.status === "COMPLETED" || (jsonData.message && jsonData.message.includes("완료"))) {
+                      console.log("완료 메시지 감지 (JSON 데이터)")
+                      isCompleted = true
+                    }
+                  } else {
+                    // 일반 텍스트로 처리
+                    controller.enqueue(`data: ${JSON.stringify({ text: line })}\n\n`)
+
+                    // 완료 메시지 확인
+                    if (line.includes("완료") || line.includes("COMPLETED")) {
+                      console.log("완료 메시지 감지 (일반 텍스트)")
+                      isCompleted = true
+                    }
+                  }
+                } catch (parseError) {
+                  console.log(parseError)
+                  // 파싱 오류 시 텍스트로 처리
+                  controller.enqueue(`data: ${JSON.stringify({ text: line })}\n\n`)
+
+                  // 완료 메시지 확인
+                  if (line.includes("완료") || line.includes("COMPLETED")) {
+                    console.log("완료 메시지 감지 (파싱 오류 후)")
+                    isCompleted = true
+                  }
+                }
               }
             }
           }
 
-          // 남은 버퍼 처리
-          if (buffer.trim()) {
-            console.log("남은 버퍼 처리:", buffer)
-            controller.enqueue(`data: ${buffer}\n\n`)
+          // 모든 응답을 받은 후 완료 메시지 전송
+          if (!isCompleted) {
+            console.log("스트림 종료 감지, 완료 메시지 전송")
+            controller.enqueue(`data: ${JSON.stringify({ message: "응답이 완료되었습니다.", status: "COMPLETED" })}\n\n`)
           }
         } catch (error) {
           console.error("SSE 처리 오류:", error)

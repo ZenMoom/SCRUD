@@ -18,17 +18,17 @@ class DiagramService:
 
     def __init__(
             self,
-            repository: Optional[DiagramRepository] = None,
+            diagram_repository: Optional[DiagramRepository] = None,
             logger: Optional[logging.Logger] = None,
     ):
         """
         DiagramService 초기화
 
         Args:
-            repository: DiagramRepository - 다이어그램 저장소
+            diagram_repository: DiagramRepository - 다이어그램 저장소
             logger: Logger - 로깅 객체
         """
-        self.repository = repository
+        self.diagram_repository = diagram_repository
         self.logger = logger or logging.getLogger(__name__)
         self.logger.info("DiagramService 초기화됨")
 
@@ -50,7 +50,7 @@ class DiagramService:
         self.logger.info(f"도식화 데이터 조회: project_id={project_id}, api_id={api_id}, version_id={version}")
 
         # 다이어그램 조회
-        diagram = await self.repository.find_by_project_api_version(project_id, api_id, version)
+        diagram = await self.diagram_repository.find_by_project_api_version(project_id, api_id, version)
 
         if not diagram:
             self.logger.error(f"다이어그램을 찾을 수 없음: project_id={project_id}, api_id={api_id}, version_id={version}")
@@ -80,7 +80,7 @@ class DiagramService:
 
             diagram: Diagram = await self.create_llm_diagram(project_id, api_id, {"d": "d"})
             # 저장
-            new_diagram = await self.repository.save(diagram)
+            new_diagram = await self.diagram_repository.save(diagram)
             # 응답 데이터로 변환
             return self._convert_to_response(new_diagram)
 
@@ -112,7 +112,7 @@ class DiagramService:
         )
 
         # 컴포넌트 위치 업데이트
-        updated_diagram = await self.repository.update_component_position(
+        updated_diagram = await self.diagram_repository.update_component_position(
             project_id, api_id, component_id, position_data.x, position_data.y
         )
 
@@ -153,55 +153,140 @@ class DiagramService:
         return DiagramResponse(**response_data)
 
     async def create_llm_diagram(self, project_id: str, api_id: str, openapi_spec: dict) -> Diagram:
-        self.logger.info(f"LLM 다이어그램 생성 시작: project_id={project_id}, api_id={api_id}")
+        """
+        LangChain Agent를 사용하여 OpenAPI 명세로부터 다이어그램을 생성합니다.
 
-        # 1. LLM 및 파서 설정
+        Args:
+            project_id: 프로젝트 ID
+            api_id: API ID
+            openapi_spec: OpenAPI 명세 데이터
+
+        Returns:
+            Diagram: 생성된 다이어그램 객체
+        """
+        self.logger.info(f"LLM 다이어그램 생성 시작 (Agent 사용): project_id={project_id}, api_id={api_id}")
+
+        # 1. LLM 설정
         from app.config.config import settings
-        self.logger.info("LLM 및 PydanticOutputParser 설정 중")
+        from langchain_openai import ChatOpenAI
         llm = ChatOpenAI(
             model="gpt-4o-mini",
             api_key=settings.OPENAI_API_KEY,
             base_url=settings.OPENAI_API_BASE,
             temperature=0.0,
         )
+
+        # 2. 파서 설정
+        from langchain_core.output_parsers import PydanticOutputParser
+        from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
         parser = PydanticOutputParser(pydantic_object=Diagram)
 
-        # 2. 프롬프트 생성
-        self.logger.info("프롬프트 생성 중")
-        prompt_generator = DiagramPromptGenerator()
-        import json
-        prompt = prompt_generator.get_prompt().format(openapi_spec=json.dumps(openapi_spec))
+        # 3. 도구 정의
+        from langchain_core.tools import tool
 
-        # 3. LLM 호출 및 응답 처리
-        self.logger.info("LLM 호출 실행")
-        from langchain_core.messages import HumanMessage
-        response = await llm.ainvoke([
-            HumanMessage(content=prompt),
-            HumanMessage(content=parser.get_format_instructions())
-        ])
-        self.logger.info("LLM 응답 받음, 파싱 중")
-        diagram_data = parser.parse(response.content)
+        @tool
+        def generate_uuid() -> str:
+            """UUID를 생성합니다. 다이어그램 내 각 요소(컴포넌트, 메서드, 연결 등)의 ID를 생성할 때 사용하세요."""
+            import uuid
+            return str(uuid.uuid4())
 
-        # 4. ID 및 메타데이터 설정
-        self.logger.info("다이어그램 ID 및 메타데이터 설정 중")
-        import uuid
-        diagram_data.projectId = project_id
-        diagram_data.apiId = api_id
-        diagram_data.diagramId = str(uuid.uuid4())
+        @tool
+        def get_current_datetime() -> str:
+            """현재 날짜와 시간을 ISO 형식의 문자열로 반환합니다. 다이어그램의 lastModified 필드를 설정할 때 사용하세요."""
+            from datetime import datetime
+            return datetime.now().isoformat()
 
-        # 5. 메타데이터 설정
-        from datetime import datetime
-        metadata = Metadata(
-            metadataId=str(uuid.uuid4()),
-            version=1,
-            lastModified=datetime.now(),
-            name=f"API {api_id}",
-            description=f"Generated diagram for API {api_id}"
+        # 4. Agent 프롬프트 생성
+        from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+        from langchain_core.messages import SystemMessage
+
+        system_message = """당신은 OpenAPI 명세를 분석하여 Spring Boot 아키텍처 기반의 UML 클래스 다이어그램을 생성하는 전문가입니다.
+
+주어진 OpenAPI 명세를 분석해서 다음과 같은 구성요소를 포함하는 다이어그램을 생성해야 합니다:
+1. Controller, Service, Repository 등의 컴포넌트 (클래스 또는 인터페이스)
+2. 각 컴포넌트의 메서드 (명세의 엔드포인트에 해당하는 메서드)
+3. 메서드 간의 연결 관계 (Controller -> Service -> Repository 흐름)
+4. DTO 모델 (요청/응답 객체)
+
+다이어그램 생성 과정:
+1. OpenAPI 명세를 파싱하여 엔드포인트 정보 추출 (parse_openapi_endpoints 도구 사용)
+2. 각 엔드포인트에 해당하는 Controller 메서드 생성
+3. Controller 메서드에 맞는 Service와 Repository 메서드 생성
+4. 컴포넌트 간 연결 관계 설정
+5. 요청/응답 객체를 기반으로 DTO 모델 생성
+6. UUID 생성 도구를 사용하여 각 요소의 고유 ID 생성
+
+최종 결과는 다음 필드를 포함하는 Diagram 객체여야 합니다:
+- diagramId: 다이어그램 ID (UUID)
+- projectId: 프로젝트 ID (입력 파라미터로 제공됨)
+- apiId: API ID (입력 파라미터로 제공됨)
+- components: 컴포넌트 목록 (클래스/인터페이스)
+- connections: 메서드 간 연결 관계
+- dto: DTO 모델 목록
+- metadata: 다이어그램 메타데이터 (버전, 수정일시 등)
+
+모든 ID 필드는 generate_uuid 도구로 생성해야 하며, 최종 출력은 Pydantic 스키마에 맞게 형식화되어야 합니다.
+"""
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(content=system_message),
+                SystemMessage(content=parser.get_format_instructions()),
+                ("human", "{input}"),
+                MessagesPlaceholder(variable_name="agent_scratchpad"),
+            ]
         )
-        diagram_data.metadata = metadata
 
-        self.logger.info(f"LLM 다이어그램 생성 완료: diagram_id={diagram_data.diagramId}")
-        return diagram_data
+        # 5. Agent 및 Executor 생성
+        from langchain.agents import create_tool_calling_agent, AgentExecutor
+
+        # 도구 목록 정의
+        tools = [generate_uuid, get_current_datetime]
+
+        # Agent 생성
+        agent = create_tool_calling_agent(llm, tools, prompt)
+
+        # AgentExecutor 생성
+        agent_executor = AgentExecutor(
+            agent=agent,
+            tools=tools,
+            verbose=True,
+            handle_parsing_errors=True,
+        )
+
+        # 6. Agent 실행
+        import json
+        input_msg = f"""
+        다음 OpenAPI 명세를 분석하여 Spring Boot 아키텍처 패턴을 따르는 다이어그램을 생성해주세요.
+
+        [OpenAPI 명세]
+        {json.dumps(openapi_spec, indent=2)}
+
+        프로젝트 ID: {project_id}
+        API ID: {api_id}
+
+        각 엔드포인트에 대해 Controller, Service, Repository 계층 구조를 생성하고,
+        이에 맞는 메서드와 연결 관계를 포함하세요.
+        """
+
+        self.logger.info("Agent 실행 중...")
+        result = await agent_executor.ainvoke({"input": input_msg})
+
+        # 7. 결과 처리
+        try:
+            diagram = parser.parse(result["output"])
+
+            # 프로젝트 ID와 API ID 확인 및 설정
+            diagram.projectId = project_id
+            diagram.apiId = api_id
+
+            self.logger.info(f"에이전트가 생성한 다이어그램: ID={diagram.diagramId}")
+            return diagram
+
+        except Exception as e:
+            self.logger.error(f"다이어그램 생성 중 오류 발생: {str(e)}")
+            # 오류 발생 시 더미 다이어그램 생성
+            return self.create_dummy_diagram(project_id, api_id)
 
     def create_dummy_diagram(self, project_id: str, api_id: str) -> Diagram:
         from app.infrastructure.mongodb.repository.model.diagram_model import ComponentTypeEnum, Method, Connection, \

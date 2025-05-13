@@ -11,10 +11,8 @@ class SSEStreamingHandler(BaseCallbackHandler):
 
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         """새 토큰이 생성될 때마다 호출됩니다."""
-        print(f"[디버깅] 새 토큰 수신: {token}")  # 토큰 로깅
         event = f"data: {json.dumps({'token': token})}\n\n"
         self.response_queue.put_nowait(event)
-        print(f"[디버깅] 토큰 이벤트 생성 및 큐에 추가")
 
     async def on_llm_end(self, response, **kwargs) -> None:
         """LLM 출력이 완료될 때 호출됩니다."""

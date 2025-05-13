@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useCallback, useEffect, useState, useRef } from "react"
 import ReactFlow, { Background, Controls, type Edge, type Node as ReactFlowNode, useNodesState, useEdgesState, MiniMap, Panel, NodeToolbar, Position } from "reactflow"
-import { Map, MapPinOffIcon as MapOff, Target, X, ChevronDown } from "lucide-react"
+import { Map, MapPinOffIcon as MapOff, Target, X, ChevronDown, Clock } from "lucide-react"
 import "reactflow/dist/style.css"
 import type { DiagramResponse, DiagramDto, ComponentDto, ConnectionDto } from "@generated/model"
 import { MethodNode } from "./nodes/MethodNode"
@@ -63,11 +63,19 @@ interface NodeRelationMap {
   }
 }
 
+// 버전 정보 타입 정의
+interface VersionInfo {
+  versionId: string
+  description: string
+  timestamp?: string
+}
+
 type DiagramContainerProps = {
   diagramData: DiagramResponse | null
   loading: boolean
   error: string | null
   onSelectionChange?: (targets: TargetNode[]) => void
+  selectedVersion?: string | null // 선택된 버전 ID 추가
 }
 
 // 타입 가드 함수들
@@ -121,7 +129,7 @@ function isDiagramDto(data: unknown): data is DiagramDto {
 }
 
 // 명시적으로 React.ReactElement 반환 타입 지정
-export default function DiagramContainer({ diagramData, loading, error, onSelectionChange }: DiagramContainerProps): React.ReactElement {
+export default function DiagramContainer({ diagramData, loading, error, onSelectionChange, selectedVersion }: DiagramContainerProps): React.ReactElement {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
@@ -140,22 +148,40 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   // 노드 초기 위치를 저장할 상태 추가
   const [initialNodePositions, setInitialNodePositions] = useState<Record<string, { x: number; y: number }>>({})
 
-  // 현재 버전과 다음 버전 상태 추가
-  const currentVersion = (() => {
-    if (!diagramData || !diagramData.metadata) return 1
-
-    const version = diagramData.metadata.version
-    if (isNumber(version)) return version
-    if (isString(version)) return Number.parseInt(version, 10) || 1
-    return 1
-  })()
+  // 현재 버전 정보 상태 추가
+  const [currentVersionInfo, setCurrentVersionInfo] = useState<VersionInfo | null>(null)
 
   // 버전 목록 상태 추가
   const [showVersions, setShowVersions] = useState<boolean>(false)
-  const [versions, setVersions] = useState<string[]>([])
+  const [availableVersions, setAvailableVersions] = useState<VersionInfo[]>([])
 
   // 버전 목록 참조 (외부 클릭 감지용)
   const versionsRef = useRef<HTMLDivElement>(null)
+
+  // 현재 버전 계산
+  const currentVersion = (() => {
+    if (selectedVersion) return selectedVersion
+
+    if (!diagramData || !diagramData.metadata) return "1"
+
+    const version = diagramData.metadata
+    if (isNumber(version)) return version.toString()
+    if (isString(version)) return version
+    return "1"
+  })()
+
+  // 현재 버전 정보 업데이트
+  useEffect(() => {
+    if (diagramData && diagramData.metadata) {
+      const metadata = diagramData.metadata
+
+      setCurrentVersionInfo({
+        versionId: isString(metadata.version) ? metadata.version : isNumber(metadata.version) ? metadata.version.toString() : "1",
+        description: metadata.description || "버전 설명 없음",
+        timestamp: metadata.lastModified,
+      })
+    }
+  }, [diagramData])
 
   // 노드가 이미 타겟에 있는지 확인하는 함수
   const isNodeTargeted = useCallback(
@@ -443,17 +469,36 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     setNodes(newNodes)
     setEdges(newEdges)
 
-    // 버전 목록 생성 (현재 버전 기준으로 -2부터 +2까지, 단 최소값은 1)
-    const versionList = []
-    const currentVersionNum = typeof currentVersion === "number" ? currentVersion : 1
-    const minVersion = Math.max(1, currentVersionNum - 2)
-    const maxVersion = currentVersionNum + 2
-    for (let i = minVersion; i <= maxVersion; i++) {
-      versionList.push(i.toString())
-    }
+    // 버전 정보 업데이트
+    if (diagramData.metadata) {
+      const metadata = diagramData.metadata
 
-    setVersions(versionList)
-  }, [diagramData, expandedNodes, calculateLayout, setNodes, setEdges, initialNodePositions, targetNodes, currentVersion])
+      // 현재 버전 정보 설정
+      const currentVersionInfo: VersionInfo = {
+        versionId: isString(metadata.version) ? metadata.version : isNumber(metadata.version) ? metadata.version.toString() : "1",
+        description: metadata.description || "버전 설명 없음",
+        timestamp: metadata.lastModified,
+      }
+
+      setCurrentVersionInfo(currentVersionInfo)
+
+      // 사용 가능한 버전 목록 생성 (현재 버전 기준으로 -2부터 +2까지, 단 최소값은 1)
+      const versionList: VersionInfo[] = []
+      const currentVersionNum = Number.parseInt(currentVersionInfo.versionId, 10) || 1
+      const minVersion = Math.max(1, currentVersionNum - 2)
+      const maxVersion = currentVersionNum + 2
+
+      for (let i = minVersion; i <= maxVersion; i++) {
+        versionList.push({
+          versionId: i.toString(),
+          description: i === currentVersionNum ? currentVersionInfo.description : `버전 ${i}`,
+          timestamp: i === currentVersionNum ? currentVersionInfo.timestamp : undefined,
+        })
+      }
+
+      setAvailableVersions(versionList)
+    }
+  }, [diagramData, expandedNodes, calculateLayout, setNodes, setEdges, initialNodePositions, targetNodes])
 
   // 메서드 확장/축소 토글 핸들러
   const toggleMethodExpand = useCallback((nodeId: string) => {
@@ -532,24 +577,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     setShowMiniMap((prev) => !prev)
   }, [])
 
-  // 버전 이동 핸들러 수정 - 문자열과 숫자 비교 문제 해결
-  const handleVersionMove = useCallback((version: string) => {
-    // URL에서 현재 경로 가져오기
-    const url = new URL(window.location.href)
-    const pathParts = url.pathname.split("/")
-    const projectId = pathParts[2]
-    const apiId = pathParts[3]
-
-    // 쿼리 파라미터 업데이트 (버전 형식 변경)
-    url.searchParams.set("version", version)
-
-    // 페이지 이동 (새로고침)
-    window.location.href = `/canvas/${projectId}/${apiId}?version=${version}`
-
-    // 버전 드롭다운 닫기
-    setShowVersions(false)
-  }, [])
-
   // 노드 클릭 핸들러
   const onNodeClick = useCallback((event: React.MouseEvent, node: ReactFlowNode) => {
     event.stopPropagation()
@@ -602,18 +629,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
       </div>
     )
   }
-
-  // 메타데이터 준비
-  const metadata = diagramData.metadata || {
-    metadataId: "default-metadata",
-    version: currentVersion,
-    lastModified: new Date().toISOString(),
-    name: "Unnamed Diagram",
-    description: "",
-  }
-
-  // 버전 문자열 변환
-  const versionString = typeof metadata.version === "number" ? metadata.version.toString() : metadata.version || "1"
 
   return (
     <div id="diagram-container" style={{ width: "100%", height: "100%" }} className="bg-white rounded-lg shadow overflow-hidden relative">
@@ -679,22 +694,31 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         <Panel position="top-right" className="mr-4 mt-16">
           <div className="relative" ref={versionsRef}>
             <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-md hover:bg-gray-50 transition-colors">
-              <span className="text-sm font-medium">버전: {versionString}</span>
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-medium">버전: {currentVersion}</span>
+                {currentVersionInfo && <span className="text-xs text-gray-500">{currentVersionInfo.description}</span>}
+              </div>
               <ChevronDown size={16} className={`text-gray-600 transition-transform ${showVersions ? "rotate-180" : ""}`} />
             </button>
 
             {/* 버전 드롭다운 */}
-            {showVersions && (
-              <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+            {showVersions && availableVersions.length > 0 && (
+              <div className="absolute right-0 mt-1 w-64 bg-white rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
                 <div className="py-1">
-                  {versions.map((version) => (
-                    <button
-                      key={`version-${version}`}
-                      onClick={() => handleVersionMove(version)}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${version === versionString ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-700"}`}
-                    >
-                      {version}
-                    </button>
+                  {availableVersions.map((version) => (
+                    <div key={`version-${version.versionId}`} className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${version.versionId === currentVersion ? "bg-blue-50" : ""}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className={`text-sm ${version.versionId === currentVersion ? "font-medium text-blue-700" : "text-gray-700"}`}>버전 {version.versionId}</span>
+                          <span className="text-xs text-gray-500 truncate max-w-[180px]">{version.description}</span>
+                        </div>
+                        {version.versionId === currentVersion && (
+                          <span className="text-blue-500">
+                            <Clock size={16} />
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

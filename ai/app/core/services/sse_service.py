@@ -106,7 +106,7 @@ class SSEService:
     async def send_data(self, response_queue: asyncio.Queue, data: dict) -> None:
         """
         데이터를 SSE 스트림으로 전송합니다.
-        
+
         Args:
             response_queue: 응답 큐
             data: 전송할 데이터
@@ -114,6 +114,19 @@ class SSEService:
         await response_queue.put(json.dumps({
             "type": "data",
             "data": data
+        }))
+
+    async def send_created(self, response_queue: asyncio.Queue, diagram_id: str) -> None:
+        """
+        도식화 생성 이벤트를 SSE 스트림으로 전송합니다.
+
+        Args:
+            response_queue: 응답 큐
+            diagram_id: 생성된 도식화 ID
+        """
+        await response_queue.put(json.dumps({
+            "type": "created",
+            "diagramId": diagram_id
         }))
 
     async def close_stream(self, response_queue: asyncio.Queue) -> None:

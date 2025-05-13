@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // API URL 가져오기
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
-
+    // const apiUrl = "http://host.docker.internal:8000"
     if (!apiUrl) {
       console.error("API_BASE_URL 환경 변수가 설정되지 않았습니다.")
       return NextResponse.json({ error: "API 서버 구성 오류" }, { status: 500 })
@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
     const scrudApiApi = new ScrudApiApi(config)
 
     // exclude 값을 쿼리로 설정
-    // const excludeValues = "USER_COMPLETED,AI_GENERATED"
+    const excludeValues = "USER_COMPLETED,AI_GENERATED"
 
     // 미완성 API 목록 조회 요청
     const response = await scrudApiApi.searchApiStatus({
       projectId,
-      // exclude: excludeValues,
+      include: excludeValues,
     })
 
     return NextResponse.json(response.data)
