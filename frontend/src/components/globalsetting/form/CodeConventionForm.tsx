@@ -34,7 +34,7 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
     
     // GitHub에서 파일 선택 시 호출될 핸들러
-    const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
+    const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string, content?: string, fileContent?: string, fileType?: string, fileName?: string }>) => {
       if (files.length > 0) {
         // 모든 선택된 파일 처리
         const githubFiles = files.map(file => {

@@ -25,7 +25,7 @@ interface ContentItem {
 interface GitHubRepoBrowserProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (files: {path?: string, downloadUrl?: string, content?: string, fileContent?: string, fileType?: string, fileName?: string}[]) => void;
+  onSelect: (files: Array<{path: string, downloadUrl?: string, content?: string, fileContent?: string, fileType?: string, fileName?: string}>) => void;
   isArchitecture?: boolean; // 아키텍처 구조도 선택 모드인지 여부
 }
 
@@ -373,6 +373,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           // 필요한 세 가지 컬럼만 전달 (fileName, fileContent, fileType)
           // GitHub API 응답 객체를 JSON 문자열로 변환하여 그대로 전달
           onSelect([{
+            path: selectedItems[0].path,
             fileContent: JSON.stringify(selectedItems[0].content), // GitHub API 응답을 JSON 문자열로 변환
             fileType: 'ARCHITECTURE_GITHUB',
             fileName: selectedItems[0].path.split('/').pop() || ''

@@ -54,7 +54,7 @@ export default function CanvasPage() {
   useEffect(() => {
     fetchDiagramData()
     fetchChatData()
-  }, [projectId, apiId, currentVersionId, fetchDiagramData, fetchChatData])
+  }, [projectId, apiId, currentVersionId])
 
   // 다이어그램 데이터 가져오기 함수 수정
   const fetchDiagramData = async () => {

@@ -130,12 +130,15 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
         if (typeof item === 'string') {
           return item;
         }
-        // FileWithContent 객체를 그대로 반환
-        return item;
+        // FileWithContent 객체를 문자열로 변환 (JSON 문자열 또는 파일 이름)
+        return item.name || JSON.stringify(item);
       });
-    } else {
-      // 문자열이거나 객체 그대로 반환 (변환 없음)
+    } else if (typeof value === 'string') {
+      // 문자열 그대로 반환
       result = value;
+    } else {
+      // FileWithContent 객체를 문자열로 변환
+      result = value.name || JSON.stringify(value);
     }
     
     console.log("ContentArea - convertFileValue - 반환값:", result);
