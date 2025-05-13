@@ -1,19 +1,15 @@
-"use client"
-
-import type React from "react"
+import React from "react"
 
 interface ApiHeaderProps {
   scrudProjectId: number
   apiSpecVersionId: number | null
   isLoading: boolean
-  isCreatingDiagram?: boolean
   handleSaveApi: () => Promise<void>
   handleDeleteApi: () => Promise<void>
   handleTestApi: () => Promise<void>
-  handleCreateDiagram?: () => Promise<void>
 }
 
-const ApiHeader: React.FC<ApiHeaderProps> = ({ scrudProjectId, apiSpecVersionId, isLoading, isCreatingDiagram = false, handleSaveApi, handleDeleteApi, handleTestApi, handleCreateDiagram }) => {
+const ApiHeader: React.FC<ApiHeaderProps> = ({ scrudProjectId, apiSpecVersionId, isLoading, handleSaveApi, handleDeleteApi, handleTestApi }) => {
   return (
     <div className="p-3 border-b bg-white">
       <div className="flex items-center justify-between mb-2">
@@ -26,24 +22,6 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({ scrudProjectId, apiSpecVersionId,
         </div>
 
         <div className="flex space-x-2">
-          {/* 도식화 진행 버튼 추가 */}
-          {apiSpecVersionId && handleCreateDiagram && (
-            <button
-              onClick={handleCreateDiagram}
-              disabled={isLoading || isCreatingDiagram}
-              className="px-3 py-1.5 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 text-sm font-medium flex items-center"
-            >
-              {isCreatingDiagram ? (
-                <span className="mr-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                </svg>
-              )}
-              도식화 진행
-            </button>
-          )}
-
           <button
             onClick={handleSaveApi}
             disabled={isLoading}
