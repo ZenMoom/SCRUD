@@ -198,8 +198,8 @@ class Chat(BaseModel):
 
 class Diagram(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")
-    projectId: str
-    apiId: str
+    projectId: Optional[str] = None
+    apiId: Optional[str] = None
     diagramId: str
     components: List[Component]
     connections: List[Connection]

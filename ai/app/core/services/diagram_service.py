@@ -71,10 +71,22 @@ class DiagramService:
             DiagramResponse: 생성된 도식화 데이터
 
         Raises:
+            ValueError: 이미 다이어그램이 존재하는 경우 (400 에러)
             Exception: 다이어그램 생성 실패 시
         """
 
         try:
+            # 기존 다이어그램이 있는지 조회
+            self.logger.info(f"다이어그램 존재 여부 확인: project_id={project_id}, api_id={api_id}")
+            existing_diagrams = await self.diagram_repository.find_many({
+                "projectId": project_id,
+                "apiId": api_id
+            })
+            
+            if existing_diagrams and len(existing_diagrams) > 0:
+                self.logger.warn(f"이미 존재하는 다이어그램: project_id={project_id}, api_id={api_id}")
+                raise ValueError(f"이미 존재하는 다이어그램입니다. (project_id={project_id}, api_id={api_id})")
+
             # 기존 다이어그램이 없으면 새로 생성
             self.logger.info(f"새 다이어그램 생성: project_id={project_id}, api_id={api_id}")
 
@@ -83,6 +95,11 @@ class DiagramService:
             new_diagram = await self.diagram_repository.save(diagram)
             # 응답 데이터로 변환
             return self._convert_to_response(new_diagram)
+
+        except ValueError as e:
+            # 400-level 에러 처리
+            self.logger.warn(f"다이어그램 생성 실패 (기존 다이어그램 존재): {str(e)}")
+            raise
 
         except Exception as e:
             self.logger.error(f"다이어그램 생성 실패: {str(e)}")
