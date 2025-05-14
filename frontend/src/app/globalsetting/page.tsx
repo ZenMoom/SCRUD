@@ -8,6 +8,18 @@ import Floatingbutton from "@/components/globalsetting/FloatingButton"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
 import useAuthStore from "@/app/store/useAuthStore"
 
+// 파일 객체 타입 정의
+interface FileWithContent {
+  name: string;
+  content: string;
+}
+
+// 선택형 입력을 위한 타입 추가
+interface SelectionValue {
+  type: string;    // enum 값
+  label: string;   // 표시 텍스트
+}
+
 // 설정 항목 키 타입 정의
 type SettingKey = 'title' | 'description' | 'serverUrl' | 'requirementSpec' | 'erd' | 
                  'dependencyFile' | 'utilityClass' | 'errorCode' | 'securitySetting' | 
@@ -18,15 +30,14 @@ interface ProjectSettings {
   title: string;
   description: string;
   serverUrl: string;
-  requirementSpec: string[];
-  erd: string[];
+  requirementSpec: FileWithContent[];
+  erd: FileWithContent[];
   dependencyFile: string[];
-  utilityClass: string[];
-  errorCode: string[];
-  securitySetting: string;
-  codeConvention: string[];
-  architectureStructure: string;
-  [key: string]: string | string[]; // 인덱스 시그니처 추가
+  utilityClass: FileWithContent[];
+  errorCode: FileWithContent[];
+  securitySetting: SelectionValue;
+  codeConvention: FileWithContent[];
+  architectureStructure: SelectionValue;
 }
 
 // 토큰 처리 컴포넌트
@@ -69,14 +80,14 @@ export default function GlobalSettingPage() {
     title: "",
     description: "",
     serverUrl: "",
-    requirementSpec: [] as string[],
-    erd: [] as string[],
+    requirementSpec: [] as FileWithContent[],
+    erd: [] as FileWithContent[],
     dependencyFile: [] as string[],
-    utilityClass: [] as string[],
-    errorCode: [] as string[],
-    securitySetting: "SECURITY_DEFAULT_JWT", // 첫 번째 선택지를 기본값으로 설정
-    codeConvention: [] as string[],
-    architectureStructure: "ARCHITECTURE_DEFAULT_LAYERED_A", // 첫 번째 선택지를 기본값으로 설정
+    utilityClass: [] as FileWithContent[],
+    errorCode: [] as FileWithContent[],
+    securitySetting: { type: "SECURITY_DEFAULT_JWT", label: "SECURITY_DEFAULT_JWT" },
+    codeConvention: [] as FileWithContent[],
+    architectureStructure: { type: "ARCHITECTURE_DEFAULT_LAYERED_A", label: "ARCHITECTURE_DEFAULT_LAYERED_A" },
   })
 
   // 각 설정 항목의 완료 상태를 관리
@@ -150,13 +161,44 @@ export default function GlobalSettingPage() {
   }
 
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string | string[]) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
+  const handleSettingChange = (key: string, value: string | string[] | FileWithContent | FileWithContent[] | SelectionValue) => {
+    setSettings((prev) => {
+      const newSettings = { ...prev };
+      
+      // 타입 가드를 사용하여 각 키에 맞는 값 할당
+      switch(key) {
+        case 'errorCode':
+          newSettings.errorCode = value as FileWithContent[];
+          break;
+        case 'title':
+        case 'description':
+        case 'serverUrl':
+          newSettings[key] = value as string;
+          break;
+        case 'securitySetting':
+        case 'architectureStructure':
+          newSettings[key] = value as SelectionValue;
+          break;
+        case 'dependencyFile':
+          newSettings[key] = value as string[];
+          break;
+        case 'requirementSpec':
+        case 'erd':
+        case 'utilityClass':
+        case 'codeConvention':
+          newSettings[key] = value as FileWithContent[];
+          break;
+      }
+      
+      return newSettings;
+    });
 
-    // 값이 있으면 완료 상태로 변경 (문자열 또는 배열)
+    // 값이 있으면 완료 상태로 변경
     if (
       (typeof value === 'string' && value.trim() !== "") ||
-      (Array.isArray(value) && value.length > 0)
+      (Array.isArray(value) && value.length > 0) ||
+      (value && typeof value === 'object' && 'name' in value) ||  // FileWithContent 객체인 경우
+      (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && 'name' in value[0])  // FileWithContent 배열인 경우
     ) {
       setCompleted((prev) => ({ ...prev, [key as SettingKey]: true }))
     } else {
@@ -211,7 +253,7 @@ export default function GlobalSettingPage() {
       }
       
       // 성공 시 메인 페이지로 이동
-      router.push('/');
+      router.push(`/project/${responseText}/api`);
     } catch (err) {
       console.error('프로젝트 생성 오류:', err);
       setError(err instanceof Error ? err.message : '프로젝트 생성 중 오류가 발생했습니다.');

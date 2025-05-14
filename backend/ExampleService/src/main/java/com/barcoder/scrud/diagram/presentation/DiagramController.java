@@ -5,9 +5,13 @@ import com.barcoder.scrud.diagram.infrastructure.webclient.ComponentWebClient;
 import com.barcoder.scrud.model.ComponentPositionUpdateRequest;
 import com.barcoder.scrud.model.ComponentUpdatedResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class DiagramController implements ComponentApi {
@@ -31,4 +35,11 @@ public class DiagramController implements ComponentApi {
         ComponentUpdatedResponse response = componentWebClient.updateComponentPosition(projectId, apiId, componentId, componentPositionUpdateRequest);
         return ResponseEntity.ok(response);
     }
+
+    @ExceptionHandler(WebClientResponseException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(WebClientResponseException ex) {
+        log.error("WebClient 에러: {}, 상태 코드: {}", ex.getMessage(), ex.getStatusCode());
+        return ResponseEntity.status(ex.getStatusCode()).body(ex.getResponseBodyAsString());
+    }
+
 }

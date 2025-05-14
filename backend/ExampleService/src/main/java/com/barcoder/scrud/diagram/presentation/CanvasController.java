@@ -2,11 +2,16 @@ package com.barcoder.scrud.diagram.presentation;
 
 import com.barcoder.scrud.api.CanvasApi;
 import com.barcoder.scrud.diagram.infrastructure.webclient.DiagramWebClient;
+import com.barcoder.scrud.model.ChatHistoryResponse;
 import com.barcoder.scrud.model.DiagramResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class CanvasController implements CanvasApi {
@@ -40,4 +45,11 @@ public class CanvasController implements CanvasApi {
         DiagramResponse response = diagramWebClient.getDiagram(projectId, apiId, versionId);
         return ResponseEntity.ok(response);
     }
+
+    @ExceptionHandler(WebClientResponseException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(WebClientResponseException ex) {
+        log.error("WebClient 에러: {}, 상태 코드: {}", ex.getMessage(), ex.getStatusCode());
+        return ResponseEntity.status(ex.getStatusCode()).body(ex.getResponseBodyAsString());
+    }
+
 }

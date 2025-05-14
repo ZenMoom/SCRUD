@@ -5,15 +5,18 @@ import axios from "axios"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
 
 // 백엔드 API 기본 URL
-const BACKEND_API_BASE_URL = "http://localhost:8080"
+
+const GITHUB_AUTH_URL = process.env.NEXT_PUBLIC_GITHUB_AUTH_URL
+const REDIRECT_URL = process.env.NEXT_PUBLIC_REDIRECT_URI
 
 /**
  * GitHub OAuth 인증 URL 생성
  * @param redirectUri - 인증 후 리다이렉트할 URI
  * @returns {string} - 인증 URL
  */
-export function getGitHubAuthUrl(redirectUri: string = "http://localhost:3000/globalsetting"): string {
-  return `${BACKEND_API_BASE_URL}/oauth2/authorize/github?redirect_uri=${encodeURIComponent(redirectUri)}`
+
+export function getGitHubAuthUrl(redirectUri: string = `${REDIRECT_URL}/globalsetting`): string {
+  return `${GITHUB_AUTH_URL}/oauth2/authorize/github?redirect_uri=${encodeURIComponent(redirectUri)}`
 }
 
 /**
@@ -26,9 +29,10 @@ export async function exchangeCodeForToken(code: string): Promise<string> {
     console.log("🔐 [GitHub] 인증 코드로 토큰 교환 시도:", code)
 
     // 백엔드를 통해 토큰 교환
-    const response = await axios.post(`${BACKEND_API_BASE_URL}/api/github/token`, {
+
+    const response = await axios.post(`${GITHUB_AUTH_URL}/api/github/token`, {
       code,
-      redirect_uri: "http://localhost:3000/globalsetting", // 명시적으로 리다이렉트 URI 지정
+      redirect_uri: `${REDIRECT_URL}/globalsetting`, // 명시적으로 리다이렉트 URI 지정
     })
 
     console.log("✅ [GitHub] 백엔드 토큰 교환 응답:", response.data)
@@ -39,7 +43,6 @@ export async function exchangeCodeForToken(code: string): Promise<string> {
     if (!token) {
       throw new Error("GitHub 토큰을 받지 못했습니다.")
     }
-  
 
     // GitHub 토큰 확인 (ghu_ 또는 ghp_로 시작하는지)
     if (token.startsWith("ghu_") || token.startsWith("ghp_")) {

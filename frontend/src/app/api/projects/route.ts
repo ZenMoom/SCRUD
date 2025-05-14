@@ -2,11 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { Configuration } from "@generated/configuration";
 import { ScrudProjectApi } from "@generated/api";
 
+// 파일 타입 정의
+interface FileWithContent {
+  name: string;
+  content: string;
+}
+
+// 선택형 입력을 위한 타입 추가
+interface SelectionValue {
+  type: string;
+  label: string;
+}
+
 // POST: 프로젝트 생성
 export async function POST(request: NextRequest) {
   try {
     // 요청 본문 및 헤더 가져오기
     const settings = await request.json();
+    console.log('받은 settings 데이터:', settings);
     let authorization = request.headers.get('Authorization');
     
     console.log('클라이언트에서 받은 원본 토큰:', authorization);
@@ -36,6 +49,7 @@ export async function POST(request: NextRequest) {
     
     // API 기본 URL 설정
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
+    console.log('API URL:', apiUrl);
     
     // 글로벌 파일 준비
     const globalFiles: Array<{
@@ -53,103 +67,114 @@ export async function POST(request: NextRequest) {
       'codeConvention': 'CONVENTION',
       'dependencyFile': 'DEPENDENCY',
       'errorCode': 'ERROR_CODE'
-      // securitySetting과 architectureStructure는 여기서 제외하고 특별 처리
     };
-    
-    // 아키텍처와 보안 설정을 추적하는 플래그
-    // let securityAdded = false;
-    // let architectureAdded = false;
     
     // 파일 타입 항목들 추가
     Object.entries(settings).forEach(([key, value]) => {
+      console.log(`처리 중인 키: ${key}, 값 타입: ${typeof value}`);
       // 아키텍처와 보안 설정 특별 처리
       if (key === 'architectureStructure') {
-        if (value) {
-          // architectureAdded = true;
-          
-          // GitHub에서 가져온 파일인 경우
-          if (typeof value === 'string' && value.startsWith('github:')) {
-            const parts = value.substring(7).split('|');
-            const fileName = parts[0];
-            const fileUrl = parts.length > 1 ? parts[1] : "";
-            
-            globalFiles.push({
-              fileName: fileName,
-              fileType: 'ARCHITECTURE_GITHUB', // GitHub에서 가져온 경우 특별 타입
-              fileUrl: fileUrl,
-              fileContent: JSON.stringify({ content: value })
+        const architectureValue = value as SelectionValue | FileWithContent[];
+        if (architectureValue) {
+          if (Array.isArray(architectureValue)) {
+            // GitHub에서 가져온 파일 처리
+            architectureValue.forEach(file => {
+              globalFiles.push({
+                fileName: file.name,
+                fileType: 'ARCHITECTURE_GITHUB',
+                fileUrl: "",
+                fileContent: file.content
+              });
             });
           } else {
-            // 기본 선택 옵션인 경우 (예: ARCHITECTURE_DEFAULT_LAYERED_A)
+            // 선택된 아키텍처 타입 처리
             globalFiles.push({
-              fileName: `Architecture-${value}`,
-              fileType: value as string, // 선택된 값을 타입으로 사용
+              fileName: `Architecture-${architectureValue.type}`,
+              fileType: architectureValue.type,
               fileUrl: "",
-              fileContent: JSON.stringify({ type: value })
+              fileContent: ""
             });
           }
         }
       } 
       else if (key === 'securitySetting') {
-        if (value) {
-          // securityAdded = true;
+        const securityValue = value as SelectionValue | FileWithContent[];
+        if (securityValue) {
+          if (Array.isArray(securityValue)) {
+            // GitHub에서 가져온 파일 처리
+            securityValue.forEach(file => {
+              globalFiles.push({
+                fileName: file.name,
+                fileType: 'SECURITY_GITHUB',
+                fileUrl: "",
+                fileContent: file.content
+              });
+            });
+          } else {
+            // 선택된 보안 타입 처리
+            globalFiles.push({
+              fileName: `Security-${securityValue.type}`,
+              fileType: securityValue.type,
+              fileUrl: "",
+              fileContent: ""
+            });
+          }
+        }
+      }
+      // 의존성 파일 처리
+      else if (key === 'dependencyFile') {
+        // 선택지에서 선택한 경우 (string[])
+        if (Array.isArray(value) && typeof value[0] === 'string') {
           globalFiles.push({
-            fileName: `Security-${value}`,
-            fileType: value as string, // 선택된 값을 타입으로 사용
-            fileUrl: "",
-            fileContent: JSON.stringify({ type: value })
+            fileName: 'dependencies.txt',
+            fileType: 'DEPENDENCY',
+            fileUrl: '',
+            fileContent: value.join('\n')
+          });
+        }
+        // 파일 업로드한 경우 (FileWithContent[])
+        else if (Array.isArray(value) && value[0]?.name) {
+          value.forEach(file => {
+            globalFiles.push({
+              fileName: file.name,
+              fileType: 'DEPENDENCY',
+              fileUrl: '',
+              fileContent: file.content
+            });
           });
         }
       }
+      // GitHub 파일 처리
+      else if (Array.isArray(value) && value.length > 0 && value[0].isGitHub === true) {
+        const files = value as Array<FileWithContent>;
+        files.forEach(file => {
+          console.log('GitHub 파일 처리:', file);
+          globalFiles.push({
+            fileName: file.name,
+            fileType: fileTypeMapping[key],
+            fileUrl: "",
+            fileContent: file.content
+          });
+        });
+      }
       // 일반 파일 처리
       else if (fileTypeMapping[key]) {
-        // 배열로 전달된 파일 처리
-        if (Array.isArray(value)) {
-          // 각 파일을 개별 globalFile로 처리
-          value.forEach(fileItem => {
-            if (fileItem) {
-              // GitHub에서 가져온 파일인 경우 URL도 추출
-              let fileUrl = "";
-              let fileName = fileItem;
-
-              if (typeof fileItem === 'string' && fileItem.startsWith('github:')) {
-                // github:filepath|url 형식에서 URL 추출
-                const parts = fileItem.substring(7).split('|');
-                fileName = parts[0]; // 파일 경로
-                fileUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
-              }
-
-              globalFiles.push({
-                fileName: typeof fileName === 'string' ? fileName : String(fileName),
-                fileType: fileTypeMapping[key],
-                fileUrl: fileUrl,
-                fileContent: JSON.stringify({ content: fileItem || "" })
-              });
-            }
-          });
-        }
-        // 문자열로 전달된 단일 값 처리
-        else if (value) {
-          // GitHub에서 가져온 파일인 경우 URL도 추출
-          let fileUrl = "";
-          let fileName = value;
-
-          if (typeof value === 'string' && value.startsWith('github:')) {
-            // github:filepath|url 형식에서 URL 추출
-            const parts = value.substring(7).split('|');
-            fileName = parts[0]; // 파일 경로
-            fileUrl = parts.length > 1 ? parts[1] : ""; // URL 부분 (있는 경우)
-          }
-
-          globalFiles.push({
-            fileName: typeof fileName === 'string' ? fileName : String(fileName),
-            fileType: fileTypeMapping[key],
-            fileUrl: fileUrl,
-            fileContent: JSON.stringify({ content: value })
+        const files = value as Array<FileWithContent>;
+        if (Array.isArray(files)) {
+          files.forEach(file => {
+            console.log('일반 파일 처리:', file);
+            globalFiles.push({
+              fileName: file.name,
+              fileType: fileTypeMapping[key],
+              fileUrl: "",
+              fileContent: file.content
+            });
           });
         }
       }
     });
+
+    console.log('변환된 globalFiles:', globalFiles);
     
     // 프로젝트 데이터 구성
     const projectData = {
@@ -161,7 +186,9 @@ export async function POST(request: NextRequest) {
       globalFiles
     };
     
-    // API 클라이언트 설정 - baseOptions 사용하여 명시적으로 헤더 설정
+    console.log('백엔드로 전송할 projectData:', projectData);
+
+    // API 클라이언트 설정
     const config = new Configuration({
       basePath: apiUrl,
       baseOptions: {
@@ -172,23 +199,41 @@ export async function POST(request: NextRequest) {
       }
     });
     
+    console.log('API 설정:', config);
+    
     // ScrudProjectApi 인스턴스 생성
     const scrudProjectApi = new ScrudProjectApi(config);
     
-    // API 직접 호출 - 타입 오류를 피하기 위해 ts-expect-error 사용
-    // @ts-expect-error - 생성된 API 클라이언트와 타입 호환성 문제 무시
-    const response = await scrudProjectApi.createProject({ createProjectRequest: projectData });
-    
-    return NextResponse.json(response.data, { status: 201 });
+    try {
+      // API 호출
+      // @ts-expect-error - 생성된 API 클라이언트와 타입 호환성 문제 무시
+      const response = await scrudProjectApi.createProject({ createProjectRequest: projectData });
+      console.log('API 응답:', response);
+      return NextResponse.json(response.data, { status: 201 });
+    } catch (apiError) {
+      console.error('API 호출 중 에러:', apiError);
+      throw apiError;
+    }
     
   } catch (error: unknown) {
     console.error('프로젝트 생성 API 오류:', error);
+    
+    if (error instanceof Error) {
+      console.error('에러 상세 정보:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        // @ts-expect-error - 추가 속성 접근
+        status: error.status,
+        // @ts-expect-error - 추가 속성 접근
+        response: error.response
+      });
+    }
     
     let status = 500;
     let message = '서버 오류가 발생했습니다.';
     
     if (error instanceof Error) {
-      console.error('에러 상세 정보:', error);
       // @ts-expect-error - Error 타입에 status 속성이 없지만 런타임에는 존재할 수 있음
       if (error.status) {
         // @ts-expect-error - status 속성에 접근하기 위한 타입 오류 무시

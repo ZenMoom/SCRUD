@@ -71,6 +71,8 @@ class DiagramResponse(BaseModel):
         name: Optional[str] = None
         description: Optional[str] = None
 
+
+
     class DtoModelResponse(BaseModel):
         dtoId: str
         name: str
@@ -107,6 +109,8 @@ class DiagramResponse(BaseModel):
         positionY: float
         methods: List[Method]
 
+    projectId: Optional[str] = None
+    apiId: Optional[str] = None
     diagramId: str
     components: List[ComponentResponse]
     connections: List[ConnectionResponse]
