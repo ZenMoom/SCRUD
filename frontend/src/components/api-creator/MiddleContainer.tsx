@@ -3,18 +3,21 @@
 import { ApiProcessStateEnumDto } from "@generated/model"
 import axios from "axios"
 import { useState, useRef, useEffect } from "react"
+import useAuthStore from "@/app/store/useAuthStore"
+import EmojiPicker from "@/components/project-card/emoji-picker"
 
 interface ApiEndpoint {
   id: string
   path: string
   method: string
-  status: ApiProcessStateEnumDto // 상태 타입 변경
+  status: ApiProcessStateEnumDto
   apiSpecVersionId?: number
 }
 
 interface ApiGroup {
   id: string
   name: string
+  emoji?: string // 옵셔널 필드로 정의 (DB에 저장되지 않을 수 있음)
   endpoints: ApiEndpoint[]
 }
 
@@ -29,15 +32,25 @@ interface MiddleContainerProps {
 export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading, scrudProjectId }: MiddleContainerProps) {
   console.log("MiddleContainer 렌더링 - scrudProjectId:", scrudProjectId)
 
+  // useAuthStore에서 토큰 가져오기
+  const { token } = useAuthStore()
+
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null)
   const [editingEndpointId, setEditingEndpointId] = useState<string | null>(null)
   const [newGroupName, setNewGroupName] = useState("")
   const [newEndpointPath, setNewEndpointPath] = useState("")
+  const [editingEmoji, setEditingEmoji] = useState<string | null>(null)
 
   // 엔드포인트 편집 시 인풋 참조
   const editInputRef = useRef<HTMLInputElement>(null)
 
-  // API 그룹 추가 함수
+  // 랜덤 이모지 선택 함수 - 간단한 배열에서 선택
+  const getRandomEmoji = () => {
+    const allEmojis = ["📊", "📈", "🚀", "💡", "✨", "🔍", "📱", "💻", "🎨", "🛠️", "⚙️", "🔧", "🔨", "📌", "📋", "📂", "📁", "🗃️", "🗄️", "📮"]
+    return allEmojis[Math.floor(Math.random() * allEmojis.length)]
+  }
+
+  // API 그룹 추가 함수 - 랜덤 이모지 추가
   const addApiGroup = () => {
     console.log("그룹 추가 - 현재 프로젝트:", scrudProjectId)
     const newGroupId = `group-${Date.now()}`
@@ -46,6 +59,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       {
         id: newGroupId,
         name: "api/v1/new",
+        emoji: getRandomEmoji(), // 랜덤 이모지 할당
         endpoints: [],
       },
     ])
@@ -66,7 +80,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       id: newEndpointId,
       path: `${basePath}/new`,
       method: "GET",
-      status: "AI_GENERATED" as ApiProcessStateEnumDto, // 초기 상태 변경
+      status: "AI_GENERATED" as ApiProcessStateEnumDto,
     }
 
     setApiGroups(
@@ -120,6 +134,30 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       setEditingGroupId(groupId)
       setNewGroupName(group.name)
     }
+  }
+
+  // API 그룹 이모지 편집 시작
+  const startEditingEmoji = (groupId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation() // 이벤트 전파 방지
+    }
+    setEditingEmoji(groupId)
+  }
+
+  // API 그룹 이모지 업데이트
+  const updateGroupEmoji = (groupId: string, emoji: string) => {
+    setApiGroups(
+      apiGroups.map((group) => {
+        if (group.id === groupId) {
+          return {
+            ...group,
+            emoji: emoji,
+          }
+        }
+        return group
+      })
+    )
+    setEditingEmoji(null)
   }
 
   // API 엔드포인트 편집 시작 - "..." 버튼 클릭 시 호출
@@ -257,7 +295,13 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     try {
       console.log(`API 스펙 ID ${endpoint.apiSpecVersionId}의 상태를 '${status}'로 업데이트 요청`)
 
-      const response = await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status })
+      // 헤더에 Bearer 토큰 추가
+      const headers = {
+        Authorization: token ? `Bearer ${token}` : "",
+        "Content-Type": "application/json",
+      }
+
+      const response = await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status }, { headers })
 
       console.log("API 상태가 성공적으로 업데이트되었습니다:", response.data)
     } catch (error) {
@@ -290,6 +334,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   const cancelEditing = () => {
     setEditingGroupId(null)
     setEditingEndpointId(null)
+    setEditingEmoji(null)
   }
 
   // 엔터 키 입력 시 저장
@@ -349,10 +394,21 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         ) : (
           <div className="px-2 py-2 divide-y divide-gray-200">
             {apiGroups.map((group) => (
-              <div key={group.id} className="py-2 overflow-hidden px-2">
+              <div key={group.id} className="py-2 overflow-hidden px-2 relative">
                 <div className="flex justify-between items-center">
                   {editingGroupId === group.id ? (
                     <div className="flex items-center gap-2 w-full flex-wrap">
+                      {/* 이모지 버튼 (편집 모드에서도 표시) */}
+                      <div className="flex-shrink-0 relative" style={{ zIndex: 50 }}>
+                        {editingEmoji === group.id ? (
+                          <EmojiPicker selectedEmoji={group.emoji || "📌"} onEmojiSelect={(emoji) => updateGroupEmoji(group.id, emoji)} />
+                        ) : (
+                          <button className="p-2 text-2xl hover:bg-gray-50 rounded-md transition-colors" onClick={(e) => startEditingEmoji(group.id, e)}>
+                            {group.emoji || "📌"}
+                          </button>
+                        )}
+                      </div>
+
                       <input
                         type="text"
                         value={newGroupName}
@@ -375,6 +431,17 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 w-full">
+                      {/* 이모지 버튼 */}
+                      <div className="flex-shrink-0 relative" style={{ zIndex: 50 }}>
+                        {editingEmoji === group.id ? (
+                          <EmojiPicker selectedEmoji={group.emoji || "📌"} onEmojiSelect={(emoji) => updateGroupEmoji(group.id, emoji)} />
+                        ) : (
+                          <button className="p-2 text-2xl hover:bg-gray-50 rounded-md transition-colors" onClick={(e) => startEditingEmoji(group.id, e)} title="이모지 변경">
+                            {group.emoji || "📌"}
+                          </button>
+                        )}
+                      </div>
+
                       <h3
                         className="font-medium cursor-pointer flex-1 text-gray-800 hover:text-blue-500 transition-colors truncate max-w-[160px]"
                         onClick={() => startEditingGroup(group.id)}

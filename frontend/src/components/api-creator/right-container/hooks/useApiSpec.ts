@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction } from "react"
 import axios, { AxiosError } from "axios"
 import { ApiSpecVersionCreatedResponse, ApiSpecVersionResponse } from "@generated/model"
 import { BodyParam, BodyModeType, RawBodyFormatType, ApiResponseData } from "../types"
+import useAuthStore from "@/app/store/useAuthStore"
 
 interface UseApiSpecProps {
   endpoint: string
@@ -25,7 +26,6 @@ interface UseApiSpecProps {
   setPathParamsJson: Dispatch<SetStateAction<string>>
   setQueryParamsJson: Dispatch<SetStateAction<string>>
   setResponseJson: Dispatch<SetStateAction<string>>
-  // 타입 수정: React의 Dispatch 타입 사용
   setApiResponse: Dispatch<SetStateAction<ApiResponseData | null>>
   setIsLoading: Dispatch<SetStateAction<boolean>>
   fetchApiSpecsByProject: (projectId: number) => Promise<ApiSpecVersionResponse[]>
@@ -67,6 +67,9 @@ export const useApiSpec = ({
   showWarningNotification,
   showInfoNotification,
 }: UseApiSpecProps) => {
+  // useAuthStore에서 토큰 가져오기
+  const { token } = useAuthStore()
+
   // 콘텐츠 타입 매핑
   const contentTypeMap: Record<string, string> = {
     json: "application/json",
@@ -89,7 +92,7 @@ export const useApiSpec = ({
     try {
       // 요청 본문 데이터 준비
       let requestBodyJson: string | null = null
-      if (bodyMode === "raw" && rawBodyFormat === "json" && method !== "GET") {
+      if (bodyMode === "raw" && rawBodyFormat === "json" && method !== "GET" && rawBody.trim()) {
         try {
           // 유효한 JSON인지 확인
           JSON.parse(rawBody)
@@ -100,7 +103,7 @@ export const useApiSpec = ({
           setIsLoading(false)
           return
         }
-      } else if (bodyMode === "form-data" || bodyMode === "x-www-form-urlencoded") {
+      } else if ((bodyMode === "form-data" || bodyMode === "x-www-form-urlencoded") && bodyParams.some((param) => param.key.trim())) {
         const formData: Record<string, string> = {}
         bodyParams.forEach((param) => {
           if (param.key.trim()) {
@@ -112,7 +115,7 @@ export const useApiSpec = ({
 
       // 경로 파라미터 검증
       let pathParametersJson: string | null = null
-      if (endpoint.includes("{")) {
+      if (endpoint.includes("{") && pathParamsJson.trim()) {
         try {
           // 유효한 JSON인지 확인
           JSON.parse(pathParamsJson)
@@ -127,7 +130,7 @@ export const useApiSpec = ({
 
       // 쿼리 파라미터 검증
       let queryParametersJson: string | null = null
-      if (method === "GET") {
+      if (method === "GET" && queryParamsJson.trim()) {
         try {
           // 유효한 JSON인지 확인
           JSON.parse(queryParamsJson)
@@ -142,15 +145,17 @@ export const useApiSpec = ({
 
       // 응답 JSON 검증
       let responseJsonValue: string | null = null
-      try {
-        // 유효한 JSON인지 확인
-        JSON.parse(responseJson)
-        responseJsonValue = responseJson
-      } catch (err) {
-        console.error("응답 JSON 형식이 올바르지 않습니다.", err)
-        alert("응답 예시의 JSON 형식이 올바르지 않습니다. 확인 후 다시 시도해주세요.")
-        setIsLoading(false)
-        return
+      if (responseJson.trim()) {
+        try {
+          // 유효한 JSON인지 확인
+          JSON.parse(responseJson)
+          responseJsonValue = responseJson
+        } catch (err) {
+          console.error("응답 JSON 형식이 올바르지 않습니다.", err)
+          alert("응답 예시의 JSON 형식이 올바르지 않습니다. 확인 후 다시 시도해주세요.")
+          setIsLoading(false)
+          return
+        }
       }
 
       // API 스펙 데이터 생성
@@ -169,10 +174,9 @@ export const useApiSpec = ({
         apiSpecData.apiSpecVersionId = apiSpecVersionId
       }
 
-      // HTTP 메서드별 차별화된 필드 추가
+      // HTTP 메서드별 차별화된 필드 추가 - 값이 있을 때만 필드 추가
       switch (method) {
         case "GET":
-          // 필드 이름 변경 (snake_case → camelCase)
           if (queryParametersJson) {
             apiSpecData.queryParameters = queryParametersJson
           }
@@ -183,7 +187,6 @@ export const useApiSpec = ({
           break
 
         case "POST":
-          // 필드 이름 변경 (snake_case → camelCase)
           if (requestBodyJson) {
             apiSpecData.requestBody = requestBodyJson
           }
@@ -198,7 +201,6 @@ export const useApiSpec = ({
           break
 
         case "PUT":
-          // camelCase로 변환
           if (requestBodyJson) {
             apiSpecData.requestBody = requestBodyJson
           }
@@ -209,7 +211,6 @@ export const useApiSpec = ({
           break
 
         case "PATCH":
-          // camelCase로 변환
           if (requestBodyJson) {
             apiSpecData.requestBody = requestBodyJson
           }
@@ -220,16 +221,21 @@ export const useApiSpec = ({
           break
 
         case "DELETE":
-          // camelCase로 변환
           if (pathParametersJson) {
             apiSpecData.pathParameters = pathParametersJson
           }
           break
       }
 
-      // 응답 예시는 모든 메서드에 공통
+      // 응답 예시는 모든 메서드에 공통 - 값이 있을 때만 필드 추가
       if (responseJsonValue) {
         apiSpecData.response = responseJsonValue
+      }
+
+      // 헤더에 Bearer 토큰 추가
+      const headers = {
+        Authorization: token ? `Bearer ${token}` : "",
+        "Content-Type": "application/json",
       }
 
       let response
@@ -239,7 +245,7 @@ export const useApiSpec = ({
         // 디버깅용 로그 추가
         console.log("API 스펙 수정 요청 데이터:", JSON.stringify(apiSpecData, null, 2))
 
-        response = await axios.put<ApiSpecVersionResponse>(`/api/api-specs/${apiSpecVersionId}`, apiSpecData)
+        response = await axios.put<ApiSpecVersionResponse>(`/api/api-specs/${apiSpecVersionId}`, apiSpecData, { headers })
 
         // 성공 처리
         setApiResponse({
@@ -253,7 +259,7 @@ export const useApiSpec = ({
       } else {
         // API 스펙 생성 (Next.js API 라우트로 요청)
         console.log("API 스펙 생성 요청 데이터:", JSON.stringify(apiSpecData, null, 2))
-        response = await axios.post<ApiSpecVersionCreatedResponse>("/api/api-specs", apiSpecData)
+        response = await axios.post<ApiSpecVersionCreatedResponse>("/api/api-specs", apiSpecData, { headers })
 
         // 응답 처리
         setApiResponse({
@@ -319,8 +325,13 @@ export const useApiSpec = ({
     try {
       console.log(`API 삭제 시작 - apiSpecVersionId: ${apiSpecVersionId}, 프로젝트 ID: ${scrudProjectId}`)
 
+      // 헤더에 Bearer 토큰 추가
+      const headers = {
+        Authorization: token ? `Bearer ${token}` : "",
+      }
+
       // API 스펙 삭제 요청 (Next.js API 라우트로 요청)
-      const response = await axios.delete(`/api/api-specs/${apiSpecVersionId}`)
+      const response = await axios.delete(`/api/api-specs/${apiSpecVersionId}`, { headers })
 
       setApiResponse({
         status: response.status,
@@ -332,10 +343,10 @@ export const useApiSpec = ({
       setEndpoint("")
       setDescription("")
       setSummary("")
-      setRawBody('{\n  "key": "value"\n}')
-      setPathParamsJson('{ "id": "123" }')
-      setQueryParamsJson('{ "page": "1", "size": "10" }')
-      setResponseJson('{\n  "data": {},\n  "message": "성공"\n}')
+      setRawBody("")
+      setPathParamsJson("")
+      setQueryParamsJson("")
+      setResponseJson("")
 
       // 삭제 후 목록 새로고침
       await fetchApiSpecsByProject(scrudProjectId)
@@ -378,9 +389,11 @@ export const useApiSpec = ({
 
       // Body 모드에 따라 다른 요청 데이터 구성
       let requestBodyData: string | Record<string, unknown> | FormData | null = null
-      const headers: Record<string, string> = {}
+      const headers: Record<string, string> = {
+        Authorization: token ? `Bearer ${token}` : "", // Bearer 토큰 추가
+      }
 
-      if (bodyMode === "raw") {
+      if (bodyMode === "raw" && rawBody.trim()) {
         if (rawBodyFormat === "json") {
           try {
             requestBodyData = JSON.parse(rawBody)
@@ -416,7 +429,7 @@ export const useApiSpec = ({
 
       // 쿼리 파라미터 구성
       let finalEndpoint = endpoint
-      if (method === "GET" && queryParamsJson) {
+      if (method === "GET" && queryParamsJson.trim()) {
         try {
           const queryParams = JSON.parse(queryParamsJson)
           const queryString = Object.entries(queryParams)
@@ -433,7 +446,7 @@ export const useApiSpec = ({
       }
 
       // 경로 파라미터 대체
-      if (endpoint.includes("{") && pathParamsJson) {
+      if (endpoint.includes("{") && pathParamsJson.trim()) {
         try {
           const pathParams = JSON.parse(pathParamsJson)
           let processedEndpoint = finalEndpoint
