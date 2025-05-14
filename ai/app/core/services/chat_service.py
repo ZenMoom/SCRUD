@@ -218,7 +218,7 @@ class ChatService:
         else:
             await self._handle_explanation_only(
                 project_id, api_id, chat_id, user_chat, user_chat_data,
-                agent_input, response_queue, lastest_diagram
+                agent_input, response_queue, latest_diagram
             )
 
     async def _handle_diagram_generation(
