@@ -218,7 +218,7 @@ class ChatService:
         else:
             await self._handle_explanation_only(
                 project_id, api_id, chat_id, user_chat, user_chat_data,
-                agent_input, response_queue
+                agent_input, response_queue, lastest_diagram
             )
 
     async def _handle_diagram_generation(
@@ -254,7 +254,8 @@ class ChatService:
 
     async def _handle_explanation_only(
             self, project_id: str, api_id: str, chat_id: str, user_chat: UserChat,
-            user_chat_data: UserChatRequest, agent_input, response_queue: asyncio.Queue
+            user_chat_data: UserChatRequest, agent_input, response_queue: asyncio.Queue,
+            latest_diagram: Diagram,
     ) -> None:
         """다이어그램 생성이 필요하지 않은 경우의 처리"""
         self.logger.info("도식화 생성이 필요하지 않다고 판단됨")
@@ -266,7 +267,7 @@ class ChatService:
         response_text = response_content.content
 
         # SystemChat 생성
-        system_chat = self._create_system_chat_explanation(response_text)
+        system_chat = self._create_system_chat_explanation(response_text, latest_diagram)
 
         # Chat 객체 생성 및 MongoDB에 저장
         await self._save_chat(chat_id, project_id, api_id, user_chat, system_chat)
@@ -300,10 +301,15 @@ class ChatService:
             diagramId=diagram_id
         )
 
-    def _create_system_chat_explanation(self, message: str) -> SystemChat:
+    def _create_system_chat_explanation(self, message: str, latest_diagram: Diagram) -> SystemChat:
         """설명 전용 SystemChat을 생성하는 함수"""
+        version_info = VersionInfo(
+            newVersionId=f"{latest_diagram.metadata.version}",
+            description="생성된 버전"
+        )
         return SystemChat(
             systemChatId=self._generate_uuid(),
+            versionInfo=version_info,
             status=PromptResponseEnum.EXPLANATION,
             message=message,
             diagramId=None
