@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGitHubTokenStore } from '@/store/githubTokenStore';
 import { Folder, File as FileIcon, Github, ChevronLeft, Check } from 'lucide-react';
+import { getGitHubAuthUrl } from '@/auth/github';
 
 // 레포지토리 타입 정의
 interface Repository {
@@ -54,6 +55,59 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
   const [error, setError] = useState<string>('');
   // 아키텍처 모드에서 전체 레포지토리 로딩 상태
   const [isLoadingFullRepo, setIsLoadingFullRepo] = useState(false);
+
+  // GitHub 인증 확인 및 처리
+  useEffect(() => {
+    if (isOpen) {
+      checkGitHubAuth();
+    }
+  }, [isOpen]);
+
+  // GitHub 인증 확인하는 함수
+  const checkGitHubAuth = async () => {
+    const storedToken = localStorage.getItem('github-token-direct');
+    
+    try {
+      if (storedToken) {
+        // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
+        console.log('GitHub 토큰 유효성 확인 중...');
+        
+        // 간단한 API 호출로 토큰 유효성 확인 - 사용자 레포지토리 목록 요청
+        const response = await fetch('/api/github/user/repos', {
+          headers: {
+            'Authorization': `Bearer ${storedToken}`
+          }
+        });
+        
+        if (!response.ok) {
+          // 토큰이 유효하지 않은 경우 (401 등)
+          console.error('GitHub 토큰이 유효하지 않음, 재인증 요청');
+          
+          // 토큰 삭제
+          localStorage.removeItem('github-token-direct');
+          
+          // 인증 요청
+          const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
+          window.location.href = oauthUrl;
+          return;
+        }
+      } else {
+        // 토큰이 없는 경우 바로 인증 요청
+        console.log('GitHub 토큰 없음, 인증 요청');
+        const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
+        window.location.href = oauthUrl;
+        return;
+      }
+    } catch (error) {
+      console.error('GitHub 토큰 검증 중 오류 발생:', error);
+      // 오류 발생시 토큰 삭제 후 재인증
+      localStorage.removeItem('github-token-direct');
+      // 인증 요청
+      const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
+      window.location.href = oauthUrl;
+      return;
+    }
+  };
 
   // 레포지토리 목록 가져오기
   useEffect(() => {

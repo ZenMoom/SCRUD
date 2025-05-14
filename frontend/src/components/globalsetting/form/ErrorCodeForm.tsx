@@ -2,7 +2,6 @@
 
 import { forwardRef, useState, useRef } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
-import { getGitHubAuthUrl } from "@/auth/github"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
 
 interface FileWithContent {
@@ -82,52 +81,9 @@ const ErrorCodeForm = forwardRef<HTMLDivElement, ErrorCodeFormProps>(
       document.getElementById(`file-upload-${title}`)?.click()
     }
 
-    const handleGithubUpload = async () => {
+    const handleGithubUpload = () => {
       setDropdownOpen(false);
-      
-      // 1. 깃허브 토큰 확인
-      const githubToken = localStorage.getItem('github-token-direct');
-      
-      try {
-        if (githubToken) {
-          // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
-          console.log('GitHub 토큰 유효성 확인 중...');
-          
-          // 간단한 API 호출로 토큰 유효성 확인 - 사용자 레포지토리 목록 요청
-          const response = await fetch('/api/github/user/repos', {
-            headers: {
-              'Authorization': `Bearer ${githubToken}`
-            }
-          });
-          
-          if (response.ok) {
-            // 토큰이 유효한 경우 모달 열기
-            console.log('GitHub 토큰 유효함, 모달 열기');
-            setIsGitHubModalOpen(true);
-          } else {
-            // 토큰이 유효하지 않은 경우 (401 등)
-            console.error('GitHub 토큰이 유효하지 않음, 재인증 요청');
-            
-            // 토큰 삭제
-            localStorage.removeItem('github-token-direct');
-            
-            // 인증 요청
-            const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
-            window.location.href = oauthUrl;
-          }
-        } else {
-          // 토큰이 없는 경우 바로 인증 요청
-          console.log('GitHub 토큰 없음, 인증 요청');
-          const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
-          window.location.href = oauthUrl;
-        }
-      } catch (error) {
-        console.error('GitHub 토큰 검증 중 오류 발생:', error);
-        setIsGitHubModalOpen(true);
-        // 오류 발생시 토큰 삭제 후 재인증
-        localStorage.removeItem('github-token-direct');
-        // 레포지토리 불러오기는 모달 내부에서 처리하며, 실패 시 바로 재인증 요청
-      }
+      setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
     }
 
     return (

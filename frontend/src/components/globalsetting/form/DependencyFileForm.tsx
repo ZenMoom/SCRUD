@@ -2,7 +2,6 @@
 
 import { forwardRef, useState, useRef } from "react"
 import { Upload, Github, File } from "lucide-react"
-import { getGitHubAuthUrl } from "@/auth/github"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
 
 interface FileWithContent {
@@ -73,35 +72,9 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
       document.getElementById(`file-upload-${title}`)?.click()
     }
 
-    const handleGithubUpload = async () => {
+    const handleGithubUpload = () => {
       setDropdownOpen(false);
-      
-      const githubToken = localStorage.getItem('github-token-direct');
-      
-      try {
-        if (githubToken) {
-          const response = await fetch('/api/github/user/repos', {
-            headers: {
-              'Authorization': `Bearer ${githubToken}`
-            }
-          });
-          
-          if (response.ok) {
-            setIsGitHubModalOpen(true);
-          } else {
-            localStorage.removeItem('github-token-direct');
-            const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
-            window.location.href = oauthUrl;
-          }
-        } else {
-          const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
-          window.location.href = oauthUrl;
-        }
-      } catch (error) {
-        console.error('GitHub 토큰 검증 중 오류 발생:', error);
-        setIsGitHubModalOpen(true);
-        localStorage.removeItem('github-token-direct');
-      }
+      setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
     }
 
     return (
