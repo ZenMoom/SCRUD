@@ -18,7 +18,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(name = "latest_endpoint_version")
+@Table(name = "api_spec")
 @Entity
 @Getter
 @Builder

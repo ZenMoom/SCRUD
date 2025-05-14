@@ -226,20 +226,19 @@ class DiagramService:
 4. DTO 모델 (요청/응답 객체)
 
 다이어그램 생성 과정:
-1. OpenAPI 명세를 파싱하여 엔드포인트 정보 추출 (parse_openapi_endpoints 도구 사용)
-2. 각 엔드포인트에 해당하는 Controller 메서드 생성
-3. Controller 메서드에 맞는 Service와 Repository 메서드 생성
-4. 컴포넌트 간 연결 관계 설정
-5. 요청/응답 객체를 기반으로 DTO 모델 생성
-6. UUID 생성 도구를 사용하여 각 요소의 고유 ID 생성
+1. 각 엔드포인트에 해당하는 Controller 메서드 생성
+2. Controller 메서드에 맞는 Service와 Repository 메서드 생성
+3. 컴포넌트 간 연결 관계 설정
+4. 요청/응답 객체를 기반으로 DTO 모델 생성
+5. UUID 생성 도구를 사용하여 각 요소의 고유 ID 생성
 
 최종 결과는 다음 필드를 포함하는 Diagram 객체여야 합니다:
 - diagramId: 다이어그램 ID (UUID)
 - projectId: 프로젝트 ID (입력 파라미터로 제공됨)
 - apiId: API ID (입력 파라미터로 제공됨)
-- components: 컴포넌트 목록 (클래스/인터페이스)
-- connections: 메서드 간 연결 관계
-- dto: DTO 모델 목록
+- components: 컴포넌트 목록 (클래스/인터페이스, componentId는 UUID)
+- connections: 메서드 간 연결 관계 (connectionId: UUID)
+- dto: DTO 모델 목록 (dtoId: UUID
 - metadata: 다이어그램 메타데이터 (버전, 수정일시 등)
 
 모든 ID 필드는 generate_uuid 도구로 생성해야 하며, 최종 출력은 Pydantic 스키마에 맞게 형식화되어야 합니다.
@@ -302,132 +301,3 @@ class DiagramService:
 
         except Exception as e:
             self.logger.error(f"다이어그램 생성 중 오류 발생: {str(e)}")
-            # 오류 발생 시 더미 다이어그램 생성
-            return self.create_dummy_diagram(project_id, api_id)
-
-    def create_dummy_diagram(self, project_id: str, api_id: str) -> Diagram:
-        from app.infrastructure.mongodb.repository.model.diagram_model import ComponentTypeEnum, Method, Connection, \
-            MethodConnectionTypeEnum
-        import uuid
-
-        # UUID 생성을 위한 인스턴스 생성
-        method1_id = str(uuid.uuid4())
-        method2_id = str(uuid.uuid4())
-        method3_id = str(uuid.uuid4())
-        method4_id = str(uuid.uuid4())
-
-        components = [
-            Component(
-                componentId=str(uuid.uuid4()),
-                type=ComponentTypeEnum.INTERFACE,
-                name="UserInterface",
-                description="사용자 관련 작업을 처리하는 인터페이스",
-                positionX=100.0,
-                positionY=150.0,
-                methods=[
-                    Method(
-                        methodId=method1_id,
-                        name="getUser",
-                        signature="getUser(userId: string): User",
-                        body="return userRepository.findById(userId);",
-                        description="사용자 ID로 사용자 정보를 조회합니다",
-                    ),
-                    Method(
-                        methodId=method2_id,
-                        name="createUser",
-                        signature="createUser(user: User): void",
-                        body="userRepository.save(user);",
-                        description="새로운 사용자를 생성합니다",
-                    )
-                ]
-            ),
-            Component(
-                componentId=str(uuid.uuid4()),
-                type=ComponentTypeEnum.CLASS,
-                name="UserServiceImpl",
-                description="사용자 서비스 구현 클래스",
-                positionX=350.0,
-                positionY=150.0,
-                methods=[
-                    Method(
-                        methodId=method3_id,
-                        name="getUserById",
-                        signature="getUserById(id: string): UserDto",
-                        body="User user = userRepository.findById(id);\nreturn userMapper.toDto(user);",
-                        description="사용자 ID로 사용자 정보를 DTO로 변환하여 반환합니다",
-                    ),
-                    Method(
-                        methodId=method4_id,
-                        name="registerUser",
-                        signature="registerUser(userDto: UserDto): void",
-                        body="User user = userMapper.toEntity(userDto);\nuserRepository.save(user);",
-                        description="DTO를 이용해 새로운 사용자를 등록합니다",
-                    )
-                ]
-            )
-        ]
-
-        connections = [
-            Connection(
-                connectionId=str(uuid.uuid4()),
-                sourceMethodId=method1_id,
-                targetMethodId=method3_id,
-                type=MethodConnectionTypeEnum.SOLID,
-            ),
-            Connection(
-                connectionId=str(uuid.uuid4()),
-                sourceMethodId=method2_id,
-                targetMethodId=method4_id,
-                type=MethodConnectionTypeEnum.SOLID,
-            )
-        ]
-
-        dto = [
-            DtoModel(
-                dtoId=str(uuid.uuid4()),
-                name="UserDto",
-                description="사용자 정보 전송 객체",
-                body="""
-{
-  "id": "string",
-  "username": "string",
-  "email": "string",
-  "firstName": "string",
-  "lastName": "string",
-  "role": "ADMIN | USER"
-}
-"""
-            ),
-            DtoModel(
-                dtoId=str(uuid.uuid4()),
-                name="LoginDto",
-                description="로그인 정보 전송 객체",
-                body="""
-{
-  "username": "string",
-  "password": "string"
-}
-"""
-            )
-        ]
-
-        from datetime import datetime
-        # 기본 메타데이터 생성
-        metadata = Metadata(
-            metadataId=str(uuid.uuid4()),
-            version=1,
-            lastModified=datetime.now(),
-            name=f"API {api_id}",
-            description=f"Diagram for API {api_id}"
-        )
-
-        # 새 다이어그램 생성
-        return Diagram(
-            projectId=project_id,
-            apiId=api_id,
-            diagramId=str(uuid.uuid4()),
-            components=components,
-            connections=connections,
-            dto=dto,
-            metadata=metadata
-        )

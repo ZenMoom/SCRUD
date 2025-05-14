@@ -21,15 +21,19 @@ interface ArchitectureOption {
 }
 
 const architectureOptions = [
-  { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A', imageUrl: '/images/layered-a.png' },
-  { type: 'ARCHITECTURE_DEFAULT_LAYERED_B', label: '레이어드 아키텍처 B', imageUrl: '/images/layered-b.png' },
-  { type: 'ARCHITECTURE_DEFAULT_CLEAN', label: '클린 아키텍처', imageUrl: '/images/clean.png' },
-  { type: 'ARCHITECTURE_DEFAULT_MSA', label: '마이크로서비스 아키텍처', imageUrl: '/images/msa.png' },
-  { type: 'ARCHITECTURE_DEFAULT_HEX', label: '헥사고날 아키텍처', imageUrl: '/images/hex.png' },
+  { type: 'ARCHITECTURE_DEFAULT_LAYERED', label: '레이어드 아키텍처(A/B)', imageUrl: '/layered-a.png' },
+  { type: 'ARCHITECTURE_DEFAULT_CLEAN', label: '클린 아키텍처', imageUrl: '/clean.png' },
+  { type: 'ARCHITECTURE_DEFAULT_MSA', label: '마이크로서비스 아키텍처', imageUrl: '/msa.png' },
+  { type: 'ARCHITECTURE_DEFAULT_HEX', label: '헥사고날 아키텍처', imageUrl: '/hex.png' },
+];
+
+const layeredOptions = [
+  { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A', imageUrl: '/layered-a.png' },
+  { type: 'ARCHITECTURE_DEFAULT_LAYERED_B', label: '레이어드 아키텍처 B', imageUrl: '/layered-b.png' },
 ];
 
 // 기본값 설정
-const DEFAULT_ARCHITECTURE_OPTION = architectureOptions[0]; // 레이어드 아키텍처 A를 기본값으로 설정
+const DEFAULT_ARCHITECTURE_OPTION = architectureOptions[0];
 
 interface ArchitectureStructureFormProps {
   title: string
@@ -43,13 +47,13 @@ interface ArchitectureStructureFormProps {
 const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructureFormProps>(
   ({ title, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
     const [inputType, setInputType] = useState<'select' | 'file'>('select')
+    const [showLayeredOptions, setShowLayeredOptions] = useState(false)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
     const [selectedOption, setSelectedOption] = useState<ArchitectureOption>(
-      // value가 있으면 value를 사용하고, 없으면 기본값 사용
       (value as ArchitectureOption)?.type ? (value as ArchitectureOption) : DEFAULT_ARCHITECTURE_OPTION
     );
 
@@ -66,6 +70,22 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
         setSelectedOption(value as ArchitectureOption);
       }
     }, [value]);
+
+    const handleOptionChange = (option: ArchitectureOption) => {
+      if (option.type === 'ARCHITECTURE_DEFAULT_LAYERED') {
+        setShowLayeredOptions(true);
+        setSelectedOption(option);
+      } else {
+        setShowLayeredOptions(false);
+        setSelectedOption(option);
+        onChange(option);
+      }
+    };
+
+    const handleLayeredOptionChange = (option: ArchitectureOption) => {
+      setSelectedOption(option);
+      onChange(option);
+    };
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
@@ -141,16 +161,6 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
     }
 
-    // 입력 타입 변경 핸들러
-    const handleInputTypeChange = () => {
-      setInputType(inputType === 'select' ? 'file' : 'select');
-    };
-
-    const handleOptionChange = (option: ArchitectureOption) => {
-      setSelectedOption(option);
-      onChange(option);
-    };
-
     return (
       <div ref={ref} className="mb-10 p-10 bg-white rounded-lg">
         <div className="flex items-center mb-4 justify-between">
@@ -168,7 +178,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
           <button
             type="button"
             className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
-            onClick={handleInputTypeChange}
+            onClick={() => setInputType(inputType === 'select' ? 'file' : 'select')}
           >
             {inputType === 'select' ? (
               <>
@@ -182,32 +192,67 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
         </div>
 
         {inputType === 'select' ? (
-          <div className="space-y-4">
-            {architectureOptions.map((option) => (
-              <div key={option.type} className="flex flex-col items-center">
-                <div className="flex items-center mb-2">
-                  <input
-                    type="radio"
-                    id={option.type}
-                    name="architecture"
-                    value={option.type}
-                    checked={selectedOption.type === option.type}
-                    onChange={() => handleOptionChange(option)}
-                    className="h-4 w-4 text-blue-600"
-                  />
-                  <label htmlFor={option.type} className="ml-2 text-sm text-gray-700">
-                    {option.label}
-                  </label>
+          <div className="space-y-6">
+            {/* 기본 아키텍처 옵션들 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {architectureOptions.map((option) => (
+                <div 
+                  key={option.type} 
+                  className={`cursor-pointer p-4 rounded-lg transition-all h-full flex flex-col ${
+                    selectedOption.type === option.type || (showLayeredOptions && option.type === 'ARCHITECTURE_DEFAULT_LAYERED')
+                      ? 'border-2 border-blue-500'
+                      : 'border border-gray-200 hover:border-blue-300'
+                  }`}
+                  onClick={() => handleOptionChange(option)}
+                >
+                  <div className="text-center mb-3">
+                    <span className="text-sm font-medium text-gray-700">
+                      {option.label}
+                    </span>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center">
+                    <img 
+                      src={option.imageUrl} 
+                      alt={option.label} 
+                      className="w-full h-auto max-h-[200px] object-contain rounded-lg shadow-sm"
+                    />
+                  </div>
                 </div>
-                {option.imageUrl && (
-                  <img 
-                    src={option.imageUrl} 
-                    alt={option.label} 
-                    className="w-full max-w-md rounded-lg shadow-md hover:shadow-lg transition-shadow"
-                  />
-                )}
+              ))}
+            </div>
+
+            {/* 레이어드 상세 옵션 */}
+            {showLayeredOptions && (
+              <div className="mt-4">
+                <div className="text-sm font-medium text-gray-700 mb-2">레이어드 아키텍처 상세 옵션</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {layeredOptions.map((option) => (
+                    <div 
+                      key={option.type} 
+                      className={`cursor-pointer p-4 rounded-lg transition-all h-full flex flex-col ${
+                        selectedOption.type === option.type 
+                          ? 'border-2 border-blue-500'
+                          : 'border border-gray-200 hover:border-blue-300'
+                      }`}
+                      onClick={() => handleLayeredOptionChange(option)}
+                    >
+                      <div className="text-center mb-3">
+                        <span className="text-sm font-medium text-gray-700">
+                          {option.label}
+                        </span>
+                      </div>
+                      <div className="flex-1 flex items-center justify-center">
+                        <img 
+                          src={option.imageUrl} 
+                          alt={option.label} 
+                          className="w-full h-auto max-h-[200px] object-contain rounded-lg shadow-sm"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
           </div>
         ) : (
           <div className="w-full">
