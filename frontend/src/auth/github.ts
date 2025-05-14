@@ -1,20 +1,22 @@
 /**
  * GitHub OAuth 인증 관련 유틸리티
  */
-import axios from 'axios';
-import { useGitHubTokenStore } from '@/store/githubTokenStore';
+import axios from "axios"
+import { useGitHubTokenStore } from "@/store/githubTokenStore"
 
 // 백엔드 API 기본 URL
-const GITHUB_AUTH_URL = process.env.NEXT_PUBLIC_GITHUB_AUTH_URL;
-const REDIRECT_URL = process.env.NEXT_PUBLIC_REDIRECT_URI;
+
+const GITHUB_AUTH_URL = process.env.NEXT_PUBLIC_GITHUB_AUTH_URL
+const REDIRECT_URL = process.env.NEXT_PUBLIC_REDIRECT_URI
 
 /**
  * GitHub OAuth 인증 URL 생성
  * @param redirectUri - 인증 후 리다이렉트할 URI
  * @returns {string} - 인증 URL
  */
+
 export function getGitHubAuthUrl(redirectUri: string = `${REDIRECT_URL}/globalsetting`): string {
-  return `${GITHUB_AUTH_URL}/oauth2/authorize/github?redirect_uri=${encodeURIComponent(redirectUri)}`;
+  return `${GITHUB_AUTH_URL}/oauth2/authorize/github?redirect_uri=${encodeURIComponent(redirectUri)}`
 }
 
 /**
@@ -24,36 +26,37 @@ export function getGitHubAuthUrl(redirectUri: string = `${REDIRECT_URL}/globalse
  */
 export async function exchangeCodeForToken(code: string): Promise<string> {
   try {
-    console.log("🔐 [GitHub] 인증 코드로 토큰 교환 시도:", code);
-    
+    console.log("🔐 [GitHub] 인증 코드로 토큰 교환 시도:", code)
+
     // 백엔드를 통해 토큰 교환
-    const response = await axios.post(`${GITHUB_AUTH_URL}/api/github/token`, { 
+
+    const response = await axios.post(`${GITHUB_AUTH_URL}/api/github/token`, {
       code,
-      redirect_uri: `${REDIRECT_URL}/globalsetting` // 명시적으로 리다이렉트 URI 지정
-    });
-    
-    console.log("✅ [GitHub] 백엔드 토큰 교환 응답:", response.data);
-    
+      redirect_uri: `${REDIRECT_URL}/globalsetting`, // 명시적으로 리다이렉트 URI 지정
+    })
+
+    console.log("✅ [GitHub] 백엔드 토큰 교환 응답:", response.data)
+
     // 응답에서 토큰 추출
-    const token = response.data.token || response.data.access_token;
-    
+    const token = response.data.token || response.data.access_token
+
     if (!token) {
-      throw new Error("GitHub 토큰을 받지 못했습니다.");
+      throw new Error("GitHub 토큰을 받지 못했습니다.")
     }
-    
+
     // GitHub 토큰 확인 (ghu_ 또는 ghp_로 시작하는지)
-    if (token.startsWith('ghu_') || token.startsWith('ghp_')) {
-      console.log("✅ GitHub 토큰 형식 확인됨");
-      useGitHubTokenStore.getState().setGithubToken(token);
+    if (token.startsWith("ghu_") || token.startsWith("ghp_")) {
+      console.log("✅ GitHub 토큰 형식 확인됨")
+      useGitHubTokenStore.getState().setGithubToken(token)
     } else {
-      console.warn("⚠️ 받은 토큰이 GitHub 토큰 형식이 아닙니다:", token.substring(0, 10) + "...");
+      console.warn("⚠️ 받은 토큰이 GitHub 토큰 형식이 아닙니다:", token.substring(0, 10) + "...")
     }
-    
-    console.log("🔑 [GitHub] 백엔드에서 토큰 받음");
-    return token;
+
+    console.log("🔑 [GitHub] 백엔드에서 토큰 받음")
+    return token
   } catch (error) {
-    console.error("🚫 [GitHub] 토큰 교환 중 오류:", error);
-    throw error;
+    console.error("🚫 [GitHub] 토큰 교환 중 오류:", error)
+    throw error
   }
 }
 
@@ -61,6 +64,6 @@ export async function exchangeCodeForToken(code: string): Promise<string> {
  * GitHub 인증 초기화 (토큰 제거)
  */
 export function clearGitHubAuth(): void {
-  localStorage.removeItem('github-token-direct');
-  useGitHubTokenStore.getState().setGithubToken('');
-} 
+  localStorage.removeItem("github-token-direct")
+  useGitHubTokenStore.getState().setGithubToken("")
+}

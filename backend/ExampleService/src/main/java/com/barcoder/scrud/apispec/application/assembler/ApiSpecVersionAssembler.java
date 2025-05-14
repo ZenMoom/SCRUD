@@ -2,11 +2,6 @@ package com.barcoder.scrud.apispec.application.assembler;
 
 import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.domain.entity.ApiSpecVersion;
-import com.barcoder.scrud.apispec.domain.entity.DeleteApiSpecVersion;
-import com.barcoder.scrud.apispec.domain.entity.GetApiSpecVersion;
-import com.barcoder.scrud.apispec.domain.entity.PatchApiSpecVersion;
-import com.barcoder.scrud.apispec.domain.entity.PostApiSpecVersion;
-import com.barcoder.scrud.apispec.domain.entity.PutApiSpecVersion;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
@@ -17,92 +12,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ApiSpecVersionAssembler {
 
-	private final ModelMapper modelMapper;
+    private final ModelMapper modelMapper;
 
-	public ApiSpecVersion toApiSpecVersionEntity(CreateApiSpecVersionIn inDto){
+    public ApiSpecVersion toApiSpecVersionEntity(CreateApiSpecVersionIn inDto) {
 
-		// version
-		int version = inDto.getVersion() != null ? inDto.getVersion() : 1;
-		// apiGroup
-		String[] segments = inDto.getEndpoint().split("/");
-		String apiGroup = segments.length >= 4 ? segments[3] : "default";
+        // version
+        int version = inDto.getVersion() != null ? inDto.getVersion() : 1;
+        // apiGroup
+        String[] segments = inDto.getEndpoint().split("/");
+        String apiGroup = segments.length >= 4 ? segments[3] : "default";
 
-		return switch (inDto.getHttpMethod()) {
+        return ApiSpecVersion.builder()
+                .userId(inDto.getUserId())
+                .endpoint(inDto.getEndpoint())
+                .apiGroup(apiGroup)
+                .version(version)
+                .summary(inDto.getSummary())
+                .description(inDto.getDescription())
+                .response(inDto.getResponse())
+                .httpMethod(inDto.getHttpMethod())
+                .queryParameters(inDto.getQueryParameters())
+                .pathParameters(inDto.getPathParameters())
+                .requestBody(inDto.getRequestBody())
+                .build();
+    }
 
-			case GET -> GetApiSpecVersion.builder()
-			.userId(inDto.getUserId())
-					.endpoint(inDto.getEndpoint())
-					.apiGroup(apiGroup)
-					.version(version)
-					.summary(inDto.getSummary())
-					.description(inDto.getDescription())
-					.response(inDto.getResponse())
-					.httpMethod(inDto.getHttpMethod())
-					.queryParameters(inDto.getQueryParameters())
-					.pathParameters(inDto.getPathParameters())
-					.build();
-
-			case POST -> PostApiSpecVersion.builder()
-					.userId(inDto.getUserId())
-					.endpoint(inDto.getEndpoint())
-					.apiGroup(apiGroup)
-					.version(version)
-					.summary(inDto.getSummary())
-					.description(inDto.getDescription())
-					.response(inDto.getResponse())
-					.httpMethod(inDto.getHttpMethod())
-					.requestBody(inDto.getRequestBody())
-					.queryParameters(inDto.getQueryParameters())
-					.pathParameters(inDto.getPathParameters())
-					.build();
-
-			case PUT -> PutApiSpecVersion.builder()
-					.userId(inDto.getUserId())
-					.endpoint(inDto.getEndpoint())
-					.apiGroup(apiGroup)
-					.version(version)
-					.summary(inDto.getSummary())
-					.description(inDto.getDescription())
-					.response(inDto.getResponse())
-					.httpMethod(inDto.getHttpMethod())
-					.requestBody(inDto.getRequestBody())
-					.pathParameters(inDto.getPathParameters())
-					.build();
-
-			case PATCH -> PatchApiSpecVersion.builder()
-					.userId(inDto.getUserId())
-					.endpoint(inDto.getEndpoint())
-					.apiGroup(apiGroup)
-					.version(version)
-					.summary(inDto.getSummary())
-					.description(inDto.getDescription())
-					.response(inDto.getResponse())
-					.httpMethod(inDto.getHttpMethod())
-					.requestBody(inDto.getRequestBody())
-					.pathParameters(inDto.getPathParameters())
-					.build();
-
-			case DELETE -> DeleteApiSpecVersion.builder()
-					.userId(inDto.getUserId())
-					.endpoint(inDto.getEndpoint())
-					.apiGroup(apiGroup)
-					.version(version)
-					.summary(inDto.getSummary())
-					.description(inDto.getDescription())
-					.response(inDto.getResponse())
-					.httpMethod(inDto.getHttpMethod())
-					.pathParameters(inDto.getPathParameters())
-					.build();
-		};
-	}
-
-	public List<ApiSpecVersion> toApiSpecVersionEntityList(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
-		return inDtoList.stream()
-				.map(createApiSpecVersionIn ->
-						toApiSpecVersionEntity(createApiSpecVersionIn.toBuilder()
-								.scrudProjectId(scrudProjectId)
-								.build())
-						)
-				.toList();
-	}
+    public List<ApiSpecVersion> toApiSpecVersionEntityList(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
+        return inDtoList.stream()
+                .map(createApiSpecVersionIn ->
+                        toApiSpecVersionEntity(createApiSpecVersionIn.toBuilder()
+                                .scrudProjectId(scrudProjectId)
+                                .build())
+                )
+                .toList();
+    }
 }

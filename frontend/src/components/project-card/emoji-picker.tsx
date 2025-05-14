@@ -58,12 +58,20 @@ export default function EmojiPicker({ selectedEmoji, onEmojiSelect }: EmojiPicke
     <div className="relative" ref={pickerRef}>
       {/* 선택된 이모지 표시 버튼 */}
       <button type="button" className="p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 text-2xl focus:outline-none focus:ring-2 focus:ring-blue-400" onClick={() => setIsOpen(!isOpen)}>
-        {selectedEmoji}
+        {selectedEmoji || "📌"}
       </button>
 
-      {/* 이모지 선택 드롭다운 */}
+      {/* 이모지 선택 드롭다운 - 수정된 부분 */}
       {isOpen && (
-        <div className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-[280px]">
+        <div
+          className="fixed bg-white border border-gray-200 rounded-md shadow-lg w-[280px]"
+          style={{
+            zIndex: 9999,
+            left: pickerRef.current ? pickerRef.current.getBoundingClientRect().left : 0,
+            top: pickerRef.current ? pickerRef.current.getBoundingClientRect().bottom + 5 : 0,
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+          }}
+        >
           {/* 카테고리 탭 */}
           <div className="flex border-b border-gray-200 bg-gray-50">
             {emojiCategories.map((category, index) => (
