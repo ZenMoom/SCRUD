@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 전역 배경색 설정 */
+@layer base {
+  html,
+  body {
+    @apply bg-gray-50; /* Tailwind 클래스 사용 */
+    /* 또는 직접 색상 지정: background-color: #f5f5f5; */
+  }
+}
+
 /* 커스텀 애니메이션 */
 @layer utilities {
   @keyframes fadeIn {
