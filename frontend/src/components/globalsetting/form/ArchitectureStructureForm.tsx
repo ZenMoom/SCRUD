@@ -21,7 +21,7 @@ interface ArchitectureOption {
 }
 
 const architectureOptions = [
-  { type: 'ARCHITECTURE_DEFAULT_LAYERED', label: '레이어드 아키텍처(A/B)', imageUrl: '/layered-a.png' },
+    { type: 'ARCHITECTURE_DEFAULT_LAYERED', label: '레이어드 아키텍처(A/B)', imageUrl: '/layered-a.png' },
   { type: 'ARCHITECTURE_DEFAULT_CLEAN', label: '클린 아키텍처', imageUrl: '/clean.png' },
   { type: 'ARCHITECTURE_DEFAULT_MSA', label: '마이크로서비스 아키텍처', imageUrl: '/msa.png' },
   { type: 'ARCHITECTURE_DEFAULT_HEX', label: '헥사고날 아키텍처', imageUrl: '/hex.png' },
@@ -54,6 +54,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
     const [selectedOption, setSelectedOption] = useState<ArchitectureOption>(
+      // value가 있으면 value를 사용하고, 없으면 기본값 사용
       (value as ArchitectureOption)?.type ? (value as ArchitectureOption) : DEFAULT_ARCHITECTURE_OPTION
     );
 
@@ -71,7 +72,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       }
     }, [value]);
 
-    const handleOptionChange = (option: ArchitectureOption) => {
+     const handleOptionChange = (option: ArchitectureOption) => {
       if (option.type === 'ARCHITECTURE_DEFAULT_LAYERED') {
         setShowLayeredOptions(true);
         setSelectedOption(option);
@@ -88,28 +89,19 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
     };
 
     // GitHub에서 파일 선택 시 호출될 핸들러
-    const handleGitHubFileSelect = (files: Array<{ path: string, downloadUrl?: string }>) => {
+    const handleGitHubFileSelect = (files: Record<string, unknown>[]) => {
       if (files.length > 0) {
-        // 모든 선택된 파일 처리
-        const githubFiles = files.map(file => {
-          // fileUrl이 있으면 fileUrl 포함, 없으면 기존 방식대로 처리
-          if (file.downloadUrl) {
-            // 파일 경로와 URL을 모두 포함해서 저장 (파이프로 구분)
-            return {
-              name: file.path,
-              content: file.downloadUrl
-            };
-          } else {
-            // 기존 방식 (URL 없는 경우)
-            return {
-              name: file.path,
-              content: ""
-            };
-          }
-        });
-
-        // 배열을 결과로 반환
-        onChange(githubFiles);
+        console.log('=== ArchitectureStructureForm handleGitHubFileSelect ===');
+        console.log('변환 전 GitHub 데이터:', files);
+        
+        const convertedFiles = files.map(file => ({
+          name: file.path as string || 'unnamed_file',
+          content: JSON.stringify(file.content),  // 객체를 문자열로 변환
+          isGitHub: true
+        }));
+        
+        console.log('변환 후 데이터:', convertedFiles);
+        onChange(convertedFiles);
       }
       setIsGitHubModalOpen(false);
     };
@@ -178,7 +170,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
           <button
             type="button"
             className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
-            onClick={() => setInputType(inputType === 'select' ? 'file' : 'select')}
+             onClick={() => setInputType(inputType === 'select' ? 'file' : 'select')}
           >
             {inputType === 'select' ? (
               <>
