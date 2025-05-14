@@ -4,7 +4,7 @@ import { ApiProcessStateEnumDto } from "@generated/model"
 import axios from "axios"
 import { useState, useRef, useEffect } from "react"
 import useAuthStore from "@/app/store/useAuthStore"
-import useApiStore from "@/app/store/useApiStore" // 추가: useApiStore import
+import useApiStore from "@/app/store/useApiStore"
 import EmojiPicker from "@/components/project-card/emoji-picker"
 
 interface ApiEndpoint {
