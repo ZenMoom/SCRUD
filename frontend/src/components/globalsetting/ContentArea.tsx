@@ -86,11 +86,19 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
   // 의존성 변경 핸들러
   const handleDependencyChange = (value: string[] | FileWithContent | FileWithContent[]) => {
-    if (Array.isArray(value)) {
-      setSelectedDependencies(value);
+  // 배열인 경우에만 처리
+  if (Array.isArray(value)) {
+    // 빈 배열이면 string[] 타입으로 간주
+    if (!value.length) {
+      setSelectedDependencies(value as string[]);
     }
-    onSettingChange("dependencyFile", value);
-  };
+    // 첫 번째 요소가 string 타입인 경우 string[] 타입으로 간주
+    else if (typeof value[0] === 'string') {
+      setSelectedDependencies(value as string[]);
+    }
+  }
+  onSettingChange("dependencyFile", value);
+};
 
   const openModal = (key: string) => {
     setModalOpen(key)
@@ -106,11 +114,11 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
   // 각 설정 항목에 대한 설명
   const descriptions: Record<string, string> = {
-    title: "프로젝트의 이름을 입력하세요. (필수)",
-    description: "프로젝트에 대한 간략한 설명을 입력하세요. (필수)",
-    serverUrl: "서버의 URL을 입력하세요. (필수)",
-    requirementSpec: "요구사항 명세서 파일을 업로드하세요. (필수)",
-    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요. (필수)",
+    title: "프로젝트의 이름을 입력하세요.",
+    description: "프로젝트에 대한 간략한 설명을 입력하세요.",
+    serverUrl: "서버의 URL을 입력하세요.",
+    requirementSpec: "요구사항 명세서 파일을 업로드하세요",
+    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요.",
     dependencyFile: "의존성 파일을 업로드하거나 Spring 의존성 목록에서 선택하세요.",
     utilityClass: "유틸리티 클래스 정보를 업로드하거나 GitHub에서 가져오세요.",
     errorCode: "에러 코드 정의 파일을 업로드하거나 GitHub에서 가져오세요.",
@@ -126,21 +134,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
     serverUrl: "text"
   }
 
-  // 보안 설정 라디오 버튼 옵션
-  const securityOptions = [
-    { value: "SECURITY_DEFAULT_JWT", label: "JWT" },
-    { value: "SECURITY_DEFAULT_SESSION", label: "세션" },
-    { value: "SECURITY_DEFAULT_NONE", label: "없음" },
-  ]
-
-  // 아키텍처 구조 옵션
-  const architectureOptions = [
-    { value: "ARCHITECTURE_DEFAULT_LAYERED", label: "레이어드 아키텍처" },
-    { value: "ARCHITECTURE_DEFAULT_CLEAN", label: "클린 아키텍처" },
-    { value: "ARCHITECTURE_DEFAULT_MSA", label: "마이크로서비스 아키텍처" },
-    { value: "ARCHITECTURE_DEFAULT_HEX", label: "헥사고날 아키텍처" },
-  ]
-
   // 항목 포커스 시 activeItem 업데이트
   const handleItemFocus = (key: string) => {
     if (setActiveItem) {
@@ -153,7 +146,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
       <div className="h-full overflow-y-auto p-8 md:p-12">
         <FormItem
           ref={refs.title}
-          title={`프로젝트명 ${isRequired('title') ? '(필수)' : ''}`}
+          title={`프로젝트명 ${isRequired('title')}`}
           type={inputTypes.title}
           value={settings.title as string}
           onChange={(value) => onSettingChange("title", value)}
@@ -164,7 +157,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.description}
-          title={`프로젝트 설명 ${isRequired('description') ? '(필수)' : ''}`}
+          title={`프로젝트 설명 ${isRequired('description')}`}
           type={inputTypes.description}
           value={settings.description as string}
           onChange={(value) => onSettingChange("description", value)}
@@ -175,7 +168,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.serverUrl}
-          title={`Server URL ${isRequired('serverUrl') ? '(필수)' : ''}`}
+          title={`Server URL ${isRequired('serverUrl')}`}
           type={inputTypes.serverUrl}
           value={settings.serverUrl as string}
           onChange={(value) => onSettingChange("serverUrl", value)}
@@ -186,7 +179,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <RequirementSpecForm
           ref={refs.requirementSpec}
-          title={`요구사항 명세서 ${isRequired('requirementSpec') ? '(필수)' : ''}`}
+          title={`요구사항 명세서 ${isRequired('requirementSpec')}`}
           value={settings.requirementSpec}
           onChange={(value) => onSettingChange("requirementSpec", value as FileValue)}
           onInfoClick={() => openModal("requirementSpec")}
@@ -196,7 +189,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <ERDForm
           ref={refs.erd}
-          title={`ERD ${isRequired('erd') ? '(필수)' : ''}`}
+          title={`ERD ${isRequired('erd')}`}
           value={settings.erd}
           onChange={(value) => onSettingChange("erd", value as FileValue)}
           onInfoClick={() => openModal("erd")}
@@ -278,7 +271,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.securitySetting}
           onChange={(value) => onSettingChange("securitySetting", value)}
           onInfoClick={() => openModal("securitySetting")}
-          options={securityOptions}
           onFocus={() => handleItemFocus("securitySetting")}
         />
 
@@ -297,7 +289,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.architectureStructure}
           onChange={(value) => onSettingChange("architectureStructure", value)}
           onInfoClick={() => openModal("architectureStructure")}
-          options={architectureOptions}
           onFocus={() => handleItemFocus("architectureStructure")}
         />
       </div>
