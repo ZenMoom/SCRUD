@@ -347,7 +347,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
       const treeData = await treeResponse.json();
       
       // 3. 선택된 항목 업데이트 - 원본 데이터 그대로 저장
-      const newSelectedItem = {
+      const newSelectedItem: SelectedItem = {
         path: `${repo.owner}/${repo.name}`,
         type: 'repository',
         repoInfo: repo,
