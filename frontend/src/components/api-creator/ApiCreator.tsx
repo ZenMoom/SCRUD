@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import LeftContainer from "./LeftContainer"
 import MiddleContainer from "./MiddleContainer"
 import RightContainer from "./right-container"
+
 import useAuthStore from "@/app/store/useAuthStore"
 import useApiStore from "@/app/store/useApiStore"
 
@@ -46,14 +47,25 @@ export default function ApiCreator({ projectId }: ApiCreatorProps) {
   useEffect(() => {
     console.log("ApiCreator - projectId from props:", projectId)
     console.log("ApiCreator - current scrudProjectId:", scrudProjectId)
-    if (projectId && projectId !== scrudProjectId) {
-      console.log("프로젝트 ID 변경:", projectId)
-      setScrudProjectId(projectId)
-      // 프로젝트 변경 시 선택된 API 초기화
-      setSelectedApi(null)
-      setSelectedMethod(null)
+
+    if (projectId !== undefined && projectId > 0) {
+      // 타입 안전한 비교를 위해 === 대신 다른 방식으로 비교
+      const shouldUpdate = scrudProjectId !== projectId
+
+      if (shouldUpdate) {
+        console.log("프로젝트 ID 변경:", projectId)
+        setScrudProjectId(projectId)
+        // 프로젝트 변경 시 선택된 API 초기화
+        setSelectedApi(null)
+        setSelectedMethod(null)
+      }
+    } else {
+      // projectId가 유효하지 않은 경우 처리
+      console.warn("유효하지 않은 프로젝트 ID:", projectId)
+      // 필요한 경우 기본 프로젝트로 이동하거나 프로젝트 선택 페이지로 리디렉션
+      // 예: router.push('/projects')
     }
-  }, [projectId, scrudProjectId])
+  }, [projectId])
 
   // 처음 로드 시 API 스펙 목록 조회 및 프로젝트 ID가 변경될 때마다 다시 조회
   useEffect(() => {
