@@ -1,3 +1,5 @@
+"use client"
+
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import axios from "axios"
@@ -36,6 +38,7 @@ interface ApiState {
 // 캐시 만료 시간 (5분 = 300000ms)
 const CACHE_EXPIRY_TIME = 300000
 
+// 스토어 생성 함수 최적화
 const useApiStore = create<ApiState>()(
   persist(
     (set, get) => ({
@@ -44,18 +47,21 @@ const useApiStore = create<ApiState>()(
       lastFetchTimestamps: {},
 
       fetchApiSpecs: async (projectId: number, token: string, forceRefresh = false) => {
+        // 내부 상태를 직접 변경하는 대신 함수형 업데이트 사용
+        const state = get()
         const currentTime = Date.now()
-        const lastFetchTime = get().lastFetchTimestamps[projectId] || 0
+        const lastFetchTime = state.lastFetchTimestamps[projectId] || 0
 
         // 이미 로딩 중이면 중복 요청 방지
-        if (get().isLoading) return
+        if (state.isLoading) return
 
         // 캐시가 있고, 강제 새로고침이 아니며, 캐시 만료 시간이 지나지 않았으면 요청하지 않음
-        if (get().apiGroups[projectId] && !forceRefresh && currentTime - lastFetchTime < CACHE_EXPIRY_TIME) {
+        if (state.apiGroups[projectId] && !forceRefresh && currentTime - lastFetchTime < CACHE_EXPIRY_TIME) {
           console.log(`Using cached API specs for project ${projectId}. Cache age: ${(currentTime - lastFetchTime) / 1000}s`)
           return
         }
 
+        // 로딩 상태 시작
         set({ isLoading: true })
 
         try {
@@ -172,7 +178,7 @@ const useApiStore = create<ApiState>()(
             })
           }
 
-          // 상태 업데이트
+          // 여기서 함수형 업데이트를 사용하여 안전하게 상태 업데이트
           set((state) => ({
             apiGroups: {
               ...state.apiGroups,
@@ -191,6 +197,7 @@ const useApiStore = create<ApiState>()(
       },
 
       updateApiGroups: (projectId, groups) => {
+        // 함수형 업데이트 사용
         set((state) => ({
           apiGroups: { ...state.apiGroups, [projectId]: groups },
         }))
