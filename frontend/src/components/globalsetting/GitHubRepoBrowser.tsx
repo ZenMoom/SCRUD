@@ -66,7 +66,8 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
   // GitHub 인증 확인하는 함수
   const checkGitHubAuth = async () => {
     const storedToken = localStorage.getItem('github-token-direct');
-    
+    const REDIRECT_URL = process.env.NEXT_PUBLIC_REDIRECT_URI;
+
     try {
       if (storedToken) {
         // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
@@ -87,14 +88,14 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           localStorage.removeItem('github-token-direct');
           
           // 인증 요청
-          const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
+          const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
           window.location.href = oauthUrl;
           return;
         }
       } else {
         // 토큰이 없는 경우 바로 인증 요청
         console.log('GitHub 토큰 없음, 인증 요청');
-        const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
+        const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
         window.location.href = oauthUrl;
         return;
       }
@@ -103,7 +104,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
       // 오류 발생시 토큰 삭제 후 재인증
       localStorage.removeItem('github-token-direct');
       // 인증 요청
-      const oauthUrl = getGitHubAuthUrl('http://localhost:3000/globalsetting');
+      const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
       window.location.href = oauthUrl;
       return;
     }
