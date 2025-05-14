@@ -2,10 +2,12 @@ import json
 import uuid
 from datetime import datetime
 
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 from app.config.config import settings
+from app.infrastructure.http.client.api_client import ApiClient, ApiSpec
 from app.infrastructure.mongodb.repository.model.diagram_model import MethodPromptTagEnum, \
     MethodPromptTargetEnum, Metadata
 
@@ -90,7 +92,7 @@ class DiagramProcessor:
         self.logger.info(f"생성된 프롬프트 일부: {complete_prompt[:300]}...")
         return complete_prompt
 
-    async def _call_llm(self, complete_prompt):
+    async def _call_llm(self, complete_prompt, diagram_code):
         """
         생성된 프롬프트를 사용하여 LLM을 호출합니다.
 
@@ -101,20 +103,33 @@ class DiagramProcessor:
             str: LLM의 응답 내용
         """
         self.logger.info("LLM 호출 시작")
+        self.logger.info(f"{diagram_code.content}")
         llm = ChatOpenAI(
             temperature=0,
             model="gpt-4o-mini",  # 필요시 모델 변경
             base_url=settings.OPENAI_API_BASE,
             api_key=settings.OPENAI_API_KEY
         )
-        response = await llm.ainvoke(
-            [
-                HumanMessage(content=complete_prompt),
-                HumanMessage(content=self.parser.get_format_instructions()),  # 파서의 형식 지침 포함
-            ]
-        )
+        system_message = f"""
+        당신은 사용자가 입력한 코드를 다이어그램으로 변환해주는 다이어그램 변환기 입니다. 
+        
+        다음 입력을 참고해서 사용자의 입력을 다이어그램으로 변환해야합니다.
+        [입력]
+        {complete_prompt}
+        
+        [출력 형식]
+        {self.parser.get_format_instructions()}
+        """
+        human_message = diagram_code.content
+        chat_prompt = ChatPromptTemplate([
+            SystemMessage(content=system_message),
+            HumanMessage(content=human_message)
+        ])
+        chain = chat_prompt | llm
+        response = await chain.ainvoke({})
+
         self.logger.info("LLM 호출 완료")
-        self.logger.info(f"LLM 응답 전체 내용 (일부): {str(response.content)[:500]}...")  # 전체 로깅은 필요시 조정
+        self.logger.info(f"LLM 응답 전체 내용 (일부): {str(response.content)[:2000]}...")  # 전체 로깅은 필요시 조정
         return response.content
 
     def _parse_llm_response(self, response_content):
@@ -194,7 +209,14 @@ class DiagramProcessor:
 
         return diagram_data  # 저장 후의 diagram_data 반환 (혹은 inserted_id 등 필요에 따라)
 
-    async def generate_diagram_data(self, user_chat_data, latest_diagram, project_id=None, api_id=None):
+    async def generate_diagram_data(
+            self,
+            user_chat_data,
+            latest_diagram,
+            project_id=None,
+            api_id=None,
+            diagram_code=str
+    ):
         """
         도식화 데이터를 생성하는 전체 프로세스를 실행합니다.
 
@@ -203,6 +225,7 @@ class DiagramProcessor:
             latest_diagram: 최신 다이어그램 데이터 (dict() 메서드 및 metadata 속성 가정)
             project_id (str, optional): 프로젝트 ID. Defaults to None.
             api_id (str, optional): API ID. Defaults to None.
+            diagram_code
 
         Returns:
             Any: 생성되고 저장된 다이어그램 데이터
@@ -215,7 +238,7 @@ class DiagramProcessor:
             complete_prompt = self._build_prompt(user_chat_data, latest_diagram)
 
             # 2. LLM 호출
-            response_content = await self._call_llm(complete_prompt)
+            response_content = await self._call_llm(complete_prompt, diagram_code)
 
             # 3. 응답 파싱
             diagram_data = self._parse_llm_response(response_content)

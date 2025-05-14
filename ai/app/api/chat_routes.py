@@ -1,12 +1,13 @@
 import logging
 
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Header
 from fastapi.responses import StreamingResponse
 
 from app.api.dto.diagram_dto import UserChatRequest
 from app.core.generator.model_generator import ModelGenerator
 from app.core.services.chat_service import ChatService
 from app.core.services.sse_service import SSEService
+from app.infrastructure.http.client.api_client import ApiClient, ApiSpec, GlobalFileList
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO,
@@ -36,13 +37,20 @@ def get_chat_repository() -> ChatRepository:
 def get_sse_service() -> SSEService:
     return SSEService(logger=logger)
 
+def get_model_generator() -> ModelGenerator:
+    return ModelGenerator()
+
+def get_a_http_client():
+    from app.infrastructure.http.client.api_client import ApiClient
+    from app.config.config import settings
+    return ApiClient(settings.A_HTTP_SPRING_BASE_URL)
 
 def get_chat_service(
         diagram_repository: DiagramRepository = Depends(get_diagram_repository),
         chat_repository: ChatRepository = Depends(get_chat_repository),
-        sse_service: SSEService = Depends(get_sse_service)
+        sse_service: SSEService = Depends(get_sse_service),
+        model_generator: ModelGenerator = Depends(get_model_generator),
 ) -> ChatService:
-    model_generator = ModelGenerator()
     return ChatService(
         model_name="openai",
         model_generator=model_generator,
@@ -95,8 +103,10 @@ async def prompt_chat(
         api_id: str,
         user_chat_data: UserChatRequest,
         background_tasks: BackgroundTasks,
+        authorization: str = Header(None),
         chat_service: ChatService = Depends(get_chat_service),
-        sse_service: SSEService = Depends(get_sse_service)
+        sse_service: SSEService = Depends(get_sse_service),
+        api_client: ApiClient = Depends(get_a_http_client)
 ):
     """
     프롬프트를 입력하여 도식화 수정을 요청하거나 설명을 요청합니다.
@@ -122,10 +132,16 @@ async def prompt_chat(
     Returns:
         Dict[str, str]: SSE 연결을 위한 스트림 ID
     """
+    logger.info(f"Authorization 헤더: {authorization}")
     logger.info(f"프롬프트 채팅 요청 시작: project_id={project_id}, api_id={api_id}")
-    logger.debug(f"사용자 채팅 데이터: {user_chat_data}")
+    logger.info(f"사용자 채팅 데이터: {user_chat_data}")
 
     try:
+        api_spec: ApiSpec = await api_client.get_api_spec(api_spec_id=api_id, token=authorization)
+        global_files: GlobalFileList = await api_client.get_project(project_id=project_id, token=authorization)
+        logger.info(f"API Spec: {api_spec}")
+        logger.info(f"Project Data: {global_files}")
+
         # SSE 스트리밍을 위한 응답 큐 생성
         stream_id, response_queue = sse_service.create_stream()
         logger.info(f"SSE 스트림 생성: stream_id={stream_id}")
@@ -137,6 +153,8 @@ async def prompt_chat(
             project_id,
             api_id,
             user_chat_data,
+            api_spec,
+            global_files,
             response_queue
         )
 
@@ -178,8 +196,6 @@ async def connect_sse(
                 if data is None:
                     logger.info(f"SSE 스트림 종료: sse_id={sse_id}")
                     break
-
-                logger.info(f"SSE 데이터 전송: {data[:100]}...")
 
                 # SSE 형식으로 데이터 전송
                 yield f"data: {data}\n\n"
