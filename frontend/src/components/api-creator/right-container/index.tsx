@@ -57,7 +57,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   const [apiResponse, setApiResponse] = useState<ApiResponseData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [apiStatus, setApiStatus] = useState<ApiProcessStateEnumDto>("AI_GENERATED")
-  // 이 줄 제거: const [diagramVersion, setDiagramVersion] = useState<string | null>(null)
 
   // 다이어그램 생성 관련 상태
   const [isCreatingDiagram, setIsCreatingDiagram] = useState<boolean>(false)
@@ -67,12 +66,12 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   // Body 관련 상태
   const [bodyMode, setBodyMode] = useState<"none" | "form-data" | "x-www-form-urlencoded" | "raw" | "binary">("raw")
   const [rawBodyFormat, setRawBodyFormat] = useState<"json" | "text" | "xml" | "javascript" | "html">("json")
-  const [rawBody, setRawBody] = useState<string>('{\n  "key": "value"\n}')
+  const [rawBody, setRawBody] = useState<string>("")
 
-  // 파라미터 상태
-  const [pathParamsJson, setPathParamsJson] = useState<string>('{ "id": "123" }')
-  const [queryParamsJson, setQueryParamsJson] = useState<string>('{ "page": "1", "size": "10" }')
-  const [responseJson, setResponseJson] = useState<string>('{\n  "data": {},\n  "message": "성공"\n}')
+  // 파라미터 상태 - 기본값을 빈 문자열로 변경
+  const [pathParamsJson, setPathParamsJson] = useState<string>("")
+  const [queryParamsJson, setQueryParamsJson] = useState<string>("")
+  const [responseJson, setResponseJson] = useState<string>("")
 
   // API 스펙 목록 조회 함수
   const fetchApiSpecsByProject = useCallback(
@@ -242,17 +241,21 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         setDescription("현재 인증된 사용자의 개인 정보를 조회하는 API")
         setSummary("사용자 정보 조회")
 
-        // 경로 파라미터 예시
+        // 경로 파라미터 예시 - 경로에 {parameter}가 있을 때만 설정
         if (selectedApi.includes("{")) {
           setPathParamsJson('{ "userId": "123" }')
+        } else {
+          setPathParamsJson("")
         }
 
         // GET 메서드는 기본적으로 body가 없음
         if (selectedMethod === "GET") {
           setBodyMode("none")
+          setRawBody("")
           setQueryParamsJson('{ "fields": "name,email,profile" }')
         } else {
           // POST/PUT은 JSON 바디 예시 설정
+          setBodyMode("raw")
           setRawBody('{\n  "name": "홍길동",\n  "email": "user@example.com"\n}')
         }
       } else if (selectedApi.includes("/user/login")) {
@@ -262,6 +265,7 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
       } else if (selectedApi.includes("/user/logout")) {
         setDescription("사용자 로그아웃 API")
         setSummary("로그아웃")
+        setRawBody("")
       } else if (selectedApi.includes("/post/send")) {
         setDescription("게시물 전송 API")
         setSummary("게시물 전송")
@@ -278,6 +282,12 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         // 기본 설정
         setDescription("")
         setSummary(selectedApi.split("/").pop() || "API")
+
+        // 기본값 설정 - 빈 문자열로 초기화
+        setRawBody("")
+        setPathParamsJson("")
+        setQueryParamsJson("")
+        setResponseJson('{\n  "message": "성공"\n}')
       }
 
       // GET 메서드인 경우 body mode를 none으로 설정
@@ -291,7 +301,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
       // 새 API 선택 시 ID 초기화
       setApiSpecVersionId(null)
       setApiStatus("AI_GENERATED") // 기본 상태 설정
-      // 이 줄 제거: setDiagramVersion(null) // 다이어그램 버전 초기화
     }
   }, [selectedApi, selectedMethod])
 
@@ -317,27 +326,43 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         setDescription(foundSpec.description || "")
         setSummary(foundSpec.summary || "")
 
-        // API 상태 설정 - any 타입 제거
+        // API 상태 설정
         const status = foundSpec.apiSpecStatus || ("AI_GENERATED" as ApiProcessStateEnumDto)
         setApiStatus(status)
 
-        // 기타 정보 설정...
+        // requestBody 설정 - null이면 빈 문자열 설정
         if (foundSpec.requestBody) {
           setRawBody(foundSpec.requestBody)
           setBodyMode("raw")
           setRawBodyFormat("json")
+        } else {
+          setRawBody("")
+          if (foundSpec.httpMethod === "GET") {
+            setBodyMode("none")
+          } else {
+            setBodyMode("raw")
+          }
         }
 
+        // pathParameters 설정 - null이면 빈 문자열 설정
         if (foundSpec.pathParameters) {
           setPathParamsJson(foundSpec.pathParameters)
+        } else {
+          setPathParamsJson("")
         }
 
+        // queryParameters 설정 - null이면 빈 문자열 설정
         if (foundSpec.queryParameters) {
           setQueryParamsJson(foundSpec.queryParameters)
+        } else {
+          setQueryParamsJson("")
         }
 
+        // response 설정 - null이면 빈 문자열 설정
         if (foundSpec.response) {
           setResponseJson(foundSpec.response)
+        } else {
+          setResponseJson("")
         }
 
         console.log("기존 API 선택:", foundSpec.apiSpecVersionId, foundSpec.endpoint, "상태:", status)
@@ -354,6 +379,11 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
 
   // JSON 형식 검사 및 포맷팅
   const formatJson = (jsonStr: string, setter: (formatted: string) => void) => {
+    // 빈 문자열이면 처리하지 않음
+    if (!jsonStr.trim()) {
+      return
+    }
+
     try {
       const parsed = JSON.parse(jsonStr)
       setter(JSON.stringify(parsed, null, 2))
@@ -406,7 +436,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         diagramCreationProgress={diagramProgress}
         diagramCreationStep={diagramStep}
         apiStatus={apiStatus}
-        // 이 줄 제거: diagramVersion={diagramVersion}
         handleSaveApi={handleSaveApi}
         handleDeleteApi={handleDeleteApi}
         handleTestApi={handleTestApi}
