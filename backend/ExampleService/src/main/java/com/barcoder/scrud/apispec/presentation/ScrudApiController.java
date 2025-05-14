@@ -2,17 +2,23 @@ package com.barcoder.scrud.apispec.presentation;
 
 
 import com.barcoder.scrud.api.ScrudApiApi;
+import com.barcoder.scrud.apispec.application.dto.in.SearchApiStatusIn;
 import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecStatusIn;
+import com.barcoder.scrud.apispec.application.dto.out.SearchApiStatusOut;
 import com.barcoder.scrud.apispec.application.service.ApiSpecService;
 import com.barcoder.scrud.apispec.domain.enums.ApiSpecStatus;
+import com.barcoder.scrud.model.ApiProcessStateEnumDto;
 import com.barcoder.scrud.model.ApiProcessStateRequest;
 import com.barcoder.scrud.model.ApiProcessStateUpdatedResponse;
+import com.barcoder.scrud.model.ApiSummaryDto;
 import com.barcoder.scrud.model.ApiSummaryPageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,7 +27,6 @@ public class ScrudApiController implements ScrudApiApi {
 
 	private final ApiSpecService apiSpecService;
 	private final ModelMapper modelMapper;
-
 
 
 	/**
@@ -59,11 +64,70 @@ public class ScrudApiController implements ScrudApiApi {
 	 * parameter에 API의 상태(AI_GENERATED 등) 을 검색할 수 있습니다.  수정된 날자순으로 정렬되어 출력됩니다.
 	 *
 	 * @param projectId 프로젝트 ID (required)
-	 * @param include   포함 (optional)
+	 * @param include   포함, 배열 지원 (optional)
 	 * @return ApiSummaryPageResponse API 상태가 AI_VISUALIZED 인 목록 조회 성공 (status code 200)
 	 */
 	@Override
-	public ResponseEntity<ApiSummaryPageResponse> searchApiStatus(String projectId, String include) {
-		return null;
+	public ResponseEntity<ApiSummaryPageResponse> searchApiStatus(String projectId, List<String> include) {
+
+		// 1. include에 있는 상태를 ApiSpecStatus로 변환
+		List<ApiSpecStatus> apiSpecStatusList = include.stream()
+				.map(status -> modelMapper.map(status, ApiSpecStatus.class))
+				.toList();
+
+		//2. inDto 생성
+		SearchApiStatusIn inDto = SearchApiStatusIn.builder()
+				.scrudProjectId(Long.parseLong(projectId))
+				.apiSpecStatusList(apiSpecStatusList)
+				.build();
+
+		// 3. api spec status로 검색
+		SearchApiStatusOut outDto = apiSpecService.searchApiStatus(inDto);
+
+		// 4. ApiSummaryDto 리스트 변환
+		List<ApiSummaryDto> apiSummaryDtoList = convertApiSpecVersionToApiSummaryDto(outDto);
+
+		// 5. ApiSummaryPageResponse 생성
+		ApiSummaryPageResponse response = assembleApiSummaryResponse(outDto, apiSummaryDtoList);
+
+		return ResponseEntity.ok(response);
+	}
+
+	/**
+	 * ApiSummaryPageResponse를 생성합니다.
+	 *
+	 * @param outDto            SearchApiStatusOut
+	 * @param apiSummaryDtoList ApiSummaryDto 리스트
+	 * @return ApiSummaryPageResponse
+	 */
+	private ApiSummaryPageResponse assembleApiSummaryResponse(SearchApiStatusOut outDto, List<ApiSummaryDto> apiSummaryDtoList) {
+		return ApiSummaryPageResponse.builder()
+				.listSize(outDto.getListSize())
+				.isFirstPage(outDto.isFirstPage())
+				.isLastPage(outDto.isLastPage())
+				.totalPages(outDto.getTotalPages())
+				.totalElements(outDto.getTotalElements())
+				.content(apiSummaryDtoList)
+				.build();
+	}
+
+	/**
+	 * ApiSpecVersionOut 리스트를 ApiSummaryDto 리스트로 변환합니다.
+	 *
+	 * @param outDto ApiSpecVersionOut 리스트
+	 * @return ApiSummaryDto 리스트
+	 */
+	private List<ApiSummaryDto> convertApiSpecVersionToApiSummaryDto(SearchApiStatusOut outDto) {
+		return outDto.getContent().stream()
+				.map(apiSpecVersion -> ApiSummaryDto.builder()
+						.apiId(apiSpecVersion.getApiSpecVersionId().toString())
+						.name(apiSpecVersion.getSummary())
+						.description(apiSpecVersion.getDescription())
+						.method(apiSpecVersion.getHttpMethod().toString())
+						.endpoint(apiSpecVersion.getEndpoint())
+						.status(modelMapper.map(apiSpecVersion.getApiSpecStatus(), ApiProcessStateEnumDto.class))
+						.build()
+				)
+				.toList();
 	}
 }

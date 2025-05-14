@@ -2,14 +2,19 @@ package com.barcoder.scrud.apispec.application.service;
 
 import com.barcoder.scrud.apispec.application.assembler.ApiSpecAssembler;
 import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
+import com.barcoder.scrud.apispec.application.dto.in.SearchApiStatusIn;
 import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecStatusIn;
 import com.barcoder.scrud.apispec.application.dto.in.UpdateApiSpecVersionIn;
 import com.barcoder.scrud.apispec.application.dto.out.ApiSpecVersionOut;
+import com.barcoder.scrud.apispec.application.dto.out.SearchApiStatusOut;
 import com.barcoder.scrud.apispec.domain.entity.ApiSpec;
 import com.barcoder.scrud.apispec.domain.entity.ApiSpecVersion;
 import com.barcoder.scrud.apispec.domain.exception.ApiSpecErrorStatus;
+import com.barcoder.scrud.apispec.domain.query.in.SearchApiStatusQueryIn;
+import com.barcoder.scrud.apispec.domain.query.out.SearchApiStatusQueryOut;
 import com.barcoder.scrud.apispec.infrastructure.jpa.ApiSpecVersionJpaRepository;
 import com.barcoder.scrud.apispec.infrastructure.jpa.ApiSpecJpaRepository;
+import com.barcoder.scrud.apispec.infrastructure.querydsl.ApiSpecQueryDsl;
 import com.barcoder.scrud.global.common.exception.BaseException;
 import com.barcoder.scrud.scrudproject.domain.entity.ScrudProject;
 import com.barcoder.scrud.scrudproject.repository.ScrudProjectRepository;
@@ -30,6 +35,7 @@ public class ApiSpecService {
     private final ApiSpecVersionJpaRepository apiSpecVersionJpaRepository;
     private final ApiSpecJpaRepository apiSpecJpaRepository;
     private final ModelMapper modelMapper;
+    private final ApiSpecQueryDsl apiSpecQuerydsl;
 
     /**
      * 최신 API 스펙 버전 생성
@@ -138,6 +144,16 @@ public class ApiSpecService {
         }
 
         // 3. ApiSpecVersionOut 리스트 생성
+        return convertToApiSpecVersionOut(apiSpecList);
+    }
+
+    /**
+     * ApiSpec entity 리스트를 ApiSpecVersionOut 리스트로 변환합니다.
+     *
+     * @param apiSpecList ApiSpec entity 리스트
+     * @return ApiSpecVersionOut 리스트
+     */
+    private List<ApiSpecVersionOut> convertToApiSpecVersionOut(List<ApiSpec> apiSpecList) {
         return apiSpecList.stream()
                 .map(apiSpec -> {
                     ApiSpecVersionOut outDto = modelMapper.map(apiSpec.getApiSpecVersion(), ApiSpecVersionOut.class);
@@ -149,6 +165,11 @@ public class ApiSpecService {
                 .toList();
     }
 
+    /**
+     * api spec id로 entity를 조회하고, api spec status를 변경합니다.
+     *
+     * @param inDto the request DTO containing the API specification ID and the new status to be updated
+     */
     public void updateApiSpecStatus(UpdateApiSpecStatusIn inDto) {
         // 1. api spec id로 entity 조회
         ApiSpec apiSpec = apiSpecJpaRepository.findById(inDto.getApiSpecId())
@@ -157,5 +178,30 @@ public class ApiSpecService {
         // 2. api spec status 변경
         apiSpec.updateApiSpecStatus(inDto.getApiSpecStatus());
 
+    }
+
+    /**
+     * api spec status로 검색합니다.
+     *
+     * @param inDto the request DTO containing the search criteria
+     */
+    public SearchApiStatusOut searchApiStatus(SearchApiStatusIn inDto) {
+
+        // 1. inQeury 생성
+        SearchApiStatusQueryIn queryIn = modelMapper.map(inDto, SearchApiStatusQueryIn.class);
+
+        // 2. api spec status로 검색
+        SearchApiStatusQueryOut queryOut = apiSpecQuerydsl.searchApiStatus(queryIn);
+
+        // 3. ApiSpecVersionOut 리스트 생성
+        List<ApiSpecVersionOut> apiSpecVersionOutList = convertToApiSpecVersionOut(queryOut.getContent());
+
+        // 3. api spec status로 검색한 결과를 outDto로 변환
+        SearchApiStatusOut outDto = modelMapper.map(queryOut.getMetadata(), SearchApiStatusOut.class).toBuilder()
+                .content(apiSpecVersionOutList)
+                .build();
+
+        // 4. 결과 반환
+        return outDto;
     }
 }
