@@ -19,7 +19,7 @@ interface ApiListItem {
   description?: string
 }
 
-// 버전 정보 타입 정의 - 수정: 모든 속성이 옵셔널하지 않도록 변경
+// 버전 정보 타입 정의
 interface VersionInfo {
   versionId: string
   description: string
@@ -65,11 +65,18 @@ export default function CanvasPage() {
     fetchChatData()
   }, [projectId, apiId])
 
-  // 채팅 데이터에서 버전 정보 추출 후 다이어그램 데이터 가져오기
+  // 채팅 데이터에서 버전 정보 추출
   useEffect(() => {
     if (chatData && chatData.content) {
       // 채팅 내역에서 버전 정보 추출
       const extractedVersions: VersionInfo[] = []
+
+      // 버전 1은 항상 기본으로 추가 (채팅 내역에 없더라도)
+      extractedVersions.push({
+        versionId: "1",
+        description: "초기 버전",
+        timestamp: new Date().toISOString(),
+      })
 
       chatData.content.forEach((item) => {
         if (item.systemChat?.versionInfo) {
@@ -79,7 +86,7 @@ export default function CanvasPage() {
           const versionId = newVersionId || ""
           const versionDesc = description || "버전 설명 없음"
 
-          // 중복 버전 체크
+          // 중복 버전 체크 (버전 1은 이미 추가했으므로 중복 체크)
           if (versionId && !extractedVersions.some((v) => v.versionId === versionId)) {
             extractedVersions.push({
               versionId: versionId,
@@ -90,23 +97,24 @@ export default function CanvasPage() {
         }
       })
 
-      // 시간순으로 정렬 (최신 버전이 앞에 오도록)
-      extractedVersions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      // 버전 ID를 숫자로 변환하여 오름차순 정렬 (1, 2, 3, ...)
+      extractedVersions.sort((a, b) => {
+        const aNum = Number.parseInt(a.versionId, 10) || 0
+        const bNum = Number.parseInt(b.versionId, 10) || 0
+        return aNum - bNum
+      })
 
       setVersions(extractedVersions)
 
-      // URL에서 버전 파라미터가 없는 경우 처리
-      if (!versionParam) {
-        let defaultVersion = "1" // 기본값
-
-        // 채팅 내역이 있으면 가장 최신 버전(첫 번째 항목) 선택
-        if (extractedVersions.length > 0) {
-          defaultVersion = extractedVersions[0].versionId
-        }
-
-        // 상태 업데이트 및 URL 쿼리 파라미터 설정
-        setSelectedVersion(defaultVersion)
-        router.push(`/canvas/${projectId}/${apiId}?version=${defaultVersion}`, { scroll: false })
+      // URL에서 버전 파라미터가 있는 경우 해당 버전 선택
+      if (versionParam) {
+        setSelectedVersion(versionParam)
+      } else if (extractedVersions.length > 0) {
+        // 버전 파라미터가 없고 버전이 있는 경우 가장 최신 버전 선택
+        const latestVersion = extractedVersions[extractedVersions.length - 1]
+        setSelectedVersion(latestVersion.versionId)
+        // URL 업데이트 (선택적)
+        router.push(`/canvas/${projectId}/${apiId}?version=${latestVersion.versionId}`, { scroll: false })
       }
     }
   }, [chatData, versionParam, projectId, apiId, router])
@@ -129,23 +137,6 @@ export default function CanvasPage() {
 
       setChatData(response.data)
       console.log("채팅 데이터:", response.data)
-
-      // 채팅 데이터에서 시스템 응답의 버전 정보 확인
-      if (response.data && response.data.content) {
-        // 가장 최근의 시스템 응답에서 버전 정보 찾기
-        const latestSystemChat = [...response.data.content].reverse().find((item) => item.systemChat?.versionInfo)
-
-        if (latestSystemChat?.systemChat?.versionInfo) {
-          const newVersionId = latestSystemChat.systemChat.versionInfo.newVersionId
-
-          // 현재 URL의 버전과 다르면 URL 업데이트
-          if (newVersionId && newVersionId !== versionParam) {
-            console.log(`새로운 버전 감지: ${newVersionId}, URL 업데이트`)
-            setSelectedVersion(newVersionId)
-            router.push(`/canvas/${projectId}/${apiId}?version=${newVersionId}`, { scroll: false })
-          }
-        }
-      }
     } catch (err) {
       console.error("채팅 데이터 가져오기 오류:", err)
 
@@ -295,7 +286,10 @@ export default function CanvasPage() {
   // 모든 데이터를 새로고침하는 함수
   const refreshAllData = async () => {
     await fetchChatData()
-    // 다이어그램 데이터는 채팅 데이터 로드 후 자동으로 갱신됨
+    // 선택된 버전이 있으면 다이어그램 데이터도 새로고침
+    if (selectedVersion) {
+      await fetchDiagramData(selectedVersion)
+    }
   }
 
   // 버전 선택 핸들러 - 채팅 컴포넌트에서 호출됨
@@ -336,7 +330,7 @@ export default function CanvasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2 relative">
+    <div className=" bg-blue-50 p-2 relative">
       {/* 슬라이드 패널을 위한 트리거 영역 */}
       <div className="absolute left-0 top-0 bottom-0 w-6 z-10 cursor-pointer hover:bg-gray-200 hover:bg-opacity-50 transition-colors" onMouseEnter={handleMouseEnter} />
 
@@ -403,47 +397,8 @@ export default function CanvasPage() {
       </div>
 
       <div className="max-w-full mx-auto">
-        <div className="flex justify-between items-center mb-2">
-          <h1 className="text-2xl font-bold text-gray-800">다이어그램 캔버스</h1>
-
-          <div className="flex items-center gap-2">
-            {/* 현재 선택된 버전 표시 */}
-            {selectedVersion && <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-sm">현재 버전: {selectedVersion}</div>}
-
-            {/* 새로고침 버튼 */}
-            <button onClick={refreshAllData} className="px-4 py-2 bg-blue-500 text-white font-medium rounded hover:bg-blue-600 transition-colors" disabled={loading || chatLoading}>
-              {loading || chatLoading ? "로딩 중..." : "새로고침"}
-            </button>
-
-            {/* API 완료 버튼 */}
-            <button onClick={completeApi} className="px-4 py-2 bg-purple-500 text-white font-medium rounded hover:bg-purple-600 transition-colors">
-              API Complete
-            </button>
-          </div>
-        </div>
-
-        {/* 버전 선택 버튼 그룹 */}
-        {versions.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-sm font-medium text-gray-700 mb-2">버전 선택:</h2>
-            <div className="flex flex-wrap gap-2">
-              {versions.map((version) => (
-                <button
-                  key={version.versionId}
-                  onClick={() => handleVersionSelect(version.versionId)}
-                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedVersion === version.versionId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-800 hover:bg-gray-200"}`}
-                  title={version.description}
-                >
-                  버전 {version.versionId}
-                  <span className="ml-2 text-xs opacity-80">{new Date(version.timestamp).toLocaleDateString()}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* 3단 레이아웃 - 비율 30:70 */}
-        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-12rem)] overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-5rem)] overflow-hidden">
           {/* 왼쪽 섹션 (비율 30%) - 채팅 데이터 전달 */}
           <div className="w-full md:w-[30%] min-w-0 h-full">
             <div className="h-full">
@@ -465,7 +420,28 @@ export default function CanvasPage() {
           {/* 오른쪽 섹션 (비율 70%) - 다이어그램 데이터 전달 */}
           <div className="w-full md:w-[70%] min-w-0 h-full" id="diagram-container">
             <div className="h-full w-full">
-              <DiagramContainer diagramData={diagramData} loading={loading} error={error} onSelectionChange={handleTargetNodesChange} selectedVersion={selectedVersion} />
+              {loading ? (
+                <div className="h-full p-4 bg-white rounded-lg shadow flex justify-center items-center">
+                  <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+                </div>
+              ) : error ? (
+                <div className="h-full p-4 bg-white rounded-lg shadow flex justify-center items-center">
+                  <div className="p-4 bg-red-50 text-red-600 rounded-lg border-l-4 border-red-500">
+                    <h3 className="font-semibold mb-2">오류 발생</h3>
+                    <p>{error}</p>
+                  </div>
+                </div>
+              ) : (
+                <DiagramContainer
+                  diagramData={diagramData}
+                  loading={false}
+                  error={null}
+                  onSelectionChange={handleTargetNodesChange}
+                  selectedVersion={selectedVersion}
+                  versions={versions}
+                  onVersionSelect={handleVersionSelect}
+                />
+              )}
             </div>
           </div>
         </div>

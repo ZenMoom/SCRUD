@@ -52,7 +52,7 @@ export default function Header() {
   }, [showDevMenu, showProfileMenu])
 
   return (
-    <header className="sticky top-0 w-full h-[70px] bg-white z-50 ">
+    <header className="sticky top-0 w-full h-[60px] bg-blue-50 z-50 ">
       <div className="flex items-center justify-between h-full w-full px-[5%]">
         {/* 로고 영역 */}
         <div className="flex items-center ml-4">

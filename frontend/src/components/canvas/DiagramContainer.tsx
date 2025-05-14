@@ -76,6 +76,8 @@ type DiagramContainerProps = {
   error: string | null
   onSelectionChange?: (targets: TargetNode[]) => void
   selectedVersion?: string | null // 선택된 버전 ID 추가
+  versions?: VersionInfo[] // 사용 가능한 버전 목록 추가
+  onVersionSelect?: (versionId: string) => void // 버전 선택 콜백 추가
 }
 
 // 타입 가드 함수들
@@ -129,7 +131,7 @@ function isDiagramDto(data: unknown): data is DiagramDto {
 }
 
 // 명시적으로 React.ReactElement 반환 타입 지정
-export default function DiagramContainer({ diagramData, loading, error, onSelectionChange, selectedVersion }: DiagramContainerProps): React.ReactElement {
+export default function DiagramContainer({ diagramData, loading, error, onSelectionChange, selectedVersion, versions = [], onVersionSelect }: DiagramContainerProps): React.ReactElement {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
@@ -169,6 +171,14 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     if (isString(version)) return version
     return "1"
   })()
+
+  // 사용 가능한 버전 목록 업데이트
+  useEffect(() => {
+    if (versions && versions.length > 0) {
+      // 부모 컴포넌트에서 전달받은 모든 버전을 그대로 사용
+      setAvailableVersions(versions)
+    }
+  }, [versions])
 
   // 현재 버전 정보 업데이트
   useEffect(() => {
@@ -287,6 +297,10 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
       const updatedPositions: Record<string, { x: number; y: number }> = { ...savedPositions }
       const newNodeRelationMap: NodeRelationMap = {}
 
+      // 중복 노드 ID 추적을 위한 Set
+      const processedComponentIds = new Set<string>()
+      const processedMethodIds = new Set<string>()
+
       // 각 컴포넌트(클래스/인터페이스)에 대해 처리
       components.forEach((component, componentIndex) => {
         if (!isComponentDto(component)) return
@@ -294,7 +308,13 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         const componentId = component.componentId
         if (!componentId) return // componentId가 없으면 처리하지 않음
 
+        // 중복 컴포넌트 ID 체크
         const componentNodeId = `component-${componentId}`
+        if (processedComponentIds.has(componentNodeId)) {
+          console.warn(`중복된 컴포넌트 ID 감지: ${componentNodeId}. 이 컴포넌트는 건너뜁니다.`)
+          return
+        }
+        processedComponentIds.add(componentNodeId)
 
         // 노드 관계 맵 초기화
         newNodeRelationMap[componentNodeId] = {
@@ -324,6 +344,15 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
             if (!methodId) return
 
             const methodNodeId = `method-${methodId}`
+
+            // 중복 메서드 ID 체크 (같은 컴포넌트 내에서만)
+            const uniqueMethodId = `${componentNodeId}-${methodNodeId}`
+            if (processedMethodIds.has(uniqueMethodId)) {
+              console.warn(`중복된 메서드 ID 감지: ${methodNodeId} in ${componentNodeId}. 이 메서드는 건너뜁니다.`)
+              return
+            }
+            processedMethodIds.add(uniqueMethodId)
+
             methodIdToNodeId[methodId] = methodNodeId
 
             // 부모-자식 관계 설정
@@ -358,6 +387,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
                 isExpanded,
                 name: method.signature.split("(")[0].trim(), // 메서드 이름 추출
                 isTargeted, // 타겟 노드 여부 전달
+                showCheckIcon: isTargeted, // 체크 아이콘 표시 여부
               },
               parentNode: componentNodeId,
               extent: "parent",
@@ -385,6 +415,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
             backgroundColor,
             name: component.name,
             isTargeted, // 타겟 노드 여부 전달
+            showCheckIcon: isTargeted, // 체크 아이콘 표시 여부
           },
           style: {
             width: CLASS_WIDTH, // 넓이 증가
@@ -428,8 +459,20 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     // 컴포넌트 배열 필터링 (유효한 컴포넌트만 사용)
     const validComponents = diagramData.components.filter(isComponentDto)
 
+    // 중복 컴포넌트 제거 (componentId 기준)
+    const uniqueComponents = validComponents.reduce<ComponentDto[]>((acc, component) => {
+      if (!acc.some((c) => c.componentId === component.componentId)) {
+        acc.push(component)
+      } else {
+        console.warn(`중복된 컴포넌트 ID 감지: ${component.componentId}. 첫 번째 발견된 컴포넌트만 사용합니다.`)
+      }
+      return acc
+    }, [])
+
+    console.log(`총 ${validComponents.length}개의 컴포넌트 중 ${uniqueComponents.length}개의 고유 컴포넌트 처리`)
+
     // 노드 레이아웃 계산 (초기 위치 전달)
-    const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(validComponents, expandedNodes, initialNodePositions)
+    const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(uniqueComponents, expandedNodes, initialNodePositions)
 
     // 초기 위치가 비어있는 경우에만 업데이트 (첫 렌더링 시에만)
     if (Object.keys(initialNodePositions).length === 0) {
@@ -442,7 +485,17 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
       // 유효한 연결만 필터링
       const validConnections = diagramData.connections.filter(isConnectionDto)
 
+      // 중복 연결 제거
+      const processedConnectionIds = new Set<string>()
+
       validConnections.forEach((connection) => {
+        // 연결 ID가 이미 처리되었는지 확인
+        if (processedConnectionIds.has(connection.connectionId)) {
+          console.warn(`중복된 연결 ID 감지: ${connection.connectionId}. 이 연결은 건너뜁니다.`)
+          return
+        }
+        processedConnectionIds.add(connection.connectionId)
+
         // sourceMethodId와 targetMethodId가 있는지 확인
         if (!connection.sourceMethodId || !connection.targetMethodId) return
 
@@ -481,22 +534,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
       }
 
       setCurrentVersionInfo(currentVersionInfo)
-
-      // 사용 가능한 버전 목록 생성 (현재 버전 기준으로 -2부터 +2까지, 단 최소값은 1)
-      const versionList: VersionInfo[] = []
-      const currentVersionNum = Number.parseInt(currentVersionInfo.versionId, 10) || 1
-      const minVersion = Math.max(1, currentVersionNum - 2)
-      const maxVersion = currentVersionNum + 2
-
-      for (let i = minVersion; i <= maxVersion; i++) {
-        versionList.push({
-          versionId: i.toString(),
-          description: i === currentVersionNum ? currentVersionInfo.description : `버전 ${i}`,
-          timestamp: i === currentVersionNum ? currentVersionInfo.timestamp : undefined,
-        })
-      }
-
-      setAvailableVersions(versionList)
     }
   }, [diagramData, expandedNodes, calculateLayout, setNodes, setEdges, initialNodePositions, targetNodes])
 
@@ -600,6 +637,17 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     }
   }, [targetNodes, onSelectionChange])
 
+  // 버전 선택 핸들러
+  const handleVersionSelect = useCallback(
+    (versionId: string) => {
+      if (onVersionSelect) {
+        onVersionSelect(versionId)
+      }
+      setShowVersions(false)
+    },
+    [onVersionSelect]
+  )
+
   // 로딩 상태 표시
   if (loading) {
     return (
@@ -670,18 +718,63 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
             className="bg-white p-2 rounded-md shadow-md flex items-center gap-2"
           >
             {isNodeTargeted(node.id) ? (
-              <button onClick={() => removeTargetNode(node.id)} className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors">
+              <button onClick={() => removeTargetNode(node.id)} className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors">
                 <X size={14} />
                 <span>타겟 해제</span>
               </button>
             ) : (
-              <button onClick={() => addTargetNode(node)} className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors">
+              <button onClick={() => addTargetNode(node)} className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors">
                 <Target size={14} />
                 <span>타겟 추가</span>
               </button>
             )}
           </NodeToolbar>
         ))}
+
+        {/* 선택된 타겟 표시 패널 */}
+        <Panel position="top-left" className="ml-4 mt-4">
+          <div className="bg-white px-4 py-3 rounded-md shadow-md">
+            <div className="flex flex-wrap gap-2">
+              {targetNodes.length > 0 ? (
+                targetNodes.map((target) => (
+                  <div key={target.id} className="relative group">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs max-w-[150px] overflow-hidden">
+                      <span className="truncate">
+                        {target.type === "class" && "클래스: "}
+                        {target.type === "interface" && "인터페이스: "}
+                        {target.type === "method" && "메서드: "}
+                        {target.name.length > 15 ? target.name.substring(0, 15) + "..." : target.name}
+                      </span>
+                      <button
+                        onClick={() => removeTargetNode(target.id)}
+                        className="ml-1 p-0.5 rounded-full bg-green-200 hover:bg-green-300 transition-colors flex-shrink-0"
+                        aria-label={`${target.name} 타겟 제거`}
+                      >
+                        <X size={12} className="text-green-700" />
+                      </button>
+                    </div>
+
+                    {/* 호버 시 전체 이름 표시 */}
+                    {target.name.length > 15 && (
+                      <div className="absolute left-0 bottom-full mb-1 z-10 bg-white p-2 rounded shadow-md text-xs max-w-[300px] break-words hidden group-hover:block">
+                        <span className="font-medium">
+                          {target.type === "class" && "클래스: "}
+                          {target.type === "interface" && "인터페이스: "}
+                          {target.type === "method" && "메서드: "}
+                        </span>
+                        <span>{target.name}</span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  <span>전체 API</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </Panel>
 
         {/* API 경로 표시 (오른쪽 상단) */}
         <Panel position="top-right" className="mr-4 mt-4">
@@ -701,12 +794,16 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
               <ChevronDown size={16} className={`text-gray-600 transition-transform ${showVersions ? "rotate-180" : ""}`} />
             </button>
 
-            {/* 버전 드롭다운 */}
+            {/* 버전 드롭다운 - 버전 1부터 최신 버전까지 순서대로 표시 */}
             {showVersions && availableVersions.length > 0 && (
               <div className="absolute right-0 mt-1 w-64 bg-white rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
                 <div className="py-1">
                   {availableVersions.map((version) => (
-                    <div key={`version-${version.versionId}`} className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${version.versionId === currentVersion ? "bg-blue-50" : ""}`}>
+                    <div
+                      key={`version-${version.versionId}`}
+                      className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${version.versionId === currentVersion ? "bg-blue-50" : ""}`}
+                      onClick={() => handleVersionSelect(version.versionId)}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                           <span className={`text-sm ${version.versionId === currentVersion ? "font-medium text-blue-700" : "text-gray-700"}`}>버전 {version.versionId}</span>
@@ -723,6 +820,14 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
                 </div>
               </div>
             )}
+          </div>
+        </Panel>
+
+        {/* 디버그 정보 패널 */}
+        <Panel position="bottom-left" className="ml-4 mb-72">
+          <div className="bg-white p-2 rounded-md shadow-md text-xs">
+            <div>노드 수: {nodes.length}</div>
+            <div>엣지 수: {edges.length}</div>
           </div>
         </Panel>
 
