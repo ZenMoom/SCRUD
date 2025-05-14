@@ -64,7 +64,7 @@ const BodyTab: React.FC<BodyTabProps> = ({ bodyMode, setBodyMode, method, rawBod
               </select>
             </div>
 
-            {rawBodyFormat === "json" && (
+            {rawBodyFormat === "json" && rawBody.trim() && (
               <button className="px-2 py-1 text-sm border rounded hover:bg-gray-100" onClick={() => formatJson(rawBody, setRawBody)}>
                 Format JSON
               </button>
@@ -75,7 +75,6 @@ const BodyTab: React.FC<BodyTabProps> = ({ bodyMode, setBodyMode, method, rawBod
             className="w-full border rounded px-2 py-1 font-mono text-sm"
             value={rawBody}
             onChange={(e) => setRawBody(e.target.value)}
-            placeholder={rawBodyFormat === "json" ? "{ ... }" : rawBodyFormat === "xml" ? "<root>...</root>" : "Enter your request body here"}
             disabled={method === "GET"} // GET 메서드는 body가 없음
             style={{ height: "180px" }}
           />
@@ -100,7 +99,6 @@ const BodyTab: React.FC<BodyTabProps> = ({ bodyMode, setBodyMode, method, rawBod
                   newParams[index].key = e.target.value
                   setBodyParams(newParams)
                 }}
-                placeholder="Key"
               />
               <input
                 className="col-span-6 border rounded px-3 py-2"
@@ -110,7 +108,6 @@ const BodyTab: React.FC<BodyTabProps> = ({ bodyMode, setBodyMode, method, rawBod
                   newParams[index].value = e.target.value
                   setBodyParams(newParams)
                 }}
-                placeholder="Value"
               />
               <button
                 className="col-span-1 text-red-500 hover:text-red-700"

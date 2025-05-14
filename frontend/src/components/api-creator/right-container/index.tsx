@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import axios from "axios"
+import useAuthStore from "@/app/store/useAuthStore"
 import { useRouter } from "next/navigation"
-import type { DiagramResponse } from "@generated/model"
+import type { DiagramResponse, ApiSpecVersionResponse } from "@generated/model"
 
 // 컴포넌트 임포트
 import ApiHeader from "./ApiHeader"
@@ -35,6 +36,9 @@ interface RightContainerProps {
 export default function RightContainer({ selectedApi, selectedMethod, scrudProjectId, onApiSpecChanged }: RightContainerProps) {
   console.log("RightContainer 렌더링 - 받은 scrudProjectId:", scrudProjectId)
 
+  // useAuthStore를 컴포넌트 최상위 레벨에서 호출
+  const { token } = useAuthStore()
+
   // 라우터 추가
   const router = useRouter()
 
@@ -53,7 +57,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   const [apiResponse, setApiResponse] = useState<ApiResponseData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [apiStatus, setApiStatus] = useState<ApiProcessStateEnumDto>("AI_GENERATED")
-  // 이 줄 제거: const [diagramVersion, setDiagramVersion] = useState<string | null>(null)
 
   // 다이어그램 생성 관련 상태
   const [isCreatingDiagram, setIsCreatingDiagram] = useState<boolean>(false)
@@ -63,34 +66,41 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   // Body 관련 상태
   const [bodyMode, setBodyMode] = useState<"none" | "form-data" | "x-www-form-urlencoded" | "raw" | "binary">("raw")
   const [rawBodyFormat, setRawBodyFormat] = useState<"json" | "text" | "xml" | "javascript" | "html">("json")
-  const [rawBody, setRawBody] = useState<string>('{\n  "key": "value"\n}')
+  const [rawBody, setRawBody] = useState<string>("")
 
-  // 파라미터 상태
-  const [pathParamsJson, setPathParamsJson] = useState<string>('{ "id": "123" }')
-  const [queryParamsJson, setQueryParamsJson] = useState<string>('{ "page": "1", "size": "10" }')
-  const [responseJson, setResponseJson] = useState<string>('{\n  "data": {},\n  "message": "성공"\n}')
+  // 파라미터 상태 - 기본값을 빈 문자열로 변경
+  const [pathParamsJson, setPathParamsJson] = useState<string>("")
+  const [queryParamsJson, setQueryParamsJson] = useState<string>("")
+  const [responseJson, setResponseJson] = useState<string>("")
 
   // API 스펙 목록 조회 함수
-  const fetchApiSpecsByProject = useCallback(async (projectId: number): Promise<ExtendedApiSpecVersionResponse[]> => {
-    console.log("fetchApiSpecsByProject 호출됨 - projectId:", projectId)
-    setIsLoading(true)
-    try {
-      // 백엔드에서 API 스펙 목록 조회
-      const response = await axios.get<{ content: ExtendedApiSpecVersionResponse[] }>(`/api/api-specs/by-project/${projectId}`)
+  const fetchApiSpecsByProject = useCallback(
+    async (projectId: number): Promise<ApiSpecVersionResponse[]> => {
+      console.log("fetchApiSpecsByProject 호출됨 - projectId:", projectId)
+      setIsLoading(true)
+      try {
+        // 백엔드에서 API 스펙 목록 조회 - 토큰을 콜백 밖에서 가져온 것 사용
+        const response = await axios.get<{ content: ApiSpecVersionResponse[] }>(`/api/api-specs/by-project/${projectId}`, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        })
 
-      // 응답 처리
-      const specsList = response.data.content || []
-      console.log(`프로젝트 ${projectId}의 API 스펙 목록:`, specsList)
-      setApiSpecsList(specsList)
+        // 응답 처리
+        const specsList = response.data.content || []
+        console.log(`프로젝트 ${projectId}의 API 스펙 목록:`, specsList)
+        setApiSpecsList(specsList)
 
-      return specsList
-    } catch (error) {
-      console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
-      return []
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+        return specsList
+      } catch (error) {
+        console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
+        return []
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [token]
+  )
 
   // 다이어그램 생성 진행 시뮬레이션
   useEffect(() => {
@@ -231,17 +241,21 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         setDescription("현재 인증된 사용자의 개인 정보를 조회하는 API")
         setSummary("사용자 정보 조회")
 
-        // 경로 파라미터 예시
+        // 경로 파라미터 예시 - 경로에 {parameter}가 있을 때만 설정
         if (selectedApi.includes("{")) {
           setPathParamsJson('{ "userId": "123" }')
+        } else {
+          setPathParamsJson("")
         }
 
         // GET 메서드는 기본적으로 body가 없음
         if (selectedMethod === "GET") {
           setBodyMode("none")
+          setRawBody("")
           setQueryParamsJson('{ "fields": "name,email,profile" }')
         } else {
           // POST/PUT은 JSON 바디 예시 설정
+          setBodyMode("raw")
           setRawBody('{\n  "name": "홍길동",\n  "email": "user@example.com"\n}')
         }
       } else if (selectedApi.includes("/user/login")) {
@@ -251,6 +265,7 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
       } else if (selectedApi.includes("/user/logout")) {
         setDescription("사용자 로그아웃 API")
         setSummary("로그아웃")
+        setRawBody("")
       } else if (selectedApi.includes("/post/send")) {
         setDescription("게시물 전송 API")
         setSummary("게시물 전송")
@@ -267,6 +282,12 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         // 기본 설정
         setDescription("")
         setSummary(selectedApi.split("/").pop() || "API")
+
+        // 기본값 설정 - 빈 문자열로 초기화
+        setRawBody("")
+        setPathParamsJson("")
+        setQueryParamsJson("")
+        setResponseJson('{\n  "message": "성공"\n}')
       }
 
       // GET 메서드인 경우 body mode를 none으로 설정
@@ -280,7 +301,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
       // 새 API 선택 시 ID 초기화
       setApiSpecVersionId(null)
       setApiStatus("AI_GENERATED") // 기본 상태 설정
-      // 이 줄 제거: setDiagramVersion(null) // 다이어그램 버전 초기화
     }
   }, [selectedApi, selectedMethod])
 
@@ -306,27 +326,43 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         setDescription(foundSpec.description || "")
         setSummary(foundSpec.summary || "")
 
-        // API 상태 설정 - any 타입 제거
+        // API 상태 설정
         const status = foundSpec.apiSpecStatus || ("AI_GENERATED" as ApiProcessStateEnumDto)
         setApiStatus(status)
 
-        // 기타 정보 설정...
+        // requestBody 설정 - null이면 빈 문자열 설정
         if (foundSpec.requestBody) {
           setRawBody(foundSpec.requestBody)
           setBodyMode("raw")
           setRawBodyFormat("json")
+        } else {
+          setRawBody("")
+          if (foundSpec.httpMethod === "GET") {
+            setBodyMode("none")
+          } else {
+            setBodyMode("raw")
+          }
         }
 
+        // pathParameters 설정 - null이면 빈 문자열 설정
         if (foundSpec.pathParameters) {
           setPathParamsJson(foundSpec.pathParameters)
+        } else {
+          setPathParamsJson("")
         }
 
+        // queryParameters 설정 - null이면 빈 문자열 설정
         if (foundSpec.queryParameters) {
           setQueryParamsJson(foundSpec.queryParameters)
+        } else {
+          setQueryParamsJson("")
         }
 
+        // response 설정 - null이면 빈 문자열 설정
         if (foundSpec.response) {
           setResponseJson(foundSpec.response)
+        } else {
+          setResponseJson("")
         }
 
         console.log("기존 API 선택:", foundSpec.apiSpecVersionId, foundSpec.endpoint, "상태:", status)
@@ -343,6 +379,11 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
 
   // JSON 형식 검사 및 포맷팅
   const formatJson = (jsonStr: string, setter: (formatted: string) => void) => {
+    // 빈 문자열이면 처리하지 않음
+    if (!jsonStr.trim()) {
+      return
+    }
+
     try {
       const parsed = JSON.parse(jsonStr)
       setter(JSON.stringify(parsed, null, 2))
@@ -395,7 +436,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         diagramCreationProgress={diagramProgress}
         diagramCreationStep={diagramStep}
         apiStatus={apiStatus}
-        // 이 줄 제거: diagramVersion={diagramVersion}
         handleSaveApi={handleSaveApi}
         handleDeleteApi={handleDeleteApi}
         handleTestApi={handleTestApi}
