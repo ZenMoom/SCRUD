@@ -6,11 +6,11 @@ from pydantic import RootModel
 
 # api model
 class ApiModel(BaseModel):
-    summary: str
-    endpoint: str
-    response: str
-    description: str
-    httpMethod: str
+    summary: Optional[str] = None
+    endpoint: Optional[str] = None
+    response: Optional[str] = None
+    description: Optional[str] = None
+    httpMethod: Optional[str] = None
     requestBody: Optional[str] = None
     queryParameters: Optional[str] = None
     pathParameters: Optional[str] = None

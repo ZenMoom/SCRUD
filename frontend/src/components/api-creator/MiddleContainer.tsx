@@ -4,6 +4,7 @@ import { ApiProcessStateEnumDto } from "@generated/model"
 import axios from "axios"
 import { useState, useRef, useEffect } from "react"
 import useAuthStore from "@/app/store/useAuthStore"
+import useApiStore from "@/app/store/useApiStore" // 추가: useApiStore import
 import EmojiPicker from "@/components/project-card/emoji-picker"
 
 interface ApiEndpoint {
@@ -17,23 +18,31 @@ interface ApiEndpoint {
 interface ApiGroup {
   id: string
   name: string
-  emoji?: string // 옵셔널 필드로 정의 (DB에 저장되지 않을 수 있음)
+  emoji?: string
   endpoints: ApiEndpoint[]
 }
 
 interface MiddleContainerProps {
   onApiSelect: (apiPath: string, apiMethod: string) => void
-  apiGroups: ApiGroup[]
-  setApiGroups: React.Dispatch<React.SetStateAction<ApiGroup[]>>
-  isLoading: boolean
+  // apiGroups 및 setApiGroups prop를 제거하고 store에서 관리
+  // apiGroups: ApiGroup[]
+  // setApiGroups: React.Dispatch<React.SetStateAction<ApiGroup[]>>
+  // isLoading: boolean
   scrudProjectId: number
 }
 
-export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading, scrudProjectId }: MiddleContainerProps) {
+export default function MiddleContainer({ onApiSelect, scrudProjectId }: MiddleContainerProps) {
   console.log("MiddleContainer 렌더링 - scrudProjectId:", scrudProjectId)
 
   // useAuthStore에서 토큰 가져오기
   const { token } = useAuthStore()
+
+  // useApiStore에서 상태 및 액션 가져오기
+  const apiGroups: ApiGroup[] = useApiStore((state) => state.apiGroups[scrudProjectId] || [])
+  const isLoading = useApiStore((state) => state.isLoading)
+  const fetchApiSpecs = useApiStore((state) => state.fetchApiSpecs)
+  const updateApiGroups = useApiStore((state) => state.updateApiGroups)
+  const updateEndpointStatus = useApiStore((state) => state.updateEndpointStatus)
 
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null)
   const [editingEndpointId, setEditingEndpointId] = useState<string | null>(null)
@@ -43,6 +52,14 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
   // 엔드포인트 편집 시 인풋 참조
   const editInputRef = useRef<HTMLInputElement>(null)
+
+  // 컴포넌트 마운트 시 API 데이터 로드
+  useEffect(() => {
+    if (scrudProjectId && token) {
+      // fetchApiSpecs 함수는 내부적으로 캐시 유효성을 검사함
+      fetchApiSpecs(scrudProjectId, token)
+    }
+  }, [scrudProjectId, token, fetchApiSpecs])
 
   // 랜덤 이모지 선택 함수 - 간단한 배열에서 선택
   const getRandomEmoji = () => {
@@ -54,7 +71,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   const addApiGroup = () => {
     console.log("그룹 추가 - 현재 프로젝트:", scrudProjectId)
     const newGroupId = `group-${Date.now()}`
-    setApiGroups([
+    const newGroups = [
       ...apiGroups,
       {
         id: newGroupId,
@@ -62,7 +79,8 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         emoji: getRandomEmoji(), // 랜덤 이모지 할당
         endpoints: [],
       },
-    ])
+    ]
+    updateApiGroups(scrudProjectId, newGroups)
     setEditingGroupId(newGroupId)
     setNewGroupName("api/v1/new")
   }
@@ -83,18 +101,17 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       status: "AI_GENERATED" as ApiProcessStateEnumDto,
     }
 
-    setApiGroups(
-      apiGroups.map((group) => {
-        if (group.id === groupId) {
-          return {
-            ...group,
-            endpoints: [...group.endpoints, newEndpoint],
-          }
+    const newGroups = apiGroups.map((group) => {
+      if (group.id === groupId) {
+        return {
+          ...group,
+          endpoints: [...group.endpoints, newEndpoint],
         }
-        return group
-      })
-    )
+      }
+      return group
+    })
 
+    updateApiGroups(scrudProjectId, newGroups)
     setEditingEndpointId(newEndpointId)
     setNewEndpointPath(`${basePath}/new`)
   }
@@ -102,7 +119,8 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   // API 그룹 삭제 함수
   const deleteApiGroup = (groupId: string) => {
     if (confirm("이 API 그룹을 삭제하시겠습니까?")) {
-      setApiGroups(apiGroups.filter((group) => group.id !== groupId))
+      const newGroups = apiGroups.filter((group) => group.id !== groupId)
+      updateApiGroups(scrudProjectId, newGroups)
     }
   }
 
@@ -120,7 +138,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         return group
       })
 
-      setApiGroups(updatedGroups)
+      updateApiGroups(scrudProjectId, updatedGroups)
       setEditingEndpointId(null) // 편집 상태 초기화
 
       console.log("엔드포인트 삭제됨:", endpointId, "프로젝트:", scrudProjectId) // 디버깅용 로그
@@ -146,17 +164,16 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
   // API 그룹 이모지 업데이트
   const updateGroupEmoji = (groupId: string, emoji: string) => {
-    setApiGroups(
-      apiGroups.map((group) => {
-        if (group.id === groupId) {
-          return {
-            ...group,
-            emoji: emoji,
-          }
+    const newGroups = apiGroups.map((group) => {
+      if (group.id === groupId) {
+        return {
+          ...group,
+          emoji: emoji,
         }
-        return group
-      })
-    )
+      }
+      return group
+    })
+    updateApiGroups(scrudProjectId, newGroups)
     setEditingEmoji(null)
   }
 
@@ -189,26 +206,25 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
     console.log("그룹명 저장 - 프로젝트:", scrudProjectId)
 
-    setApiGroups(
-      apiGroups.map((group) => {
-        if (group.id === editingGroupId) {
-          // 그룹 이름 변경 시 하위 엔드포인트 경로도 함께 수정
-          const oldName = group.name
-          const updatedEndpoints = group.endpoints.map((endpoint) => ({
-            ...endpoint,
-            path: endpoint.path.replace(oldName, newGroupName),
-          }))
+    const newGroups = apiGroups.map((group) => {
+      if (group.id === editingGroupId) {
+        // 그룹 이름 변경 시 하위 엔드포인트 경로도 함께 수정
+        const oldName = group.name
+        const updatedEndpoints = group.endpoints.map((endpoint) => ({
+          ...endpoint,
+          path: endpoint.path.replace(oldName, newGroupName),
+        }))
 
-          return {
-            ...group,
-            name: newGroupName,
-            endpoints: updatedEndpoints,
-          }
+        return {
+          ...group,
+          name: newGroupName,
+          endpoints: updatedEndpoints,
         }
-        return group
-      })
-    )
+      }
+      return group
+    })
 
+    updateApiGroups(scrudProjectId, newGroups)
     setEditingGroupId(null)
   }
 
@@ -218,31 +234,30 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
     console.log("엔드포인트 저장 - 프로젝트:", scrudProjectId)
 
-    setApiGroups(
-      apiGroups.map((group) => {
-        if (group.id === groupId) {
-          return {
-            ...group,
-            endpoints: group.endpoints.map((endpoint) => {
-              if (endpoint.id === editingEndpointId) {
-                return {
-                  ...endpoint,
-                  path: newEndpointPath,
-                }
+    const newGroups = apiGroups.map((group) => {
+      if (group.id === groupId) {
+        return {
+          ...group,
+          endpoints: group.endpoints.map((endpoint) => {
+            if (endpoint.id === editingEndpointId) {
+              return {
+                ...endpoint,
+                path: newEndpointPath,
               }
-              return endpoint
-            }),
-          }
+            }
+            return endpoint
+          }),
         }
-        return group
-      })
-    )
+      }
+      return group
+    })
 
+    updateApiGroups(scrudProjectId, newGroups)
     setEditingEndpointId(null)
   }
 
   // API 상태 변경 함수
-  const updateEndpointStatus = async (groupId: string, endpointId: string, status: ApiProcessStateEnumDto, e?: React.MouseEvent) => {
+  const handleUpdateEndpointStatus = async (groupId: string, endpointId: string, status: ApiProcessStateEnumDto, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation() // 상태 변경 시 클릭 이벤트 전파 방지
     }
@@ -268,28 +283,8 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       return
     }
 
-    // 특정 로직을 추가할 자리 (여기에 필요한 로직 추가)
-
-    // 먼저 UI 상태 업데이트 (낙관적 업데이트)
-    setApiGroups(
-      apiGroups.map((group) => {
-        if (group.id === groupId) {
-          return {
-            ...group,
-            endpoints: group.endpoints.map((endpoint) => {
-              if (endpoint.id === endpointId) {
-                return {
-                  ...endpoint,
-                  status,
-                }
-              }
-              return endpoint
-            }),
-          }
-        }
-        return group
-      })
-    )
+    // 먼저 ui 상태 업데이트
+    updateEndpointStatus(scrudProjectId, groupId, endpointId, status)
 
     // API 스펙 상태 업데이트 요청
     try {
@@ -308,25 +303,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       console.error("API 상태 업데이트 중 오류 발생:", error)
 
       // 요청 실패 시 UI 롤백 (원래 상태로 복원)
-      setApiGroups(
-        apiGroups.map((group) => {
-          if (group.id === groupId) {
-            return {
-              ...group,
-              endpoints: group.endpoints.map((ep) => {
-                if (ep.id === endpointId) {
-                  return {
-                    ...ep,
-                    status: endpoint.status, // 원래 상태로 복원
-                  }
-                }
-                return ep
-              }),
-            }
-          }
-          return group
-        })
-      )
+      updateEndpointStatus(scrudProjectId, groupId, endpointId, endpoint.status)
     }
   }
 
@@ -380,10 +357,23 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     }
   }
 
+  // 강제 새로고침 함수 추가
+  const handleRefresh = () => {
+    if (token && scrudProjectId) {
+      fetchApiSpecs(scrudProjectId, token, true) // true를 전달하여 강제 새로고침
+    }
+  }
+
   return (
     <div className="bg-white h-full w-full">
-      <div className="py-4 px-4">
+      <div className="py-4 px-4 flex justify-between items-center">
         <h2 className="text-lg font-bold text-gray-800">API 관리</h2>
+        {/* 새로고침 버튼 추가 */}
+        <button onClick={handleRefresh} className="p-1 rounded-md hover:bg-gray-100 transition-colors" title="API 목록 새로고침">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
       </div>
       <div className="overflow-y-auto overflow-x-hidden" style={{ height: "calc(100vh - 179px)" }}>
         {isLoading ? (
@@ -506,7 +496,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                             <div className="relative inline-block text-left w-24 flex-shrink-0">
                               <select
                                 value={endpoint.status}
-                                onChange={(e) => updateEndpointStatus(group.id, endpoint.id, e.target.value as ApiProcessStateEnumDto)}
+                                onChange={(e) => handleUpdateEndpointStatus(group.id, endpoint.id, e.target.value as ApiProcessStateEnumDto)}
                                 className={`appearance-none text-xs px-2 py-0.5 rounded w-full cursor-pointer focus:outline-none ${getStatusStyle(endpoint.status)} pr-6`}
                                 onClick={(e) => e.stopPropagation()}
                                 disabled={endpoint.status === "AI_GENERATED"} // 생성됨 상태일 때 드롭박스 자체를 비활성화
