@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import axios from "axios"
 import useAuthStore from "@/app/store/useAuthStore"
+import useApiStore from "@/app/store/useApiStore" // useApiStore 추가
 import { useRouter } from "next/navigation"
 import type { DiagramResponse, ApiSpecVersionResponse } from "@generated/model"
 
@@ -39,6 +40,11 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   // useAuthStore를 컴포넌트 최상위 레벨에서 호출
   const { token } = useAuthStore()
 
+  // useApiStore에서 상태 및 액션 가져오기
+  const apiGroups = useApiStore((state) => state.apiGroups[scrudProjectId] || [])
+  const isApiLoading = useApiStore((state) => state.isLoading)
+  const fetchApiSpecs = useApiStore((state) => state.fetchApiSpecs)
+
   // 라우터 추가
   const router = useRouter()
 
@@ -73,25 +79,69 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   const [queryParamsJson, setQueryParamsJson] = useState<string>("")
   const [responseJson, setResponseJson] = useState<string>("")
 
-  // API 스펙 목록 조회 함수
+  // API 스펙 목록을 apiGroups에서 추출하는 함수
+  const extractApiSpecsList = useCallback(() => {
+    // apiGroups가 배열이 아니면 빈 배열 반환
+    if (!Array.isArray(apiGroups)) return []
+
+    // 모든 API 엔드포인트 추출
+    const specs: ExtendedApiSpecVersionResponse[] = []
+
+    apiGroups.forEach((group) => {
+      group.endpoints.forEach((endpoint) => {
+        // 타입 안전한 방식으로 처리
+        if (endpoint.apiSpecVersionId) {
+          specs.push({
+            apiSpecVersionId: endpoint.apiSpecVersionId,
+            endpoint: endpoint.path,
+            httpMethod:
+              endpoint.method === "GET"
+                ? "GET"
+                : endpoint.method === "POST"
+                ? "POST"
+                : endpoint.method === "PUT"
+                ? "PUT"
+                : endpoint.method === "DELETE"
+                ? "DELETE"
+                : endpoint.method === "PATCH"
+                ? "PATCH"
+                : "GET", // 적절한 기본값 설정
+            description: "", // 기본값 설정
+            summary: "", // 기본값 설정
+            apiSpecStatus: endpoint.status,
+          })
+        }
+      })
+    })
+
+    return specs
+  }, [apiGroups])
+
+  // API 스펙 목록 조회 함수 - 캐싱 기능 활용
   const fetchApiSpecsByProject = useCallback(
     async (projectId: number): Promise<ApiSpecVersionResponse[]> => {
       console.log("fetchApiSpecsByProject 호출됨 - projectId:", projectId)
+
+      // 이미 로딩 중이거나 apiGroups에 데이터가 있으면 그대로 사용
+      if (isApiLoading || (apiGroups && apiGroups.length > 0)) {
+        const extractedSpecs = extractApiSpecsList()
+        setApiSpecsList(extractedSpecs)
+        return extractedSpecs
+      }
+
       setIsLoading(true)
       try {
-        // 백엔드에서 API 스펙 목록 조회 - 토큰을 콜백 밖에서 가져온 것 사용
-        const response = await axios.get<{ content: ApiSpecVersionResponse[] }>(`/api/api-specs/by-project/${projectId}`, {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        })
+        // token이 null이 아닌 경우에만 fetchApiSpecs 호출
+        if (token) {
+          // useApiStore의 fetchApiSpecs 함수 호출 (내부적으로 캐싱 처리)
+          await fetchApiSpecs(projectId, token)
+        }
 
-        // 응답 처리
-        const specsList = response.data.content || []
-        console.log(`프로젝트 ${projectId}의 API 스펙 목록:`, specsList)
-        setApiSpecsList(specsList)
+        // apiGroups에서 API 스펙 목록 추출
+        const extractedSpecs = extractApiSpecsList()
+        setApiSpecsList(extractedSpecs)
 
-        return specsList
+        return extractedSpecs
       } catch (error) {
         console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
         return []
@@ -99,7 +149,7 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         setIsLoading(false)
       }
     },
-    [token]
+    [token, apiGroups, isApiLoading, extractApiSpecsList, fetchApiSpecs]
   )
 
   // 다이어그램 생성 진행 시뮬레이션
@@ -189,8 +239,11 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         // 상태 변경 전에 잠시 대기 (서버 처리 시간 고려)
         await new Promise((resolve) => setTimeout(resolve, 500))
 
-        // 수정된 API 상태 변경 함수 호출
-        await updateApiStatus(scrudProjectId, apiSpecVersionId, "AI_VISUALIZED")
+        // 명시적인 null 체크 추가
+        if (apiSpecVersionId !== null) {
+          // 수정된 API 상태 변경 함수 호출
+          await updateApiStatus(scrudProjectId, apiSpecVersionId, "AI_VISUALIZED")
+        }
 
         // 성공 메시지
         showSuccessNotification("다이어그램이 성공적으로 생성되었습니다.")
@@ -199,7 +252,10 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         showWarningNotification("다이어그램은 생성되었지만 API 상태 변경에 실패했습니다.")
       }
 
-      // 목록 새로고침
+      // 목록 새로고침 - 강제 새로고침 옵션 사용
+      if (token && typeof scrudProjectId === "number") {
+        await fetchApiSpecs(scrudProjectId, token, true)
+      }
       onApiSpecChanged()
 
       // 다이어그램 페이지로 이동 - 버전 파라미터 제거
@@ -307,10 +363,23 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   // 프로젝트 ID가 변경될 때 API 스펙 목록 가져오기
   useEffect(() => {
     console.log("RightContainer - 프로젝트 ID 변경 useEffect 실행:", scrudProjectId)
-    if (scrudProjectId > 0) {
-      fetchApiSpecsByProject(scrudProjectId).catch((err) => console.error(`프로젝트 ${scrudProjectId}의 API 스펙 목록 조회 오류:`, err))
+    if (scrudProjectId > 0 && token) {
+      // useApiStore의 fetchApiSpecs 함수 호출
+      fetchApiSpecs(scrudProjectId, token)
+
+      // 추가적으로 apiGroups에서 API 스펙 목록 추출하여 업데이트
+      const extractedSpecs = extractApiSpecsList()
+      setApiSpecsList(extractedSpecs)
     }
-  }, [scrudProjectId, fetchApiSpecsByProject])
+  }, [scrudProjectId, token, fetchApiSpecs, extractApiSpecsList])
+
+  // apiGroups가 변경될 때마다 API 스펙 목록 업데이트
+  useEffect(() => {
+    if (apiGroups && apiGroups.length > 0) {
+      const extractedSpecs = extractApiSpecsList()
+      setApiSpecsList(extractedSpecs)
+    }
+  }, [apiGroups, extractApiSpecsList])
 
   // selectedApi와 selectedMethod가 변경될 때 apiSpecVersionId를 설정하는 useEffect
   useEffect(() => {
@@ -425,13 +494,16 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
     showInfoNotification,
   })
 
+  // 로딩 상태는 내부 상태와 API 스토어의 로딩 상태를 결합
+  const combinedLoading = isLoading || isApiLoading
+
   return (
     <div className="flex flex-col h-full bg-white overflow-auto">
       {/* 헤더 영역 */}
       <ApiHeader
         scrudProjectId={scrudProjectId}
         apiSpecVersionId={apiSpecVersionId}
-        isLoading={isLoading}
+        isLoading={combinedLoading}
         isCreatingDiagram={isCreatingDiagram}
         diagramCreationProgress={diagramProgress}
         diagramCreationStep={diagramStep}
@@ -499,7 +571,7 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
       {apiResponse && <ApiResponse apiResponse={apiResponse} />}
 
       {/* 로딩 인디케이터 */}
-      {isLoading && <LoadingIndicator />}
+      {combinedLoading && <LoadingIndicator />}
     </div>
   )
 }
