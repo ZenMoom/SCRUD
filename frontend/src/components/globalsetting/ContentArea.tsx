@@ -146,7 +146,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
       <div className="h-full overflow-y-auto p-8 md:p-12">
         <FormItem
           ref={refs.title}
-          title={`프로젝트명 ${isRequired('title')}`}
+          title={`프로젝트명`}
           type={inputTypes.title}
           value={settings.title as string}
           onChange={(value) => onSettingChange("title", value)}
@@ -157,7 +157,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.description}
-          title={`프로젝트 설명 ${isRequired('description')}`}
+          title={`프로젝트 설명`}
           type={inputTypes.description}
           value={settings.description as string}
           onChange={(value) => onSettingChange("description", value)}
@@ -168,7 +168,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <FormItem
           ref={refs.serverUrl}
-          title={`Server URL ${isRequired('serverUrl')}`}
+          title={`Server URL`}
           type={inputTypes.serverUrl}
           value={settings.serverUrl as string}
           onChange={(value) => onSettingChange("serverUrl", value)}
@@ -179,7 +179,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <RequirementSpecForm
           ref={refs.requirementSpec}
-          title={`요구사항 명세서 ${isRequired('requirementSpec')}`}
+          title={`요구사항 명세서`}
           value={settings.requirementSpec}
           onChange={(value) => onSettingChange("requirementSpec", value as FileValue)}
           onInfoClick={() => openModal("requirementSpec")}
@@ -189,7 +189,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
         <ERDForm
           ref={refs.erd}
-          title={`ERD ${isRequired('erd')}`}
+          title={`ERD`}
           value={settings.erd}
           onChange={(value) => onSettingChange("erd", value as FileValue)}
           onInfoClick={() => openModal("erd")}
