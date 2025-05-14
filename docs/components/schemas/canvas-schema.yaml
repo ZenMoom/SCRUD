@@ -410,7 +410,10 @@ PromptId:
 Include:
   name: include
   in: query
-  description: 포함
+  description: 포함, 배열 지원
   required: false
   schema:
-    type: string
+    type: array
+    items:
+      type: string
+      enum: [AI_GENERATED, AI_VISUALIZED, USER_COMPLETED]
