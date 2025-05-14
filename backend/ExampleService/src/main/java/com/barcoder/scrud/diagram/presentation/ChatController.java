@@ -11,9 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
@@ -76,5 +78,11 @@ public class ChatController implements ChatApi {
     public ResponseEntity<SSEIdResponse> promptChat(String projectId, String apiId, UserChatRequest userChatRequest) {
         SSEIdResponse response = chatWebClient.promptChat(projectId, apiId, userChatRequest);
         return ResponseEntity.ok(response);
+    }
+
+    @ExceptionHandler(WebClientResponseException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(WebClientResponseException ex) {
+        log.error("WebClient 에러: {}, 상태 코드: {}", ex.getMessage(), ex.getStatusCode());
+        return ResponseEntity.status(ex.getStatusCode()).body(ex.getResponseBodyAsString());
     }
 }

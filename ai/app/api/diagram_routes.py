@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.dto.diagram_dto import PositionRequest, DiagramResponse
 from app.core.generator.model_generator import ModelGenerator
@@ -89,7 +89,7 @@ async def create_diagram(
         diagram_service: DiagramService = Depends(get_diagram_service),
 ) -> DiagramResponse:
     """
-    특정 프로젝트의 특정 API 버전에 대한 메서드 도식화 데이터를 가져옵니다.
+    특정 프로젝트와 API에 대한 새로운 다이어그램을 생성합니다.
 
     Args:
         diagram_service: DiagramService
@@ -97,10 +97,22 @@ async def create_diagram(
         api_id: API ID
 
     Returns:
-        Diagram: 조회된 도식화 데이터
+        Diagram: 생성된 도식화 데이터
+        
+    Raises:
+        HTTPException: 400 - 이미 다이어그램이 존재하는 경우
+        HTTPException: 500 - 서버 오류가 발생한 경우
     """
-
-    return await diagram_service.create_diagram(project_id, api_id)
+    try:
+        return await diagram_service.create_diagram(project_id, api_id)
+    except ValueError as e:
+        # 이미 존재하는 다이어그램인 경우 400 에러
+        logger.warning(f"다이어그램 생성 실패 (기존 다이어그램 존재): {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        # 기타 오류는 500 에러
+        logger.error(f"다이어그램 생성 중 서버 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
 
 
 @diagram_router.put("/projects/{project_id}/apis/{api_id}/components/{component_id}/position")
@@ -123,10 +135,19 @@ async def update_component_position(
     Returns:
         Component: 업데이트된 컴포넌트 정보
     """
+    try:
+        return await diagram_service.update_component_position(
+            project_id,
+            api_id,
+            component_id,
+            position_data
+        )
 
-    return await diagram_service.update_component_position(
-        project_id,
-        api_id,
-        component_id,
-        position_data
-    )
+    except ValueError as e:
+        # 이미 존재하는 다이어그램인 경우 400 에러
+        logger.warning(f"다이어그램 생성 실패 (기존 다이어그램 존재): {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        # 기타 오류는 500 에러
+        logger.error(f"다이어그램 생성 중 서버 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
