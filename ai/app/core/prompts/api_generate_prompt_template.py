@@ -367,7 +367,7 @@ def build_prompt(data: GenerateRequest, format_instructions: str) -> str:
 [출력 형식]
 {format_instructions}
 
-❗ JSON 배열 전체는 한 줄로 출력해 주세요. 줄바꿈 없이 [ {...}, {...} ] 형태의 **정확한 JSON**으로 반환해 주세요.
+❗ JSON 배열 전체는 한 줄로 출력해 주세요. 줄바꿈 없이 [ {...}, {...} ] 형태의 **정확한 JSON**으로 반환해 주세요. 각 객체는 쉼표(,)로 구분되어야 합니다.
 ❗ JSON 안의 문자열은 반드시 쌍따옴표(")로 감싸야 하며, \n 없이 작성하세요.
 ❗ ```json 코드 블록 없이 순수 JSON만 반환하세요.
 """
