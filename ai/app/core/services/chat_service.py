@@ -95,7 +95,7 @@ class ChatService:
                 "apiId": api_id
             }, sort=[("metadata.version", -1)])
 
-            latest_diagram = all_diagrams[0] if all_diagrams else None
+            latest_diagram: Diagram = all_diagrams[0] if all_diagrams else None
 
             if not latest_diagram:
                 self.logger.error("기존 다이어그램이 없어 도식화를 생성할 수 없습니다.")
@@ -121,7 +121,8 @@ class ChatService:
 
             # MongoDB에 저장
             await self.diagram_repository.create_new_version(
-                diagram=self._convert_diagram_response_to_diagram(generated_diagram)
+                diagram=self._convert_diagram_response_to_diagram(generated_diagram),
+                new_version=latest_diagram.metadata.version
             )
 
             self.logger.info(f"비동기 도식화 생성 완료: diagram_id={diagram_id}")
