@@ -148,13 +148,13 @@ class DiagramRepositoryImpl(DiagramRepository):
         await self.save(diagram)
         return diagram
 
-    async def create_new_version(self, diagram: Diagram) -> Diagram:
+    async def create_new_version(self, diagram: Diagram, new_version) -> Diagram:
         """
         기존 다이어그램을 기반으로 새 버전의 다이어그램을 생성합니다.
 
         Args:
             diagram: 기존 다이어그램 객체
-
+            new_version
         Returns:
             Diagram: 새 버전으로 생성된 다이어그램 객체
         """
@@ -163,7 +163,7 @@ class DiagramRepositoryImpl(DiagramRepository):
 
         # 메타데이터 업데이트
         new_diagram.metadata.metadataId = str(uuid.uuid4())
-        new_diagram.metadata.version = diagram.metadata.version + 1
+        new_diagram.metadata.version = new_version
         new_diagram.metadata.lastModified = datetime.utcnow()
 
         # 새 다이어그램 저장

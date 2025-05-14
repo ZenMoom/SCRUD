@@ -82,7 +82,7 @@ class DiagramRepository(ABC):
         pass
 
     @abstractmethod
-    async def create_new_version(self, diagram: Diagram) -> Diagram:
+    async def create_new_version(self, diagram: Diagram, new_version) -> Diagram:
         """
         기존 다이어그램을 기반으로 새 버전의 다이어그램을 생성합니다.
 
