@@ -36,10 +36,11 @@ public class ChatWebClient {
                 .block();
     }
 
-    public SSEIdResponse promptChat(String projectId, String apiId, UserChatRequest userChatRequest) {
+    public SSEIdResponse promptChat(String projectId, String apiId, UserChatRequest userChatRequest, String authorization) {
         return webClient.post()
                 .uri("/api/v1/projects/{projectId}/apis/{apiId}/chats", projectId, apiId)
                 .bodyValue(userChatRequest)
+                .header("Authorization", authorization)
                 .retrieve()
                 .bodyToMono(SSEIdResponse.class)
                 .block();

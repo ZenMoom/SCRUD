@@ -83,27 +83,27 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
     router.push(`/canvas/${scrudProjectId}/${apiSpecVersionId}`)
   }
 
+  // Google 스타일 버튼 기본 클래스 - 반응형으로 설정
+  const googleButtonClass =
+    "bg-white border border-gray-300 rounded-md text-gray-700 font-medium text-sm hover:shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center px-2 py-2 sm:px-4 sm:py-2"
+
+  // 아이콘 기본 클래스
+  const iconClass = "h-5 w-5 sm:mr-2"
+
+  // 텍스트 클래스 (반응형)
+  const textClass = "hidden sm:inline whitespace-nowrap"
+
   return (
     <div className="p-3 border-b bg-white">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
-          <h2 className="text-lg font-semibold mr-4">API 편집기</h2>
-          {/* 프로젝트 ID 표시 - 편집 불가능한 형태로 */}
-          <div className="px-3 py-1 bg-gray-100 rounded-md text-sm">
-            <span className="text-gray-500">프로젝트 ID:</span> <span className="font-medium text-gray-800">{scrudProjectId}</span>
-          </div>
-
-          {/* API 상태 표시 */}
-          {apiSpecVersionId && apiStatus !== "AI_VISUALIZED" && (
-            <div className={`ml-2 px-3 py-1 rounded-md text-sm ${apiStatus === "AI_GENERATED" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"}`}>
-              {apiStatus === "AI_GENERATED" ? "AI 생성됨" : "사용자 완료"}
-            </div>
-          )}
+          <h2 className="text-lg font-semibold mr-4 hidden sm:block">API 편집기</h2>
+          <h2 className="text-lg font-semibold mr-4 sm:hidden">API</h2>
 
           {/* 도식화 보기 버튼 - API 상태가 AI_VISUALIZED일 때만 표시 */}
           {apiSpecVersionId && apiStatus === "AI_VISUALIZED" && (
-            <button onClick={handleViewDiagram} className="ml-2 px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <button onClick={handleViewDiagram} className={googleButtonClass} title="도식화 보기">
+              <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                 <path
                   fillRule="evenodd"
@@ -111,7 +111,7 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
                   clipRule="evenodd"
                 />
               </svg>
-              도식화 보기
+              <span className={textClass}>도식화 보기</span>
             </button>
           )}
         </div>
@@ -122,30 +122,30 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
             <button
               onClick={handleCreateDiagram}
               disabled={isLoading || isCreatingDiagram}
-              className="px-3 py-1.5 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 text-sm font-medium flex items-center"
+              className={`${googleButtonClass} ${isLoading || isCreatingDiagram ? "opacity-50 cursor-not-allowed" : ""}`}
+              title="도식화 진행"
             >
               {isCreatingDiagram ? (
-                <span className="mr-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+                <span className="h-5 w-5 rounded-full border-2 border-gray-400 border-t-transparent animate-spin"></span>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
                   <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                 </svg>
               )}
-              도식화 진행
+              <span className={textClass}>도식화 진행</span>
             </button>
           )}
 
           <button
             onClick={handleSaveApi}
             disabled={isLoading || isCreatingDiagram}
-            className={`px-3 py-1.5 rounded text-white text-sm font-medium disabled:opacity-50 flex items-center ${
-              apiSpecVersionId ? "bg-yellow-500 hover:bg-yellow-600" : "bg-blue-500 hover:bg-blue-600"
-            }`}
+            className={`${googleButtonClass} ${isLoading || isCreatingDiagram ? "opacity-50 cursor-not-allowed" : ""}`}
+            title={apiSpecVersionId ? "수정하기" : "생성하기"}
           >
             {isLoading ? (
-              <span className="mr-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+              <span className="h-5 w-5 rounded-full border-2 border-gray-400 border-t-transparent animate-spin"></span>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
                 {apiSpecVersionId ? (
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 ) : (
@@ -153,35 +153,37 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
                 )}
               </svg>
             )}
-            {apiSpecVersionId ? "수정하기" : "생성하기"}
+            <span className={textClass}>{apiSpecVersionId ? "수정하기" : "생성하기"}</span>
           </button>
 
           {apiSpecVersionId && (
             <button
               onClick={handleDeleteApi}
               disabled={isLoading || isCreatingDiagram}
-              className="px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 text-sm font-medium flex items-center"
+              className={`${googleButtonClass} ${isLoading || isCreatingDiagram ? "opacity-50 cursor-not-allowed" : ""}`}
+              title="삭제하기"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
                 <path
                   fillRule="evenodd"
                   d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
                   clipRule="evenodd"
                 />
               </svg>
-              삭제하기
+              <span className={textClass}>삭제하기</span>
             </button>
           )}
 
           <button
             onClick={handleTestApi}
             disabled={isLoading || isCreatingDiagram}
-            className="px-3 py-1.5 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50 text-sm font-medium flex items-center"
+            className={`${googleButtonClass} ${isLoading || isCreatingDiagram ? "opacity-50 cursor-not-allowed" : ""}`}
+            title="테스트하기"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
             </svg>
-            테스트하기
+            <span className={textClass}>테스트하기</span>
           </button>
         </div>
       </div>
@@ -197,8 +199,15 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
             <div className="flex items-center">
               <span className="text-sm text-blue-600 mr-3">경과 시간: {formatElapsedTime(elapsedTime)}</span>
               {handleCancelDiagramCreation && (
-                <button onClick={handleCancelDiagramCreation} className="px-2 py-1 bg-white text-red-600 border border-red-300 rounded text-xs hover:bg-red-50">
-                  취소
+                <button onClick={handleCancelDiagramCreation} className={googleButtonClass} title="취소">
+                  <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className={textClass}>취소</span>
                 </button>
               )}
             </div>

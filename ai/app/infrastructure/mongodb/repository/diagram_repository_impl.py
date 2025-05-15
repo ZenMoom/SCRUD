@@ -169,3 +169,38 @@ class DiagramRepositoryImpl(DiagramRepository):
         # 새 다이어그램 저장
         await self.repository.insert_one(new_diagram)
         return new_diagram
+        
+    async def find_diagram_by_method_id(self, project_id: str, api_id: str, method_id: str) -> Optional[Diagram]:
+        """
+        프로젝트 ID, API ID, 메서드 ID로 다이어그램을 조회합니다.
+        MongoDB의 $elemMatch 쿼리 연산자를 사용하여 components 배열 내에서 
+        methods 배열 내의 methodId 필드가 주어진 method_id와 일치하는 문서를 찾습니다.
+        
+        Args:
+            project_id: 프로젝트 ID
+            api_id: API ID
+            method_id: 메서드 ID
+            
+        Returns:
+            Optional[Diagram]: 해당 메서드 ID를 포함하는 다이어그램 또는 None
+        """
+        # MongoDB 쿼리 작성 - components 배열 내의 메서드들 중 methodId가 일치하는 요소 검색
+        filter_dict = {
+            "projectId": project_id,
+            "apiId": api_id,
+            "components": {
+                "$elemMatch": {
+                    "methods": {
+                        "$elemMatch": {
+                            "methodId": method_id
+                        }
+                    }
+                }
+            }
+        }
+        
+        # 버전 번호를 기준으로 내림차순 정렬하여 최신 버전을 먼저 찾음
+        sort = [("metadata.version", -1)]
+        
+        # 쿼리 실행 및 결과 반환
+        return await self.repository.find_one(filter_dict, sort)
