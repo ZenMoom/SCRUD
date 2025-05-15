@@ -237,7 +237,7 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
   return (
     <div className="flex h-[calc(100vh-70px)] overflow-hidden bg-gray-50 gap-1 relative py-1 ">
       {/* 좌측 패널 - 접었다 펼칠 수 있게 수정 */}
-      <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto`}>
+      <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}>
         <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />
       </div>
 
@@ -252,13 +252,13 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
         </button>
       </div>
 
-      <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[350px]"} h-full bg-white shadow-sm border-r transition-all duration-300 overflow-hidden`}>
+      <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[350px]"} h-full bg-white shadow-sm border-r transition-all duration-300 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}>
         <MiddleContainer
           onApiSelect={handleApiSelect}
           apiGroups={apiGroups}
           setApiGroups={setApiGroups}
           isLoading={isLoading}
-          scrudProjectId={scrudProjectId} // MiddleContainer에 프로젝트 ID 전달
+          scrudProjectId={scrudProjectId}
         />
       </div>
       <div className="flex-1 h-full bg-white shadow-sm overflow-hidden">
