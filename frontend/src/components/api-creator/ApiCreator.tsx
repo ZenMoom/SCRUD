@@ -252,13 +252,13 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
         </button>
       </div>
 
-      <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[350px]"} h-full bg-white shadow-sm border-r transition-all duration-300 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}>
+      <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[350px]"} h-full bg-white shadow-sm border-r transition-all duration-300 overflow-hidden`}>
         <MiddleContainer
           onApiSelect={handleApiSelect}
           apiGroups={apiGroups}
           setApiGroups={setApiGroups}
           isLoading={isLoading}
-          scrudProjectId={scrudProjectId}
+          scrudProjectId={scrudProjectId} // MiddleContainer에 프로젝트 ID 전달
         />
       </div>
       <div className="flex-1 h-full bg-white shadow-sm overflow-hidden">

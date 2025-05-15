@@ -193,17 +193,30 @@ export default function GlobalSettingPage() {
       return newSettings;
     });
 
-    // 값이 있으면 완료 상태로 변경
-    if (
-      (typeof value === 'string' && value.trim() !== "") ||
-      (Array.isArray(value) && value.length > 0) ||
-      (value && typeof value === 'object' && 'name' in value) ||  // FileWithContent 객체인 경우
-      (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && 'name' in value[0])  // FileWithContent 배열인 경우
-    ) {
-      setCompleted((prev) => ({ ...prev, [key as SettingKey]: true }))
-    } else {
-      setCompleted((prev) => ({ ...prev, [key as SettingKey]: false }))
-    }
+    // 완료 상태 업데이트
+    setCompleted((prev) => {
+      let isCompleted = false;
+
+      // securitySetting과 architectureStructure의 특별 처리
+      if (key === 'securitySetting' || key === 'architectureStructure') {
+        if (Array.isArray(value)) {
+          // 파일이 선택된 경우
+          isCompleted = value.length > 0;
+        } else if (value && typeof value === 'object' && 'type' in value) {
+          // SelectionValue 타입인 경우 (기본값 포함)
+          const type = (value as SelectionValue).type;
+          isCompleted = type.startsWith('SECURITY_DEFAULT_') || type.startsWith('ARCHITECTURE_DEFAULT_') || type.startsWith('SECURITY_') || type.startsWith('ARCHITECTURE_');
+        }
+      } else if (typeof value === 'string') {
+        // 문자열 타입 (title, description, serverUrl)
+        isCompleted = value.trim() !== "";
+      } else if (Array.isArray(value)) {
+        // 배열 타입 (파일 목록)
+        isCompleted = value.length > 0;
+      }
+
+      return { ...prev, [key as SettingKey]: isCompleted };
+    });
   }
 
   // 필수 항목이 모두 완료되었는지 확인
