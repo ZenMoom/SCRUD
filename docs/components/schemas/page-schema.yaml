@@ -19,6 +19,22 @@ Size:
     minimum: 1
     maximum: 100 # 최대 페이지 크기 제한 (선택 사항)
 
+PostSort:
+  name: sort
+  in: query
+  description: 정렬 기준 필드
+  required: false
+  schema:
+    $ref: '#/PostSortEnumDto'
+
+PostOrder:
+  name: order
+  in: query
+  description: 정렬 방향
+  required: false
+  schema:
+    $ref: '#/PostOrderEnumDto'
+
 PageDto:
   type: object
   properties:
@@ -37,3 +53,13 @@ PageDto:
     totalElements:
       type: integer
       description: 총 데이터 개수
+
+PostOrderEnumDto:
+  type: string
+  enum: [asc, desc]
+  description: 정렬 방향 (오름차순 또는 내림차순)
+
+PostSortEnumDto:
+  type: string
+  enum: [createdAt, viewCount, likeCount]
+  description: 게시글 정렬 기준 (작성일, 조회수, 좋아요 수)

@@ -1,0 +1,52 @@
+####### requestBody #######
+CreatePostRequest:
+  description: 게시글을 작성합니다.
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/post-schema.yaml#/CreatePostRequest'
+
+UpdatePostRequest:
+  description: 게시글을 수정합니다.
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/post-schema.yaml#/UpdatePostRequest'
+
+PostVoteRequest:
+  description: 게시글 추천/비추천 요청입니다.
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/post-schema.yaml#/PostVoteRequest'
+
+######## end of requestBody #######
+
+####### params #######
+SearchPostParam:
+  name: keyword
+  in: query
+  description: 검색 키워드
+  required: false
+  schema:
+    type: string
+
+SearchTypeParam:
+  name: type
+  in: query
+  description: 검색 대상 필드
+  required: false
+  schema:
+    $ref: '../schemas/post-schema.yaml#/SearchTypeEnumDto'
+
+CategoryIdParam:
+  name: categoryId
+  in: query
+  description: 카테고리 ID
+  required: false
+  schema:
+    type: integer
+###### end of params #######

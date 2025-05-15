@@ -1,0 +1,131 @@
+PostId:
+  name: postId
+  in: path
+  required: true
+  schema:
+    type: integer
+    format: int64
+
+SearchTypeEnumDto:
+  type: string
+  enum: [ title, content, title_content ]
+
+######## request dto ########
+
+CreatePostRequest:
+  type: object
+  required:
+    - title
+    - content
+    - categoryId
+  properties:
+    title:
+      type: string
+      example: "게시글 제목"
+    content:
+      type: string
+      example: "게시글 내용입니다."
+    categoryId:
+      type: integer
+      example: 1
+
+UpdatePostRequest:
+  type: object
+  properties:
+    title:
+      type: string
+      example: "수정된 제목"
+    content:
+      type: string
+      example: "수정된 내용"
+
+PostVoteRequest:
+  type: object
+  required:
+    - isLike
+  properties:
+    isLike:
+      type: boolean
+      description: true면 추천, false면 비추천
+      example: true
+
+###### response dto ######
+
+PostSummaryResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      example: 101
+    title:
+      type: string
+      example: "게시글 제목"
+    category:
+      type: string
+      example: "공지"
+    createdAt:
+      type: string
+      format: date-time
+      example: "2024-05-15T12:34:56"
+    viewCount:
+      type: integer
+      example: 123
+    likeCount:
+      type: integer
+      example: 10
+
+PostDetailResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      example: 101
+    title:
+      type: string
+      example: "상세 게시글 제목"
+    content:
+      type: string
+      example: "상세 게시글 내용입니다."
+    category:
+      type: string
+      example: "공지"
+    createdAt:
+      type: string
+      format: date-time
+      example: "2024-05-15T12:34:56"
+    updatedAt:
+      type: string
+      format: date-time
+      example: "2024-05-15T13:00:00"
+    viewCount:
+      type: integer
+      example: 123
+    likeCount:
+      type: integer
+      example: 10
+    dislikeCount:
+      type: integer
+      example: 1
+    commentCount:
+      type: integer
+      example: 5
+    author:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        username:
+          type: string
+          example: "john_doe"
+
+VoteResponse:
+  type: object
+  properties:
+    likeCount:
+      type: integer
+      example: 12
+    dislikeCount:
+      type: integer
+      example: 2

@@ -1,0 +1,23 @@
+CreateCommentRequest:
+  description: 댓글을 작성합니다.
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/comment-schema.yaml#/CreateCommentRequest'
+
+UpdateCommentRequest:
+  description: 댓글을 수정합니다.
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/comment-schema.yaml#/UpdateCommentRequest'
+
+CommentVoteRequest:
+  description: 댓글 추천/비추천 요청입니다.
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/comment-schema.yaml#/CommentVoteRequest'
