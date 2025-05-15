@@ -39,7 +39,7 @@ public class ApiSpecQueryDsl {
 				.selectFrom(apiSpec)
 				.join(apiSpec.apiSpecVersion, apiSpecVersion).fetchJoin()
 				.where(builder)
-				.orderBy(apiSpec.createdAt.desc())
+				.orderBy(apiSpec.updatedAt.desc())
 				.fetch();
 
 		// 4. 메타데이터 생성
