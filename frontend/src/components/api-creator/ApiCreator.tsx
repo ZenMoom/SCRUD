@@ -235,7 +235,7 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
   }, [scrudProjectId, fetchApiSpecs])
 
   return (
-    <div className="flex h-[calc(100vh-152px)] overflow-hidden bg-gray-50 gap-1 relative py-1 mt-2">
+    <div className="flex h-[calc(100vh-70px)] overflow-hidden bg-gray-50 gap-1 relative py-1 ">
       {/* 좌측 패널 - 접었다 펼칠 수 있게 수정 */}
       <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto`}>
         <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />

@@ -390,7 +390,7 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-6 py-8 md:py-16">
+      <div className="max-w-7xl mx-auto px-6 py-8 md:py-20">
         <div className="mb-10">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">{user?.username || "바코드"}</span> 님의 프로젝트
