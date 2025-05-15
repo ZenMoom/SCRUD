@@ -7,6 +7,7 @@ import { Clock, Send, RefreshCw, X, AlertCircle, Info } from "lucide-react"
 import type { ChatHistoryResponse } from "@generated/model"
 import type { TargetNode } from "./DiagramContainer"
 import axios from "axios"
+import useAuthStore from "@/app/store/useAuthStore"
 
 // 채팅 컨테이너 속성 타입 정의
 interface ChatContainerProps {
@@ -82,6 +83,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const activeSSEIdRef = useRef<string | null>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const { token } = useAuthStore()
 
   // SSE 연결 해제 함수
   const disconnectSSE = useCallback(() => {
@@ -326,7 +328,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         // 시스템 메시지 추가
         if (item.systemChat) {
           formattedMessages.push({
-            id: `system-${item.systemChat.systemChatId}`,
+            id: `system-${item.systemChat.systemChatId || item.chatId}`,
             type: "system",
             message: item.systemChat.message || "",
             timestamp: item.createdAt,
@@ -338,7 +340,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             const description = item.systemChat.versionInfo.description || ""
 
             formattedMessages.push({
-              id: `version-${versionId}`,
+              id: `version-${versionId}-${item.chatId}`,
               type: "version",
               message: description,
               timestamp: item.createdAt,
@@ -370,17 +372,17 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   }, [disconnectSSE])
 
   // 요청 태그 선택 핸들러
-  const handleTagSelect = (tag: RequestTag) => {
+  const handleTagSelect = useCallback((tag: RequestTag) => {
     setSelectedTag(tag)
-  }
+  }, [])
 
   // 요청 태그 해제 핸들러
-  const handleTagClear = () => {
+  const handleTagClear = useCallback(() => {
     setSelectedTag("EXPLAIN") // 기본값으로 설정
-  }
+  }, [])
 
   // 메시지 전송 핸들러
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim() || sending || sseConnected || isConnecting || isSubmitting) return
 
     setIsSubmitting(true)
@@ -402,8 +404,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       const sentMessage = newMessage
       setLastSentMessage(sentMessage)
 
-      const targetMethods =
-        targetNodes.length > 0 ? targetNodes.filter((target) => target.type === "method").map((target) => ({ methodId: target.id.replace("method-", "") })) : [{ methodId: "explain" }]
+      const targetMethods = targetNodes.length > 0 ? targetNodes.filter((target) => target.type === "method").map((target) => ({ methodId: target.id.replace("method-", "") })) : []
 
       const chatMessageData = {
         tag: selectedTag,
@@ -413,8 +414,16 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       }
 
       setNewMessage("")
-
-      const response = await axios.post<SSEIdResponse>(`/api/chat/${projectId}/${apiId}`, chatMessageData)
+      console.log(token)
+      const response = await axios.post<SSEIdResponse>(
+        `/api/chat/${projectId}/${apiId}`,
+        chatMessageData, // 요청 본문 (필요한 경우)
+        {
+          headers: {
+            Authorization: token, // 인증 토큰 헤더에 추가
+          },
+        }
+      )
 
       if (response.data && response.data.streamId) {
         connectToSSE(response.data.streamId)
@@ -435,38 +444,44 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         setIsSubmitting(false)
       }, 500)
     }
-  }
+  }, [newMessage, sending, sseConnected, isConnecting, isSubmitting, disconnectSSE, targetNodes, selectedTag, token, projectId, apiId, connectToSSE])
 
   // 버전 클릭 핸들러
-  const handleVersionClick = (versionId: string) => {
-    if (onVersionSelect) {
-      onVersionSelect(versionId)
-    }
-  }
+  const handleVersionClick = useCallback(
+    (versionId: string) => {
+      if (onVersionSelect) {
+        onVersionSelect(versionId)
+      }
+    },
+    [onVersionSelect]
+  )
 
   // 엔터 키 처리
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      if (!isSubmitting) {
-        handleSendMessage()
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault()
+        if (!isSubmitting) {
+          handleSendMessage()
+        }
       }
-    }
-  }
+    },
+    [handleSendMessage, isSubmitting]
+  )
 
   // 메시지 파싱 함수 - 코드 블록과 마크다운 형식 처리
-  const parseMessage = (message: string) => {
+  const parseMessage = useCallback((message: string) => {
     // 코드 블록 처리
     const codeBlockRegex = /```(java|javascript|typescript|html|css|python|json|xml|sql|bash|shell|cmd|yaml|markdown|text|jsx|tsx)?\s*([\s\S]*?)```/g
     let lastIndex = 0
-    const parts = []
+    const parts: React.ReactNode[] = []
     let match
 
     while ((match = codeBlockRegex.exec(message)) !== null) {
       // 코드 블록 이전의 텍스트 추가
       if (match.index > lastIndex) {
         const textBeforeCode = message.substring(lastIndex, match.index)
-        parts.push(parseMarkdown(textBeforeCode))
+        parts.push(parseMarkdown(textBeforeCode, `text-${match.index}`))
       }
 
       // 코드 블록 추가
@@ -483,16 +498,19 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
 
     // 남은 텍스트 추가
     if (lastIndex < message.length) {
-      parts.push(parseMarkdown(message.substring(lastIndex)))
+      parts.push(parseMarkdown(message.substring(lastIndex), `text-${lastIndex}`))
     }
 
-    return parts.length > 0 ? parts : parseMarkdown(message)
-  }
+    return parts.length > 0 ? parts : parseMarkdown(message, "text-full")
+  }, [])
 
-  // 마크다운 파싱 함수 - 볼드, 이탤릭, 링크 등 처리
-  const parseMarkdown = (text: string) => {
+  // 마크다운 파싱 함수 - 볼드, 이탤릭, 링크, 제목, 글머리 기호 등 처리
+  const parseMarkdown = useCallback((text: string, key: string) => {
+    // 제목 처리 (## 제목)
+    let parsedText = text.replace(/##\s+(.*?)(?:\n|$)/g, '<h2 class="text-xl font-bold my-2">$1</h2>')
+
     // 볼드 처리 (**텍스트** 또는 __텍스트__)
-    let parsedText = text.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>")
+    parsedText = parsedText.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>")
 
     // 이탤릭 처리 (*텍스트* 또는 _텍스트_)
     parsedText = parsedText.replace(/(\*|_)(.*?)\1/g, "<em>$2</em>")
@@ -500,11 +518,19 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     // 링크 처리 [텍스트](URL)
     parsedText = parsedText.replace(/\[([^\]]+)\]$$([^)]+)$$/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">$1</a>')
 
+    // 글머리 기호 목록 처리 (- 항목)
+    parsedText = parsedText.replace(/^-\s+(.*?)(?:\n|$)/gm, '<li class="flex items-start"><span class="inline-block w-2 h-2 rounded-full bg-gray-500 mt-1.5 mr-2"></span>$1</li>')
+
+    // 연속된 목록 항목을 ul 태그로 감싸기
+    parsedText = parsedText.replace(/<li.*?<\/li>(?:\s*<li.*?<\/li>)*/g, (match) => {
+      return `<ul class="list-none pl-2 my-2">${match}</ul>`
+    })
+
     // 줄바꿈 처리
     parsedText = parsedText.replace(/\n/g, "<br />")
 
-    return <div dangerouslySetInnerHTML={{ __html: parsedText }} />
-  }
+    return <div key={key} dangerouslySetInnerHTML={{ __html: parsedText }} />
+  }, [])
 
   // 로딩 상태 표시
   if (loading) {
@@ -573,23 +599,21 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             } else if (msg.type === "version" && msg.versionInfo) {
               // 버전 메시지 표시
               return (
-                <>
-                  <div key={msg.id} className="flex my-2">
-                    <button
-                      onClick={() => handleVersionClick(msg.versionInfo!.versionId)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
-                        versionId === msg.versionInfo!.versionId ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                      }`}
-                    >
-                      <Clock size={16} />
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">버전 {msg.versionInfo.versionId}</span>
-                        <span className="text-xs">{msg.versionInfo.description}</span>
-                      </div>
-                    </button>
-                  </div>
-                  <hr className="mb-4" />
-                </>
+                <div key={msg.id} className="my-2">
+                  <button
+                    onClick={() => handleVersionClick(msg.versionInfo!.versionId)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                      versionId === msg.versionInfo!.versionId ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                    }`}
+                  >
+                    <Clock size={16} />
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">버전 {msg.versionInfo.versionId}</span>
+                      <span className="text-xs">{msg.versionInfo.description}</span>
+                    </div>
+                  </button>
+                  <hr className="mb-4 mt-2" />
+                </div>
               )
             }
             return null

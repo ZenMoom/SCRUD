@@ -5,7 +5,6 @@ import axios from "axios"
 import useAuthStore from "@/app/store/useAuthStore"
 import { useRouter } from "next/navigation"
 import type { DiagramResponse, ApiSpecVersionResponse } from "@generated/model"
-
 // 컴포넌트 임포트
 import ApiHeader from "./ApiHeader"
 import ApiForm from "./ApiForm"
@@ -174,8 +173,15 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
       // 다이어그램 생성 API 호출
       console.log(`다이어그램 생성 시도: projectId=${scrudProjectId}, apiId=${apiSpecVersionId}`)
 
-      const response = await axios.post<DiagramResponse>(`/api/canvas/${scrudProjectId}/${apiSpecVersionId}`)
-
+      const response = await axios.post<DiagramResponse>(
+        `/api/canvas/${scrudProjectId}/${apiSpecVersionId}`,
+        {}, // 요청 본문 (필요한 경우)
+        {
+          headers: {
+            Authorization: token, // 인증 토큰 헤더에 추가
+          },
+        }
+      )
       // 응답 처리
       const diagramData = response.data
       console.log("다이어그램 생성 성공:", diagramData)

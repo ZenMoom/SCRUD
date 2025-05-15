@@ -11,7 +11,6 @@ import { MethodNode } from "./nodes/MethodNode"
 import { ClassNode } from "./nodes/ClassNode"
 import { InterfaceNode } from "./nodes/InterfaceNode"
 import { CustomEdge } from "./edges/CustomEdge"
-import DtoContainer from "./DtoContainer"
 
 // 미리 정의된 배경색 배열 추가 (파스텔톤으로 구성)
 const backgroundColors = [
@@ -138,9 +137,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   const [targetNodes, setTargetNodes] = useState<TargetNode[]>([])
   const [showToolbar, setShowToolbar] = useState<string | null>(null)
 
-  // DTO 패널 상태
-  const [showDtoPanel, setShowDtoPanel] = useState<boolean>(true)
-
   // 노드 관계 맵 (부모-자식 관계)
   const [nodeRelationMap, setNodeRelationMap] = useState<NodeRelationMap>({})
 
@@ -201,7 +197,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     [targetNodes]
   )
 
-  // 타겟 노드 제거 핸들러 (자식 노드 제거 시 부모도 제거)
+  // 타겟 노드 제거 핸들러 (자�� 노드 제거 시 부모도 제거)
   const removeTargetNode = useCallback(
     (nodeId: string) => {
       setTargetNodes((prev) => {
@@ -439,6 +435,16 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   // 데이터로부터 노드와 엣지 생성
   useEffect(() => {
+    // 컴포넌트 마운트 시 한 번만 실행되는 초기화 로직
+    console.log("DiagramContainer 마운트됨")
+
+    // 언마운트 시 정리 작업
+    return () => {
+      console.log("DiagramContainer 언마운트됨")
+    }
+  }, [])
+
+  useEffect(() => {
     if (!diagramData) {
       console.log("다이어그램 데이터가 없습니다:", diagramData)
       return
@@ -454,76 +460,80 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
       return
     }
 
-    console.log("다이어그램 데이터 처리 시작:", diagramData)
+    try {
+      console.log("다이어그램 데이터 처리 시작:", diagramData)
 
-    // 컴포넌트 배열 필터링 (유효한 컴포넌트만 사용)
-    const validComponents = diagramData.components.filter(isComponentDto)
+      // 컴포넌트 배열 필터링 (유효한 컴포넌트만 사용)
+      const validComponents = diagramData.components.filter(isComponentDto)
 
-    // 중복 컴포넌트 제거 (componentId 기준)
-    const uniqueComponents = validComponents.reduce<ComponentDto[]>((acc, component) => {
-      if (!acc.some((c) => c.componentId === component.componentId)) {
-        acc.push(component)
-      } else {
-        console.warn(`중복된 컴포넌트 ID 감지: ${component.componentId}. 첫 번째 발견된 컴포넌트만 사용합니다.`)
-      }
-      return acc
-    }, [])
-
-    console.log(`총 ${validComponents.length}개의 컴포넌트 중 ${uniqueComponents.length}개의 고유 컴포넌트 처리`)
-
-    // 노드 레이아웃 계산 (초기 위치 전달)
-    const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(uniqueComponents, expandedNodes, initialNodePositions)
-
-    // 초기 위치가 비어있는 경우에만 업데이트 (첫 렌더링 시에만)
-    if (Object.keys(initialNodePositions).length === 0) {
-      setInitialNodePositions(updatedPositions)
-    }
-
-    // 엣지 생성
-    const newEdges: Edge[] = []
-    if (diagramData.connections && Array.isArray(diagramData.connections)) {
-      // 유효한 연결만 필터링
-      const validConnections = diagramData.connections.filter(isConnectionDto)
-
-      validConnections.forEach((connection) => {
-        // sourceMethodId와 targetMethodId가 있는지 확인
-        if (!connection.sourceMethodId || !connection.targetMethodId) return
-
-        const sourceNodeId = methodIdToNodeId[connection.sourceMethodId]
-        const targetNodeId = methodIdToNodeId[connection.targetMethodId]
-
-        if (sourceNodeId && targetNodeId) {
-          newEdges.push({
-            id: `edge-${connection.connectionId}`,
-            source: sourceNodeId,
-            target: targetNodeId,
-            type: "custom",
-            data: {
-              isInterfaceRelated: connection.type === "DOTTED",
-            },
-          })
+      // 중복 컴포넌트 제거 (componentId 기준)
+      const uniqueComponents = validComponents.reduce<ComponentDto[]>((acc, component) => {
+        if (!acc.some((c) => c.componentId === component.componentId)) {
+          acc.push(component)
+        } else {
+          console.warn(`중복된 컴포넌트 ID 감지: ${component.componentId}. 첫 번째 발견된 컴포넌트만 사용합니다.`)
         }
-      })
-    }
+        return acc
+      }, [])
 
-    console.log("생성된 노드:", newNodes)
-    console.log("생성된 엣지:", newEdges)
+      console.log(`총 ${validComponents.length}개의 컴포넌트 중 ${uniqueComponents.length}개의 고유 컴포넌트 처리`)
 
-    setNodes(newNodes)
-    setEdges(newEdges)
+      // 노드 레이아웃 계산 (초기 위치 전달)
+      const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(uniqueComponents, expandedNodes, initialNodePositions)
 
-    // 버전 정보 업데이트
-    if (diagramData.metadata) {
-      const metadata = diagramData.metadata
-
-      // 현재 버전 정보 설정
-      const currentVersionInfo: VersionInfo = {
-        versionId: isString(metadata.version) ? metadata.version : isNumber(metadata.version) ? metadata.version.toString() : "1",
-        description: metadata.description || "버전 설명 없음",
-        timestamp: metadata.lastModified,
+      // 초기 위치가 비어있는 경우에만 업데이트 (첫 렌더링 시에만)
+      if (Object.keys(initialNodePositions).length === 0) {
+        setInitialNodePositions(updatedPositions)
       }
 
-      setCurrentVersionInfo(currentVersionInfo)
+      // 엣지 생성
+      const newEdges: Edge[] = []
+      if (diagramData.connections && Array.isArray(diagramData.connections)) {
+        // 유효한 연결만 필터링
+        const validConnections = diagramData.connections.filter(isConnectionDto)
+
+        validConnections.forEach((connection) => {
+          // sourceMethodId와 targetMethodId가 있는지 확인
+          if (!connection.sourceMethodId || !connection.targetMethodId) return
+
+          const sourceNodeId = methodIdToNodeId[connection.sourceMethodId]
+          const targetNodeId = methodIdToNodeId[connection.targetMethodId]
+
+          if (sourceNodeId && targetNodeId) {
+            newEdges.push({
+              id: `edge-${connection.connectionId}`,
+              source: sourceNodeId,
+              target: targetNodeId,
+              type: "custom",
+              data: {
+                isInterfaceRelated: connection.type === "DOTTED",
+              },
+            })
+          }
+        })
+      }
+
+      console.log("생성된 노드:", newNodes)
+      console.log("생성된 엣지:", newEdges)
+
+      setNodes(newNodes)
+      setEdges(newEdges)
+
+      // 버전 정보 업데이트
+      if (diagramData.metadata) {
+        const metadata = diagramData.metadata
+
+        // 현재 버전 정보 설정
+        const currentVersionInfo: VersionInfo = {
+          versionId: isString(metadata.version) ? metadata.version : isNumber(metadata.version) ? metadata.version.toString() : "1",
+          description: metadata.description || "버전 설명 없음",
+          timestamp: metadata.lastModified,
+        }
+
+        setCurrentVersionInfo(currentVersionInfo)
+      }
+    } catch (error) {
+      console.error("다이어그램 데이터 처리 중 오류:", error)
     }
   }, [diagramData, expandedNodes, calculateLayout, setNodes, setEdges, initialNodePositions, targetNodes])
 
@@ -613,11 +623,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   // 배경 클릭 핸들러
   const onPaneClick = useCallback(() => {
     setShowToolbar(null)
-  }, [])
-
-  // DTO 패널 토글 핸들러
-  const toggleDtoPanel = useCallback(() => {
-    setShowDtoPanel((prev) => !prev)
   }, [])
 
   // 타겟 노드 변경 시 부모 컴포넌트에 알림
@@ -828,11 +833,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
           </button>
         </Panel>
       </ReactFlow>
-
-      {/* DTO 패널 - DtoContainer 컴포넌트로 분리 */}
-      <div className={`absolute bottom-0 left-0 w-[70%] transition-all duration-300 ${showDtoPanel ? "h-64" : "h-10"}`}>
-        <DtoContainer diagramData={diagramData} loading={loading} isCollapsed={!showDtoPanel} onToggleCollapse={toggleDtoPanel} />
-      </div>
     </div>
   )
 }
