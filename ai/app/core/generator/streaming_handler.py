@@ -17,8 +17,8 @@ class SSEStreamingHandler(BaseCallbackHandler):
     async def on_llm_end(self, response, **kwargs) -> None:
         """LLM 출력이 완료될 때 호출됩니다."""
         print("[디버깅] LLM 처리 완료, 종료 이벤트 추가")
-        self.response_queue.put_nowait(f"data: {json.dumps({'done': True})}\n\n")
-        self.response_queue.put_nowait(f"event: close\ndata: closing\n\n")
+        # self.response_queue.put_nowait(f"data: {json.dumps({'done': True})}\n\n")
+        # self.response_queue.put_nowait(f"event: close\ndata: closing\n\n")
 
     async def on_llm_error(self, error: BaseException, **kwargs) -> None:
         """LLM에서 오류가 발생했을 때 호출됩니다."""

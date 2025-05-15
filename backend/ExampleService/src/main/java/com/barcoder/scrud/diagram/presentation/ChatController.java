@@ -5,6 +5,7 @@ import com.barcoder.scrud.diagram.infrastructure.webclient.ChatWebClient;
 import com.barcoder.scrud.model.ChatHistoryResponse;
 import com.barcoder.scrud.model.SSEIdResponse;
 import com.barcoder.scrud.model.UserChatRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -76,7 +79,13 @@ public class ChatController implements ChatApi {
      */
     @Override
     public ResponseEntity<SSEIdResponse> promptChat(String projectId, String apiId, UserChatRequest userChatRequest) {
-        SSEIdResponse response = chatWebClient.promptChat(projectId, apiId, userChatRequest);
+        // RequestContextHolder를 사용하여 현재 요청에서 헤더 가져오기
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = requestAttributes.getRequest();
+
+        // Authorization 헤더 가져오기
+        String authorizationHeader = request.getHeader("Authorization");
+        SSEIdResponse response = chatWebClient.promptChat(projectId, apiId, userChatRequest, authorizationHeader);
         return ResponseEntity.ok(response);
     }
 

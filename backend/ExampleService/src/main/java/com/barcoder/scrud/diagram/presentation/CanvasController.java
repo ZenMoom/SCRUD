@@ -4,11 +4,14 @@ import com.barcoder.scrud.api.CanvasApi;
 import com.barcoder.scrud.diagram.infrastructure.webclient.DiagramWebClient;
 import com.barcoder.scrud.model.ChatHistoryResponse;
 import com.barcoder.scrud.model.DiagramResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Slf4j
@@ -27,10 +30,16 @@ public class CanvasController implements CanvasApi {
      */
     @Override
     public ResponseEntity<DiagramResponse> createDiagram(String projectId, String apiId) {
-        DiagramResponse response = diagramWebClient.createDiagram(projectId, apiId);
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = requestAttributes.getRequest();
+
+        // Authorization 헤더 가져오기
+        String authorizationHeader = request.getHeader("Authorization");
+
+        // 헤더를 웹 클라이언트에 전달
+        DiagramResponse response = diagramWebClient.createDiagram(projectId, apiId, authorizationHeader);
         return ResponseEntity.ok(response);
     }
-
     /**
      * GET /api/v1/projects/{projectId}/apis/{apiId}/versions/{versionId} : 특정 버전의 도식화 데이터 조회 특정 프로젝트의 특정 API 버전에 대한 메서드
      * 도식화 데이터를 가져옵니다.

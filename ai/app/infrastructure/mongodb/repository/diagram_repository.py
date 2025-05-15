@@ -93,3 +93,18 @@ class DiagramRepository(ABC):
             Diagram: 새 버전으로 생성된 다이어그램 객체
         """
         pass
+        
+    @abstractmethod
+    async def find_diagram_by_method_id(self, project_id: str, api_id: str, method_id: str) -> Optional[Diagram]:
+        """
+        프로젝트 ID, API ID, 메서드 ID로 다이어그램을 조회합니다.
+        
+        Args:
+            project_id: 프로젝트 ID
+            api_id: API ID
+            method_id: 메서드 ID
+            
+        Returns:
+            Optional[Diagram]: 해당 메서드 ID를 포함하는 다이어그램 또는 None
+        """
+        pass
