@@ -71,7 +71,7 @@ VALUES (1,
            ,now()
            ,now());
 
-INSERT INTO default_global_files ( default_global_file_id, file_type, file_content, created_at, updated_at)
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
 VALUES (2,
            '헥사고널 아키텍처',
            'ARCHITECTURE_DEFAULT_HEX',
@@ -110,7 +110,7 @@ VALUES (2,
            now()
        );
 
-INSERT INTO default_global_files ( default_global_file_id, file_type, file_content, created_at, updated_at)
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
 VALUES (3,
            '레이어드 아키텍처 A',
            'ARCHITECTURE_DEFAULT_LAYERED_A',
@@ -135,7 +135,7 @@ VALUES (3,
            now()
        );
 
-INSERT INTO default_global_files ( default_global_file_id, file_type, file_content, created_at, updated_at)
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
 VALUES (4,
            '레이어드 아키텍처 B',
            'ARCHITECTURE_DEFAULT_LAYERED_B',
@@ -164,7 +164,7 @@ VALUES (4,
            now()
        );
 
-INSERT INTO default_global_files ( default_global_file_id, file_type, file_content, created_at, updated_at)
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
 VALUES (5,
            '클린 아키텍처',
            'ARCHITECTURE_DEFAULT_CLEAN',
@@ -206,7 +206,7 @@ VALUES (5,
            now()
        );
 
-INSERT INTO default_global_files ( default_global_file_id, file_type, file_content, created_at, updated_at)
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
 VALUES (
         6,
            '기본 컨벤션',
