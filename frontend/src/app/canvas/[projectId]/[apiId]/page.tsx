@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import axios from "axios"
 import type { DiagramResponse } from "@generated/model"
@@ -60,10 +60,34 @@ export default function CanvasPage() {
   // 타겟 노드 상태
   const [targetNodes, setTargetNodes] = useState<TargetNode[]>([])
 
+  // 채팅 데이터 가져오기 함수
+  const fetchChatData = useCallback(async () => {
+    try {
+      setChatLoading(true)
+      setChatError(null)
+
+      // axios를 사용하여 채팅 API 호출
+      const response = await axios.get<ChatHistoryResponse>(`/api/chat/${projectId}/${apiId}`)
+
+      setChatData(response.data)
+      console.log("채팅 데이터:", response.data)
+    } catch (err) {
+      console.error("채팅 데이터 가져오기 오류:", err)
+
+      if (axios.isAxiosError(err)) {
+        setChatError(err.response?.data?.error || err.message)
+      } else {
+        setChatError("채팅 데이터를 가져오는 중 오류가 발생했습니다.")
+      }
+    } finally {
+      setChatLoading(false)
+    }
+  }, [projectId, apiId])
+
   // 페이지 로드 시 채팅 데이터 먼저 가져오기
   useEffect(() => {
     fetchChatData()
-  }, [projectId, apiId])
+  }, [projectId, apiId, fetchChatData]) // fetchChatData 의존성 추가
 
   // 채팅 데이터에서 버전 정보 추출
   useEffect(() => {
@@ -119,84 +143,63 @@ export default function CanvasPage() {
     }
   }, [chatData, versionParam, projectId, apiId, router])
 
+  // 다이어그램 데이터 가져오기 함수 - 버전 ID를 파라미터로 받음
+  const fetchDiagramData = useCallback(
+    async (versionId: string) => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        // axios를 사용하여 API 호출 - 버전 ID를 쿼리 파라미터로 전달
+        const response = await axios.get<DiagramResponse>(`/api/canvas/${projectId}/${apiId}?version=${versionId}`)
+
+        // 응답 데이터 검증 및 변환
+        if (response.data) {
+          // 필요한 경우 응답 데이터 구조 변환
+          const processedData: DiagramResponse = {
+            ...response.data,
+            // 필요한 경우 필드 변환 또는 기본값 설정
+            components: response.data.components || [],
+            connections: response.data.connections || [],
+            dto: response.data.dto || [],
+            metadata: response.data.metadata || {
+              // 타입 호환성을 위해 MetadataDto 형식에 맞게 수정
+              version: Number(versionId), // string을 number로 변환
+              metadataId: "metadata-default",
+              lastModified: new Date().toISOString(),
+              name: "API",
+              description: "API 설명",
+            },
+          }
+
+          // 응답 데이터 저장
+          setDiagramData(processedData)
+          console.log("다이어그램 데이터:", processedData)
+        } else {
+          console.error("응답 데이터가 없습니다.")
+          setError("응답 데이터가 없습니다.")
+        }
+      } catch (err) {
+        console.error("다이어그램 데이터 가져오기 오류:", err)
+
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.error || err.message)
+        } else {
+          setError("알 수 없는 오류가 발생했습니다.")
+        }
+      } finally {
+        setLoading(false)
+      }
+    },
+    [projectId, apiId]
+  )
+
   // 선택된 버전이 변경되면 다이어그램 데이터 가져오기
   useEffect(() => {
     if (selectedVersion) {
       fetchDiagramData(selectedVersion)
     }
-  }, [selectedVersion])
-
-  // 채팅 데이터 가져오기 함수
-  const fetchChatData = async () => {
-    try {
-      setChatLoading(true)
-      setChatError(null)
-
-      // axios를 사용하여 채팅 API 호출
-      const response = await axios.get<ChatHistoryResponse>(`/api/chat/${projectId}/${apiId}`)
-
-      setChatData(response.data)
-      console.log("채팅 데이터:", response.data)
-    } catch (err) {
-      console.error("채팅 데이터 가져오기 오류:", err)
-
-      if (axios.isAxiosError(err)) {
-        setChatError(err.response?.data?.error || err.message)
-      } else {
-        setChatError("채팅 데이터를 가져오는 중 오류가 발생했습니다.")
-      }
-    } finally {
-      setChatLoading(false)
-    }
-  }
-
-  // 다이어그램 데이터 가져오기 함수 - 버전 ID를 파라미터로 받음
-  const fetchDiagramData = async (versionId: string) => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      // axios를 사용하여 API 호출 - 버전 ID를 쿼리 파라미터로 전달
-      const response = await axios.get<DiagramResponse>(`/api/canvas/${projectId}/${apiId}?version=${versionId}`)
-
-      // 응답 데이터 검증 및 변환
-      if (response.data) {
-        // 필요한 경우 응답 데이터 구조 변환
-        const processedData: DiagramResponse = {
-          ...response.data,
-          // 필요한 경우 필드 변환 또는 기본값 설정
-          components: response.data.components || [],
-          connections: response.data.connections || [],
-          dto: response.data.dto || [],
-          metadata: response.data.metadata || {
-            // 타입 호환성을 위해 MetadataDto 형식에 맞게 수정
-            version: Number(versionId), // string을 number로 변환
-            metadataId: "metadata-default",
-            lastModified: new Date().toISOString(),
-            name: "API",
-            description: "API 설명",
-          },
-        }
-
-        // 응답 데이터 저장
-        setDiagramData(processedData)
-        console.log("다이어그램 데이터:", processedData)
-      } else {
-        console.error("응답 데이터가 없습니다.")
-        setError("응답 데이터가 없습니다.")
-      }
-    } catch (err) {
-      console.error("다이어그램 데이터 가져오기 오류:", err)
-
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.error || err.message)
-      } else {
-        setError("알 수 없는 오류가 발생했습니다.")
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [selectedVersion, fetchDiagramData]) // fetchDiagramData 의존성 추가
 
   // API 목록 가져오기 함수
   const fetchApiList = async () => {
@@ -250,47 +253,47 @@ export default function CanvasPage() {
     }
   }
 
-  // API 완료 처리 함수
-  const completeApi = async () => {
-    try {
-      // 프로젝트 ID와 API ID가 필요함
-      if (!projectId || !apiId) {
-        alert("프로젝트 ID와 API ID가 필요합니다.")
-        return
-      }
+  // API 완료 처리 함수 - 현재 사용되지 않음
+  // const completeApi = async () => {
+  //   try {
+  //     // 프로젝트 ID와 API ID가 필요함
+  //     if (!projectId || !apiId) {
+  //       alert("프로젝트 ID와 API ID가 필요합니다.")
+  //       return
+  //     }
 
-      // API 호출
-      const response = await axios.put(`/api/canvas-api/${projectId}/${apiId}`, {
-        status: "USER_COMPLETED",
-      })
+  //     // API 호출
+  //     const response = await axios.put(`/api/canvas-api/${projectId}/${apiId}`, {
+  //       status: "USER_COMPLETED",
+  //     })
 
-      // 성공 메시지 표시
-      alert("API를 완료했습니다.")
-      console.log("API 완료 응답:", response.data)
+  //     // 성공 메시지 표시
+  //     alert("API를 완료했습니다.")
+  //     console.log("API 완료 응답:", response.data)
 
-      // 선택적으로 API 목록을 새로고침하여 최신 상태 반영
-      if (apiListVisible) {
-        fetchApiList()
-      }
-    } catch (err) {
-      console.error("API 완료 처리 오류:", err)
+  //     // 선택적으로 API 목록을 새로고침하여 최신 상태 반영
+  //     if (apiListVisible) {
+  //       fetchApiList()
+  //     }
+  //   } catch (err) {
+  //     console.error("API 완료 처리 오류:", err)
 
-      if (axios.isAxiosError(err)) {
-        alert(`API 완료 처리 오류: ${err.response?.data?.error || err.message}`)
-      } else {
-        alert("API 완료 처리 중 오류가 발생했습니다.")
-      }
-    }
-  }
+  //     if (axios.isAxiosError(err)) {
+  //       alert(`API 완료 처리 오류: ${err.response?.data?.error || err.message}`)
+  //     } else {
+  //       alert("API 완료 처리 중 오류가 발생했습니다.")
+  //     }
+  //   }
+  // }
 
-  // 모든 데이터를 새로고침하는 함수
-  const refreshAllData = async () => {
-    await fetchChatData()
-    // 선택된 버전이 있으면 다이어그램 데이터도 새로고침
-    if (selectedVersion) {
-      await fetchDiagramData(selectedVersion)
-    }
-  }
+  // 모든 데이터를 새로고침하는 함수 - 현재 사용되지 않음
+  // const refreshAllData = async () => {
+  //   await fetchChatData()
+  //   // 선택된 버전이 있으면 다이어그램 데이터도 새로고침
+  //   if (selectedVersion) {
+  //     await fetchDiagramData(selectedVersion)
+  //   }
+  // }
 
   // 버전 선택 핸들러 - 채팅 컴포넌트에서 호출됨
   const handleVersionSelect = (versionId: string) => {
@@ -311,16 +314,6 @@ export default function CanvasPage() {
     setTargetNodes(nodes)
   }
 
-  // 타겟 노드 제거 핸들러
-  const handleRemoveTarget = (nodeId: string) => {
-    // DiagramContainer 컴포넌트의 removeTargetNode 함수 호출
-    const diagramContainer = document.getElementById("diagram-container")
-    if (diagramContainer) {
-      const event = new CustomEvent("removeTarget", { detail: { nodeId } })
-      diagramContainer.dispatchEvent(event)
-    }
-  }
-
   // 마우스가 패널에 들어갈 때 호출
   const handleMouseEnter = () => {
     if (apiListData.length === 0) {
@@ -330,7 +323,7 @@ export default function CanvasPage() {
   }
 
   return (
-    <div className=" bg-blue-50 p-2 relative">
+    <div className="bg-blue-50 p-2 relative">
       {/* 슬라이드 패널을 위한 트리거 영역 */}
       <div className="absolute left-0 top-0 bottom-0 w-6 z-10 cursor-pointer hover:bg-gray-200 hover:bg-opacity-50 transition-colors" onMouseEnter={handleMouseEnter} />
 
@@ -411,7 +404,6 @@ export default function CanvasPage() {
                 error={chatError}
                 onRefresh={fetchChatData}
                 targetNodes={targetNodes}
-                onRemoveTarget={handleRemoveTarget}
                 onVersionSelect={handleVersionSelect}
               />
             </div>

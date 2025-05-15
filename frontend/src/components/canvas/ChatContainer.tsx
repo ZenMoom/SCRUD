@@ -18,7 +18,6 @@ interface ChatContainerProps {
   error: string | null
   onRefresh: () => Promise<void>
   targetNodes: TargetNode[]
-  onRemoveTarget: (nodeId: string) => void
   onVersionSelect?: (versionId: string) => void
 }
 
@@ -59,7 +58,7 @@ interface ChatMessage {
 // 요청 태그 타입 정의
 type RequestTag = "EXPLAIN" | "REFACTORING" | "OPTIMIZE" | "IMPLEMENT"
 
-export default function ChatContainer({ projectId, apiId, versionId, chatData, loading, error, onRefresh, targetNodes, onRemoveTarget, onVersionSelect }: ChatContainerProps) {
+export default function ChatContainer({ projectId, apiId, versionId, chatData, loading, error, onRefresh, targetNodes, onVersionSelect }: ChatContainerProps) {
   // 상태 관리
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
@@ -73,7 +72,6 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   const [accumulatedText, setAccumulatedText] = useState<string>("")
   const [isConnecting, setIsConnecting] = useState<boolean>(false)
   const [currentMessageCompleted, setCurrentMessageCompleted] = useState<boolean>(false)
-  const [hoveredTarget, setHoveredTarget] = useState<string | null>(null)
   const [versionInfo, setVersionInfo] = useState<{ newVersionId: string; description: string } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
@@ -122,7 +120,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             try {
               const jsonStr = event.data.substring(5).trim()
               parsedData = JSON.parse(jsonStr)
-            } catch (e2) {
+            } catch {
               parsedData = { text: event.data }
             }
           } else {
@@ -454,11 +452,6 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         handleSendMessage()
       }
     }
-  }
-
-  // 타겟 이름 단축 함수
-  const truncateTargetName = (name: string, maxLength = 15) => {
-    return name.length > maxLength ? name.substring(0, maxLength) + "..." : name
   }
 
   // 메시지 파싱 함수 - 코드 블록과 마크다운 형식 처리

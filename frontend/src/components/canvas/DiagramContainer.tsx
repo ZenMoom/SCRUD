@@ -485,17 +485,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
       // 유효한 연결만 필터링
       const validConnections = diagramData.connections.filter(isConnectionDto)
 
-      // 중복 연결 제거
-      const processedConnectionIds = new Set<string>()
-
       validConnections.forEach((connection) => {
-        // 연결 ID가 이미 처리되었는지 확인
-        if (processedConnectionIds.has(connection.connectionId)) {
-          console.warn(`중복된 연결 ID 감지: ${connection.connectionId}. 이 연결은 건너뜁니다.`)
-          return
-        }
-        processedConnectionIds.add(connection.connectionId)
-
         // sourceMethodId와 targetMethodId가 있는지 확인
         if (!connection.sourceMethodId || !connection.targetMethodId) return
 
