@@ -68,8 +68,7 @@ public class ScrudApiController implements ScrudApiApi {
 	 * @return ApiSummaryPageResponse API 상태가 AI_VISUALIZED 인 목록 조회 성공 (status code 200)
 	 */
 	@Override
-	public ResponseEntity<ApiSummaryPageResponse> searchApiStatus(String projectId, List<String> include) {
-
+	public ResponseEntity<ApiSummaryPageResponse> searchApiStatus(String projectId, List<ApiProcessStateEnumDto> include) {
 		// 1. include에 있는 상태를 ApiSpecStatus로 변환
 		List<ApiSpecStatus> apiSpecStatusList = include.stream()
 				.map(status -> modelMapper.map(status, ApiSpecStatus.class))
