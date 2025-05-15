@@ -160,7 +160,12 @@ class ChatService:
 
         try:
             # 최신 다이어그램 조회
-            latest_diagram: Diagram = await self._get_latest_diagram(project_id, api_id, response_queue)
+            latest_diagram: Diagram = await self._get_latest_diagram(
+                project_id=project_id,
+                api_id=api_id,
+                user_chat_data=user_chat_data,
+                response_queue=response_queue
+            )
 
             # 메서드 상세 정보 및 다이어그램 생성 여부 평가
             target_method_details = await self._get_method_details(latest_diagram, user_chat_data)
@@ -182,21 +187,53 @@ class ChatService:
         except Exception as e:
             await self._handle_error(e, response_queue)
 
-    async def _get_latest_diagram(self, project_id: str, api_id: str, response_queue: asyncio.Queue) -> Diagram:
+    async def _get_latest_diagram(
+            self,
+            project_id: str,
+            api_id: str,
+            user_chat_data: UserChatRequest,
+            response_queue: asyncio.Queue
+    ) -> Diagram:
         """최신 다이어그램을 조회하는 함수"""
         self.logger.info(f"최신 다이어그램 조회: project_id={project_id}, api_id={api_id}")
-
-        all_diagrams = await self.diagram_repository.find_many({
-            "projectId": project_id,
-            "apiId": api_id,
-        }, sort=[("metadata.version", -1)])
-
-        latest_diagram = all_diagrams[0] if all_diagrams else None
+        
+        # targetMethods가 있는지 확인하고 methodId로 다이어그램 조회
+        if user_chat_data.targetMethods and len(user_chat_data.targetMethods) > 0:
+            method_id = user_chat_data.targetMethods[0].get("methodId", "")
+            if method_id:
+                self.logger.info(f"methodId로 다이어그램 조회: methodId={method_id}")
+                
+                # MongoDB 쿼리를 사용해 methodId가 포함된 다이어그램 조회
+                diagram_with_method = await self.diagram_repository.find_diagram_by_method_id(
+                    project_id=project_id,
+                    api_id=api_id,
+                    method_id=method_id
+                )
+                
+                if diagram_with_method:
+                    self.logger.info(f"methodId={method_id}로 다이어그램을 찾았습니다. version={diagram_with_method.metadata.version}")
+                    return diagram_with_method
+                
+                # methodId가 있는 다이어그램을 찾지 못한 경우
+                error_msg = f"methodId={method_id}에 해당하는 다이어그램을 찾을 수 없습니다."
+                self.logger.error(error_msg)
+                await self.sse_service.send_error(response_queue, error_msg)
+                await self.sse_service.close_stream(response_queue)
+                # 404 에러 발생시키기
+                from fastapi import HTTPException
+                raise HTTPException(status_code=404, detail=error_msg)
+        
+        # 기존 로직: 최신 다이어그램 조회 (find_latest_by_project_api 사용)
+        latest_diagram = await self.diagram_repository.find_latest_by_project_api(project_id, api_id)
 
         if not latest_diagram:
-            self.logger.error(f"다이어그램을 찾을 수 없습니다: project_id={project_id}, api_id={api_id}")
+            error_msg = f"다이어그램을 찾을 수 없습니다: project_id={project_id}, api_id={api_id}"
+            self.logger.error(error_msg)
             await self.sse_service.send_error(response_queue, "다이어그램을 찾을 수 없습니다.")
             await self.sse_service.close_stream(response_queue)
+            # 404 에러 발생시키기
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail=error_msg)
 
         return latest_diagram
 
@@ -235,6 +272,8 @@ class ChatService:
                 api_spec, global_files
             )
 
+        await self.sse_service.close_stream(response_queue)
+
     async def _handle_diagram_generation(
             self, project_id: str, api_id: str, chat_id: str, user_chat: UserChat,
             user_chat_data: UserChatRequest, latest_diagram, agent_input, response_queue: asyncio.Queue,
@@ -257,16 +296,15 @@ class ChatService:
             api_spec,
             global_files
         )
-        await self.sse_service.close_stream(response_queue)
 
         # 비동기로 도식화 생성 작업 시작
-        asyncio.create_task(self._create_diagram_async(
+        await self._create_diagram_async(
             project_id=project_id,
             api_id=api_id,
             user_chat_data=user_chat_data,
             diagram_id=diagram_id,
             diagram_code=response_content
-        ))
+        )
 
         # SystemChat 생성
         system_chat = self._create_system_chat_with_diagram(
@@ -290,7 +328,6 @@ class ChatService:
             agent_input, user_chat_data.message,
             api_spec, global_files
         )
-        await self.sse_service.close_stream(response_queue)
 
         response_text = response_content.content
 
@@ -392,14 +429,30 @@ class ChatService:
 
     async def _handle_error(self, exception: Exception, response_queue: asyncio.Queue) -> Dict:
         """에러를 처리하는 함수"""
-        error_message = str(exception)
-        self.logger.error(f"채팅 및 다이어그램 처리 중 오류 발생: {error_message}", exc_info=True)
+        # HTTPException인 경우 상태 코드 확인
+        from fastapi import HTTPException
+        if isinstance(exception, HTTPException):
+            error_message = exception.detail
+            status_code = exception.status_code
+            self.logger.error(f"HTTP 오류 발생 ({status_code}): {error_message}", exc_info=True)
+            
+            # 이미 SSE 에러가 전송되었을 수 있으므로 스트림이 열려있는지 확인
+            if not response_queue.empty():
+                # 오류 발생 시 클라이언트에게 알림
+                await self.sse_service.send_error(response_queue, f"오류 {status_code}: {error_message}")
+                await self.sse_service.close_stream(response_queue)
+            
+            return {"error": error_message, "status_code": status_code}
+        else:
+            # 일반 예외 처리
+            error_message = str(exception)
+            self.logger.error(f"채팅 및 다이어그램 처리 중 오류 발생: {error_message}", exc_info=True)
 
-        # 오류 발생 시 클라이언트에게 알림
-        await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {error_message}")
-        await self.sse_service.close_stream(response_queue)
+            # 오류 발생 시 클라이언트에게 알림
+            await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {error_message}")
+            await self.sse_service.close_stream(response_queue)
 
-        return {"error": error_message}
+            return {"error": error_message}
 
     async def evaluate_diagram_generate(self, target_method_details, user_chat_data):
         # Agent에게 도식화 생성 여부를 판단하도록 요청
