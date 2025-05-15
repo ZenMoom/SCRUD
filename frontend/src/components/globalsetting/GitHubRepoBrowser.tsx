@@ -347,12 +347,16 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
       const treeData = await treeResponse.json();
       
       // 3. 선택된 항목 업데이트 - 원본 데이터 그대로 저장
-      setSelectedItems([{
+      const newSelectedItem: SelectedItem = {
         path: `${repo.owner}/${repo.name}`,
         type: 'repository',
         repoInfo: repo,
-        content: treeData // JSON.stringify 제거: 원본 데이터 그대로 저장
-      }]);
+        content: treeData
+      };
+      console.log('저장할 selectedItems 데이터:', newSelectedItem);
+      
+      setSelectedItems([newSelectedItem]);
+      console.log('=== fetchFullRepositoryStructure 완료 ===');
     } catch (error) {
       console.error('레포지토리 전체 구조 가져오기 실패:', error);
       setError('레포지토리 전체 구조를 가져오는데 실패했습니다.');
@@ -442,13 +446,16 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           }
           
           if (selectedItems[0].content) {
-            onSelect([{
+            console.log('전달할 레포지토리 데이터:', selectedItems[0].content);
+            const processedData = [{
               path: selectedItems[0].path,
-              content: JSON.stringify(selectedItems[0].content),
+              content: selectedItems[0].content,
               fileType: 'ARCHITECTURE_GITHUB',
               fileName: selectedItems[0].path.split('/').pop() || '',
               isGitHub: true
-            }]);
+            }];
+            console.log('onSelect에 전달할 최종 데이터:', processedData);
+            onSelect(processedData);
             onClose();
             return;
           } else {
