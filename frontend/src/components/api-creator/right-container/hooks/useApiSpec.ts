@@ -65,19 +65,19 @@ export const useApiSpec = ({
   showSuccessNotification,
   showErrorNotification,
   showWarningNotification,
-  showInfoNotification,
-}: UseApiSpecProps) => {
+}: // showInfoNotification,
+UseApiSpecProps) => {
   // useAuthStore에서 토큰 가져오기
   const { token } = useAuthStore()
 
   // 콘텐츠 타입 매핑
-  const contentTypeMap: Record<string, string> = {
-    json: "application/json",
-    text: "text/plain",
-    xml: "application/xml",
-    javascript: "application/javascript",
-    html: "text/html",
-  }
+  // const contentTypeMap: Record<string, string> = {
+  //   json: "application/json",
+  //   text: "text/plain",
+  //   xml: "application/xml",
+  //   javascript: "application/javascript",
+  //   html: "text/html",
+  // }
 
   // API 생성 또는 업데이트 핸들러
   const handleSaveApi = async () => {
@@ -377,156 +377,156 @@ export const useApiSpec = ({
   }
 
   // API 테스트 실행
-  const handleTestApi = async () => {
-    if (!endpoint.trim()) {
-      showWarningNotification("API 엔드포인트를 입력해주세요.")
-      return
-    }
+  // const handleTestApi = async () => {
+  //   if (!endpoint.trim()) {
+  //     showWarningNotification("API 엔드포인트를 입력해주세요.")
+  //     return
+  //   }
 
-    setIsLoading(true)
-    try {
-      console.log(`API 테스트 시작 - 엔드포인트: ${endpoint}, 프로젝트 ID: ${scrudProjectId}`)
+  //   setIsLoading(true)
+  //   try {
+  //     console.log(`API 테스트 시작 - 엔드포인트: ${endpoint}, 프로젝트 ID: ${scrudProjectId}`)
 
-      // Body 모드에 따라 다른 요청 데이터 구성
-      let requestBodyData: string | Record<string, unknown> | FormData | null = null
-      const headers: Record<string, string> = {
-        Authorization: token ? `Bearer ${token}` : "", // Bearer 토큰 추가
-      }
+  //     // Body 모드에 따라 다른 요청 데이터 구성
+  //     let requestBodyData: string | Record<string, unknown> | FormData | null = null
+  //     const headers: Record<string, string> = {
+  //       Authorization: token ? `Bearer ${token}` : "", // Bearer 토큰 추가
+  //     }
 
-      if (bodyMode === "raw" && rawBody.trim()) {
-        if (rawBodyFormat === "json") {
-          try {
-            requestBodyData = JSON.parse(rawBody)
-            headers["Content-Type"] = "application/json"
-          } catch (err) {
-            console.error("JSON 형식이 올바르지 않습니다.", err)
-            showErrorNotification("요청 본문의 JSON 형식이 올바르지 않습니다.")
-            setIsLoading(false)
-            return
-          }
-        } else {
-          requestBodyData = rawBody
-          headers["Content-Type"] = contentTypeMap[rawBodyFormat]
-        }
-      } else if (bodyMode === "form-data") {
-        const formData = new FormData()
-        bodyParams.forEach((param) => {
-          if (param.key.trim()) {
-            formData.append(param.key, param.value)
-          }
-        })
-        requestBodyData = formData
-      } else if (bodyMode === "x-www-form-urlencoded") {
-        const urlEncoded = new URLSearchParams()
-        bodyParams.forEach((param) => {
-          if (param.key.trim()) {
-            urlEncoded.append(param.key, param.value)
-          }
-        })
-        requestBodyData = urlEncoded.toString()
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
-      }
+  //     if (bodyMode === "raw" && rawBody.trim()) {
+  //       if (rawBodyFormat === "json") {
+  //         try {
+  //           requestBodyData = JSON.parse(rawBody)
+  //           headers["Content-Type"] = "application/json"
+  //         } catch (err) {
+  //           console.error("JSON 형식이 올바르지 않습니다.", err)
+  //           showErrorNotification("요청 본문의 JSON 형식이 올바르지 않습니다.")
+  //           setIsLoading(false)
+  //           return
+  //         }
+  //       } else {
+  //         requestBodyData = rawBody
+  //         headers["Content-Type"] = contentTypeMap[rawBodyFormat]
+  //       }
+  //     } else if (bodyMode === "form-data") {
+  //       const formData = new FormData()
+  //       bodyParams.forEach((param) => {
+  //         if (param.key.trim()) {
+  //           formData.append(param.key, param.value)
+  //         }
+  //       })
+  //       requestBodyData = formData
+  //     } else if (bodyMode === "x-www-form-urlencoded") {
+  //       const urlEncoded = new URLSearchParams()
+  //       bodyParams.forEach((param) => {
+  //         if (param.key.trim()) {
+  //           urlEncoded.append(param.key, param.value)
+  //         }
+  //       })
+  //       requestBodyData = urlEncoded.toString()
+  //       headers["Content-Type"] = "application/x-www-form-urlencoded"
+  //     }
 
-      // 쿼리 파라미터 구성
-      let finalEndpoint = endpoint
-      if (method === "GET" && queryParamsJson.trim()) {
-        try {
-          const queryParams = JSON.parse(queryParamsJson)
-          const queryString = Object.entries(queryParams)
-            .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
-            .join("&")
+  //     // 쿼리 파라미터 구성
+  //     let finalEndpoint = endpoint
+  //     if (method === "GET" && queryParamsJson.trim()) {
+  //       try {
+  //         const queryParams = JSON.parse(queryParamsJson)
+  //         const queryString = Object.entries(queryParams)
+  //           .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+  //           .join("&")
 
-          if (queryString) {
-            finalEndpoint += `?${queryString}`
-          }
-        } catch (err) {
-          console.error("쿼리 파라미터 파싱 오류", err)
-          showWarningNotification("쿼리 파라미터 파싱 중 오류가 발생했습니다.")
-        }
-      }
+  //         if (queryString) {
+  //           finalEndpoint += `?${queryString}`
+  //         }
+  //       } catch (err) {
+  //         console.error("쿼리 파라미터 파싱 오류", err)
+  //         showWarningNotification("쿼리 파라미터 파싱 중 오류가 발생했습니다.")
+  //       }
+  //     }
 
-      // 경로 파라미터 대체
-      if (endpoint.includes("{") && pathParamsJson.trim()) {
-        try {
-          const pathParams = JSON.parse(pathParamsJson)
-          let processedEndpoint = finalEndpoint
+  //     // 경로 파라미터 대체
+  //     if (endpoint.includes("{") && pathParamsJson.trim()) {
+  //       try {
+  //         const pathParams = JSON.parse(pathParamsJson)
+  //         let processedEndpoint = finalEndpoint
 
-          // 경로의 {parameter} 부분을 실제 값으로 대체
-          Object.entries(pathParams).forEach(([key, value]) => {
-            processedEndpoint = processedEndpoint.replace(`{${key}}`, String(value))
-          })
+  //         // 경로의 {parameter} 부분을 실제 값으로 대체
+  //         Object.entries(pathParams).forEach(([key, value]) => {
+  //           processedEndpoint = processedEndpoint.replace(`{${key}}`, String(value))
+  //         })
 
-          finalEndpoint = processedEndpoint
-        } catch (err) {
-          console.error("경로 파라미터 파싱 오류", err)
-          showWarningNotification("경로 파라미터 파싱 중 오류가 발생했습니다.")
-        }
-      }
+  //         finalEndpoint = processedEndpoint
+  //       } catch (err) {
+  //         console.error("경로 파라미터 파싱 오류", err)
+  //         showWarningNotification("경로 파라미터 파싱 중 오류가 발생했습니다.")
+  //       }
+  //     }
 
-      // 백엔드 서버 요청을 Next.js API 라우트로 프록시
-      const testApiUrl = `/api/test${finalEndpoint}`
+  //     // 백엔드 서버 요청을 Next.js API 라우트로 프록시
+  //     const testApiUrl = `/api/test${finalEndpoint}`
 
-      // 테스트 시작 알림
-      showInfoNotification(`API 테스트 요청 중... (${method} ${finalEndpoint})`)
+  //     // 테스트 시작 알림
+  //     showInfoNotification(`API 테스트 요청 중... (${method} ${finalEndpoint})`)
 
-      let response
+  //     let response
 
-      switch (method) {
-        case "GET":
-          response = await axios.get(testApiUrl, { headers })
-          break
-        case "POST":
-          response = await axios.post(testApiUrl, requestBodyData, { headers })
-          break
-        case "PUT":
-          response = await axios.put(testApiUrl, requestBodyData, { headers })
-          break
-        case "PATCH":
-          response = await axios.patch(testApiUrl, requestBodyData, { headers })
-          break
-        case "DELETE":
-          response = await axios.delete(testApiUrl, {
-            data: requestBodyData,
-            headers,
-          })
-          break
-        default:
-          throw new Error("지원하지 않는 HTTP 메소드입니다.")
-      }
+  //     switch (method) {
+  //       case "GET":
+  //         response = await axios.get(testApiUrl, { headers })
+  //         break
+  //       case "POST":
+  //         response = await axios.post(testApiUrl, requestBodyData, { headers })
+  //         break
+  //       case "PUT":
+  //         response = await axios.put(testApiUrl, requestBodyData, { headers })
+  //         break
+  //       case "PATCH":
+  //         response = await axios.patch(testApiUrl, requestBodyData, { headers })
+  //         break
+  //       case "DELETE":
+  //         response = await axios.delete(testApiUrl, {
+  //           data: requestBodyData,
+  //           headers,
+  //         })
+  //         break
+  //       default:
+  //         throw new Error("지원하지 않는 HTTP 메소드입니다.")
+  //     }
 
-      // 테스트 성공
-      setApiResponse({
-        status: response.status,
-        data: response.data,
-      })
+  //     // 테스트 성공
+  //     setApiResponse({
+  //       status: response.status,
+  //       data: response.data,
+  //     })
 
-      // 성공 메시지
-      showSuccessNotification(`API 테스트 성공: ${response.status} ${response.statusText}`)
-    } catch (error) {
-      console.error("API 테스트 오류:", error)
-      const err = error as Error | AxiosError
+  //     // 성공 메시지
+  //     showSuccessNotification(`API 테스트 성공: ${response.status} ${response.statusText}`)
+  //   } catch (error) {
+  //     console.error("API 테스트 오류:", error)
+  //     const err = error as Error | AxiosError
 
-      if (axios.isAxiosError(err) && err.response) {
-        setApiResponse({
-          status: err.response.status,
-          error: err.response.data?.error || "API 테스트 중 오류가 발생했습니다.",
-        })
-        showErrorNotification(`API 테스트 실패: ${err.response.status} ${err.response.statusText}`)
-      } else {
-        setApiResponse({
-          status: 500,
-          error: "API 테스트 중 오류가 발생했습니다.",
-        })
-        showErrorNotification(`API 테스트 실패: ${err.message || "알 수 없는 오류"}`)
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  //     if (axios.isAxiosError(err) && err.response) {
+  //       setApiResponse({
+  //         status: err.response.status,
+  //         error: err.response.data?.error || "API 테스트 중 오류가 발생했습니다.",
+  //       })
+  //       showErrorNotification(`API 테스트 실패: ${err.response.status} ${err.response.statusText}`)
+  //     } else {
+  //       setApiResponse({
+  //         status: 500,
+  //         error: "API 테스트 중 오류가 발생했습니다.",
+  //       })
+  //       showErrorNotification(`API 테스트 실패: ${err.message || "알 수 없는 오류"}`)
+  //     }
+  //   } finally {
+  //     setIsLoading(false)
+  //   }
+  // }
 
   return {
     handleSaveApi,
     handleDeleteApi,
-    handleTestApi,
+    // handleTestApi,
   }
 }
