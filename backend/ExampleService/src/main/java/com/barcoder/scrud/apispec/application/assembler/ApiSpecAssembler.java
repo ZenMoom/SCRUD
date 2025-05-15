@@ -10,7 +10,7 @@ import java.util.List;
 @Component
 public class ApiSpecAssembler {
 
-	public ApiSpec toLatestEndpointVersionEntity(ScrudProject scrudProject, ApiSpecVersion apiSpecVersion, String endpoint) {
+	public ApiSpec toApiSpecEntity(ScrudProject scrudProject, ApiSpecVersion apiSpecVersion, String endpoint) {
 		return ApiSpec.builder()
 				.scrudProject(scrudProject)
 				.apiSpecVersion(apiSpecVersion)
@@ -18,7 +18,7 @@ public class ApiSpecAssembler {
 				.build();
 	}
 
-	public List<ApiSpec> toLatestEndpointVersionEntityList(ScrudProject scrudProject, List<ApiSpecVersion> apiSpecVersionList) {
+	public List<ApiSpec> toApiSpecEntityList(ScrudProject scrudProject, List<ApiSpecVersion> apiSpecVersionList) {
 		return apiSpecVersionList.stream()
 				.map(apiSpecVersion -> ApiSpec.builder()
 						.scrudProject(scrudProject)
