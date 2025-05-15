@@ -6,12 +6,18 @@ public class SnowflakeWorker {
     private final long datacenterIdBits = 5L;
     private final long maxWorkerId = ~(-1L << workerIdBits); // 31
     private final long maxDatacenterId = ~(-1L << datacenterIdBits); // 31
-    private final long sequenceBits = 12L;
+    // 자리 수 문제로 임시
+    //    private final long sequenceBits = 12L;
+    private final long sequenceBits = 8L;
 
     private final long workerIdShift = sequenceBits;
     private final long datacenterIdShift = sequenceBits + workerIdBits;
-    private final long timestampLeftShift = sequenceBits + workerIdBits + datacenterIdBits;
+    //    private final long timestampLeftShift = sequenceBits + workerIdBits + datacenterIdBits;
     private final long sequenceMask = ~(-1L << sequenceBits);
+
+    // 자리 수 문제로 임시
+    // timestamp → 35bit (약 1,000년 보장 → 34로 하면 약 500년)
+    private final long timestampLeftShift = sequenceBits + workerIdBits + datacenterIdBits; // = 18
 
     private long workerId;
     private long datacenterId;
@@ -20,7 +26,8 @@ public class SnowflakeWorker {
 
     public SnowflakeWorker(long workerId, long datacenterId) {
         if (workerId > maxWorkerId || workerId < 0) throw new IllegalArgumentException("worker Id out of range");
-        if (datacenterId > maxDatacenterId || datacenterId < 0) throw new IllegalArgumentException("datacenter Id out of range");
+        if (datacenterId > maxDatacenterId || datacenterId < 0)
+            throw new IllegalArgumentException("datacenter Id out of range");
         this.workerId = workerId;
         this.datacenterId = datacenterId;
     }
