@@ -1146,6 +1146,7 @@ paths:
       - ScrudProject
   /api/v1/posts:
     get:
+      operationId: getPostList
       parameters:
       - description: "요청할 페이지 번호 (기본값: 0)"
         in: query
@@ -1199,12 +1200,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/_api_v1_posts_get_200_response'
+                $ref: '#/components/schemas/GetPostListResponse'
           description: 게시글 목록 조회 응답
       summary: 게시글 목록 조회
       tags:
       - Post
     post:
+      operationId: createPost
       requestBody:
         $ref: '#/components/requestBodies/CreatePostRequest'
       responses:
@@ -1212,13 +1214,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/_api_v1_posts_post_201_response'
+                $ref: '#/components/schemas/CreatePostResponse'
           description: 게시글 생성 성공 응답
       summary: 게시글 작성
       tags:
       - Post
   /api/v1/posts/{postId}:
     delete:
+      operationId: deletePost
       parameters:
       - in: path
         name: postId
@@ -1233,6 +1236,7 @@ paths:
       tags:
       - Post
     get:
+      operationId: getPostById
       parameters:
       - in: path
         name: postId
@@ -1251,6 +1255,7 @@ paths:
       tags:
       - Post
     patch:
+      operationId: updatePost
       parameters:
       - in: path
         name: postId
@@ -1268,6 +1273,7 @@ paths:
       - Post
   /api/v1/posts/{postId}/vote:
     post:
+      operationId: votePost
       parameters:
       - in: path
         name: postId
@@ -1289,6 +1295,7 @@ paths:
       - Post
   /api/v1/posts/{postId}/comments:
     get:
+      operationId: getCommentList
       parameters:
       - in: path
         name: postId
@@ -1307,6 +1314,7 @@ paths:
       tags:
       - Comment
     post:
+      operationId: createComment
       parameters:
       - in: path
         name: postId
@@ -1324,6 +1332,7 @@ paths:
       - Comment
   /api/v1/comments/{commentId}:
     delete:
+      operationId: deleteComment
       parameters:
       - in: path
         name: commentId
@@ -1338,6 +1347,7 @@ paths:
       tags:
       - Comment
     patch:
+      operationId: updateComment
       parameters:
       - in: path
         name: commentId
@@ -1355,6 +1365,7 @@ paths:
       - Comment
   /api/v1/comments/{commentId}/vote:
     post:
+      operationId: voteComment
       parameters:
       - in: path
         name: commentId
@@ -2016,13 +2027,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/_api_v1_posts_get_200_response'
+            $ref: '#/components/schemas/GetPostListResponse'
       description: 게시글 목록 조회 응답
     CreatePostResponse:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/_api_v1_posts_post_201_response'
+            $ref: '#/components/schemas/CreatePostResponse'
       description: 게시글 생성 성공 응답
     GetPostDetailResponse:
       content:
@@ -3329,6 +3340,35 @@ components:
       - content
       - title_content
       type: string
+    GetPostListResponse:
+      example:
+        pageable:
+          isLastPage: true
+          totalPages: 1
+          listSize: 6
+          isFirstPage: true
+          totalElements: 5
+        content:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          likeCount: 10
+          postId: 101
+          viewCount: 123
+          title: 게시글 제목
+          category: 공지
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          likeCount: 10
+          postId: 101
+          viewCount: 123
+          title: 게시글 제목
+          category: 공지
+      properties:
+        content:
+          items:
+            $ref: '#/components/schemas/PostSummaryResponse'
+          type: array
+        pageable:
+          $ref: '#/components/schemas/PageDto'
+      type: object
     PostSummaryResponse:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
@@ -3357,28 +3397,12 @@ components:
           example: 10
           type: integer
       type: object
-    PageDto:
+    CreatePostResponse:
       example:
-        isLastPage: true
-        totalPages: 1
-        listSize: 6
-        isFirstPage: true
-        totalElements: 5
+        postId: 101
       properties:
-        listSize:
-          description: 현재 페이지의 데이터 개수
-          type: integer
-        isFirstPage:
-          description: 현재 페이지가 첫 번째 페이지인지 여부
-          type: boolean
-        isLastPage:
-          description: 현재 페이지가 마지막 페이지인지 여부
-          type: boolean
-        totalPages:
-          description: 총 페이지 수
-          type: integer
-        totalElements:
-          description: 총 데이터 개수
+        postId:
+          example: 101
           type: integer
       type: object
     PostDetailResponse:
@@ -3741,40 +3765,28 @@ components:
       required:
       - isLike
       type: object
-    _api_v1_posts_get_200_response:
-      allOf:
-      - properties:
-          content:
-            items:
-              $ref: '#/components/schemas/PostSummaryResponse'
-            type: array
-        type: object
-      - $ref: '#/components/schemas/PageDto'
+    PageDto:
       example:
         isLastPage: true
-        totalPages: 6
-        listSize: 0
+        totalPages: 1
+        listSize: 6
         isFirstPage: true
-        content:
-        - createdAt: 2000-01-23T04:56:07.000+00:00
-          likeCount: 10
-          postId: 101
-          viewCount: 123
-          title: 게시글 제목
-          category: 공지
-        - createdAt: 2000-01-23T04:56:07.000+00:00
-          likeCount: 10
-          postId: 101
-          viewCount: 123
-          title: 게시글 제목
-          category: 공지
-        totalElements: 1
-    _api_v1_posts_post_201_response:
-      example:
-        postId: 101
+        totalElements: 5
       properties:
-        postId:
-          example: 101
+        listSize:
+          description: 현재 페이지의 데이터 개수
+          type: integer
+        isFirstPage:
+          description: 현재 페이지가 첫 번째 페이지인지 여부
+          type: boolean
+        isLastPage:
+          description: 현재 페이지가 마지막 페이지인지 여부
+          type: boolean
+        totalPages:
+          description: 총 페이지 수
+          type: integer
+        totalElements:
+          description: 총 데이터 개수
           type: integer
       type: object
     PostDetailResponse_author:

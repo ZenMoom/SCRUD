@@ -32,6 +32,7 @@ paths:
     post:
       tags: [ Comment ]
       summary: 댓글 작성
+      operationId: createComment
       parameters:
         - $ref: './components/schemas/post-schema.yaml#/PostId'
       requestBody:
@@ -43,6 +44,7 @@ paths:
     get:
       tags: [ Comment ]
       summary: 댓글 조회
+      operationId: getCommentList
       parameters:
         - $ref: './components/schemas/post-schema.yaml#/PostId'
       responses:
@@ -53,10 +55,11 @@ paths:
     patch:
       tags: [ Comment ]
       summary: 댓글 수정
+      operationId: updateComment
       parameters:
         - $ref: './components/schemas/comment-schema.yaml#/CommentId'
       requestBody:
-        $ref: './components/schemas/comment-schema.yaml#/UpdateCommentRequest'
+        $ref: './components/requests/comment-request.yaml#/UpdateCommentRequest'
       responses:
         '200':
           $ref: './components/responses/success-response.yaml#/SuccessNoContent'
@@ -64,6 +67,7 @@ paths:
     delete:
       tags: [ Comment ]
       summary: 댓글 삭제
+      operationId: deleteComment
       parameters:
         - $ref: './components/schemas/comment-schema.yaml#/CommentId'
       responses:
@@ -74,10 +78,11 @@ paths:
     post:
       tags: [ Comment ]
       summary: 댓글 추천/비추천
+      operationId: voteComment
       parameters:
         - $ref: './components/schemas/comment-schema.yaml#/CommentId'
       requestBody:
-        $ref: './components/schemas/comment-schema.yaml#/CommentVoteRequest'
+        $ref: './components/requests/comment-request.yaml#/CommentVoteRequest'
       responses:
         '200':
           $ref: './components/responses/comment-response.yaml#/VoteCommentResponse'

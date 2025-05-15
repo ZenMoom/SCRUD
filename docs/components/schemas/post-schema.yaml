@@ -62,6 +62,13 @@ PostVoteRequest:
 
 ###### response dto ######
 
+CreatePostResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      example: 101
+
 PostSummaryResponse:
   type: object
   properties:
@@ -130,6 +137,16 @@ PostDetailResponse:
         username:
           type: string
           example: "john_doe"
+
+GetPostListResponse:
+  type: object
+  properties:
+    content:
+      type: array
+      items:
+        $ref: "#/PostSummaryResponse"
+    pageable:
+      $ref: "../schemas/page-schema.yaml#/PageDto"
 
 VoteResponse:
   type: object

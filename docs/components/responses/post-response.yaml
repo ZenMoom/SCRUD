@@ -3,25 +3,14 @@ CreatePostResponse:
   content:
     application/json:
       schema:
-        type: object
-        properties:
-          postId:
-            type: integer
-            example: 101
+        $ref: '../schemas/post-schema.yaml#/CreatePostResponse'
 
 GetPostListResponse:
   description: 게시글 목록 조회 응답
   content:
     application/json:
       schema:
-        allOf:
-          - type: object
-            properties:
-              content:
-                type: array
-                items:
-                  $ref: '../schemas/post-schema.yaml#/PostSummaryResponse'
-          - $ref: '../schemas/page-schema.yaml#/PageDto'
+        $ref: '../schemas/post-schema.yaml#/GetPostListResponse'
 
 GetPostDetailResponse:
   description: 게시글 상세 조회 응답
