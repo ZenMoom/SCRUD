@@ -1,10 +1,10 @@
 package com.barcoder.scrud.spec.domain.entity;
 
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
+import com.barcoder.scrud.global.config.generator.SnowflakeId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -22,23 +22,23 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class RequestRule extends BaseTimeEntity {
 
-	@Id
-	@GeneratedValue
-	private Long requestRuleId;
+    @Id
+    @SnowflakeId
+    private Long requestRuleId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "operation_field_rule_id")
-	private OperationFieldRule operationFieldRule;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "operation_field_rule_id")
+    private OperationFieldRule operationFieldRule;
 
-	@Column(columnDefinition = "VARCHAR(50)", nullable = false)
-	private String contentType;
+    @Column(columnDefinition = "VARCHAR(50)", nullable = false)
+    private String contentType;
 
-	@Column(columnDefinition = "VARCHAR(50)", nullable = false)
-	private String bodyType;
+    @Column(columnDefinition = "VARCHAR(50)", nullable = false)
+    private String bodyType;
 
-	private Boolean isRequired;
+    private Boolean isRequired;
 
-	private boolean supportsFile;
+    private boolean supportsFile;
 
-	private String allowedFields;
+    private String allowedFields;
 }
