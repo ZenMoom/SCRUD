@@ -287,7 +287,11 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.architectureStructure}
           title="아키텍처 구조"
           value={settings.architectureStructure}
-          onChange={(value) => onSettingChange("architectureStructure", value)}
+          onChange={(value) => {
+            console.log('=== ContentArea architectureStructure onChange ===');
+            console.log('ArchitectureStructureForm에서 받은 값:', value);
+            onSettingChange("architectureStructure", value);
+          }}
           onInfoClick={() => openModal("architectureStructure")}
           onFocus={() => handleItemFocus("architectureStructure")}
         />

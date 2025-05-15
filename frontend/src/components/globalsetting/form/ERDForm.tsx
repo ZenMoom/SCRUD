@@ -62,10 +62,6 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
           name: file.name,
           content: content
         };
-
-        console.log('드래그 앤 드롭으로 추가된 파일:');
-        console.log('파일명:', fileWithContent.name);
-        console.log('파일 내용:', fileWithContent.content);
         
         // 드롭한 파일을 현재 값 배열에 추가
         if (Array.isArray(value)) {
@@ -174,10 +170,6 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
                   content: content
                 };
 
-                console.log('파일 업로드로 추가된 파일:');
-                console.log('파일명:', fileWithContent.name);
-                console.log('파일 내용:', fileWithContent.content);
-                
                 // 현재 value가 배열인 경우 새 파일을 추가
                 if (Array.isArray(value)) {
                   onChange([...value, fileWithContent]);

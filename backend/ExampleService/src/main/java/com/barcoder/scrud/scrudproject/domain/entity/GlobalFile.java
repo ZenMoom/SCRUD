@@ -33,6 +33,6 @@ public class GlobalFile extends BaseTimeEntity {
     private FileTypeEnumDto fileType;
 
     @Lob
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String fileContent;
 }

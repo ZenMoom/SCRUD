@@ -410,7 +410,9 @@ PromptId:
 Include:
   name: include
   in: query
-  description: 포함
+  description: 포함, 배열 지원
   required: false
   schema:
-    type: string
+    type: array
+    items:
+      $ref: '#/ApiProcessStateEnumDto'
