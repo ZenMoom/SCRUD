@@ -255,6 +255,12 @@ class DiagramService:
 - dto: DTO 모델 목록 (dtoId: UUID)
 - metadata: 다이어그램 메타데이터 (버전, 수정일시 등)
 
+[참고]
+Controller 컴포넌트는 positionX, positionY (0, 0)으로 시작합니다.
+서로 다른 컴포넌트 간의 positionX, positionY 간 간격은 각각 500, 0 입니다.
+Controller로 부터 같은 거리의 클래스는 상하로 구분합니다. (ServiceA, ServiceB가 Controller로 부터 사용된다면 ServiceA, ServiceB의 x값은 같습니다.
+Controller가 0,0 이면 ServiceA = (500, 0), ServiceB = (500, 300) 입니다.) 
+
 모든 ID 필드는 generate_uuid 도구로 생성해야 합니다. 특히 methodId끼리 겹치거나 componentId가 겹치는 일이 없도록 주의하세요  
 최종 출력은 Pydantic 스키마에 맞게 형식화되어야 합니다.
 

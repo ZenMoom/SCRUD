@@ -1,11 +1,10 @@
 package com.barcoder.scrud.spec.domain.entity;
 
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
+import com.barcoder.scrud.global.config.generator.SnowflakeId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -23,23 +22,23 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class ParameterRule extends BaseTimeEntity {
 
-	@Id
-	@GeneratedValue
-	private Long parameterRuleId;
+    @Id
+    @SnowflakeId
+    private Long parameterRuleId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "operation_field_rule_id")
-	private OperationFieldRule operationFieldRule;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "operation_field_rule_id")
+    private OperationFieldRule operationFieldRule;
 
-	@Column(columnDefinition = "VARCHAR(20)", nullable = false)
-	private String inType;
+    @Column(columnDefinition = "VARCHAR(20)", nullable = false)
+    private String inType;
 
-	@Column(columnDefinition = "VARCHAR(20)", nullable = false)
-	private String dataType;
+    @Column(columnDefinition = "VARCHAR(20)", nullable = false)
+    private String dataType;
 
-	private boolean supportsEnum;
+    private boolean supportsEnum;
 
-	private boolean supportsArray;
+    private boolean supportsArray;
 
-	private Boolean isRequired;
+    private Boolean isRequired;
 }

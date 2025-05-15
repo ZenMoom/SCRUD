@@ -12,7 +12,7 @@ from app.api.dto.diagram_dto import UserChatRequest, DiagramResponse, ChatRespon
 from app.core.generator.chat_request_evaluator import PropositionAnalysis
 from app.core.generator.model_generator import ModelGenerator
 from app.core.services.sse_service import SSEService
-from app.infrastructure.http.client.api_client import ApiClient, ApiSpec, GlobalFileList
+from app.infrastructure.http.client.api_client import ApiSpec, GlobalFileList
 from app.infrastructure.mongodb.repository.chat_repository import ChatRepository
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram, UserChat, SystemChat, Chat, VersionInfo, \
@@ -377,7 +377,7 @@ class ChatService:
         self.logger.info(f"사용된 프롬프트: {chat_prompt}")
 
         # 이제 user_input 변수가 필요 없어졌으므로 빈 딕셔너리로 호출합니다
-        response_content = chain.invoke({})
+        response_content = await chain.ainvoke({})
 
         self.logger.info(f"생성된 응답 값: {response_content.content}")
         return response_content
@@ -469,7 +469,6 @@ class ChatService:
         self.logger.info(f"Agent에게 도식화 생성 여부 판단 요청: {agent_input}")
         # Agent의 결과에서 도식화 생성 여부 추출
         should_generate_diagram = result.is_true
-        # should_generate_diagram = True
         self.logger.info(f"Agent에게 도식화 생성 여부 판단 결과: {should_generate_diagram}")
         self.logger.info(f"Agent에게 도식화 생성 여부 판단 이유: {result.reasoning}")
         self.logger.info(f"==============================================================")
