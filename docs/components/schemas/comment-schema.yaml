@@ -17,6 +17,7 @@ CreateCommentRequest:
       example: 댓글입니다.
     parentCommentId:
       type: integer
+      format: int64
       nullable: true
       example: 123
 
@@ -45,9 +46,11 @@ CommentResponse:
   properties:
     commentId:
       type: integer
+      format: int64
       example: 101
     postId:
       type: integer
+      format: int64
       example: 5
     content:
       type: string
@@ -55,12 +58,19 @@ CommentResponse:
     parentCommentId:
       type: integer
       nullable: true
+      format: int64
       example: 12
+    replies:
+      type: array
+      items:
+        $ref: '#/CommentResponse'
     likeCount:
       type: integer
+      format: int64
       example: 3
     dislikeCount:
       type: integer
+      format: int64
       example: 1
     isEdited:
       type: boolean
@@ -97,7 +107,9 @@ VoteCommentResponse:
   properties:
     likeCount:
       type: integer
+      format: int64
       example: 4
     dislikeCount:
       type: integer
+      format: int64
       example: 2

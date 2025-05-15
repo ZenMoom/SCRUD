@@ -38,6 +38,7 @@ CreatePostRequest:
       example: "게시글 내용입니다."
     categoryId:
       type: integer
+      format: int64
       example: 1
 
 UpdatePostRequest:
@@ -67,6 +68,7 @@ CreatePostResponse:
   properties:
     postId:
       type: integer
+      format: int64
       example: 101
 
 PostSummaryResponse:
@@ -74,6 +76,7 @@ PostSummaryResponse:
   properties:
     postId:
       type: integer
+      format: int64
       example: 101
     title:
       type: string
@@ -87,9 +90,11 @@ PostSummaryResponse:
       example: "2024-05-15T12:34:56"
     viewCount:
       type: integer
+      format: int64
       example: 123
     likeCount:
       type: integer
+      format: int64
       example: 10
 
 PostDetailResponse:
@@ -97,6 +102,7 @@ PostDetailResponse:
   properties:
     postId:
       type: integer
+      format: int64
       example: 101
     title:
       type: string
@@ -117,12 +123,15 @@ PostDetailResponse:
       example: "2024-05-15T13:00:00"
     viewCount:
       type: integer
+      format: int64
       example: 123
     likeCount:
       type: integer
+      format: int64
       example: 10
     dislikeCount:
       type: integer
+      format: int64
       example: 1
     commentCount:
       type: integer
@@ -153,7 +162,9 @@ VoteResponse:
   properties:
     likeCount:
       type: integer
+      format: int64
       example: 12
     dislikeCount:
       type: integer
+      format: int64
       example: 2
