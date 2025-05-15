@@ -8,7 +8,7 @@ from langchain_openai import ChatOpenAI
 
 from app.config.config import settings
 from app.infrastructure.mongodb.repository.model.diagram_model import MethodPromptTagEnum, \
-    MethodPromptTargetEnum, Metadata
+    MethodPromptTargetEnum, Metadata, Diagram
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -91,7 +91,7 @@ class DiagramProcessor:
         self.logger.info(f"생성된 프롬프트 일부: {complete_prompt}...")
         return complete_prompt
 
-    async def _call_llm(self, complete_prompt, diagram_code):
+    async def _call_llm(self, complete_prompt, diagram_code, latest_diagram: Diagram):
         """
         생성된 프롬프트를 사용하여 LLM을 호출합니다.
 
@@ -116,9 +116,13 @@ class DiagramProcessor:
         [입력]
         {complete_prompt}
         
+        [현재 다이어그램 상태]
+        {latest_diagram.model_dump_json()}
+        
         [출력 형식]
         {self.parser.get_format_instructions()}
         """
+        self.logger.info(f"파서 내용: {self.parser.get_format_instructions()}")
         human_message = diagram_code.content
         chat_prompt = ChatPromptTemplate([
             SystemMessage(content=system_message),
@@ -128,7 +132,6 @@ class DiagramProcessor:
         response = await chain.ainvoke({})
 
         self.logger.info("LLM 호출 완료")
-        self.logger.info(f"LLM 응답 전체 내용 (일부): {str(response.content)[:2000]}...")  # 전체 로깅은 필요시 조정
         return response.content
 
     def _parse_llm_response(self, response_content):
@@ -145,6 +148,7 @@ class DiagramProcessor:
             Exception: 파싱 실패 시 발생
         """
         self.logger.info("응답 파싱 시작")
+
         try:
             diagram_data = self.parser.parse(response_content)
             self.logger.info("응답 파싱 성공")
@@ -234,10 +238,14 @@ class DiagramProcessor:
         """
         try:
             # 1. 프롬프트 생성
-            complete_prompt = self._build_prompt(user_chat_data, latest_diagram)
+            complete_prompt: str = self._build_prompt(user_chat_data, latest_diagram)
 
             # 2. LLM 호출
-            response_content = await self._call_llm(complete_prompt, diagram_code)
+            response_content = await self._call_llm(
+                complete_prompt,
+                diagram_code,
+                latest_diagram
+            )
 
             # 3. 응답 파싱
             diagram_data = self._parse_llm_response(response_content)
@@ -255,5 +263,5 @@ class DiagramProcessor:
             return updated_diagram_data
 
         except Exception as e:
-            self.logger.error(f"도식화 데이터 생성 중 오류 발생: {str(e)}", exc_info=True)
+            self.logger.error(f"Diagram_Generator 도식화 데이터 생성 중 오류 발생: {str(e)}", exc_info=True)
             raise

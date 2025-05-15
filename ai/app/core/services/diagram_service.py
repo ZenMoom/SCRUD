@@ -255,7 +255,9 @@ class DiagramService:
 - dto: DTO 모델 목록 (dtoId: UUID)
 - metadata: 다이어그램 메타데이터 (버전, 수정일시 등)
 
-모든 ID 필드는 generate_uuid 도구로 생성해야 하며, 최종 출력은 Pydantic 스키마에 맞게 형식화되어야 합니다.
+모든 ID 필드는 generate_uuid 도구로 생성해야 합니다. 특히 methodId끼리 겹치거나 componentId가 겹치는 일이 없도록 주의하세요  
+최종 출력은 Pydantic 스키마에 맞게 형식화되어야 합니다.
+
 """
 
         prompt = ChatPromptTemplate.from_messages(
