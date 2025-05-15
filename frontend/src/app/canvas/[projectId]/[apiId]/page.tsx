@@ -1,15 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
+/**
+ * 이 페이지는 클라이언트 컴포넌트입니다.
+ * 모든 React Hooks는 컴포넌트의 최상위 레벨에서 호출되어야 합니다.
+ */
+
+import { useState, useEffect, useCallback, useLayoutEffect } from "react"
+import { useParams, useSearchParams } from "next/navigation"
 import axios from "axios"
 import type { DiagramResponse } from "@generated/model"
 import type { ChatHistoryResponse } from "@generated/model"
 import type { TargetNode } from "@/components/canvas/DiagramContainer"
+import { ArrowLeft } from "lucide-react"
 
 // 컴포넌트 임포트
 import ChatContainer from "@/components/canvas/ChatContainer"
 import DiagramContainer from "@/components/canvas/DiagramContainer"
+import DtoContainer from "@/components/canvas/DtoContainer"
 
 // API 목록 아이템 타입 정의
 interface ApiListItem {
@@ -19,20 +26,24 @@ interface ApiListItem {
   description?: string
 }
 
-// 버전 정보 타입 정의 - 수정: 모든 속성이 옵셔널하지 않도록 변경
+// 버전 정보 타입 정의
 interface VersionInfo {
   versionId: string
   description: string
   timestamp: string
 }
 
-export default function CanvasPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+// 사이드 패널 탭 타입 정의
+type SidePanelTab = "api" | "dto"
 
-  // URL 파라미터 가져오기
+export default function CanvasPage() {
+  // 라우터 및 파라미터 가져오기
+  const searchParams = useSearchParams()
   const params = useParams()
-  const { projectId, apiId } = params
+
+  // URL 파라미터 추출
+  const projectId = params.projectId as string
+  const apiId = params.apiId as string
 
   // 쿼리 파라미터에서 버전 ID 가져오기
   const versionParam = searchParams.get("version")
@@ -57,69 +68,16 @@ export default function CanvasPage() {
   const [apiListLoading, setApiListLoading] = useState<boolean>(false)
   const [apiListError, setApiListError] = useState<string | null>(null)
 
+  // 사이드 패널 탭 상태
+  const [activeTab, setActiveTab] = useState<SidePanelTab>("api")
+
   // 타겟 노드 상태
   const [targetNodes, setTargetNodes] = useState<TargetNode[]>([])
 
-  // 페이지 로드 시 채팅 데이터 먼저 가져오기
-  useEffect(() => {
-    fetchChatData()
-  }, [projectId, apiId])
-
-  // 채팅 데이터에서 버전 정보 추출 후 다이어그램 데이터 가져오기
-  useEffect(() => {
-    if (chatData && chatData.content) {
-      // 채팅 내역에서 버전 정보 추출
-      const extractedVersions: VersionInfo[] = []
-
-      chatData.content.forEach((item) => {
-        if (item.systemChat?.versionInfo) {
-          const { newVersionId, description } = item.systemChat.versionInfo
-
-          // null/undefined 체크 및 기본값 설정
-          const versionId = newVersionId || ""
-          const versionDesc = description || "버전 설명 없음"
-
-          // 중복 버전 체크
-          if (versionId && !extractedVersions.some((v) => v.versionId === versionId)) {
-            extractedVersions.push({
-              versionId: versionId,
-              description: versionDesc,
-              timestamp: item.createdAt,
-            })
-          }
-        }
-      })
-
-      // 시간순으로 정렬 (최신 버전이 앞에 오도록)
-      extractedVersions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-
-      setVersions(extractedVersions)
-
-      // URL에서 버전 파라미터가 없는 경우 처리
-      if (!versionParam) {
-        let defaultVersion = "1" // 기본값
-
-        // 채팅 내역이 있으면 가장 최신 버전(첫 번째 항목) 선택
-        if (extractedVersions.length > 0) {
-          defaultVersion = extractedVersions[0].versionId
-        }
-
-        // 상태 업데이트 및 URL 쿼리 파라미터 설정
-        setSelectedVersion(defaultVersion)
-        router.push(`/canvas/${projectId}/${apiId}?version=${defaultVersion}`, { scroll: false })
-      }
-    }
-  }, [chatData, versionParam, projectId, apiId, router])
-
-  // 선택된 버전이 변경되면 다이어그램 데이터 가져오기
-  useEffect(() => {
-    if (selectedVersion) {
-      fetchDiagramData(selectedVersion)
-    }
-  }, [selectedVersion])
-
   // 채팅 데이터 가져오기 함수
-  const fetchChatData = async () => {
+  const fetchChatData = useCallback(async () => {
+    if (!projectId || !apiId) return
+
     try {
       setChatLoading(true)
       setChatError(null)
@@ -129,23 +87,6 @@ export default function CanvasPage() {
 
       setChatData(response.data)
       console.log("채팅 데이터:", response.data)
-
-      // 채팅 데이터에서 시스템 응답의 버전 정보 확인
-      if (response.data && response.data.content) {
-        // 가장 최근의 시스템 응답에서 버전 정보 찾기
-        const latestSystemChat = [...response.data.content].reverse().find((item) => item.systemChat?.versionInfo)
-
-        if (latestSystemChat?.systemChat?.versionInfo) {
-          const newVersionId = latestSystemChat.systemChat.versionInfo.newVersionId
-
-          // 현재 URL의 버전과 다르면 URL 업데이트
-          if (newVersionId && newVersionId !== versionParam) {
-            console.log(`새로운 버전 감지: ${newVersionId}, URL 업데이트`)
-            setSelectedVersion(newVersionId)
-            router.push(`/canvas/${projectId}/${apiId}?version=${newVersionId}`, { scroll: false })
-          }
-        }
-      }
     } catch (err) {
       console.error("채팅 데이터 가져오기 오류:", err)
 
@@ -157,67 +98,139 @@ export default function CanvasPage() {
     } finally {
       setChatLoading(false)
     }
-  }
+  }, [projectId, apiId])
+
+  // 페이지 로드 시 채팅 데이터 먼저 가져오기
+  useEffect(() => {
+    if (projectId && apiId) {
+      fetchChatData()
+    }
+  }, [projectId, apiId, fetchChatData])
+
+  // 채팅 데이터에서 버전 정보 추출
+  useEffect(() => {
+    if (chatData && chatData.content) {
+      // 채팅 내역에서 버전 정보 추출
+      const extractedVersions: VersionInfo[] = []
+
+      // 버전 1은 항상 기본으로 추가 (채팅 내역에 없더라도)
+      extractedVersions.push({
+        versionId: "1",
+        description: "초기 버전",
+        timestamp: new Date().toISOString(),
+      })
+
+      chatData.content.forEach((item) => {
+        if (item.systemChat?.versionInfo) {
+          const { newVersionId, description } = item.systemChat.versionInfo
+
+          // null/undefined 체크 및 기본값 설정
+          const versionId = newVersionId || ""
+          const versionDesc = description || "버전 설명 없음"
+
+          // 중복 버전 체크 (버전 1은 이미 추가했으므로 중복 체크)
+          if (versionId && !extractedVersions.some((v) => v.versionId === versionId)) {
+            extractedVersions.push({
+              versionId: versionId,
+              description: versionDesc,
+              timestamp: item.createdAt,
+            })
+          }
+        }
+      })
+
+      // 버전 ID를 숫자로 변환하여 오름차순 정렬 (1, 2, 3, ...)
+      extractedVersions.sort((a, b) => {
+        const aNum = Number.parseInt(a.versionId, 10) || 0
+        const bNum = Number.parseInt(b.versionId, 10) || 0
+        return aNum - bNum
+      })
+
+      setVersions(extractedVersions)
+
+      // URL에서 버전 파라미터가 있는 경우 해당 버전 선택
+      if (versionParam) {
+        setSelectedVersion(versionParam)
+      } else if (extractedVersions.length > 0) {
+        // 버전 파라미터가 없고 버전이 있는 경우 가장 최신 버전 선택
+        const latestVersion = extractedVersions[extractedVersions.length - 1]
+        setSelectedVersion(latestVersion.versionId)
+
+        // URL 업데이트 대신 전체 페이지 새로고침 사용
+        if (projectId && apiId) {
+          window.location.href = `/canvas/${projectId}/${apiId}?version=${latestVersion.versionId}`
+        }
+      }
+    }
+  }, [chatData, versionParam, projectId, apiId])
 
   // 다이어그램 데이터 가져오기 함수 - 버전 ID를 파라미터로 받음
-  const fetchDiagramData = async (versionId: string) => {
-    try {
-      setLoading(true)
-      setError(null)
+  const fetchDiagramData = useCallback(
+    async (versionId: string) => {
+      if (!projectId || !apiId) return
 
-      // axios를 사용하여 API 호출 - 버전 ID를 쿼리 파라미터로 전달
-      const response = await axios.get<DiagramResponse>(`/api/canvas/${projectId}/${apiId}?version=${versionId}`)
+      try {
+        setLoading(true)
+        setError(null)
 
-      // 응답 데이터 검증 및 변환
-      if (response.data) {
-        // 필요한 경우 응답 데이터 구조 변환
-        const processedData: DiagramResponse = {
-          ...response.data,
-          // 필요한 경우 필드 변환 또는 기본값 설정
-          components: response.data.components || [],
-          connections: response.data.connections || [],
-          dto: response.data.dto || [],
-          metadata: response.data.metadata || {
-            // 타입 호환성을 위해 MetadataDto 형식에 맞게 수정
-            version: Number(versionId), // string을 number로 변환
-            metadataId: "metadata-default",
-            lastModified: new Date().toISOString(),
-            name: "API",
-            description: "API 설명",
-          },
+        // axios를 사용하여 API 호출 - 버전 ID를 쿼리 파라미터로 전달
+        const response = await axios.get<DiagramResponse>(`/api/canvas/${projectId}/${apiId}?version=${versionId}`)
+
+        // 응답 데이터 검증 및 변환
+        if (response.data) {
+          // 필요한 경우 응답 데이터 구조 변환
+          const processedData: DiagramResponse = {
+            ...response.data,
+            // 필요한 경우 필드 변환 또는 기본값 설정
+            components: response.data.components || [],
+            connections: response.data.connections || [],
+            dto: response.data.dto || [],
+            metadata: response.data.metadata || {
+              // 타입 호환성을 위해 MetadataDto 형식에 맞게 수정
+              version: Number(versionId), // string을 number로 변환
+              metadataId: "metadata-default",
+              lastModified: new Date().toISOString(),
+              name: "API",
+              description: "API 설명",
+            },
+          }
+
+          // 응답 데이터 저장
+          setDiagramData(processedData)
+          console.log("다이어그램 데이터:", processedData)
+        } else {
+          console.error("응답 데이터가 없습니다.")
+          setError("응답 데이터가 없습니다.")
         }
+      } catch (err) {
+        console.error("다이어그램 데이터 가져오기 오류:", err)
 
-        // 응답 데이터 저장
-        setDiagramData(processedData)
-        console.log("다이어그램 데이터:", processedData)
-      } else {
-        console.error("응답 데이터가 없습니다.")
-        setError("응답 데이터가 없습니다.")
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.error || err.message)
+        } else {
+          setError("알 수 없는 오류가 발생했습니다.")
+        }
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      console.error("다이어그램 데이터 가져오기 오류:", err)
+    },
+    [projectId, apiId]
+  )
 
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.error || err.message)
-      } else {
-        setError("알 수 없는 오류가 발생했습니다.")
-      }
-    } finally {
-      setLoading(false)
+  // 선택된 버전이 변경되면 다이어그램 데이터 가져오기
+  useEffect(() => {
+    if (selectedVersion && projectId && apiId) {
+      fetchDiagramData(selectedVersion)
     }
-  }
+  }, [selectedVersion, fetchDiagramData, projectId, apiId])
 
   // API 목록 가져오기 함수
-  const fetchApiList = async () => {
+  const fetchApiList = useCallback(async () => {
+    if (!projectId) return
+
     try {
       setApiListLoading(true)
       setApiListError(null)
-
-      // 프로젝트 ID가 필요함
-      if (!projectId) {
-        setApiListError("프로젝트 ID가 필요합니다.")
-        return
-      }
 
       // API 호출
       const response = await axios.get(`/api/canvas-api/${projectId}`)
@@ -257,17 +270,16 @@ export default function CanvasPage() {
     } finally {
       setApiListLoading(false)
     }
-  }
+  }, [projectId])
 
   // API 완료 처리 함수
-  const completeApi = async () => {
-    try {
-      // 프로젝트 ID와 API ID가 필요함
-      if (!projectId || !apiId) {
-        alert("프로젝트 ID와 API ID가 필요합니다.")
-        return
-      }
+  const completeApi = useCallback(async () => {
+    if (!projectId || !apiId) {
+      alert("프로젝트 ID와 API ID가 필요합니다.")
+      return
+    }
 
+    try {
       // API 호출
       const response = await axios.put(`/api/canvas-api/${projectId}/${apiId}`, {
         status: "USER_COMPLETED",
@@ -277,7 +289,7 @@ export default function CanvasPage() {
       alert("API를 완료했습니다.")
       console.log("API 완료 응답:", response.data)
 
-      // 선택적으로 API 목록을 새로고침하여 최신 상태 반영
+      // API 목록을 새로고침하여 최신 상태 반영
       if (apiListVisible) {
         fetchApiList()
       }
@@ -290,64 +302,97 @@ export default function CanvasPage() {
         alert("API 완료 처리 중 오류가 발생했습니다.")
       }
     }
-  }
-
-  // 모든 데이터를 새로고침하는 함수
-  const refreshAllData = async () => {
-    await fetchChatData()
-    // 다이어그램 데이터는 채팅 데이터 로드 후 자동으로 갱신됨
-  }
+  }, [projectId, apiId, apiListVisible, fetchApiList])
 
   // 버전 선택 핸들러 - 채팅 컴포넌트에서 호출됨
-  const handleVersionSelect = (versionId: string) => {
-    console.log(`버전 선택: ${versionId}`)
+  const handleVersionSelect = useCallback(
+    (versionId: string) => {
+      console.log(`버전 선택: ${versionId}`)
 
-    // 이미 선택된 버전이면 무시
-    if (selectedVersion === versionId) return
+      // 이미 선택된 버전이면 무시
+      if (selectedVersion === versionId) return
 
-    // 상태 업데이트
-    setSelectedVersion(versionId)
+      // 상태 업데이트
+      setSelectedVersion(versionId)
 
-    // URL 쿼리 파라미터 업데이트 (페이지 새로고침 없이)
-    router.push(`/canvas/${projectId}/${apiId}?version=${versionId}`, { scroll: false })
-  }
+      // URL 쿼리 파라미터 업데이트 (전체 페이지 새로고침 사용)
+      if (projectId && apiId) {
+        window.location.href = `/canvas/${projectId}/${apiId}?version=${versionId}`
+      }
+    },
+    [selectedVersion, projectId, apiId]
+  )
 
   // 타겟 노드 변경 핸들러
-  const handleTargetNodesChange = (nodes: TargetNode[]) => {
+  const handleTargetNodesChange = useCallback((nodes: TargetNode[]) => {
     setTargetNodes(nodes)
-  }
-
-  // 타겟 노드 제거 핸들러
-  const handleRemoveTarget = (nodeId: string) => {
-    // DiagramContainer 컴포넌트의 removeTargetNode 함수 호출
-    const diagramContainer = document.getElementById("diagram-container")
-    if (diagramContainer) {
-      const event = new CustomEvent("removeTarget", { detail: { nodeId } })
-      diagramContainer.dispatchEvent(event)
-    }
-  }
+  }, [])
 
   // 마우스가 패널에 들어갈 때 호출
-  const handleMouseEnter = () => {
-    if (apiListData.length === 0) {
+  const handleMouseEnter = useCallback(() => {
+    if (apiListData.length === 0 && projectId) {
       fetchApiList()
     }
     setApiListVisible(true)
-  }
+  }, [apiListData.length, fetchApiList, projectId])
+
+  // 탭 변경 핸들러
+  const handleTabChange = useCallback((tab: SidePanelTab) => {
+    setActiveTab(tab)
+  }, [])
+
+  // API 항목 클릭 핸들러
+  const handleApiItemClick = useCallback(
+    (clickedApiId: string) => {
+      // 현재 보고 있는 API와 다른 경우에만 이동
+      if (clickedApiId !== apiId && projectId) {
+        // 클라이언트 사이드 라우팅 대신 전체 페이지 새로고침 사용
+        window.location.href = `/canvas/${projectId}/${clickedApiId}?version=1`
+      }
+    },
+    [apiId, projectId]
+  )
+
+  // 뒤로 가기 핸들러
+  const handleBackClick = useCallback(() => {
+    if (projectId) {
+      // 클라이언트 사이드 라우팅 대신 전체 페이지 새로고침 사용
+      window.location.href = `/project/${projectId}/api`
+    }
+  }, [projectId])
+
+  // 페이지 진입 시 일관된 Hook 실행을 보장하기 위한 useLayoutEffect
+  useLayoutEffect(() => {
+    // 페이지 로드 시 URL 상태 확인
+    const urlParams = new URLSearchParams(window.location.search)
+    const hasVersion = urlParams.has("version")
+
+    // 쿼리 파라미터가 없는 경우 페이지 새로고침
+    if (!hasVersion && projectId && apiId) {
+      // 기본 버전 1로 리디렉션
+      window.location.href = `/canvas/${projectId}/${apiId}?version=1`
+    }
+  }, [projectId, apiId])
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2 relative">
+    <div className="bg-blue-50 p-2 relative">
       {/* 슬라이드 패널을 위한 트리거 영역 */}
       <div className="absolute left-0 top-0 bottom-0 w-6 z-10 cursor-pointer hover:bg-gray-200 hover:bg-opacity-50 transition-colors" onMouseEnter={handleMouseEnter} />
 
-      {/* API 목록 슬라이드 패널 */}
+      {/* API 목록 슬라이드 패널 - 너비 확장 */}
       <div
-        className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-transform duration-300 ease-in-out z-20 w-80 ${apiListVisible ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-transform duration-300 ease-in-out z-20 w-96 ${apiListVisible ? "translate-x-0" : "-translate-x-full"}`}
         onMouseLeave={() => setApiListVisible(false)}
       >
         <div className="p-4 h-full flex flex-col">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-bold">API 목록</h2>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <button onClick={handleBackClick} className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md flex items-center gap-1 transition-colors">
+                <ArrowLeft size={16} />
+                <span>BACK</span>
+              </button>
+              <h2 className="text-xl font-bold">API 정보</h2>
+            </div>
             <button onClick={() => setApiListVisible(false)} className="p-2 rounded-full hover:bg-gray-100">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -355,108 +400,101 @@ export default function CanvasPage() {
             </button>
           </div>
 
-          {apiListLoading ? (
-            <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          ) : apiListError ? (
-            <div className="text-red-500 p-4">{apiListError}</div>
-          ) : (
-            <div className="overflow-y-auto flex-1">
-              {apiListData.length === 0 ? (
-                <p className="text-gray-500 text-center">API 목록이 없습니다.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {apiListData.map((item, index) => {
-                    // 각 항목에 고유한 키 생성
-                    const uniqueKey = `api-item-${index}-${item.apiId}`
-
-                    return (
-                      <li key={uniqueKey} className="p-3 border rounded-lg hover:bg-gray-50">
-                        <div className="font-medium text-lg">{item.name || "이름 없음"}</div>
-                        <div className="text-sm text-gray-500 mb-1">ID: {item.apiId || "없음"}</div>
-                        <div className="text-sm mb-1">
-                          상태:
-                          <span
-                            className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
-                              item.status === "AI_VISUALIZED" ? "bg-green-100 text-green-800" : item.status === "AI_GENERATED" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {item.status || "알 수 없음"}
-                          </span>
-                        </div>
-                        {item.description && <p className="text-sm text-gray-700">{item.description}</p>}
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </div>
-          )}
-
-          <div className="pt-4">
-            <button onClick={fetchApiList} className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors" disabled={apiListLoading}>
-              {apiListLoading ? "로딩 중..." : "새로고침"}
+          {/* 탭 버튼 */}
+          <div className="flex border-b mb-4">
+            <button
+              onClick={() => handleTabChange("api")}
+              className={`flex-1 py-2 px-4 text-center font-medium ${activeTab === "api" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              API 목록
+            </button>
+            <button
+              onClick={() => handleTabChange("dto")}
+              className={`flex-1 py-2 px-4 text-center font-medium ${activeTab === "dto" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              DTO 정보
             </button>
           </div>
+
+          {/* API 목록 탭 */}
+          {activeTab === "api" && (
+            <>
+              {apiListLoading ? (
+                <div className="flex justify-center items-center flex-1">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : apiListError ? (
+                <div className="text-red-500 p-4 flex-1">{apiListError}</div>
+              ) : (
+                <div className="overflow-y-auto flex-1">
+                  {apiListData.length === 0 ? (
+                    <p className="text-gray-500 text-center">API 목록이 없습니다.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {apiListData.map((item, index) => {
+                        // 각 항목에 고유한 키 생성
+                        const uniqueKey = `api-item-${index}-${item.apiId}`
+                        const isCurrentApi = item.apiId === apiId
+
+                        return (
+                          <li
+                            key={uniqueKey}
+                            className={`p-3 border rounded-lg hover:bg-gray-50 cursor-pointer ${isCurrentApi ? "border-blue-500 bg-blue-50" : ""}`}
+                            onClick={() => handleApiItemClick(item.apiId)}
+                          >
+                            <div className="font-medium text-lg">{item.name || "이름 없음"}</div>
+                            <div className="text-sm text-gray-500 mb-1">ID: {item.apiId || "없음"}</div>
+                            <div className="text-sm mb-1">
+                              상태:
+                              <span
+                                className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+                                  item.status === "AI_VISUALIZED" ? "bg-green-100 text-green-800" : item.status === "AI_GENERATED" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {item.status || "알 수 없음"}
+                              </span>
+                            </div>
+                            {item.description && <p className="text-sm text-gray-700">{item.description}</p>}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-4">
+                <button onClick={completeApi} className="w-full py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+                  현재 API 완료 처리
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* DTO 정보 탭 */}
+          {activeTab === "dto" && (
+            <div className="flex-1 overflow-hidden">
+              <DtoContainer diagramData={diagramData} loading={loading} isCollapsed={false} onToggleCollapse={() => {}} />
+            </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-full mx-auto">
-        <div className="flex justify-between items-center mb-2">
-          <h1 className="text-2xl font-bold text-gray-800">다이어그램 캔버스</h1>
-
-          <div className="flex items-center gap-2">
-            {/* 현재 선택된 버전 표시 */}
-            {selectedVersion && <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-sm">현재 버전: {selectedVersion}</div>}
-
-            {/* 새로고침 버튼 */}
-            <button onClick={refreshAllData} className="px-4 py-2 bg-blue-500 text-white font-medium rounded hover:bg-blue-600 transition-colors" disabled={loading || chatLoading}>
-              {loading || chatLoading ? "로딩 중..." : "새로고침"}
-            </button>
-
-            {/* API 완료 버튼 */}
-            <button onClick={completeApi} className="px-4 py-2 bg-purple-500 text-white font-medium rounded hover:bg-purple-600 transition-colors">
-              API Complete
-            </button>
-          </div>
-        </div>
-
-        {/* 버전 선택 버튼 그룹 */}
-        {versions.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-sm font-medium text-gray-700 mb-2">버전 선택:</h2>
-            <div className="flex flex-wrap gap-2">
-              {versions.map((version) => (
-                <button
-                  key={version.versionId}
-                  onClick={() => handleVersionSelect(version.versionId)}
-                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedVersion === version.versionId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-800 hover:bg-gray-200"}`}
-                  title={version.description}
-                >
-                  버전 {version.versionId}
-                  <span className="ml-2 text-xs opacity-80">{new Date(version.timestamp).toLocaleDateString()}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* 3단 레이아웃 - 비율 30:70 */}
-        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-12rem)] overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-2rem)] overflow-hidden">
           {/* 왼쪽 섹션 (비율 30%) - 채팅 데이터 전달 */}
           <div className="w-full md:w-[30%] min-w-0 h-full">
             <div className="h-full">
               <ChatContainer
-                projectId={projectId as string}
-                apiId={apiId as string}
+                projectId={projectId}
+                apiId={apiId}
                 versionId={selectedVersion || ""}
                 chatData={chatData}
                 loading={chatLoading}
                 error={chatError}
                 onRefresh={fetchChatData}
                 targetNodes={targetNodes}
-                onRemoveTarget={handleRemoveTarget}
                 onVersionSelect={handleVersionSelect}
               />
             </div>
@@ -465,7 +503,28 @@ export default function CanvasPage() {
           {/* 오른쪽 섹션 (비율 70%) - 다이어그램 데이터 전달 */}
           <div className="w-full md:w-[70%] min-w-0 h-full" id="diagram-container">
             <div className="h-full w-full">
-              <DiagramContainer diagramData={diagramData} loading={loading} error={error} onSelectionChange={handleTargetNodesChange} selectedVersion={selectedVersion} />
+              {loading ? (
+                <div className="h-full p-4 bg-white rounded-lg shadow flex justify-center items-center">
+                  <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+                </div>
+              ) : error ? (
+                <div className="h-full p-4 bg-white rounded-lg shadow flex justify-center items-center">
+                  <div className="p-4 bg-red-50 text-red-600 rounded-lg border-l-4 border-red-500">
+                    <h3 className="font-semibold mb-2">오류 발생</h3>
+                    <p>{error}</p>
+                  </div>
+                </div>
+              ) : (
+                <DiagramContainer
+                  diagramData={diagramData}
+                  loading={false}
+                  error={null}
+                  onSelectionChange={handleTargetNodesChange}
+                  selectedVersion={selectedVersion}
+                  versions={versions}
+                  onVersionSelect={handleVersionSelect}
+                />
+              )}
             </div>
           </div>
         </div>

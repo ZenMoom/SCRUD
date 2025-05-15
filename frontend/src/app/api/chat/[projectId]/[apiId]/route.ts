@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     // URL에서 직접 경로 매개변수 추출
     const url = new URL(req.url)
     const pathParts = url.pathname.split("/")
-
+    const authToken = req.headers.get("Authorization")
     // /api/chat 뒤에 오는 경로 파라미터 추출
     // 경로가 /api/chat/{projectId}/{apiId} 형식이라고 가정
     const projectId = pathParts[3] // /api/chat/[projectId]
@@ -69,6 +69,13 @@ export async function POST(req: NextRequest) {
     // API 설정 구성
     const config = new Configuration({
       basePath: apiUrl,
+      baseOptions: {
+        headers: authToken
+          ? {
+              Authorization: `Bearer ${authToken}`,
+            }
+          : undefined,
+      },
     })
 
     // ChatApi 인스턴스 생성

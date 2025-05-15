@@ -172,7 +172,7 @@ public class ApiSpecService {
      */
     public void updateApiSpecStatus(UpdateApiSpecStatusIn inDto) {
         // 1. api spec id로 entity 조회
-        ApiSpec apiSpec = apiSpecJpaRepository.findById(inDto.getApiSpecId())
+        ApiSpec apiSpec = apiSpecJpaRepository.findByApiSpecVersion_ApiSpecVersionId(inDto.getApiSpecVersionId())
                 .orElseThrow(() -> new BaseException(ApiSpecErrorStatus.API_SPEC_NOT_FOUND));
 
         // 2. api spec status 변경

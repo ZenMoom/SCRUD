@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { ScrudApiApi } from "@generated/api"
 import { Configuration } from "@generated/configuration"
-import { ApiProcessStateRequest } from "@generated/model"
+import type { ApiProcessStateRequest } from "@generated/model"
 
 // PUT 요청 핸들러 - API 처리 상태 변경
 export async function PUT(request: NextRequest) {
