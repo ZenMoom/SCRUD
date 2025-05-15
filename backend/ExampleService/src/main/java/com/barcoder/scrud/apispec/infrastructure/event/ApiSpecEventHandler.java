@@ -1,5 +1,7 @@
 package com.barcoder.scrud.apispec.infrastructure.event;
 
+import com.barcoder.scrud.apispec.application.dto.in.CreateApiSpecVersionIn;
+import com.barcoder.scrud.apispec.application.usecase.ApiPromptUseCase;
 import com.barcoder.scrud.apispec.application.usecase.ApiSpecUseCase;
 import com.barcoder.scrud.apispec.infrastructure.webclient.ApiSpecVersionWebclient;
 import com.barcoder.scrud.apispec.infrastructure.webclient.request.ApiSpecGenerateRequest;
@@ -22,6 +24,7 @@ import java.util.List;
 public class ApiSpecEventHandler {
 
     private final ApiSpecUseCase apiSpecUseCase;
+    private final ApiPromptUseCase apiPromptUseCase;
     private final ApiSpecVersionWebclient apiSpecVersionWebclient;
 
     @EventListener
@@ -30,8 +33,10 @@ public class ApiSpecEventHandler {
 
         ScrudProject scrudProject = event.scrudProject();
 
+        // 추가 정보 조회
         List<GlobalFile> globalFileList = scrudProject.getGlobalFileList();
 
+        // 파일 타입에 따라 ERD, 요구사항, 기타 정보 분리
         StringBuilder erd = new StringBuilder();
         StringBuilder requirements = new StringBuilder();
         StringBuilder extraInfo = new StringBuilder();
@@ -45,6 +50,7 @@ public class ApiSpecEventHandler {
             }
         }
 
+        // API Spec request 생성
         ApiSpecGenerateRequest request = ApiSpecGenerateRequest.builder()
                 .erd(erd.toString())
                 .requirements(requirements.toString())
@@ -53,6 +59,7 @@ public class ApiSpecEventHandler {
 
         log.info("ApiSpecGenerateEvent: {}", request.toString());
 
+        // API Spec 생성
         LocalDateTime startTime = LocalDateTime.now();
         ApiSpecGenerateResponse response = apiSpecVersionWebclient.generateApiSpec(request);
         LocalDateTime endTime = LocalDateTime.now();
@@ -62,8 +69,17 @@ public class ApiSpecEventHandler {
             throw new RuntimeException("API Spec generation failed");
         }
 
-        apiSpecUseCase.bulkCreateApiSpecVersion(scrudProject.getScrudProjectId(), response.getResult());
+        // prompt 저장
+        List<CreateApiSpecVersionIn> result = response.getResult();
+        StringBuilder promptResult = new StringBuilder()
+                .append(response.getPrompt());
+        for (CreateApiSpecVersionIn createApiSpecVersionIn : result) {
+            promptResult.append(createApiSpecVersionIn.toString()).append("\n");
+        }
 
+        apiPromptUseCase.savePrompt(response.getPrompt(), promptResult.toString());
+
+        apiSpecUseCase.bulkCreateApiSpecVersion(scrudProject.getScrudProjectId(), response.getResult());
 
     }
 }
