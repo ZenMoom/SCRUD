@@ -397,9 +397,9 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
               <div key={group.id} className="py-2 overflow-hidden px-2 relative">
                 <div className="flex justify-between items-center">
                   {editingGroupId === group.id ? (
-                    <div className="flex items-center gap-2 w-full flex-wrap">
+                    <div className="flex items-center gap-2 w-full">
                       {/* 이모지 버튼 (편집 모드에서도 표시) */}
-                      <div className="flex-shrink-0 relative" style={{ zIndex: 50 }}>
+                      <div className="flex-shrink-0 relative z-10">
                         {editingEmoji === group.id ? (
                           <EmojiPicker selectedEmoji={group.emoji || "📌"} onEmojiSelect={(emoji) => updateGroupEmoji(group.id, emoji)} />
                         ) : (
@@ -432,7 +432,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                   ) : (
                     <div className="flex items-center gap-2 w-full">
                       {/* 이모지 버튼 */}
-                      <div className="flex-shrink-0 relative" style={{ zIndex: 50 }}>
+                      <div className="flex-shrink-0 relative z-10">
                         {editingEmoji === group.id ? (
                           <EmojiPicker selectedEmoji={group.emoji || "📌"} onEmojiSelect={(emoji) => updateGroupEmoji(group.id, emoji)} />
                         ) : (
