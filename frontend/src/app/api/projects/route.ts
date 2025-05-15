@@ -4,14 +4,20 @@ import { ScrudProjectApi } from "@generated/api";
 
 // 파일 타입 정의
 interface FileWithContent {
-  name: string;
-  content: string;
+  name?: string;
+  fileName?: string;
+  content: string | Record<string, unknown>;  // GitHub API 응답을 포함할 수 있도록 수정
+  isGitHub?: boolean;
+  path?: string;
+  fileType?: string;
 }
 
 // 선택형 입력을 위한 타입 추가
 interface SelectionValue {
   type: string;
   label: string;
+  name?: string;
+  content?: string;
 }
 
 // POST: 프로젝트 생성
@@ -19,10 +25,8 @@ export async function POST(request: NextRequest) {
   try {
     // 요청 본문 및 헤더 가져오기
     const settings = await request.json();
-    console.log('받은 settings 데이터:', settings);
     let authorization = request.headers.get('Authorization');
     
-    console.log('클라이언트에서 받은 원본 토큰:', authorization);
     
     // 인증 토큰이 없으면 401 에러 반환
     if (!authorization) {
@@ -34,7 +38,6 @@ export async function POST(request: NextRequest) {
       authorization = `Bearer ${authorization}`;
     }
     
-    console.log('백엔드로 전송할 토큰:', authorization);
     
     // 데이터 검증 - 필수 필드 확인
     if (!settings.title || !settings.description) {
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
       fileName: string;
       fileType: string;
       fileUrl: string;
-      fileContent: string;
+      fileContent: string | Record<string, unknown>;  // string 또는 객체를 허용
     }> = [];
     
     // 파일 타입 매핑 
@@ -71,32 +74,47 @@ export async function POST(request: NextRequest) {
     
     // 파일 타입 항목들 추가
     Object.entries(settings).forEach(([key, value]) => {
-      console.log(`처리 중인 키: ${key}, 값 타입: ${typeof value}`);
       // 아키텍처와 보안 설정 특별 처리
       if (key === 'architectureStructure') {
+        console.log('\n=== 아키텍처 처리 시작 ===');
+        console.log('받은 key:', key);
+        console.log('받은 value 전체:', value);
+        
         const architectureValue = value as SelectionValue | FileWithContent[];
         if (architectureValue) {
           if (Array.isArray(architectureValue)) {
             // GitHub에서 가져온 파일 처리
-            architectureValue.forEach(file => {
+            console.log('\n=== 아키텍처 GitHub 처리 시작 ===');
+            console.log('GitHub 파일 배열 길이:', architectureValue.length);
+            architectureValue.forEach((file, index) => {
+              console.log(`\n[GitHub 파일 ${index + 1} 처리]`);
+              console.log('파일명:', file.fileName || file.name || 'unnamed_file');
+              console.log('content:', file.content);
+
               globalFiles.push({
-                fileName: file.name,
+                fileName: file.fileName || file.name || 'unnamed_file',
                 fileType: 'ARCHITECTURE_GITHUB',
                 fileUrl: "",
                 fileContent: file.content
               });
             });
-          } else {
-            // 선택된 아키텍처 타입 처리
+            console.log('\n=== 아키텍처 GitHub 처리 완료 ===');
+          } else if (architectureValue.type && architectureValue.type.startsWith('ARCHITECTURE_DEFAULT_')) {
+            console.log('\n=== 아키텍처 선택지 처리 시작 ===');
+            console.log('선택된 아키텍처 타입:', architectureValue.type);
+            
             globalFiles.push({
               fileName: `Architecture-${architectureValue.type}`,
               fileType: architectureValue.type,
               fileUrl: "",
               fileContent: ""
             });
+            console.log('\n=== 아키텍처 선택지 처리 완료 ===');
           }
         }
-      } 
+        console.log('\n=== 아키텍처 처리 완료 ===');
+        console.log('최종 globalFiles 길이:', globalFiles.length);
+      }
       else if (key === 'securitySetting') {
         const securityValue = value as SelectionValue | FileWithContent[];
         if (securityValue) {
@@ -104,7 +122,7 @@ export async function POST(request: NextRequest) {
             // GitHub에서 가져온 파일 처리
             securityValue.forEach(file => {
               globalFiles.push({
-                fileName: file.name,
+                fileName: file.name || 'unnamed_security_file',
                 fileType: 'SECURITY_GITHUB',
                 fileUrl: "",
                 fileContent: file.content
@@ -150,7 +168,7 @@ export async function POST(request: NextRequest) {
         files.forEach(file => {
           console.log('GitHub 파일 처리:', file);
           globalFiles.push({
-            fileName: file.name,
+            fileName: file.name || 'unnamed_github_file',
             fileType: fileTypeMapping[key],
             fileUrl: "",
             fileContent: file.content
@@ -164,7 +182,7 @@ export async function POST(request: NextRequest) {
           files.forEach(file => {
             console.log('일반 파일 처리:', file);
             globalFiles.push({
-              fileName: file.name,
+              fileName: file.name || 'unnamed_file',
               fileType: fileTypeMapping[key],
               fileUrl: "",
               fileContent: file.content
@@ -219,15 +237,7 @@ export async function POST(request: NextRequest) {
     console.error('프로젝트 생성 API 오류:', error);
     
     if (error instanceof Error) {
-      console.error('에러 상세 정보:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-        // @ts-expect-error - 추가 속성 접근
-        status: error.status,
-        // @ts-expect-error - 추가 속성 접근
-        response: error.response
-      });
+      console.error('에러 상세 정보:', error );
     }
     
     let status = 500;
