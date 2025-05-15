@@ -1,5 +1,5 @@
 CreateCommentRequest:
-  description: 댓글을 작성합니다.
+  description: 댓글 작성 요청
   required: true
   content:
     application/json:

@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
   title: 게시판 API
   version: 1.0.0
@@ -10,7 +10,9 @@ info:
 servers:
   - url: http://localhost:8080
     description: 개발 서버
-  - url: https://board.example.com
+  - url: http://localhost:8081
+    description: 개발용 목 서버
+  - url: https://scrud.co.kr
     description: 운영 서버
 
 tags:
@@ -28,7 +30,7 @@ components:
 paths:
   /api/v1/posts/{postId}/comments:
     post:
-      tags: [Comment]
+      tags: [ Comment ]
       summary: 댓글 작성
       parameters:
         - $ref: './components/schemas/post-schema.yaml#/PostId'
@@ -39,7 +41,7 @@ paths:
           $ref: './components/responses/success-response.yaml#/SuccessCreated'
 
     get:
-      tags: [Comment]
+      tags: [ Comment ]
       summary: 댓글 조회
       parameters:
         - $ref: './components/schemas/post-schema.yaml#/PostId'
@@ -49,7 +51,7 @@ paths:
 
   /api/v1/comments/{commentId}:
     patch:
-      tags: [Comment]
+      tags: [ Comment ]
       summary: 댓글 수정
       parameters:
         - $ref: './components/schemas/comment-schema.yaml#/CommentId'
@@ -60,7 +62,7 @@ paths:
           $ref: './components/responses/success-response.yaml#/SuccessNoContent'
 
     delete:
-      tags: [Comment]
+      tags: [ Comment ]
       summary: 댓글 삭제
       parameters:
         - $ref: './components/schemas/comment-schema.yaml#/CommentId'
@@ -70,7 +72,7 @@ paths:
 
   /api/v1/comments/{commentId}/vote:
     post:
-      tags: [Comment]
+      tags: [ Comment ]
       summary: 댓글 추천/비추천
       parameters:
         - $ref: './components/schemas/comment-schema.yaml#/CommentId'

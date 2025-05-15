@@ -1,11 +1,13 @@
 GetCommentListResponse:
-    description: 댓글 목록 조회 성공
-    content:
-      $ref: '../schemas/comment-schema.yaml#/GetCommentListResponse'
+  description: 댓글 목록 조회 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/comment-schema.yaml#/GetCommentListResponse'
 
 VoteCommentResponse:
-    description: 댓글 추천/비추천 성공
-    content:
-      application/json:
-        schema:
-          $ref: '../schemas/comment-schema.yaml#/VoteCommentResponse'
+  description: 댓글 추천/비추천 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/comment-schema.yaml#/VoteCommentResponse'
