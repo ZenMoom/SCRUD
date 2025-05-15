@@ -252,7 +252,7 @@ class DiagramService:
 - apiId: API ID (입력 파라미터로 제공됨)
 - components: 컴포넌트 목록 (클래스/인터페이스, componentId는 UUID)
 - connections: 메서드 간 연결 관계 (connectionId: UUID)
-- dto: DTO 모델 목록 (dtoId: UUID
+- dto: DTO 모델 목록 (dtoId: UUID)
 - metadata: 다이어그램 메타데이터 (버전, 수정일시 등)
 
 모든 ID 필드는 generate_uuid 도구로 생성해야 하며, 최종 출력은 Pydantic 스키마에 맞게 형식화되어야 합니다.
@@ -297,8 +297,7 @@ class DiagramService:
         프로젝트 ID: {project_id}
         API ID: {api_id}
 
-        각 엔드포인트에 대해 Controller, Service, Repository 계층 구조를 생성하고,
-        이에 맞는 메서드와 연결 관계를 포함하세요.
+        메서드와 연결 관계를 포함하세요.
         """
 
         self.logger.info("Agent 실행 중...")

@@ -7,7 +7,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 from app.config.config import settings
-from app.infrastructure.http.client.api_client import ApiClient, ApiSpec
 from app.infrastructure.mongodb.repository.model.diagram_model import MethodPromptTagEnum, \
     MethodPromptTargetEnum, Metadata
 
@@ -89,7 +88,7 @@ class DiagramProcessor:
         사용자 메시지:
         {user_chat_data.message}
         """
-        self.logger.info(f"생성된 프롬프트 일부: {complete_prompt[:300]}...")
+        self.logger.info(f"생성된 프롬프트 일부: {complete_prompt}...")
         return complete_prompt
 
     async def _call_llm(self, complete_prompt, diagram_code):
