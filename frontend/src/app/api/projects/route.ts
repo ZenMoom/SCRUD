@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
             securityValue.forEach(file => {
               globalFiles.push({
                 fileName: file.name || 'unnamed_security_file',
-                fileType: 'SECURITY_GITHUB',
+                fileType: 'SECURITY',
                 fileUrl: "",
                 fileContent: file.content
               });

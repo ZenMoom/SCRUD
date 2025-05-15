@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { CheckCircle, XCircle, Plus, Pencil, X } from "lucide-react"
 import useAuthStore from "@/app/store/useAuthStore"
 import { useParams } from "next/navigation"
+import FileInputModal from "./file-modal/FileInputModal"
 
 // 전역 파일 정의
 interface GlobalFile {
@@ -46,9 +47,6 @@ type SidebarItem = ProjectItem | FileItem
 
 // 아이템 정의 - 파일 타입 카테고리는 고정이므로 컴포넌트 외부로 이동
 const ITEMS: SidebarItem[] = [
-  { id: "title", label: "프로젝트명", isProject: true },
-  { id: "description", label: "프로젝트 설명", isProject: true },
-  { id: "serverUrl", label: "Server URL", isProject: true },
   { id: "requirementSpec", label: "요구사항 명세서", fileType: "REQUIREMENTS", isProject: false },
   { id: "erd", label: "ERD", fileType: "ERD", isProject: false },
   { id: "dependencyFile", label: "의존성 파일", fileType: "DEPENDENCY", isProject: false },
@@ -63,8 +61,9 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
   const [files, setFiles] = useState<GlobalFilesByType>({})
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(false)
-  // error 상태는 사용하지 않지만 추후 사용할 가능성을 위해 주석으로 남겨둠
-  // const [error, setError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedFileType, setSelectedFileType] = useState<string>("")
+  const addButtonRef = useRef<HTMLButtonElement>(null)
   const { token } = useAuthStore()
   const params = useParams()
   const projectId = params.id ? parseInt(params.id as string, 10) : 0
@@ -127,10 +126,8 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
       // 백엔드 응답 구조에 따라 조정 필요
       const globalFiles = data.content || data.globalFiles || []
       setFiles(groupFilesByType(globalFiles))
-      // setError(null)
     } catch (err) {
       console.error("Failed to fetch global files:", err)
-      // setError('전역 파일을 불러오는 데 실패했습니다')
     } finally {
       setLoading(false)
     }
@@ -185,11 +182,15 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     return files[fileType] && files[fileType].length > 0
   }
 
-  // 파일 추가 핸들러 (추후 구현)
+  // 파일 추가 핸들러
   const handleAddFile = (fileType: string) => {
-    console.log(`Add file to ${fileType}`)
-    // 추후 API 구현 시 여기에 추가
-    // 파일 추가 후 데이터 다시 불러오기
+    setSelectedFileType(fileType)
+    setIsModalOpen(true)
+  }
+
+  // 파일 업로드 성공 핸들러
+  const handleUploadSuccess = () => {
+    setIsModalOpen(false)
     fetchGlobalFiles()
   }
 
@@ -222,8 +223,9 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
             {hasFilesForType ? <CheckCircle className="text-green-500 mr-2.5" size={20} /> : <XCircle className="text-red-500 mr-2.5" size={20} />}
             <span className="text-base font-medium">{label}</span>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center relative">
             <button
+              ref={addButtonRef}
               className="p-1 rounded-full hover:bg-gray-200"
               onClick={(e) => {
                 e.stopPropagation()
@@ -232,6 +234,15 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
             >
               <Plus size={18} className="text-blue-500" />
             </button>
+            {isModalOpen && selectedFileType === fileType && (
+              <FileInputModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                fileType={selectedFileType}
+                projectId={projectId}
+                onSuccess={handleUploadSuccess}
+              />
+            )}
           </div>
         </div>
         {isExpanded && (
@@ -299,7 +310,9 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
   return (
     <div className="w-full h-full bg-white p-6 overflow-y-auto">
       <h2 className="text-lg font-bold text-gray-800 mb-4">프로젝트 설정</h2>
-      <div className="space-y-2">{ITEMS.map((item) => (item.isProject ? renderProjectItem(item) : renderFileItem(item as FileItem)))}</div>
+      <div className="space-y-2">
+        {ITEMS.map((item) => (item.isProject ? renderProjectItem(item) : renderFileItem(item as FileItem)))}
+      </div>
     </div>
   )
 }
