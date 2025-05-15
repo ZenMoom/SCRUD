@@ -399,7 +399,7 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   }
 
   // API 조작 핸들러
-  const { handleSaveApi, handleDeleteApi, handleTestApi } = useApiSpec({
+  const { handleSaveApi, handleDeleteApi } = useApiSpec({
     endpoint,
     method,
     summary,
@@ -444,7 +444,7 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         apiStatus={apiStatus}
         handleSaveApi={handleSaveApi}
         handleDeleteApi={handleDeleteApi}
-        handleTestApi={handleTestApi}
+        // handleTestApi={handleTestApi}
         handleCreateDiagram={handleCreateDiagram}
         handleCancelDiagramCreation={handleCancelDiagramCreation}
       />

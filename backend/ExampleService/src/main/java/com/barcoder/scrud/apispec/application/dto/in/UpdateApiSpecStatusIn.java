@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdateApiSpecStatusIn {
 
-    private Long apiSpecId;
+    private Long apiSpecVersionId;
     private ApiSpecStatus apiSpecStatus;
 
 }

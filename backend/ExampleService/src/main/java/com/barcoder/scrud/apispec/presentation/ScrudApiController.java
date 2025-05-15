@@ -43,7 +43,7 @@ public class ScrudApiController implements ScrudApiApi {
 
 		// 1. 조건에 맞게 inDto를 생성
 		UpdateApiSpecStatusIn inDto = UpdateApiSpecStatusIn.builder()
-				.apiSpecId(Long.parseLong(apiId))
+				.apiSpecVersionId(Long.parseLong(apiId))
 				.apiSpecStatus(modelMapper.map(apiProcessStateRequest.getStatus(), ApiSpecStatus.class))
 				.build();
 
