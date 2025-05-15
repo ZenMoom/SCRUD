@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import GitHubRepoBrowser from "@/components/globalsetting/GitHubRepoBrowser"
 import FileUploadSection from "./FileUploadSection"
+import useAuthStore from "@/app/store/useAuthStore"
 
 interface FileInputModalProps {
   isOpen: boolean
@@ -15,6 +16,9 @@ interface FileInputModalProps {
 export default function FileInputModal({ isOpen, onClose, fileType, projectId, onSuccess }: FileInputModalProps) {
   const [selectedOption, setSelectedOption] = useState<'github' | 'upload' | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+// AuthStore에서 토큰과 인증 상태 가져오기
+  const { token, isAuthenticated } = useAuthStore()
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -29,6 +33,50 @@ export default function FileInputModal({ isOpen, onClose, fileType, projectId, o
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [onClose, selectedOption])
+
+  const handleFileSelect = async (files: Array<{ path: string; content: string; fileType?: string; fileName?: string; isGitHub: boolean }>) => {
+    console.log('FileInputModal - GitHub에서 받은 파일 데이터:', files);
+    
+    try {
+      for (const file of files) {
+        const requestBody = {
+          globalFileId: 0,
+          fileName: file.fileName || file.path.split('/').pop(),
+          fileType: file.fileType || fileType,
+          fileContent: file.content,
+          isGitHub: true
+        };
+    
+        
+        console.log('FileInputModal - API 요청 데이터:', requestBody);
+        
+        if (!token || !isAuthenticated) {
+            return;
+            }
+
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Bearer 접두어 추가
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        console.log('FileInputModal - API 응답:', response);
+        
+        if (!response.ok) {
+          throw new Error('파일 업로드 실패');
+        }
+      }
+
+      console.log('FileInputModal - 모든 파일 업로드 완료');
+      onSuccess?.();
+      onClose();
+    } catch (error) {
+      console.error('FileInputModal - 파일 업로드 중 오류:', error);
+    }
+  };
 
   if (!isOpen) return null
 
@@ -84,10 +132,7 @@ export default function FileInputModal({ isOpen, onClose, fileType, projectId, o
             setSelectedOption(null)
             onClose()
           }}
-          onSelect={() => {
-            onSuccess?.()
-            onClose()
-          }}
+          onSelect={handleFileSelect}
           formType={fileType}
           isArchitecture={fileType === 'ARCHITECTURE_DEFAULT'}
         />
