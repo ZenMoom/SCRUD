@@ -1,11 +1,10 @@
 package com.barcoder.scrud.spec.domain.entity;
 
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
-import io.swagger.v3.core.util.Json;
+import com.barcoder.scrud.global.config.generator.SnowflakeId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -23,19 +22,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class OperationFieldRule extends BaseTimeEntity {
 
-	@Id
-	@GeneratedValue
-	private Long operationFieldRuleId;
+    @Id
+    @SnowflakeId
+    private Long operationFieldRuleId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "service_spec_version_id")
-	private ServiceSpecVersion serviceSpecVersion;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_spec_version_id")
+    private ServiceSpecVersion serviceSpecVersion;
 
-	@Column(columnDefinition = "VARCHAR(50)", nullable = false)
-	private String fieldName;
+    @Column(columnDefinition = "VARCHAR(50)", nullable = false)
+    private String fieldName;
 
-	@Builder.Default
-	private Boolean isEditable = false;
+    @Builder.Default
+    private Boolean isEditable = false;
 
-	private String editableSubFields;
+    private String editableSubFields;
 }
