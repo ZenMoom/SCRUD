@@ -80,28 +80,6 @@ export default function Header() {
 
         {/* 우측 영역 */}
         <div className="flex items-center gap-4 mr-4">
-          {/* 개발자 메뉴 드롭다운 */}
-          {/* <div className="relative dev-menu-container">
-            <button
-              onClick={() => setShowDevMenu(!showDevMenu)}
-              className="px-6 py-2 border-2 border-black text-black font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors duration-200"
-            >
-              개발 메뉴
-            </button>
-
-            {showDevMenu && (
-              <div className="absolute top-full right-0 mt-1 bg-white rounded-md shadow-lg z-50 w-48 border border-gray-200">
-                <ul>
-                  <li>
-                    <Link href="/project/api" className="block px-4 py-3 hover:bg-gray-100 text-gray-800 border-b border-gray-100">
-                      API 제작 페이지
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div> */}
-
           {/* 로그인 버튼 또는 프로필 아이콘 */}
           {isAuthenticated && user ? (
             <div className="relative profile-menu-container">

@@ -44,8 +44,8 @@ INSERT INTO global_files (
 
 
 -- 디폴트 전역 설정 파일
-INSERT INTO default_global_files (file_name, file_type, file_content, created_at, updated_at)
-VALUES (
+INSERT INTO default_global_files (default_global_file_id, file_name, file_type, file_content, created_at, updated_at)
+VALUES (1,
            'MSA아키텍처',
            'ARCHITECTURE_DEFAULT_MSA',
            'com.example.userservice.controller.UserController
@@ -71,8 +71,8 @@ VALUES (
            ,now()
            ,now());
 
-INSERT INTO default_global_files (file_name, file_type, file_content, created_at, updated_at)
-VALUES (
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
+VALUES (2,
            '헥사고널 아키텍처',
            'ARCHITECTURE_DEFAULT_HEX',
            'com.example.userservice.application.UserServiceApplication
@@ -110,8 +110,8 @@ VALUES (
            now()
        );
 
-INSERT INTO default_global_files (file_name, file_type, file_content, created_at, updated_at)
-VALUES (
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
+VALUES (3,
            '레이어드 아키텍처 A',
            'ARCHITECTURE_DEFAULT_LAYERED_A',
            'com.example.app.user.controller.UserController
@@ -135,8 +135,8 @@ VALUES (
            now()
        );
 
-INSERT INTO default_global_files (file_name, file_type, file_content, created_at, updated_at)
-VALUES (
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
+VALUES (4,
            '레이어드 아키텍처 B',
            'ARCHITECTURE_DEFAULT_LAYERED_B',
            'com.example.app.controller.UserController
@@ -164,8 +164,8 @@ VALUES (
            now()
        );
 
-INSERT INTO default_global_files (file_name, file_type, file_content, created_at, updated_at)
-VALUES (
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
+VALUES (5,
            '클린 아키텍처',
            'ARCHITECTURE_DEFAULT_CLEAN',
            'com.example.app.domain.model.User
@@ -206,8 +206,9 @@ VALUES (
            now()
        );
 
-INSERT INTO default_global_files (file_name, file_type, file_content, created_at, updated_at)
+INSERT INTO default_global_files ( default_global_file_id, file_name,  file_type, file_content, created_at, updated_at)
 VALUES (
+        6,
            '기본 컨벤션',
            'CONVENTION_DEFAULT',
            '임포트 순서

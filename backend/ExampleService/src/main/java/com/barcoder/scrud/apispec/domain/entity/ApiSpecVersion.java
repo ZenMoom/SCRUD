@@ -2,11 +2,11 @@ package com.barcoder.scrud.apispec.domain.entity;
 
 import com.barcoder.scrud.apispec.domain.enums.HttpMethod;
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
+import com.barcoder.scrud.global.config.generator.SnowflakeId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class ApiSpecVersion extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue
+    @SnowflakeId
     private Long apiSpecVersionId;
 
     private UUID userId;

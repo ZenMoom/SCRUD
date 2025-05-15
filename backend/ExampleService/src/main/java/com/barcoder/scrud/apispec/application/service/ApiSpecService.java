@@ -51,7 +51,7 @@ public class ApiSpecService {
         ApiSpecVersion apiSpecVersion = apiSpecVersionJpaRepository.getReferenceById(apiSpecVersionOut.getApiSpecVersionId());
 
         // 2. LatestEndpointVersion entity 생성
-        ApiSpec apiSpec = apiSpecAssembler.toLatestEndpointVersionEntity(
+        ApiSpec apiSpec = apiSpecAssembler.toApiSpecEntity(
                 scrudProject,
                 apiSpecVersion,
                 inDto.getEndpoint()
@@ -116,7 +116,7 @@ public class ApiSpecService {
         List<ApiSpecVersion> apiSpecVersions = apiSpecVersionJpaRepository.findAllById(apiSpecVersionIds);
 
         // 4. LatestEndpointVersion entity 리스트 생성
-        List<ApiSpec> apiSpecList = apiSpecAssembler.toLatestEndpointVersionEntityList(
+        List<ApiSpec> apiSpecList = apiSpecAssembler.toApiSpecEntityList(
                 scrudProject,
                 apiSpecVersions
         );
