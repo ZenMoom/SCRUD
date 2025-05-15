@@ -134,7 +134,7 @@ public class ApiSpecController implements ApiSpecApi {
     public ResponseEntity<Void> updateApiSpecStatus(Long apiSpecId, ApiSpecVersionStatusRequest apiSpecVersionStatusRequest) {
 
         UpdateApiSpecStatusIn inDto = modelMapper.map(apiSpecVersionStatusRequest, UpdateApiSpecStatusIn.class).toBuilder()
-                .apiSpecId(apiSpecId)
+                .apiSpecVersionId(apiSpecId)
                 .build();
 
         apiSpecService.updateApiSpecStatus(inDto);
