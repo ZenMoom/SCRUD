@@ -1169,13 +1169,13 @@ paths:
         name: sort
         required: false
         schema:
-          $ref: '#/PostSortEnumDto'
+          $ref: '#/components/schemas/PostSortEnumDto'
       - description: 정렬 방향
         in: query
         name: order
         required: false
         schema:
-          $ref: '#/PostOrderEnumDto'
+          $ref: '#/components/schemas/PostOrderEnumDto'
       - description: 검색 키워드
         in: query
         name: keyword
@@ -1559,14 +1559,14 @@ components:
       name: sort
       required: false
       schema:
-        $ref: '#/PostSortEnumDto'
+        $ref: '#/components/schemas/PostSortEnumDto'
     PostOrder:
       description: 정렬 방향
       in: query
       name: order
       required: false
       schema:
-        $ref: '#/PostOrderEnumDto'
+        $ref: '#/components/schemas/PostOrderEnumDto'
     SearchPostParam:
       description: 검색 키워드
       in: query

@@ -6,9 +6,20 @@ PostId:
     type: integer
     format: int64
 
+####### enum dto #######
 SearchTypeEnumDto:
   type: string
   enum: [ title, content, title_content ]
+
+PostOrderEnumDto:
+  type: string
+  enum: [ asc, desc ]
+  description: 정렬 방향 (오름차순 또는 내림차순)
+
+PostSortEnumDto:
+  type: string
+  enum: [ createdAt, viewCount, likeCount ]
+  description: 게시글 정렬 기준 (작성일, 조회수, 좋아요 수)
 
 ######## request dto ########
 
