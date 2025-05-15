@@ -176,20 +176,22 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
             type="file"
             className="hidden"
             onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-              if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                const content = await file.text();
-                const fileWithContent = {
-                  name: file.name,
-                  content: content,
-                };
+              if (e.target.files && e.target.files.length > 0) {
+                const filesArray = Array.from(e.target.files);
+                const filePromises = filesArray.map(async (file) => {
+                  const content = await file.text();
+                  return {
+                    name: file.name,
+                    content,
+                  };
+                });
 
-                // 현재 value가 배열인 경우 새 파일을 추가
+                const filesWithContent = await Promise.all(filePromises);
+
                 if (Array.isArray(value)) {
-                  onChange([...value, fileWithContent]);
+                  onChange([...value, ...filesWithContent]);
                 } else {
-                  // 배열이 아닌 경우 단일 항목 배열로 설정
-                  onChange([fileWithContent]);
+                  onChange(filesWithContent);
                 }
               }
             }}
