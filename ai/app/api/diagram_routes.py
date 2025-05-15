@@ -1,11 +1,14 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 
+from app.api.chat_routes import get_model_generator
 from app.api.dto.diagram_dto import PositionRequest, DiagramResponse
 from app.core.generator.model_generator import ModelGenerator
 from app.core.services.chat_service import ChatService
 from app.core.services.diagram_service import DiagramService
+from app.core.services.sse_service import SSEService
+from app.infrastructure.http.client.api_client import ApiClient, ApiSpec, GlobalFileList
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO,
@@ -40,19 +43,29 @@ def get_diagram_service(
         logger=logger,
     )
 
+def get_sse_service() -> SSEService:
+    return SSEService(logger=logger)
+
+def get_a_http_client():
+    from app.infrastructure.http.client.api_client import ApiClient
+    from app.config.config import settings
+    return ApiClient(settings.A_HTTP_SPRING_BASE_URL)
 
 def get_chat_service(
         diagram_repository: DiagramRepository = Depends(get_diagram_repository),
-        chat_repository: ChatRepository = Depends(get_chat_repository)
+        chat_repository: ChatRepository = Depends(get_chat_repository),
+        sse_service: SSEService = Depends(get_sse_service),
+        model_generator: ModelGenerator = Depends(get_model_generator),
 ) -> ChatService:
-    model_generator = ModelGenerator()
     return ChatService(
         model_name="openai",
         model_generator=model_generator,
         diagram_repository=diagram_repository,
         chat_repository=chat_repository,
+        sse_service=sse_service,
         logger=logger,
     )
+
 
 
 #####################################################################################################
@@ -87,6 +100,8 @@ async def create_diagram(
         project_id: str,
         api_id: str,
         diagram_service: DiagramService = Depends(get_diagram_service),
+        authorization: str = Header(None),
+        api_client: ApiClient = Depends(get_a_http_client)
 ) -> DiagramResponse:
     """
     특정 프로젝트와 API에 대한 새로운 다이어그램을 생성합니다.
@@ -103,11 +118,22 @@ async def create_diagram(
         HTTPException: 400 - 이미 다이어그램이 존재하는 경우
         HTTPException: 500 - 서버 오류가 발생한 경우
     """
+    logger.info(f"Authorization 헤더: {authorization}")
+
     try:
-        return await diagram_service.create_diagram(project_id, api_id)
+        api_spec: ApiSpec = await api_client.get_api_spec(api_spec_id=api_id, token=authorization)
+        global_files: GlobalFileList = await api_client.get_project(project_id=project_id, token=authorization)
+        logger.info(f"API Spec: {api_spec}")
+        logger.info(f"Project Data: {global_files}")
+        return await diagram_service.create_diagram(
+            project_id=project_id,
+            api_id=api_id,
+            api_spec=api_spec,
+            global_files=global_files
+        )
     except ValueError as e:
         # 이미 존재하는 다이어그램인 경우 400 에러
-        logger.warning(f"다이어그램 생성 실패 (기존 다이어그램 존재): {str(e)}")
+        logger.warning(f"다이어그램 생성 실패: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         # 기타 오류는 500 에러

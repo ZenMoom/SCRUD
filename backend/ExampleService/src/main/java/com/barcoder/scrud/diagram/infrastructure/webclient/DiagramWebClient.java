@@ -13,9 +13,10 @@ public class DiagramWebClient {
 
     private final WebClient webClient;
 
-    public DiagramResponse createDiagram(String projectId, String apiId) {
+    public DiagramResponse createDiagram(String projectId, String apiId, String authorization) {
         return webClient.post()
                 .uri("/api/v1/projects/{projectId}/apis/{apiId}/diagrams", projectId, apiId)
+                .header("Authorization", authorization)
                 .retrieve()
                 .bodyToMono(DiagramResponse.class)
                 .block();
