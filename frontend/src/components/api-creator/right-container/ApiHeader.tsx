@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import type React from "react"
-import { useRouter } from "next/navigation"
 
 interface ApiHeaderProps {
   scrudProjectId: number
@@ -33,9 +32,6 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
   handleCreateDiagram,
   handleCancelDiagramCreation,
 }) => {
-  // 라우터 추가
-  const router = useRouter()
-
   // 다이어그램 생성 시작 시간 추적
   const [creationStartTime, setCreationStartTime] = useState<number | null>(null)
   const [elapsedTime, setElapsedTime] = useState<number>(0)
@@ -75,12 +71,12 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
   // API 상태에 따라 도식화 버튼 표시 여부 결정
   const showDiagramButton = apiStatus === "AI_GENERATED" && apiSpecVersionId !== null
 
-  // 도식화 보기 버튼 클릭 핸들러
+  // 도식화 보기 버튼 클릭 핸들러 - router.push 대신 window.location.href 사용
   const handleViewDiagram = () => {
     if (!apiSpecVersionId) return
 
-    // 버전 정보 없이 URL 구성
-    router.push(`/canvas/${scrudProjectId}/${apiSpecVersionId}`)
+    // 버전 정보를 포함하여 URL 구성 (version=1 추가)
+    window.location.href = `/canvas/${scrudProjectId}/${apiSpecVersionId}`
   }
 
   // Google 스타일 버튼 기본 클래스 - 반응형으로 설정
