@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import GitHubRepoBrowser from "@/components/globalsetting/GitHubRepoBrowser"
-import FileUploadSection from "./FileUploadSection"
+import { Upload } from 'lucide-react'
 import useAuthStore from "@/app/store/useAuthStore"
 
 interface FileInputModalProps {
@@ -14,12 +14,12 @@ interface FileInputModalProps {
 }
 
 export default function FileInputModal({ isOpen, onClose, fileType, projectId, onSuccess }: FileInputModalProps) {
-  const [selectedOption, setSelectedOption] = useState<'github' | 'upload' | null>(null)
+  const [selectedOption, setSelectedOption] = useState<'github' | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+    const { token, isAuthenticated } = useAuthStore()
 
-// AuthStore에서 토큰과 인증 상태 가져오기
-  const { token, isAuthenticated } = useAuthStore()
-
+    
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (!selectedOption && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -46,19 +46,18 @@ export default function FileInputModal({ isOpen, onClose, fileType, projectId, o
           fileContent: file.content,
           isGitHub: true
         };
-    
-        
-        console.log('FileInputModal - API 요청 데이터:', requestBody);
         
         if (!token || !isAuthenticated) {
-            return;
-            }
+           return;
+        }
 
+        console.log('FileInputModal - API 요청 데이터:', requestBody);
+        
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Bearer 접두어 추가
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify(requestBody),
         });
@@ -78,7 +77,45 @@ export default function FileInputModal({ isOpen, onClose, fileType, projectId, o
     }
   };
 
-  if (!isOpen) return null
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const content = await file.text();
+      
+      const requestBody = {
+        globalFileId: 0,
+        fileName: file.name,
+        fileType: fileType,
+        fileContent: content,
+        isGitHub: false
+      };
+
+      console.log('FileInputModal - 파일 업로드 요청 데이터:', requestBody);
+
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error('파일 업로드 실패');
+      }
+
+      console.log('FileInputModal - 파일 업로드 완료');
+      onSuccess?.();
+      onClose();
+    } catch (error) {
+      console.error('FileInputModal - 파일 업로드 중 오류:', error);
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
     <>
@@ -89,40 +126,28 @@ export default function FileInputModal({ isOpen, onClose, fileType, projectId, o
           top: '100%',
         }}
       >
-        {!selectedOption ? (
-          <div className="py-1">
-            <button
-              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
-              onClick={() => setSelectedOption('github')}
-            >
-              GitHub에서 가져오기
-            </button>
-            <button
-              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
-              onClick={() => setSelectedOption('upload')}
-            >
-              파일 업로드
-            </button>
-          </div>
-        ) : selectedOption === 'upload' ? (
-          <div className="p-4">
-            <FileUploadSection 
-              fileType={fileType}
-              projectId={projectId}
-              onSuccess={() => {
-                onSuccess?.()
-                onClose()
-              }}
-            />
-            
-            <button
-              onClick={() => setSelectedOption(null)}
-              className="mt-4 w-full p-2 text-gray-600 hover:text-gray-800 text-sm"
-            >
-              다른 옵션 선택하기
-            </button>
-          </div>
-        ) : null}
+        <div className="py-1">
+          <button
+            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+            onClick={() => setSelectedOption('github')}
+          >
+            <Upload size={16} className="mr-2" />
+            GitHub에서 가져오기
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          <button
+            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload size={16} className="mr-2" />
+            파일 업로드
+          </button>
+        </div>
       </div>
 
       {selectedOption === 'github' && (
