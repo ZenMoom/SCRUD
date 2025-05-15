@@ -415,5 +415,4 @@ Include:
   schema:
     type: array
     items:
-      type: string
-      enum: [AI_GENERATED, AI_VISUALIZED, USER_COMPLETED]
+      $ref: '#/ApiProcessStateEnumDto'

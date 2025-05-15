@@ -1,14 +1,10 @@
 import logging
 from typing import Optional
 
-from langchain_core.output_parsers import PydanticOutputParser
-from langchain_openai import ChatOpenAI
-
 from app.api.dto.diagram_dto import DiagramResponse, PositionRequest
-from app.core.generator.model_generator import ModelGenerator
-from app.core.prompts.few_shot_prompt_template import DiagramPromptGenerator
+from app.infrastructure.http.client.api_client import GlobalFileList, ApiSpec
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
-from app.infrastructure.mongodb.repository.model.diagram_model import Diagram, Metadata, Component, DtoModel
+from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
 
 
 class DiagramService:
@@ -59,14 +55,21 @@ class DiagramService:
         # 응답 데이터로 변환
         return self._convert_to_response(diagram)
 
-    async def create_diagram(self, project_id: str, api_id: str) -> DiagramResponse:
+    async def create_diagram(
+            self,
+            project_id: str,
+            api_id: str,
+            api_spec: ApiSpec,
+            global_files: GlobalFileList,
+    ) -> DiagramResponse:
         """
         특정 프로젝트의 특정 API에 대한 새로운 다이어그램을 생성합니다.
 
         Args:
             project_id: 프로젝트 ID
             api_id: API ID
-
+            api_spec
+            global_files
         Returns:
             DiagramResponse: 생성된 도식화 데이터
 
@@ -90,7 +93,12 @@ class DiagramService:
             # 기존 다이어그램이 없으면 새로 생성
             self.logger.info(f"새 다이어그램 생성: project_id={project_id}, api_id={api_id}")
 
-            diagram: Diagram = await self.create_llm_diagram(project_id, api_id, {"d": "d"})
+            diagram: Diagram = await self.create_llm_diagram(
+                project_id=project_id,
+                api_id=api_id,
+                global_files=global_files,
+                api_spec=api_spec
+            )
             # 저장
             new_diagram = await self.diagram_repository.save(diagram)
             # 응답 데이터로 변환
@@ -169,15 +177,21 @@ class DiagramService:
 
         return DiagramResponse(**response_data)
 
-    async def create_llm_diagram(self, project_id: str, api_id: str, openapi_spec: dict) -> Diagram:
+    async def create_llm_diagram(
+            self,
+            project_id: str,
+            api_id: str,
+            global_files: GlobalFileList,
+            api_spec: ApiSpec,
+    ) -> Diagram:
         """
         LangChain Agent를 사용하여 OpenAPI 명세로부터 다이어그램을 생성합니다.
 
         Args:
             project_id: 프로젝트 ID
             api_id: API ID
-            openapi_spec: OpenAPI 명세 데이터
-
+            api_spec: OpenAPI 명세 데이터
+            global_files
         Returns:
             Diagram: 생성된 다이어그램 객체
         """
@@ -238,10 +252,12 @@ class DiagramService:
 - apiId: API ID (입력 파라미터로 제공됨)
 - components: 컴포넌트 목록 (클래스/인터페이스, componentId는 UUID)
 - connections: 메서드 간 연결 관계 (connectionId: UUID)
-- dto: DTO 모델 목록 (dtoId: UUID
+- dto: DTO 모델 목록 (dtoId: UUID)
 - metadata: 다이어그램 메타데이터 (버전, 수정일시 등)
 
-모든 ID 필드는 generate_uuid 도구로 생성해야 하며, 최종 출력은 Pydantic 스키마에 맞게 형식화되어야 합니다.
+모든 ID 필드는 generate_uuid 도구로 생성해야 합니다. 특히 methodId끼리 겹치거나 componentId가 겹치는 일이 없도록 주의하세요  
+최종 출력은 Pydantic 스키마에 맞게 형식화되어야 합니다.
+
 """
 
         prompt = ChatPromptTemplate.from_messages(
@@ -271,18 +287,19 @@ class DiagramService:
         )
 
         # 6. Agent 실행
-        import json
         input_msg = f"""
         다음 OpenAPI 명세를 분석하여 Spring Boot 아키텍처 패턴을 따르는 다이어그램을 생성해주세요.
-
+        다음의 내용들을 모두 고려 해주세요
+        [고려할 사항]
+        {global_files.model_dump_json()}
+        
         [OpenAPI 명세]
-        {json.dumps(openapi_spec, indent=2)}
+        {api_spec.model_dump_json()}
 
         프로젝트 ID: {project_id}
         API ID: {api_id}
 
-        각 엔드포인트에 대해 Controller, Service, Repository 계층 구조를 생성하고,
-        이에 맞는 메서드와 연결 관계를 포함하세요.
+        메서드와 연결 관계를 포함하세요.
         """
 
         self.logger.info("Agent 실행 중...")
