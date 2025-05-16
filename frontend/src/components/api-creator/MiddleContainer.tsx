@@ -153,7 +153,69 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       }
     }
   }
+  // API 그룹 삭제 함수
+  const deleteApiGroup = async (groupId: string) => {
+    if (confirm("이 API 그룹과 그룹에 속한 모든 엔드포인트를 삭제하시겠습니까?")) {
+      try {
+        const group = apiGroups.find((g) => g.id === groupId)
+        if (!group) return
 
+        // 그룹 내 모든 엔드포인트 중 apiSpecVersionId가 있는 엔드포인트 필터링
+        const endpointsWithApiSpecId = group.endpoints.filter((endpoint) => endpoint.apiSpecVersionId)
+
+        if (endpointsWithApiSpecId.length > 0) {
+          // 백엔드에 저장된 엔드포인트가 있는 경우
+          const deletionPromises = endpointsWithApiSpecId.map(async (endpoint) => {
+            try {
+              // 헤더에 Bearer 토큰 추가
+              const headers = {
+                Authorization: token ? `Bearer ${token}` : "",
+                "Content-Type": "application/json",
+              }
+
+              // 백엔드 API 호출하여 실제 데이터 삭제
+              await axios.delete(`/api/api-specs/${endpoint.apiSpecVersionId}`, { headers })
+              console.log(`엔드포인트 삭제 완료: ${endpoint.path}`)
+              return true
+            } catch (error) {
+              console.error(`엔드포인트 ${endpoint.path} 삭제 중 오류 발생:`, error)
+              return false
+            }
+          })
+
+          // 모든 삭제 작업이 완료될 때까지 기다림
+          const results = await Promise.all(deletionPromises)
+
+          // 삭제 결과 확인
+          const successCount = results.filter((result) => result).length
+          const failCount = results.filter((result) => !result).length
+
+          if (failCount > 0) {
+            alert(`${successCount}개의 엔드포인트가 삭제되었으나, ${failCount}개의 엔드포인트 삭제 중 오류가 발생했습니다.`)
+          } else {
+            alert(`${successCount}개의 엔드포인트와 함께 그룹이 성공적으로 삭제되었습니다.`)
+          }
+        } else {
+          // 백엔드에 저장된 엔드포인트가 없는 경우
+          alert("그룹이 삭제되었습니다.")
+        }
+
+        // UI 업데이트 - 해당 그룹 제거
+        setApiGroups(apiGroups.filter((g) => g.id !== groupId))
+
+        // 해당 그룹의 엔드포인트 중 선택된 것이 있으면 선택 해제
+        const hasSelectedEndpoint = group.endpoints.some((endpoint) => endpoint.id === selectedEndpointId)
+        if (hasSelectedEndpoint) {
+          setSelectedEndpointId(null)
+        }
+
+        console.log("그룹 삭제 완료:", groupId, "프로젝트:", scrudProjectId)
+      } catch (error) {
+        console.error("그룹 삭제 중 오류 발생:", error)
+        alert("그룹 삭제 중 오류가 발생했습니다.")
+      }
+    }
+  }
   // API 엔드포인트 선택 함수
   const handleApiSelect = (groupId: string, endpoint: ApiEndpoint) => {
     // setSelectedGroupId(null) // 그룹 강조 제거
@@ -439,10 +501,10 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                       {/* 이모지 버튼 (편집 모드에서도 표시) */}
                       <div className="flex-shrink-0 relative z-10">
                         {editingEmoji === group.id ? (
-                          <EmojiPicker selectedEmoji={group.emoji || "📌"} onEmojiSelect={(emoji) => updateGroupEmoji(group.id, emoji)} />
+                          <EmojiPicker selectedEmoji={group.emoji || "📂"} onEmojiSelect={(emoji) => updateGroupEmoji(group.id, emoji)} />
                         ) : (
                           <button className="p-2 text-2xl hover:bg-gray-50 rounded-md transition-colors" onClick={(e) => startEditingEmoji(group.id, e)}>
-                            {group.emoji || "📌"}
+                            {group.emoji || "📂"}
                           </button>
                         )}
                       </div>
@@ -472,10 +534,10 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                       {/* 이모지 버튼 */}
                       <div className="flex-shrink-0 relative z-10">
                         {editingEmoji === group.id ? (
-                          <EmojiPicker selectedEmoji={group.emoji || "📌"} onEmojiSelect={(emoji) => updateGroupEmoji(group.id, emoji)} />
+                          <EmojiPicker selectedEmoji={group.emoji || "📂"} onEmojiSelect={(emoji) => updateGroupEmoji(group.id, emoji)} />
                         ) : (
                           <button className="p-2 text-2xl hover:bg-gray-50 rounded-md transition-colors" onClick={(e) => startEditingEmoji(group.id, e)} title="이모지 변경">
-                            {group.emoji || "📌"}
+                            {group.emoji || "📂"}
                           </button>
                         )}
                       </div>
@@ -498,6 +560,22 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        <button
+                          className="p-1 text-red-400 hover:text-red-600 transition-colors flex-shrink-0 ml-1"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteApiGroup(group.id)
+                          }}
+                          title="그룹 및 모든 엔드포인트 삭제"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                              fillRule="evenodd"
+                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
                           </svg>
                         </button>
                       </div>
