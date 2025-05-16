@@ -12,9 +12,9 @@ interface ProjectInfo {
   description?: string
 }
 
-export default function ApiHeader({ projectId, project }: { projectId: number; project: ProjectInfo }) {
+export default function ApiHeader({ project }: { projectId: number; project: ProjectInfo }) {
   // 로고 이미지 경로
-  const logoPath = "/logo.png"
+  const logoPath = "/faviconblack.png"
   // 프로필 메뉴 상태 관리
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
@@ -52,16 +52,14 @@ export default function ApiHeader({ projectId, project }: { projectId: number; p
   }, [showProfileMenu])
 
   return (
-    <header className="sticky top-0 w-full h-[60px] bg-white z-50 border-b border-gray-200">
+    <header className="sticky top-0 w-full h-[60px] bg-blue-50 z-50 ">
       <div className="flex items-center justify-between h-full w-full px-4">
         {/* 로고 및 프로젝트명 영역 */}
         <div className="flex items-center gap-4">
-          <Link href="/" className="cursor-pointer">
-            <Image src={logoPath || "/placeholder.svg"} alt="로고" width={100} height={32} priority />
+          <Link href="/" className="cursor-pointer ">
+            <Image src={logoPath || "/placeholder.svg"} alt="로고" width={40} height={32} priority />
           </Link>
 
-          {/* 세로 구분선과 프로젝트명 */}
-          <div className="h-6 border-l border-gray-300 mx-2"></div>
           <h2 className="text-xl font-semibold text-gray-800 truncate max-w-[200px]">{project.title}</h2>
         </div>
 
