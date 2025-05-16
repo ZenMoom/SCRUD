@@ -17,9 +17,12 @@ import com.barcoder.scrud.model.UpdatePostRequest;
 import com.barcoder.scrud.model.VoteResponse;
 import com.barcoder.scrud.post.application.dto.in.CreatePostIn;
 import com.barcoder.scrud.post.application.dto.in.GetPostListIn;
+import com.barcoder.scrud.post.application.dto.in.PostVoteIn;
+import com.barcoder.scrud.post.application.dto.in.UpdatePostIn;
 import com.barcoder.scrud.post.application.dto.out.CreatePostOut;
 import com.barcoder.scrud.post.application.dto.out.GetPostOut;
 import com.barcoder.scrud.post.application.dto.out.PostListOut;
+import com.barcoder.scrud.post.application.dto.out.PostVoteOut;
 import com.barcoder.scrud.post.application.facade.PostGetFacade;
 import com.barcoder.scrud.post.application.service.PostGetService;
 import com.barcoder.scrud.post.application.service.PostService;
@@ -172,7 +175,16 @@ public class PostController implements PostApi {
      */
     @Override
     public ResponseEntity<Void> updatePost(Long postId, UpdatePostRequest updatePostRequest) {
-        return null;
+
+        // inDto 생성
+        UpdatePostIn inDto = modelMapper.map(updatePostRequest, UpdatePostIn.class).toBuilder()
+                .postId(postId)
+                .build();
+
+        // 게시글 수정
+        postService.updatePost(inDto);
+
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -184,7 +196,24 @@ public class PostController implements PostApi {
      */
     @Override
     public ResponseEntity<VoteResponse> votePost(Long postId, PostVoteRequest postVoteRequest) {
-        return null;
+
+        // userId 조회
+        UUID userId = securityUtil.getCurrentUserId();
+
+        // inDto 생성
+        PostVoteIn inDto = PostVoteIn.builder()
+                .postId(postId)
+                .userId(userId)
+                .isLike(postVoteRequest.getIsLike())
+                .build();
+
+        // 추천, 비추천
+        PostVoteOut outDto = postService.votePost(inDto);
+
+        // response 변환
+        VoteResponse response = modelMapper.map(outDto, VoteResponse.class);
+
+        return ResponseEntity.ok(response);
     }
 
 }

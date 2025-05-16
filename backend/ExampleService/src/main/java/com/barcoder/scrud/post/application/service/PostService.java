@@ -3,14 +3,19 @@ package com.barcoder.scrud.post.application.service;
 import com.barcoder.scrud.global.common.exception.BaseException;
 import com.barcoder.scrud.post.application.assembler.PostAssembler;
 import com.barcoder.scrud.post.application.dto.in.CreatePostIn;
+import com.barcoder.scrud.post.application.dto.in.PostVoteIn;
+import com.barcoder.scrud.post.application.dto.in.UpdatePostIn;
 import com.barcoder.scrud.post.application.dto.out.CreatePostOut;
+import com.barcoder.scrud.post.application.dto.out.PostVoteOut;
 import com.barcoder.scrud.post.domain.entity.Category;
 import com.barcoder.scrud.post.domain.entity.Post;
 import com.barcoder.scrud.post.domain.exception.PostErrorStatus;
+import com.barcoder.scrud.post.infrastructure.event.PostVoteEvent;
 import com.barcoder.scrud.post.infrastructure.jpa.CategoryJpaRepository;
 import com.barcoder.scrud.post.infrastructure.jpa.PostJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +28,7 @@ public class PostService {
     private final CategoryJpaRepository categoryJpaRepository;
     private final PostJpaRepository postJpaRepository;
     private final ModelMapper modelMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 게시글 생성
@@ -46,12 +52,51 @@ public class PostService {
         return modelMapper.map(post, CreatePostOut.class);
     }
 
-    public void addPostViewCount(Long postId) {
+    /**
+     * 게시글 수정
+     *
+     * @param inDto 게시글 수정 요청 DTO
+     */
+    public void updatePost(UpdatePostIn inDto) {
         // 게시글 조회
-        Post post = postJpaRepository.findById(postId)
+        Post post = postJpaRepository.findById(inDto.getPostId())
                 .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
 
-        // 조회수 증가
-        post.addPostViewCount();
+        // entity 수정
+        post.updateTitle(inDto.getTitle());
+        post.updateContent(inDto.getContent());
+    }
+
+    /**
+     * 게시글 추천 / 비추천
+     *
+     * @param inDto 게시글 추천/비추천 요청 DTO
+     * @return PostVoteOut 게시글 추천/비추천 응답 DTO
+     */
+    @Transactional(readOnly = true)
+    public PostVoteOut votePost(PostVoteIn inDto) {
+
+        // 게시글 조회
+        Post post = postJpaRepository.findById(inDto.getPostId())
+                .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
+
+        // 응답 DTO를 위한 값 +1 처리 (응답에서 증가된 값 보여줌)
+        long likeCount = post.getLikeCount();
+        long dislikeCount = post.getDislikeCount();
+
+        // 추천/비추천 처리
+        if (inDto.getIsLike()) likeCount++;
+        else dislikeCount++;
+
+        // 조회수 증가 이벤트 발행 (실제 DB에는 비동기로 반영)
+        PostVoteEvent event = modelMapper.map(inDto, PostVoteEvent.class);
+
+        eventPublisher.publishEvent(event);
+
+        // 반환
+        return PostVoteOut.builder()
+                .likeCount(likeCount)
+                .dislikeCount(dislikeCount)
+                .build();
     }
 }

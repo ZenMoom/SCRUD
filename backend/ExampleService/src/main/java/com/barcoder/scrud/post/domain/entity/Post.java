@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "post")
 @Builder
+@Getter
 @AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class Post extends BaseTimeEntity {
@@ -62,7 +64,39 @@ public class Post extends BaseTimeEntity {
 	@OneToMany(mappedBy = "post")
 	private List<Comment> comments = new ArrayList<>();
 
+	@JsonIgnore
+	@OneToMany(mappedBy = "post")
+	private List<PostVote> postVotes = new ArrayList<>();
+
+	// 조회수 증가
 	public void addPostViewCount() {
 		this.viewCount++;
+	}
+
+	// 제목 변경
+	public void updateTitle(String title) {
+		this.title = title;
+	}
+
+	// 내용 변경
+	public void updateContent(String content) {
+		this.content = content;
+	}
+
+	// 좋아요, 싫어요 수 증가
+	public void addPostVoteCount(Boolean isLike, UUID userId) {
+
+		// 이미 투표한 경우
+		for (PostVote postVote : this.postVotes) {
+			if (postVote.getUserId().equals(userId)) {
+				return;
+			}
+		}
+
+		if (isLike) {
+			this.likeCount++;
+		} else {
+			this.dislikeCount++;
+		}
 	}
 }

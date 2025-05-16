@@ -1,6 +1,6 @@
 package com.barcoder.scrud.post.infrastructure.event;
 
-import com.barcoder.scrud.post.application.service.PostService;
+import com.barcoder.scrud.post.application.service.PostEventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -13,12 +13,19 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PostEventHandler {
 
-    private final PostService postService;
+    private final PostEventService postEventService;
 
     @EventListener
     @Transactional
     @Async
     public void PostViewEvent(PostViewEvent event) {
-        postService.addPostViewCount(event.postId());
+        postEventService.addPostViewCount(event.postId());
+    }
+
+    @EventListener
+    @Transactional
+    @Async
+    public void PostVoteEvent(PostVoteEvent event) {
+        postEventService.addPostVoteCount(event);
     }
 }
