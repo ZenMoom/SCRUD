@@ -187,7 +187,4 @@ public class PostController implements PostApi {
         return null;
     }
 
-    public ModelMapper getModelMapper() {
-        return modelMapper;
-    }
 }
