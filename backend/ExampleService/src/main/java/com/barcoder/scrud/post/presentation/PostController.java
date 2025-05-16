@@ -7,13 +7,13 @@ import com.barcoder.scrud.model.CreatePostResponse;
 import com.barcoder.scrud.model.GetPostListResponse;
 import com.barcoder.scrud.model.PageDto;
 import com.barcoder.scrud.model.PostDetailResponse;
-import com.barcoder.scrud.model.PostDetailResponseAuthor;
 import com.barcoder.scrud.model.PostOrderEnumDto;
 import com.barcoder.scrud.model.PostSortEnumDto;
 import com.barcoder.scrud.model.PostSummaryResponse;
 import com.barcoder.scrud.model.PostVoteRequest;
 import com.barcoder.scrud.model.SearchTypeEnumDto;
 import com.barcoder.scrud.model.UpdatePostRequest;
+import com.barcoder.scrud.model.UserResponse;
 import com.barcoder.scrud.model.VoteResponse;
 import com.barcoder.scrud.post.application.dto.in.CreatePostIn;
 import com.barcoder.scrud.post.application.dto.in.GetPostListIn;
@@ -99,7 +99,7 @@ public class PostController implements PostApi {
         GetPostOut outDto = postGetFacade.getPostById(postId);
 
         // author 변환
-        PostDetailResponseAuthor author = modelMapper.map(outDto.getAuthor(), PostDetailResponseAuthor.class);
+        UserResponse author = modelMapper.map(outDto.getAuthor(), UserResponse.class);
 
         // post 변환
         PostDetailResponse response = modelMapper.map(outDto.getPost(), PostDetailResponse.class);

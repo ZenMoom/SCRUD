@@ -3308,6 +3308,12 @@ components:
     GlobalFileListDto:
       description: 전체 전역설정 파일 목록
       example:
+        project:
+          serverUrl: serverUrl
+          scrudProjectId: 0
+          description: description
+          title: title
+          updatedAt: 2000-01-23T04:56:07.000+00:00
         content:
         - fileName: fileName
           globalFileId: 0
@@ -3318,6 +3324,8 @@ components:
           fileType: REQUIREMENTS
           fileContent: fileContent
       properties:
+        project:
+          $ref: '#/components/schemas/ScrudProjectDto'
         content:
           items:
             $ref: '#/components/schemas/GlobalFileDto'
@@ -3470,7 +3478,7 @@ components:
           example: 5
           type: integer
         author:
-          $ref: '#/components/schemas/PostDetailResponse_author'
+          $ref: '#/components/schemas/UserResponse'
       type: object
     VoteResponse:
       example:
@@ -3488,14 +3496,15 @@ components:
       type: object
     GetCommentListResponse:
       example:
-        comments:
+        content:
         - createdAt: 2000-01-23T04:56:07.000+00:00
           replies:
           - null
           - null
           author:
+            profileImgUrl: https://example.com/profile.jpg
+            nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
-            username: john_doe
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
@@ -3509,8 +3518,9 @@ components:
           - null
           - null
           author:
+            profileImgUrl: https://example.com/profile.jpg
+            nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
-            username: john_doe
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
@@ -3520,7 +3530,7 @@ components:
           content: 댓글 내용입니다.
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
-        comments:
+        content:
           items:
             $ref: '#/components/schemas/CommentResponse'
           type: array
@@ -3532,8 +3542,9 @@ components:
         - null
         - null
         author:
+          profileImgUrl: https://example.com/profile.jpg
+          nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
-          username: john_doe
         dislikeCount: 1
         commentId: 101
         parentCommentId: 12
@@ -3581,7 +3592,7 @@ components:
           format: date-time
           type: string
         author:
-          $ref: '#/components/schemas/CommentResponse_author'
+          $ref: '#/components/schemas/UserResponse'
       type: object
     VoteCommentResponse:
       example:
@@ -3831,7 +3842,7 @@ components:
           description: 총 데이터 개수
           type: integer
       type: object
-    PostDetailResponse_author:
+    UserResponse:
       example:
         profileImgUrl: https://example.com/profile.jpg
         nickname: john_doe
@@ -3847,19 +3858,6 @@ components:
         profileImgUrl:
           example: https://example.com/profile.jpg
           format: uri
-          type: string
-      type: object
-    CommentResponse_author:
-      example:
-        userId: 550e8400-e29b-41d4-a716-446655440000
-        username: john_doe
-      properties:
-        userId:
-          example: 550e8400-e29b-41d4-a716-446655440000
-          format: uuid
-          type: string
-        username:
-          example: john_doe
           type: string
       type: object
   securitySchemes:
