@@ -16,119 +16,62 @@ def prepare_diagram_examples() -> List[Dict[str, str]]:
             description: 게시판 서비스를 위한 CRUD API 모음
             version: 1.0.0
             paths:
-            /api/posts:
-            get:
-              summary: 게시글 목록 조회
-              responses:
-                '200':
-                  description: 성공
-            post:
-              summary: 게시글 등록
-              responses:
-                '201':
-                  description: 생성됨
-            /api/posts/{{postId}}:
-            get:
-              summary: 게시글 조회
-              parameters:
-                - name: postId
-                  in: path
-                  required: true
-                  schema:
-                    type: integer
-              responses:
-                '200':
-                  description: 성공
+              /api/posts/{{postId}}:
+              get:
+                summary: 게시글 조회
+                parameters:
+                  - name: postId
+                    in: path
+                    required: true
+                    schema:
+                      type: integer
+                responses:
+                  '200':
+                    description: 성공
                     """,
             "diagram": """
     {{
-        "diagramId": "diagram-001",
+        "diagramId": "b2a1d7d5-551b-4d8f-ab78-bcd9bcde7950",
         "metadata": {{
-          "version": "1.0.0",
+          "metadataId": "b2a1d7d5-551b-4d8f-ab78-bcd9bcde7950",
+          "version": 1,
           "lastModified": "2025-04-25T10:30:45.123Z",
-          "name": "게시판 API",
-          "description": "게시판 서비스를 위한 CRUD API 모음"
+          "name": "메서드 구현",
+          "description": "게시글 조회 API를 구현했습니다."
         }},
         "connections": [
         {{
-          "connectionId": "connection-001",
-          "sourceMethodId": "method-001",
-          "targetMethodId": "method-004",
+          "connectionId": "6901aeb2-59f6-4f38-9b2a-aa93ab53dd74",
+          "sourceMethodId": "741a3b01-9c59-4879-8c16-1d0f92542db5",
+          "targetMethodId": "de71c3c6-9f6e-4bcf-a29d-753bf0586934",
           "type": "SOLID"
         }},
         {{
-          "connectionId": "connection-002",
-          "sourceMethodId": "method-002",
-          "targetMethodId": "method-005",
+          "connectionId": "69afac2d-c323-4424-bc43-948cb73148c0",
+          "sourceMethodId": "de71c3c6-9f6e-4bcf-a29d-753bf0586934",
+          "targetMethodId": "fc1c4558-2c9b-4ef8-9792-20603a0b59aa",
           "type": "SOLID"
-        }},
-        {{
-          "connectionId": "connection-003",
-          "sourceMethodId": "method-003",
-          "targetMethodId": "method-006",
-          "type": "SOLID"
-        }},
-        {{
-          "connectionId": "connection-004",
-          "sourceMethodId": "method-004",
-          "targetMethodId": "method-007",
-          "type": "DOTTED"
-        }},
-        {{
-          "connectionId": "connection-005",
-          "sourceMethodId": "method-005",
-          "targetMethodId": "method-008",
-          "type": "DOTTED"
-        }},
-        {{
-          "connectionId": "connection-006",
-          "sourceMethodId": "method-006",
-          "targetMethodId": "method-009",
-          "type": "DOTTED"
         }}
         ],
         "dto": [
         {{
-          "dtoId": "dto-001",
+          "dtoId": "cc21d47e-d752-416b-a96c-63f90329bcc2",
           "name": "PostDto",
           "description": "게시글 DTO",
           "body": "public class PostDto {{\\n    private Long id;\\n    private String title;\\n    private String content;\\n    private String author;\\n    private LocalDateTime createdAt;\\n    private LocalDateTime updatedAt;\\n    \\n    // getters and setters\\n}}"
         }},
-        {{
-          "dtoId": "dto-002",
-          "name": "PageDto",
-          "description": "페이지 DTO",
-          "body": "public class PageDto<T> {{\\n    private List<T> content;\\n    private int listSize;\\n    private boolean isFirstPage;\\n    private boolean isLastPage;\\n    private int totalPages;\\n    private long totalElements;\\n    \\n    // constructors, getters and setters\\n}}"
-        }},
-        {{
-          "dtoId": "dto-003",
-          "name": "PostCreateDto",
-          "description": "게시글 생성 DTO",
-          "body": "public class PostCreateDto {{\\n    private String title;\\n    private String content;\\n    private String author;\\n    \\n    // getters and setters\\n}}"
-        }}
         ],
         "components": [
         {{
-          "componentId": "class-001",
+          "componentId": "84322822-22bc-4d00-bcb0-826328a2ed20",
           "type": "CLASS",
           "name": "BoardController",
           "description": "게시판 컨트롤러 클래스",
-          "positionX": 250.5,
-          "positionY": 150.75,
+          "positionX": 0,
+          "positionY": 0,
           "methods": [
             {{
-              "methodId": "method-001",
-              "name": "getAllPosts",
-              "signature": "public ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable)",
-              "body": "
-                @GetMapping
-                public ResponseEntity<PageDto<PostDto>> getAllPosts(Pageable pageable) {{
-                    return ResponseEntity.ok(boardService.getAllPosts(pageable));
-                }}",
-              "description": "모든 게시글을 페이징하여 조회합니다."
-            }},
-            {{
-              "methodId": "method-002",
+              "methodId": "741a3b01-9c59-4879-8c16-1d0f92542db5",
               "name": "getPostById",
               "signature": "public ResponseEntity<PostDto> getPostById(Long postId)",
               "body": "
@@ -137,42 +80,19 @@ def prepare_diagram_examples() -> List[Dict[str, str]]:
                     return ResponseEntity.ok(boardService.getPostById(postId));
                 }}",
               "description": "특정 ID의 게시글을 조회합니다."
-            }},
-            {{
-              "methodId": "method-003",
-              "name": "createPost",
-              "signature": "public ResponseEntity<PostDto> createPost(PostCreateDto postCreateDto)",
-              "body": "
-              @PostMapping
-              public ResponseEntity<PostDto> createPost(@RequestBody PostCreateDto postCreateDto) {{
-                  return ResponseEntity.status(HttpStatus.CREATED).body(boardService.createPost(postCreateDto));
-              }}",
-              "description": "새로운 게시글을 등록합니다."
             }}
           ]
         }},
         {{
-          "componentId": "class-002",
+          "componentId": "26385baf-55b1-4636-9f12-5aa83c4408a4",
           "type": "CLASS",
           "name": "BoardService",
           "description": "게시판 서비스 클래스",
-          "positionX": 450.0,
-          "positionY": 150.0,
+          "positionX": 500.0,
+          "positionY": 0.0,
           "methods": [
             {{
-              "methodId": "method-004",
-              "name": "getAllPosts",
-              "signature": "public PageDto<PostDto> getAllPosts(Pageable pageable)",
-              "body": "
-              public PageDto<PostDto> getAllPosts(Pageable pageable) {{
-                Page<Post> postsPage = postRepository.findAll(pageable);
-                List<PostDto> postDtos = postsPage.getContent().stream().map(this::convertToDto).collect(Collectors.toList());
-                    return new PageDto<>(postDtos, postsPage.getNumber(), postsPage.isFirst(), postsPage.isLast(), postsPage.getTotalPages(), postsPage.getTotalElements());
-              }}",
-              "description": "모든 게시글을 페이징하여 조회합니다."
-            }},
-            {{
-              "methodId": "method-005",
+              "methodId": "de71c3c6-9f6e-4bcf-a29d-753bf0586934",
               "name": "getPostById",
               "signature": "public PostDto getPostById(Long postId)",
               "body": "
@@ -181,59 +101,29 @@ def prepare_diagram_examples() -> List[Dict[str, str]]:
                 return convertToDto(post);
               }}",
               "description": "특정 ID의 게시글을 조회합니다."
-            }},
-            {{
-              "methodId": "method-006",
-              "name": "createPost",
-              "signature": "public PostDto createPost(PostCreateDto postCreateDto)",
-              "body": "
-              public PostDto createPost(PostCreateDto postCreateDto) {{
-                Post post = new Post();
-                post.setTitle(postCreateDto.getTitle());
-                post.setContent(postCreateDto.getContent());
-                post.setAuthor(postCreateDto.getAuthor());
-                post.setCreatedAt(LocalDateTime.now());
-                Post savedPost = postRepository.save(post);
-                return convertToDto(savedPost);
-              }}",
-              "description": "새로운 게시글을 등록합니다."
             }}
           ]
         }},
         {{
-          "componentId": "class-003",
+          "componentId": "7f75b4d4-6e7b-4e70-b119-e777a0aed731",
           "type": "INTERFACE",
           "name": "PostRepository",
           "description": "게시글 저장소 인터페이스",
-          "positionX": 650.0,
-          "positionY": 150.0,
+          "positionX": 1000.0,
+          "positionY": 0.0,
           "methods": [
             {{
-              "methodId": "method-007",
-              "name": "findAll",
-              "signature": "Page<Post> findAll(Pageable pageable)",
-              "body":"Page<Post> findAll(Pageable pageable);",
-              "description": "모든 게시글을 페이징하여 조회합니다."
-            }},
-            {{
-              "methodId": "method-008",
+              "methodId": "fc1c4558-2c9b-4ef8-9792-20603a0b59aa",
               "name": "findById",
               "signature": "Optional<Post> findById(Long id)",
               "body": "Optional<Post> findById(Long id);",
               "description": "ID로 게시글을 조회합니다."
-            }},
-            {{
-              "methodId": "method-009",
-              "name": "save",
-              "signature": "Post save(Post post)",
-              "body: "Post save(Post post);",
-              "description": "게시글을 저장합니다."
             }}
           ]
         }}
         ]
     }}
-                    """
+"""
         }]
 
 
