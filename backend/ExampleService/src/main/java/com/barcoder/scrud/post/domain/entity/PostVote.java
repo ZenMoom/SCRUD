@@ -28,7 +28,7 @@ public class PostVote extends BaseTimeEntity {
 	@SnowflakeId
 	private Long postVoteId;
 
-	@Column(nullable = false, columnDefinition = "UNIQUE")
+	@Column(nullable = false)
 	private UUID userId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -38,4 +38,12 @@ public class PostVote extends BaseTimeEntity {
 	@Column(nullable = false, columnDefinition = "TINYINT(1)")
 	@Builder.Default
 	private Boolean isLike = true;
+
+	void addPost(Post post) {
+		this.post = post;
+	}
+
+	boolean aleadyVote(UUID userId) {
+        return this.userId.equals(userId);
+    }
 }

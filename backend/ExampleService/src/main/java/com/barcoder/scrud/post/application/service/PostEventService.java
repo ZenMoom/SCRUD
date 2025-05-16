@@ -3,6 +3,7 @@ package com.barcoder.scrud.post.application.service;
 import com.barcoder.scrud.global.common.exception.BaseException;
 import com.barcoder.scrud.post.application.assembler.PostAssembler;
 import com.barcoder.scrud.post.domain.entity.Post;
+import com.barcoder.scrud.post.domain.entity.PostVote;
 import com.barcoder.scrud.post.domain.exception.PostErrorStatus;
 import com.barcoder.scrud.post.infrastructure.event.PostVoteEvent;
 import com.barcoder.scrud.post.infrastructure.jpa.CategoryJpaRepository;
@@ -21,8 +22,6 @@ public class PostEventService {
     private final PostAssembler postAssembler;
     private final CategoryJpaRepository categoryJpaRepository;
     private final PostJpaRepository postJpaRepository;
-    private final ModelMapper modelMapper;
-    private final ApplicationEventPublisher eventPublisher;
 
 
     /**
@@ -50,8 +49,16 @@ public class PostEventService {
         Post post = postJpaRepository.findById(event.postId())
                 .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
 
+        // 이미 투표한 경우
+        if (post.isAlreadyVoted(event.userId())) {
+            throw new BaseException(PostErrorStatus.POST_ALREADY_LIKED);
+        }
+
+        // PostVoteEntity 생성
+        PostVote postVote = postAssembler.toPostVoteEntity(event);
+
         // 추천/비추천 처리
-        post.addPostVoteCount(event.isLike(), event.userId());
+        post.addPostVoteCount(postVote);
 
     }
 }
