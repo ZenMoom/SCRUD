@@ -69,8 +69,8 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
   const [modalOpen, setModalOpen] = useState<string | null>(null)
 
   // 의존성 선택 핸들러
-  const handleDependencySelect = (selected: string[]) => {
-    onSettingChange("dependencyFile", selected.join(' '));
+  const handleDependencySelect = (file: { fileName: string; fileContent: string }) => {
+    onSettingChange("dependencyFile", file);
   };
 
   // 파일 선택 핸들러
@@ -187,7 +187,9 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium mb-4">Spring 의존성 추가 선택</h3>
             <DependencySelector
-              selectedDependencies={typeof settings.dependencyFile === 'string' ? settings.dependencyFile.split(' ').filter(Boolean) : []}
+              selectedDependencies={typeof settings.dependencyFile === 'object' && 'fileContent' in settings.dependencyFile && settings.dependencyFile.fileName === 'dependency.txt'
+                ? settings.dependencyFile.fileContent.split('\n').map(line => line.match(/\((.*?)\)/)?.[1] || '').filter(Boolean)
+                : []}
               onChange={handleDependencySelect}
             />
           </div>

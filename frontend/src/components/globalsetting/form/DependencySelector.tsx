@@ -6,7 +6,7 @@ import React from 'react'
 
 interface DependencySelectorProps {
   selectedDependencies: string[];
-  onChange: (dependencies: string[]) => void;
+  onChange: (file: { fileName: string; fileContent: string }) => void;
 }
 
 // Spring 의존성 목록
@@ -41,7 +41,17 @@ export default function DependencySelector({ selectedDependencies, onChange }: D
     const newDeps = selectedDependencies.includes(depId)
       ? selectedDependencies.filter(id => id !== depId)
       : [...selectedDependencies, depId];
-    onChange(newDeps);
+    
+    // 파일 객체로 변환하여 전달
+    const fileContent = newDeps.map(depId => {
+      const dep = springDependencies.find(d => d.id === depId);
+      return dep ? `${dep.name} (${dep.id})` : depId;
+    }).join('\n');
+    
+    onChange({
+      fileName: "dependency.txt",
+      fileContent: fileContent
+    });
   }
 
   // 드롭다운 외부 클릭 시 닫기

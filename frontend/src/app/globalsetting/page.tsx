@@ -32,7 +32,7 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: string | { fileName: string; fileContent: string };
+  dependencyFile: { fileName: string; fileContent: string } | { fileName: string; fileContent: string }[];
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue;
@@ -82,7 +82,7 @@ export default function GlobalSettingPage() {
     serverUrl: "",
     requirementSpec: [] as FileWithContent[],
     erd: [] as FileWithContent[],
-    dependencyFile: "",
+    dependencyFile: [] as { fileName: string; fileContent: string }[],
     utilityClass: [] as FileWithContent[],
     errorCode: [] as FileWithContent[],
     securitySetting: { type: "SECURITY_DEFAULT_JWT", label: "SECURITY_DEFAULT_JWT" },
@@ -161,13 +161,19 @@ export default function GlobalSettingPage() {
   }
 
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { fileName: string; fileContent: string }) => {
+  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { fileName: string; fileContent: string } | { fileName: string; fileContent: string }[]) => {
     setSettings((prev) => {
       const newSettings = { ...prev };
       
       switch(key) {
         case 'dependencyFile':
-          newSettings.dependencyFile = value as string | { fileName: string; fileContent: string };
+          if (typeof value === 'object') {
+            if (Array.isArray(value)) {
+              newSettings.dependencyFile = value as { fileName: string; fileContent: string }[];
+            } else {
+              newSettings.dependencyFile = value as { fileName: string; fileContent: string };
+            }
+          }
           break;
         case 'title':
         case 'description':
@@ -202,10 +208,12 @@ export default function GlobalSettingPage() {
 
       switch(key) {
         case 'dependencyFile':
-          if (typeof value === 'string') {
-            isCompleted = value.trim() !== '';
-          } else if (typeof value === 'object' && 'fileName' in value) {
-            isCompleted = value.fileContent.trim() !== '';
+          if (typeof value === 'object') {
+            if (Array.isArray(value)) {
+              isCompleted = value.length > 0;
+            } else if ('fileName' in value && 'fileContent' in value) {
+              isCompleted = value.fileContent.trim() !== '';
+            }
           }
           break;
         case 'title':
