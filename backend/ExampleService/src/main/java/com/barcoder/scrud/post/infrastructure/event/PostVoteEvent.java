@@ -5,7 +5,7 @@ import lombok.Builder;
 import java.util.UUID;
 
 @Builder(toBuilder = true)
-public record PostVoteEvent (
+public record PostVoteEvent(
         Long postId,
         UUID userId,
         Boolean isLike

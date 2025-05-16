@@ -9,8 +9,6 @@ import com.barcoder.scrud.post.infrastructure.event.PostVoteEvent;
 import com.barcoder.scrud.post.infrastructure.jpa.CategoryJpaRepository;
 import com.barcoder.scrud.post.infrastructure.jpa.PostJpaRepository;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

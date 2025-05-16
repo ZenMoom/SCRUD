@@ -24,26 +24,26 @@ import java.util.UUID;
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class PostVote extends BaseTimeEntity {
 
-	@Id
-	@SnowflakeId
-	private Long postVoteId;
+    @Id
+    @SnowflakeId
+    private Long postVoteId;
 
-	@Column(nullable = false)
-	private UUID userId;
+    @Column(nullable = false)
+    private UUID userId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "post_id")
-	private Post post;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
 
-	@Column(nullable = false, columnDefinition = "TINYINT(1)")
-	@Builder.Default
-	private Boolean isLike = true;
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
+    @Builder.Default
+    private Boolean isLike = true;
 
-	void addPost(Post post) {
-		this.post = post;
-	}
+    void addPost(Post post) {
+        this.post = post;
+    }
 
-	boolean aleadyVote(UUID userId) {
+    boolean aleadyVote(UUID userId) {
         return this.userId.equals(userId);
     }
 }

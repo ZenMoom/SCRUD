@@ -28,81 +28,81 @@ import java.util.UUID;
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class Post extends BaseTimeEntity {
 
-	@Id
-	@SnowflakeId
-	private Long postId;
+    @Id
+    @SnowflakeId
+    private Long postId;
 
-	private UUID userId;
+    private UUID userId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "category_id")
-	private Category category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
-	@Column(nullable = false, columnDefinition = "VARCHAR(255)")
-	private String title;
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
+    private String title;
 
-	@Column(nullable = false, columnDefinition = "LONGTEXT")
-	private String content;
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    private String content;
 
-	@Column(nullable = false)
-	@Builder.Default
-	private Long viewCount = 0L;
+    @Column(nullable = false)
+    @Builder.Default
+    private Long viewCount = 0L;
 
-	@Column(nullable = false)
-	@Builder.Default
-	private Long likeCount = 0L;
+    @Column(nullable = false)
+    @Builder.Default
+    private Long likeCount = 0L;
 
-	@Column(nullable = false)
-	@Builder.Default
-	private Long dislikeCount = 0L;
+    @Column(nullable = false)
+    @Builder.Default
+    private Long dislikeCount = 0L;
 
-	@Column(nullable = false)
-	@Builder.Default
-	private Long commentCount = 0L;
+    @Column(nullable = false)
+    @Builder.Default
+    private Long commentCount = 0L;
 
-	@JsonIgnore
-	@OneToMany(mappedBy = "post")
-	private List<Comment> comments = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "post")
+    private List<Comment> comments = new ArrayList<>();
 
-	@JsonIgnore
-	@OneToMany(mappedBy = "post")
-	private List<PostVote> postVotes = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "post")
+    private List<PostVote> postVotes = new ArrayList<>();
 
-	// 조회수 증가
-	public void addPostViewCount() {
-		this.viewCount++;
-	}
+    // 조회수 증가
+    public void addPostViewCount() {
+        this.viewCount++;
+    }
 
-	// 제목 변경
-	public void updateTitle(String title) {
-		this.title = title;
-	}
+    // 제목 변경
+    public void updateTitle(String title) {
+        this.title = title;
+    }
 
-	// 내용 변경
-	public void updateContent(String content) {
-		this.content = content;
-	}
+    // 내용 변경
+    public void updateContent(String content) {
+        this.content = content;
+    }
 
-	// 이미 추천했는지 확인
-	public boolean isAlreadyVoted(UUID userId) {
-		for (PostVote postVote : this.postVotes) {
-			if (postVote.aleadyVote(userId)) {
-				return true;
-			}
-		}
-		return false;
-	}
+    // 이미 추천했는지 확인
+    public boolean isAlreadyVoted(UUID userId) {
+        for (PostVote postVote : this.postVotes) {
+            if (postVote.aleadyVote(userId)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	// 좋아요, 싫어요 수 증가
-	public void addPostVoteCount(PostVote postVote) {
+    // 좋아요, 싫어요 수 증가
+    public void addPostVoteCount(PostVote postVote) {
 
-		postVote.addPost(this);
-		this.postVotes.add(postVote);
+        postVote.addPost(this);
+        this.postVotes.add(postVote);
 
-		if (postVote.getIsLike()) {
-			this.likeCount++;
-		} else {
-			this.dislikeCount++;
-		}
-	}
+        if (postVote.getIsLike()) {
+            this.likeCount++;
+        } else {
+            this.dislikeCount++;
+        }
+    }
 }
