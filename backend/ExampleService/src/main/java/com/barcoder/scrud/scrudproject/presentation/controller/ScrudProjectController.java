@@ -139,11 +139,11 @@ public class ScrudProjectController implements ScrudProjectApi {
 
         UUID userId = securityUtil.getCurrentUserId();
 
-        AllGlobalFileOut content = scrudProjectService.getAllGlobalFile(projectId, userId);
+        AllGlobalFileOut project = scrudProjectService.getProject(projectId, userId);
 
-        log.info(content.toString());
+        log.info(project.toString());
 
-        GlobalFileListDto outDto = modelMapper.map(content, GlobalFileListDto.class);
+        GlobalFileListDto outDto = modelMapper.map(project, GlobalFileListDto.class);
 
         log.info(outDto.toString());
 
