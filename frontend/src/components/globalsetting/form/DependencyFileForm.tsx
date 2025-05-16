@@ -6,7 +6,7 @@ import GitHubRepoBrowser from "../GitHubRepoBrowser"
 
 interface DependencyFileFormProps {
   title: string;
-  onFileSelect: (file: { fileName: string; fileContent: string }) => void;
+  onFileSelect: (file: { name: string; content: string }) => void;
   onFocus?: () => void;
 }
 
@@ -15,7 +15,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
-    const [selectedFiles, setSelectedFiles] = useState<Array<{ fileName: string; fileContent: string }>>([])
+    const [selectedFiles, setSelectedFiles] = useState<Array<{ name: string; content: string }>>([])
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
 
@@ -25,8 +25,8 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
         // 각 파일을 개별적으로 처리
         files.forEach(file => {
           const newFile = {
-            fileName: file.path,
-            fileContent: file.content
+            name: file.path,
+            content: file.content
           };
           setSelectedFiles(prev => [...prev, newFile]);
           onFileSelect(newFile);
@@ -53,8 +53,8 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
         const file = e.dataTransfer.files[0];
         const content = await file.text();
         const newFile = {
-          fileName: file.name,
-          fileContent: content
+          name: file.name,
+          content: content
         };
         setSelectedFiles(prev => [...prev, newFile]);
         onFileSelect(newFile);
@@ -137,8 +137,8 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                 const file = e.target.files[0];
                 const content = await file.text();
                 const newFile = {
-                  fileName: file.name,
-                  fileContent: content
+                  name: file.name,
+                  content: content
                 };
                 setSelectedFiles(prev => [...prev, newFile]);
                 onFileSelect(newFile);
@@ -155,7 +155,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                   <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                     <div className="flex items-center gap-2">
                       <File size={16} className="text-gray-500" />
-                      <span className="truncate">{file.fileName}</span>
+                      <span className="truncate">{file.name}</span>
                     </div>
                     <button
                       onClick={() => {

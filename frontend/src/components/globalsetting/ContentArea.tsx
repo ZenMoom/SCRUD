@@ -13,7 +13,6 @@ import ErrorCodeForm from "./form/ErrorCodeForm"
 import SecuritySettingForm from "./form/SecuritySettingForm"
 import CodeConventionForm from "./form/CodeConventionForm"
 import ArchitectureStructureForm from "./form/ArchitectureStructureForm"
-import { HelpCircle } from "lucide-react"
 
 // 파일 객체 타입 정의 (다른 컴포넌트와 일치시킴)
 interface FileWithContent {
@@ -28,8 +27,8 @@ interface SelectionValue {
 }
 
 interface DependencyFile {
-  fileName: string;
-  fileContent: string;
+  name: string;
+  content: string;
 }
 
 // 프로젝트 설정 타입 정의
@@ -52,7 +51,7 @@ type FileValue = FileWithContent | FileWithContent[];
 
 interface ContentAreaProps {
   settings: ProjectSettings;
-  onSettingChange: (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { fileName: string; fileContent: string }) => void;
+  onSettingChange: (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string }) => void;
   refs: {
     title: React.RefObject<HTMLDivElement | null>
     description: React.RefObject<HTMLDivElement | null>
@@ -192,10 +191,10 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             <h3 className="text-lg font-medium mb-4">Spring 의존성 추가 선택</h3>
             <DependencySelector
               selectedDependencies={
-                settings.dependencyFile.find(file => file.fileName === 'dependency.txt')
+                settings.dependencyFile.find(file => file.name === 'dependency.txt')
                   ? settings.dependencyFile
-                      .find(file => file.fileName === 'dependency.txt')!
-                      .fileContent
+                      .find(file => file.name === 'dependency.txt')!
+                      .content
                       .split('\n')
                       .map(line => {
                         const match = line.match(/\((.*?)\)/);

@@ -32,7 +32,7 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: { fileName: string; fileContent: string }[];  // 항상 배열로 관리
+  dependencyFile: { name: string; content: string }[];  // 항상 배열로 관리
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue;
@@ -82,7 +82,7 @@ export default function GlobalSettingPage() {
     serverUrl: "",
     requirementSpec: [] as FileWithContent[],
     erd: [] as FileWithContent[],
-    dependencyFile: [] as { fileName: string; fileContent: string }[],
+    dependencyFile: [] as { name: string; content: string }[],
     utilityClass: [] as FileWithContent[],
     errorCode: [] as FileWithContent[],
     securitySetting: { type: "SECURITY_DEFAULT_JWT", label: "SECURITY_DEFAULT_JWT" },
@@ -161,7 +161,7 @@ export default function GlobalSettingPage() {
   }
 
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { fileName: string; fileContent: string } | { fileName: string; fileContent: string }[]) => {
+  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[]) => {
     setSettings((prev) => {
       const newSettings = { ...prev };
       
@@ -174,13 +174,13 @@ export default function GlobalSettingPage() {
             } else {
               // dependency.txt 파일이 있으면 업데이트, 없으면 추가
               const dependencyTxtIndex = prev.dependencyFile.findIndex(
-                file => file.fileName === 'dependency.txt'
+                file => file.name === 'dependency.txt'
               );
               if (dependencyTxtIndex >= 0) {
                 newSettings.dependencyFile = [...prev.dependencyFile];
-                newSettings.dependencyFile[dependencyTxtIndex] = value as { fileName: string; fileContent: string };
+                newSettings.dependencyFile[dependencyTxtIndex] = value as { name: string; content: string };
               } else {
-                newSettings.dependencyFile = [...prev.dependencyFile, value as { fileName: string; fileContent: string }];
+                newSettings.dependencyFile = [...prev.dependencyFile, value as { name: string; content: string }];
               }
             }
           }

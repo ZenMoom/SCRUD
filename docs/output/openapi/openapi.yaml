@@ -3308,6 +3308,12 @@ components:
     GlobalFileListDto:
       description: 전체 전역설정 파일 목록
       example:
+        project:
+          serverUrl: serverUrl
+          scrudProjectId: 0
+          description: description
+          title: title
+          updatedAt: 2000-01-23T04:56:07.000+00:00
         content:
         - fileName: fileName
           globalFileId: 0
@@ -3318,6 +3324,8 @@ components:
           fileType: REQUIREMENTS
           fileContent: fileContent
       properties:
+        project:
+          $ref: '#/components/schemas/ScrudProjectDto'
         content:
           items:
             $ref: '#/components/schemas/GlobalFileDto'

@@ -6,7 +6,7 @@ import React from 'react'
 
 interface DependencySelectorProps {
   selectedDependencies: string[];
-  onChange: (file: { fileName: string; fileContent: string }) => void;
+  onChange: (file: { name: string; content: string }) => void;
 }
 
 // Spring 의존성 목록
@@ -49,8 +49,8 @@ export default function DependencySelector({ selectedDependencies, onChange }: D
     }).join('\n');
     
     onChange({
-      fileName: "dependency.txt",
-      fileContent: fileContent
+      name: "dependency.txt",
+      content: fileContent
     });
   }
 
