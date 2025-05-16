@@ -139,8 +139,8 @@ async def prompt_chat(
     try:
         api_spec: ApiSpec = await api_client.get_api_spec(api_spec_id=api_id, token=authorization)
         global_files: GlobalFileList = await api_client.get_project(project_id=project_id, token=authorization)
-        logger.info(f"API Spec: {api_spec}")
-        logger.info(f"Project Data: {global_files}")
+        logger.info(f"API Spec: {api_spec.model_dump_json(indent=2) if api_spec else '{empty}'}")
+        logger.info(f"Project Data: {global_files.model_dump_json(indent=2) if global_files else '{empty}'}")
 
         # SSE 스트리밍을 위한 응답 큐 생성
         stream_id, response_queue = sse_service.create_stream()
