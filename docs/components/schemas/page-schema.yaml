@@ -7,7 +7,7 @@ Page:
     type: integer
     default: 0
     minimum: 0
-    
+
 Size:
   name: size
   in: query
@@ -18,6 +18,22 @@ Size:
     default: 10
     minimum: 1
     maximum: 100 # 최대 페이지 크기 제한 (선택 사항)
+
+PostSort:
+  name: sort
+  in: query
+  description: 정렬 기준 필드
+  required: false
+  schema:
+    $ref: '../schemas/post-schema.yaml#/PostSortEnumDto'
+
+PostOrder:
+  name: order
+  in: query
+  description: 정렬 방향
+  required: false
+  schema:
+    $ref: '../schemas/post-schema.yaml#/PostOrderEnumDto'
 
 PageDto:
   type: object
@@ -37,3 +53,4 @@ PageDto:
     totalElements:
       type: integer
       description: 총 데이터 개수
+

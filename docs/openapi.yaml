@@ -26,6 +26,10 @@ tags:
     description: 프롬프트 채팅 관련 API
   - name: ScrudProject
     description: 프로젝트 전역세팅 관련 API - 개발 전
+  - name: Post
+    description: 게시글 관련 API
+  - name: Comment
+    description: 댓글 관련 API
 
 components:
   securitySchemes:
@@ -528,3 +532,141 @@ paths:
       responses:
         "204":
           $ref: "./components/responses/success-response.yaml#/SuccessNoContent"
+
+  ##############################################
+  # post api
+  ##############################################
+  /api/v1/posts:
+    post:
+      tags: [ Post ]
+      summary: 게시글 작성
+      operationId: createPost
+      requestBody:
+        $ref: './components/requests/post-request.yaml#/CreatePostRequest'
+      responses:
+        '201':
+          $ref: './components/responses/post-response.yaml#/CreatePostResponse'
+
+    get:
+      tags: [ Post ]
+      summary: 게시글 목록 조회
+      operationId: getPostList
+      parameters:
+        - $ref: './components/schemas/page-schema.yaml#/Page'
+        - $ref: './components/schemas/page-schema.yaml#/Size'
+        - $ref: './components/schemas/page-schema.yaml#/PostSort'
+        - $ref: './components/schemas/page-schema.yaml#/PostOrder'
+        - $ref: './components/requests/post-request.yaml#/SearchPostParam'
+        - $ref: './components/requests/post-request.yaml#/SearchTypeParam'
+        - $ref: './components/requests/post-request.yaml#/CategoryIdParam'
+      responses:
+        '200':
+          $ref: './components/responses/post-response.yaml#/GetPostListResponse'
+
+  /api/v1/posts/{postId}:
+    get:
+      tags: [ Post ]
+      summary: 게시글 상세 조회
+      operationId: getPostById
+      parameters:
+        - $ref: './components/schemas/post-schema.yaml#/PostId'
+      responses:
+        '200':
+          $ref: './components/responses/post-response.yaml#/GetPostDetailResponse'
+
+    patch:
+      tags: [ Post ]
+      summary: 게시글 수정
+      operationId: updatePost
+      parameters:
+        - $ref: './components/schemas/post-schema.yaml#/PostId'
+      requestBody:
+        $ref: './components/requests/post-request.yaml#/UpdatePostRequest'
+      responses:
+        '200':
+          $ref: './components/responses/success-response.yaml#/SuccessNoContent'
+
+    delete:
+      tags: [ Post ]
+      summary: 게시글 삭제
+      operationId: deletePost
+      parameters:
+        - $ref: './components/schemas/post-schema.yaml#/PostId'
+      responses:
+        '204':
+          $ref: './components/responses/success-response.yaml#/SuccessNoContent'
+
+  /api/v1/posts/{postId}/vote:
+    post:
+      tags: [ Post ]
+      summary: 게시글 추천/비추천
+      operationId: votePost
+      parameters:
+        - $ref: './components/schemas/post-schema.yaml#/PostId'
+      requestBody:
+        $ref: './components/requests/post-request.yaml#/PostVoteRequest'
+      responses:
+        '200':
+          $ref: './components/responses/post-response.yaml#/VotePostResponse'
+
+  ##############################################
+  # comment api
+  ##############################################
+  /api/v1/posts/{postId}/comments:
+    post:
+      tags: [ Comment ]
+      summary: 댓글 작성
+      operationId: createComment
+      parameters:
+        - $ref: './components/schemas/post-schema.yaml#/PostId'
+      requestBody:
+        $ref: './components/requests/comment-request.yaml#/CreateCommentRequest'
+      responses:
+        '201':
+          $ref: './components/responses/success-response.yaml#/SuccessCreated'
+
+    get:
+      tags: [ Comment ]
+      summary: 댓글 조회
+      operationId: getCommentList
+      parameters:
+        - $ref: './components/schemas/post-schema.yaml#/PostId'
+      responses:
+        '200':
+          $ref: './components/responses/comment-response.yaml#/GetCommentListResponse'
+
+  /api/v1/comments/{commentId}:
+    patch:
+      tags: [ Comment ]
+      summary: 댓글 수정
+      operationId: updateComment
+      parameters:
+        - $ref: './components/schemas/comment-schema.yaml#/CommentId'
+      requestBody:
+        $ref: './components/requests/comment-request.yaml#/UpdateCommentRequest'
+      responses:
+        '200':
+          $ref: './components/responses/success-response.yaml#/SuccessNoContent'
+
+    delete:
+      tags: [ Comment ]
+      summary: 댓글 삭제
+      operationId: deleteComment
+      parameters:
+        - $ref: './components/schemas/comment-schema.yaml#/CommentId'
+      responses:
+        '204':
+          $ref: './components/responses/success-response.yaml#/SuccessNoContent'
+
+  /api/v1/comments/{commentId}/vote:
+    post:
+      tags: [ Comment ]
+      summary: 댓글 추천/비추천
+      operationId: voteComment
+      parameters:
+        - $ref: './components/schemas/comment-schema.yaml#/CommentId'
+      requestBody:
+        $ref: './components/requests/comment-request.yaml#/CommentVoteRequest'
+      responses:
+        '200':
+          $ref: './components/responses/comment-response.yaml#/VoteCommentResponse'

@@ -1,0 +1,27 @@
+CreatePostResponse:
+  description: 게시글 생성 성공 응답
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/post-schema.yaml#/CreatePostResponse'
+
+GetPostListResponse:
+  description: 게시글 목록 조회 응답
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/post-schema.yaml#/GetPostListResponse'
+
+GetPostDetailResponse:
+  description: 게시글 상세 조회 응답
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/post-schema.yaml#/PostDetailResponse'
+
+VotePostResponse:
+  description: 게시글 추천/비추천 응답
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/post-schema.yaml#/VoteResponse'

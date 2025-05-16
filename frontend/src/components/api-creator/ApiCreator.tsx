@@ -235,13 +235,8 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
   }, [scrudProjectId, fetchApiSpecs])
 
   return (
-    <div className="flex h-[calc(100vh-70px)] overflow-hidden bg-gray-50 gap-1 relative py-1 ">
-      {/* 좌측 패널 - 접었다 펼칠 수 있게 수정 */}
-      <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}>
-        <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />
-      </div>
-
-      {/* 좌측 패널 토글 버튼 - 개선된 위치 및 스타일 */}
+    <div className="bg-blue-50 p-2 relative">
+      {/* 기존 좌측 패널 토글 버튼 - 위치 및 스타일만 수정 */}
       <div className={`absolute top-1/2 transform -translate-y-1/2 ${isLeftPanelOpen ? "left-[300px]" : "left-0"} transition-all duration-300 z-20`}>
         <button
           className="bg-white w-6 h-24 flex items-center justify-center rounded-r-md shadow-md hover:bg-gray-50 transition-colors focus:outline-none"
@@ -252,17 +247,30 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
         </button>
       </div>
 
-      <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[350px]"} h-full bg-white shadow-sm border-r transition-all duration-300 overflow-hidden`}>
-        <MiddleContainer
-          onApiSelect={handleApiSelect}
-          apiGroups={apiGroups}
-          setApiGroups={setApiGroups}
-          isLoading={isLoading}
-          scrudProjectId={scrudProjectId} // MiddleContainer에 프로젝트 ID 전달
-        />
-      </div>
-      <div className="flex-1 h-full bg-white shadow-sm overflow-hidden">
-        <RightContainer selectedApi={selectedApi} selectedMethod={selectedMethod} onToggleVersionPanel={toggleVersionPanel} scrudProjectId={scrudProjectId} onApiSpecChanged={handleApiSpecChanged} />
+      <div className="max-w-full mx-auto">
+        {/* 3단 레이아웃 - 캔버스 페이지와 동일한 스타일 적용 */}
+        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-4.8rem)] overflow-hidden">
+          {/* 좌측 패널 - 스타일만 수정 */}
+          <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full rounded-lg bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto `}>
+            <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />
+          </div>
+
+          {/* 중앙 패널 - 스타일만 수정 */}
+          <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[350px]"} rounded-lg h-full bg-white shadow-sm border-r transition-all duration-300 overflow-hidden`}>
+            <MiddleContainer onApiSelect={handleApiSelect} apiGroups={apiGroups} setApiGroups={setApiGroups} isLoading={isLoading} scrudProjectId={scrudProjectId} />
+          </div>
+
+          {/* 우측 패널 - 스타일만 수정 */}
+          <div className="flex-1 h-full rounded-lg bg-white shadow-sm overflow-hidden">
+            <RightContainer
+              selectedApi={selectedApi}
+              selectedMethod={selectedMethod}
+              onToggleVersionPanel={toggleVersionPanel}
+              scrudProjectId={scrudProjectId}
+              onApiSpecChanged={handleApiSpecChanged}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

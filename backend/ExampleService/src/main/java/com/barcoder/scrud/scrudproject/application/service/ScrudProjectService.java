@@ -19,7 +19,7 @@ public interface ScrudProjectService {
 
     void deleteGlobalFile(Long projectId, Long globalFileId, UUID userId);
 
-    AllGlobalFileOut getAllGlobalFile(Long projectId, UUID userId);
+    AllGlobalFileOut getProject(Long projectId, UUID userId);
 
     ScrudProjectOut updateScrudProject(UpdateProjectIn inDto);
 

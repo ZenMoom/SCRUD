@@ -1,6 +1,6 @@
 import { memo } from "react"
 import type { NodeProps } from "reactflow"
-import { Code } from "lucide-react"
+import { Code, Check } from "lucide-react"
 
 interface ClassNodeData {
   label: string
@@ -15,7 +15,7 @@ export const ClassNode = memo(({ data }: NodeProps<ClassNodeData>) => {
 
   return (
     <div
-      className={`rounded-lg shadow-lg overflow-hidden transition-all duration-200 border ${isTargeted ? "border-red-500 border-dashed animate-pulse shadow-red-100" : "border-gray-200"}`}
+      className={`rounded-lg shadow-lg overflow-hidden transition-all duration-200 border ${isTargeted ? "border-green-500 border-dashed animate-pulse shadow-green-100" : "border-gray-200"}`}
       style={{
         backgroundColor: backgroundColor || "rgba(255, 255, 255, 0.8)",
         backdropFilter: "blur(8px)",
@@ -23,10 +23,8 @@ export const ClassNode = memo(({ data }: NodeProps<ClassNodeData>) => {
       }}
     >
       {/* 헤더 섹션 */}
-      <div className={`bg-gradient-to-r ${isTargeted ? "from-red-600 to-red-800" : "from-gray-700 to-gray-900"} text-white p-3 flex items-center gap-2`}>
-        <div className="bg-white/20 p-1.5 rounded-md">
-          <Code size={18} className="text-white" />
-        </div>
+      <div className={`bg-gradient-to-r ${isTargeted ? "from-green-600 to-green-800" : "from-gray-700 to-gray-900"} text-white p-3 flex items-center gap-2`}>
+        <div className="bg-white/20 p-1.5 rounded-md">{isTargeted ? <Check size={18} className="text-white" /> : <Code size={18} className="text-white" />}</div>
         <div className="font-bold text-base tracking-wide">{label}</div>
       </div>
 
@@ -41,7 +39,7 @@ export const ClassNode = memo(({ data }: NodeProps<ClassNodeData>) => {
       <div className="p-2">{/* 메서드 노드들이 여기에 렌더링됩니다 */}</div>
 
       {/* 하단 장식 */}
-      <div className={`h-1 bg-gradient-to-r ${isTargeted ? "from-red-400 via-red-500 to-red-600" : "from-blue-400 via-purple-500 to-pink-500"}`}></div>
+      <div className={`h-1 bg-gradient-to-r ${isTargeted ? "from-green-400 via-green-500 to-green-600" : "from-blue-400 via-purple-500 to-pink-500"}`}></div>
     </div>
   )
 })

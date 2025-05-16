@@ -58,13 +58,13 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       ...apiGroups,
       {
         id: newGroupId,
-        name: "api/v1/new",
+        name: "/api/v1/new",
         emoji: getRandomEmoji(), // 랜덤 이모지 할당
         endpoints: [],
       },
     ])
     setEditingGroupId(newGroupId)
-    setNewGroupName("api/v1/new")
+    setNewGroupName("/api/v1/new")
   }
 
   // API 엔드포인트 추가 함수

@@ -23,6 +23,18 @@ function isDtoModelDto(dto: unknown): dto is DtoModelDto {
 export default function DtoContainer({ diagramData, loading, isCollapsed, onToggleCollapse }: DtoContainerProps) {
   const [selectedDto, setSelectedDto] = useState<string | null>(null)
 
+  // DTO 선택 핸들러 - undefined 처리 추가
+  const handleSelectDto = (dtoId: string | undefined) => {
+    // dtoId가 undefined인 경우 null로 설정
+    setSelectedDto(dtoId || null)
+  }
+
+  // 유효한 DTO만 필터링
+  const validDtos = !loading && diagramData && diagramData.dto && Array.isArray(diagramData.dto) ? diagramData.dto.filter(isDtoModelDto) : []
+
+  // 선택된 DTO 찾기
+  const selectedDtoData = selectedDto ? validDtos.find((dto) => dto.dtoId === selectedDto) : null
+
   // 로딩 상태 표시
   if (loading) {
     return (
@@ -44,18 +56,6 @@ export default function DtoContainer({ diagramData, loading, isCollapsed, onTogg
         </div>
       </div>
     )
-  }
-
-  // 유효한 DTO만 필터링
-  const validDtos = Array.isArray(diagramData.dto) ? diagramData.dto.filter(isDtoModelDto) : []
-
-  // 선택된 DTO 찾기
-  const selectedDtoData = selectedDto ? validDtos.find((dto) => dto.dtoId === selectedDto) : null
-
-  // DTO 선택 핸들러 - undefined 처리 추가
-  const handleSelectDto = (dtoId: string | undefined) => {
-    // dtoId가 undefined인 경우 null로 설정
-    setSelectedDto(dtoId || null)
   }
 
   return (
