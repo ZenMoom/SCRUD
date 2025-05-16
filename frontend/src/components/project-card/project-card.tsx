@@ -65,7 +65,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
   return (
     <Link
       href={`/project/${project.id}/api`}
-      className="flex flex-col p-6 h-[220px] rounded-xl text-inherit no-underline border border-gray-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
+      className="flex flex-col p-6 h-[240px] rounded-xl text-inherit no-underline border border-gray-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
       style={{ backgroundColor }}
     >
       {/* 이모지와 제목 */}
