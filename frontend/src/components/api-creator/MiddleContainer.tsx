@@ -17,7 +17,7 @@ interface ApiEndpoint {
 interface ApiGroup {
   id: string
   name: string
-  emoji?: string // 옵셔널 필드로 정의 (DB에 저장되지 않을 수 있음)
+  emoji?: string
   endpoints: ApiEndpoint[]
 }
 
@@ -40,6 +40,10 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   const [newGroupName, setNewGroupName] = useState("")
   const [newEndpointPath, setNewEndpointPath] = useState("")
   const [editingEmoji, setEditingEmoji] = useState<string | null>(null)
+
+  // 선택된 API 그룹 및 엔드포인트 추적을 위한 상태 추가
+  const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(null)
+  // const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null) // 그룹 선택 상태 제거
 
   // 엔드포인트 편집 시 인풋 참조
   const editInputRef = useRef<HTMLInputElement>(null)
@@ -99,36 +103,70 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     setNewEndpointPath(`${basePath}/new`)
   }
 
-  // API 그룹 삭제 함수
-  const deleteApiGroup = (groupId: string) => {
-    if (confirm("이 API 그룹을 삭제하시겠습니까?")) {
-      setApiGroups(apiGroups.filter((group) => group.id !== groupId))
+  // API 엔드포인트 삭제 함수
+  const deleteApiEndpoint = async (groupId: string, endpointId: string) => {
+    if (confirm("이 API 엔드포인트를 삭제하시겠습니까?")) {
+      try {
+        // 해당 엔드포인트 정보 찾기
+        const group = apiGroups.find((g) => g.id === groupId)
+        const endpoint = group?.endpoints.find((e) => e.id === endpointId)
+
+        if (!endpoint || !endpoint.apiSpecVersionId) {
+          console.warn("삭제할 apiSpecVersionId가 없습니다.")
+          return
+        }
+
+        // 헤더에 Bearer 토큰 추가
+        const headers = {
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        }
+
+        // 백엔드 API 호출하여 실제 데이터 삭제
+        const response = await axios.delete(`/api/api-specs/${endpoint.apiSpecVersionId}`, { headers })
+        console.log("API 스펙이 성공적으로 삭제되었습니다:", response.data)
+        alert(`성공적으로 삭제되었습니다.`)
+
+        // 성공적으로 삭제된 후 UI 상태 업데이트
+        const updatedGroups = apiGroups.map((group) => {
+          if (group.id === groupId) {
+            return {
+              ...group,
+              endpoints: group.endpoints.filter((e) => e.id !== endpointId),
+            }
+          }
+          return group
+        })
+
+        setApiGroups(updatedGroups)
+        setEditingEndpointId(null) // 편집 상태 초기화
+
+        // 삭제한 엔드포인트가 현재 선택된 엔드포인트인 경우 선택 해제
+        if (selectedEndpointId === endpointId) {
+          setSelectedEndpointId(null)
+        }
+
+        console.log("엔드포인트 삭제 완료:", endpointId, "프로젝트:", scrudProjectId)
+      } catch (error) {
+        console.error("API 스펙 삭제 중 오류 발생:", error)
+        alert("API 스펙 삭제 중 오류가 발생했습니다.")
+      }
     }
   }
 
-  // API 엔드포인트 삭제 함수 개선
-  const deleteApiEndpoint = (groupId: string, endpointId: string) => {
-    if (confirm("이 API 엔드포인트를 삭제하시겠습니까?")) {
-      // 삭제 로직
-      const updatedGroups = apiGroups.map((group) => {
-        if (group.id === groupId) {
-          return {
-            ...group,
-            endpoints: group.endpoints.filter((endpoint) => endpoint.id !== endpointId),
-          }
-        }
-        return group
-      })
-
-      setApiGroups(updatedGroups)
-      setEditingEndpointId(null) // 편집 상태 초기화
-
-      console.log("엔드포인트 삭제됨:", endpointId, "프로젝트:", scrudProjectId) // 디버깅용 로그
-    }
+  // API 엔드포인트 선택 함수
+  const handleApiSelect = (groupId: string, endpoint: ApiEndpoint) => {
+    // setSelectedGroupId(null) // 그룹 강조 제거
+    setSelectedEndpointId(endpoint.id)
+    onApiSelect(endpoint.path, endpoint.method)
   }
 
   // API 그룹 이름 편집 시작
-  const startEditingGroup = (groupId: string) => {
+  const startEditingGroup = (groupId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation() // 그룹 선택 이벤트 중단
+    }
+
     const group = apiGroups.find((g) => g.id === groupId)
     if (group) {
       setEditingGroupId(groupId)
@@ -444,24 +482,22 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
                       <h3
                         className="font-medium cursor-pointer flex-1 text-gray-800 hover:text-blue-500 transition-colors truncate max-w-[160px]"
-                        onClick={() => startEditingGroup(group.id)}
+                        onClick={(e) => startEditingGroup(group.id, e)}
                         title={group.name}
                       >
                         {group.name}
                       </h3>
                       <div className="flex items-center">
-                        <button className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex-shrink-0" onClick={() => addApiEndpoint(group.id)} title="엔드포인트 추가">
+                        <button
+                          className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex-shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            addApiEndpoint(group.id)
+                          }}
+                          title="엔드포인트 추가"
+                        >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        <button className="p-1 text-red-400 hover:text-red-600 transition-colors flex-shrink-0 ml-1" onClick={() => deleteApiGroup(group.id)} title="그룹 삭제">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                              fillRule="evenodd"
-                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                              clipRule="evenodd"
-                            />
                           </svg>
                         </button>
                       </div>
@@ -470,7 +506,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                 </div>
                 <ul className="space-y-1 mt-1">
                   {group.endpoints.map((endpoint) => (
-                    <li key={endpoint.id} className="ml-4 overflow-hidden">
+                    <li key={endpoint.id} className={`ml-4 overflow-hidden ${selectedEndpointId === endpoint.id ? "bg-gray-100 rounded" : ""}`}>
                       {editingEndpointId === endpoint.id ? (
                         // 편집 모드 UI
                         <div className="flex items-center gap-1 flex-wrap text-sm">
@@ -486,7 +522,10 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                           <button
                             data-delete-button="true"
                             className="text-red-500 px-1 py-0.5 text-xs rounded hover:bg-red-50 ml-auto flex-shrink-0"
-                            onClick={() => deleteApiEndpoint(group.id, endpoint.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteApiEndpoint(group.id, endpoint.id)
+                            }}
                             title="삭제"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -496,49 +535,68 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                         </div>
                       ) : (
                         // 일반 모드 UI - HTTP 메서드 표시 추가 및 향상된 UI
-                        <div className="flex justify-between items-center rounded-sm hover:bg-gray-50 transition-colors py-1 overflow-hidden">
-                          <div
-                            className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
-                            onClick={() => onApiSelect(endpoint.path, endpoint.method)}
-                            onDoubleClick={(e) => startEditingEndpoint(group.id, endpoint.id, e)}
-                          >
-                            {/* 상태 드롭다운 - 상태 변경 제한 적용 */}
-                            <div className="relative inline-block text-left w-24 flex-shrink-0">
-                              <select
-                                value={endpoint.status}
-                                onChange={(e) => updateEndpointStatus(group.id, endpoint.id, e.target.value as ApiProcessStateEnumDto)}
-                                className={`appearance-none text-xs px-2 py-0.5 rounded w-full cursor-pointer focus:outline-none ${getStatusStyle(endpoint.status)} pr-6`}
-                                onClick={(e) => e.stopPropagation()}
-                                disabled={endpoint.status === "AI_GENERATED"} // 생성됨 상태일 때 드롭박스 자체를 비활성화
+                        <div
+                          className={`flex justify-between items-center rounded-sm gap-1 ${
+                            selectedEndpointId === endpoint.id ? "bg-gray-100" : "hover:bg-gray-50"
+                          } transition-colors py-1 overflow-hidden cursor-pointer`}
+                          onClick={() => handleApiSelect(group.id, endpoint)}
+                          onDoubleClick={(e) => startEditingEndpoint(group.id, endpoint.id, e)}
+                        >
+                          {/* 상태 드롭다운 - 상태 변경 제한 적용 */}
+                          <div className="relative inline-block text-left w-18 flex-shrink-0">
+                            <select
+                              value={endpoint.status}
+                              onChange={(e) => updateEndpointStatus(group.id, endpoint.id, e.target.value as ApiProcessStateEnumDto)}
+                              className={`appearance-none text-xs px-2 py-0.5 rounded w-full cursor-pointer focus:outline-none ${getStatusStyle(endpoint.status)} pr-6`}
+                              onClick={(e) => e.stopPropagation()}
+                              disabled={endpoint.status === "AI_GENERATED"} // 생성됨 상태일 때 드롭박스 자체를 비활성화
+                            >
+                              <option
+                                value="AI_GENERATED"
+                                className="bg-white text-gray-700"
+                                disabled={endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED"} // 작업중 또는 완료 상태에서 생성됨으로 돌아갈 수 없음
                               >
-                                <option
-                                  value="AI_GENERATED"
-                                  className="bg-white text-gray-700"
-                                  disabled={endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED"} // 작업중 또는 완료 상태에서 생성됨으로 돌아갈 수 없음
-                                >
-                                  생성됨
-                                </option>
-                                <option value="AI_VISUALIZED" className="bg-white text-blue-700">
-                                  작업중
-                                </option>
-                                <option value="USER_COMPLETED" className="bg-white text-green-700">
-                                  완료
-                                </option>
-                              </select>
-                              <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center">
-                                <svg className="h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                              </div>
+                                생성됨
+                              </option>
+                              <option value="AI_VISUALIZED" className="bg-white text-blue-700">
+                                작업중
+                              </option>
+                              <option value="USER_COMPLETED" className="bg-white text-green-700">
+                                완료
+                              </option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center">
+                              <svg className="h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
                             </div>
+                          </div>
 
-                            {/* 경로 표시 */}
-                            <span className="text-sm text-gray-800 hover:text-blue-500 transition-colors truncate" title={endpoint.path}>
-                              {endpoint.path.startsWith(group.name)
-                                ? endpoint.path.substring(group.name.length) || "/" // 그룹 이름 다음 부분만 표시
-                                : endpoint.path}{" "}
+                          {/* HTTP 메서드 태그 추가 - GET, POST, PUT, DELETE 등 */}
+                          <div className="mr-2 flex-shrink-0">
+                            <span
+                              className={`px-2 py-0.5 text-xs rounded font-medium ${
+                                endpoint.method === "GET"
+                                  ? "bg-green-100 text-green-800"
+                                  : endpoint.method === "POST"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : endpoint.method === "PUT"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : endpoint.method === "DELETE"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {endpoint.method}
                             </span>
                           </div>
+
+                          {/* 경로 표시 */}
+                          <span className="text-sm text-gray-800 hover:text-blue-500 transition-colors truncate flex-1" title={endpoint.path}>
+                            {endpoint.path.startsWith(group.name)
+                              ? endpoint.path.substring(group.name.length) || "/" // 그룹 이름 다음 부분만 표시
+                              : endpoint.path}{" "}
+                          </span>
 
                           {/* 점 세개 버튼 - 클릭하면 편집 모드로 전환 */}
                           <div className="flex items-center gap-1 flex-shrink-0">
