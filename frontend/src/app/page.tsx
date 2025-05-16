@@ -392,7 +392,7 @@ function HomeContent() {
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-8 md:py-20">
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+          <h1 className="text-5xl md:text-5xl font-bold text-gray-800">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">{user?.username || "바코드"}</span> 님의 프로젝트
           </h1>
         </div>
@@ -413,7 +413,7 @@ function HomeContent() {
             {/* 새 프로젝트 버튼 */}
             <button
               onClick={handleNewProject}
-              className="flex flex-col items-center justify-center p-6 h-[220px] rounded-xl border-2 border-dashed border-gray-200 text-inherit no-underline transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
+              className="flex flex-col items-center justify-center p-6 h-[240px] rounded-xl border-2 border-dashed border-gray-200 text-inherit no-underline transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
             >
               <div className="mb-3 bg-gray-50 p-4 rounded-full">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

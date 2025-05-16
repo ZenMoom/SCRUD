@@ -3,33 +3,24 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import useAuthStore from "../../app/store/useAuthStore"
-import { MessageCircle } from "lucide-react"
 
-export default function Header() {
+interface ProjectInfo {
+  id: number
+  title: string
+  description?: string
+}
+
+export default function ApiHeader({ project }: { projectId: number; project: ProjectInfo }) {
   // 로고 이미지 경로
-  const logoPath = "/logo.png"
-  // 개발자 메뉴 상태 관리
-  const [showDevMenu, setShowDevMenu] = useState(false)
+  const logoPath = "/faviconblack.png"
   // 프로필 메뉴 상태 관리
   const [showProfileMenu, setShowProfileMenu] = useState(false)
-  // 헤더 표시 여부 상태
-  const [showHeader, setShowHeader] = useState(true)
 
   // 인증 상태 및 기능 가져오기
   const { isAuthenticated, user, logout } = useAuthStore()
   const router = useRouter()
-  const pathname = usePathname()
-
-  // 현재 경로 확인 및 헤더 표시 여부 결정
-  useEffect(() => {
-    // 현재 경로가 canvas/{projectId}/{apiId} 패턴인지 확인
-    const isCanvasRoute = pathname && /^\/canvas\/[^/]+\/[^/]+/.test(pathname)
-    const isProjectApiRoute = pathname && /^\/project\/[^/]+\/api/.test(pathname)
-    // canvas 경로에서는 헤더를 표시하지 않음
-    setShowHeader(!isCanvasRoute && !isProjectApiRoute)
-  }, [pathname])
 
   // 로그인 버튼 클릭 핸들러
   const handleLoginClick = useCallback(() => {
@@ -48,11 +39,6 @@ export default function Header() {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
 
-      // 개발자 메뉴 외부 클릭 시 메뉴 닫기
-      if (showDevMenu && !target.closest(".dev-menu-container")) {
-        setShowDevMenu(false)
-      }
-
       // 프로필 메뉴 외부 클릭 시 메뉴 닫기
       if (showProfileMenu && !target.closest(".profile-menu-container")) {
         setShowProfileMenu(false)
@@ -63,34 +49,27 @@ export default function Header() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
-  }, [showDevMenu, showProfileMenu])
-
-  // 헤더를 표시하지 않는 경우 null 반환
-  if (!showHeader) {
-    return null
-  }
+  }, [showProfileMenu])
 
   return (
-    <header className="sticky top-0 w-full h-[60px] bg-white z-50">
-      <div className="flex items-center justify-between h-full w-full ">
-        {/* 로고 영역 */}
-        <div className="flex items-center ml-4">
-          <Link href="/" className="cursor-pointer">
-            <Image src={logoPath || "/placeholder.svg"} alt="로고" width={120} height={40} priority />
+    <header className="sticky top-0 w-full h-[60px] bg-blue-50 z-50 ">
+      <div className="flex items-center justify-between h-full w-full px-4">
+        {/* 로고 및 프로젝트명 영역 */}
+        <div className="flex items-center gap-4">
+          <Link href="/" className="cursor-pointer ">
+            <Image src={logoPath || "/placeholder.svg"} alt="로고" width={40} height={32} priority />
           </Link>
+
+          <h2 className="text-xl font-semibold text-gray-800 truncate max-w-[200px]">{project.title}</h2>
         </div>
 
-        {/* 우측 영역 */}
-        <div className="flex items-center gap-4 mr-4">
-          {/* 로그인 버튼 또는 프로필 아이콘 */}
-          <div className="flex items-center gap-4 mr-4">
-            {/* 피드백 버튼 */}
-            <button className="flex items-center gap-1 px-2 py-1 border border-gray-300 rounded-md text-xs text-gray-700 hover:bg-gray-100 transition">
-              <MessageCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">피드백</span>
-            </button>
+        {/* 우측 영역 - 사용자 정보 */}
+        <div className="flex items-center gap-3">
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-3">
+              {/* 파싱된 사용자 이름 표시 */}
+              <span className="text-gray-700 font-medium">{user.username ? user.username.split("@")[0] : "사용자"}</span>
 
-            {isAuthenticated && user ? (
               <div className="relative profile-menu-container">
                 <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center focus:outline-none">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-colors">
@@ -121,15 +100,12 @@ export default function Header() {
                   </div>
                 )}
               </div>
-            ) : (
-              <button
-                onClick={handleLoginClick}
-                className="px-6 py-2 border-2 border-black text-black font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors duration-200"
-              >
-                Login
-              </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <button onClick={handleLoginClick} className="px-6 py-2 border-2 border-black text-black font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors duration-200">
+              Login
+            </button>
+          )}
         </div>
       </div>
     </header>
