@@ -211,3 +211,22 @@ class Diagram(BaseModel):
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
+
+    def validate_diagram_ids(self) -> bool:
+        """다이어그램 내 ID 중복을 검사하는 메서드"""
+        # 컴포넌트 ID 검사
+        component_ids = [c.componentId for c in self.components]
+        if len(component_ids) != len(set(component_ids)):
+            return False
+
+        # 메소드 ID 검사
+        method_ids = [m.methodId for c in self.components for m in c.methods]
+        if len(method_ids) != len(set(method_ids)):
+            return False
+
+        # 커넥션 ID 검사
+        connection_ids = [c.connectionId for c in self.connections]
+        if len(connection_ids) != len(set(connection_ids)):
+            return False
+
+        return True
