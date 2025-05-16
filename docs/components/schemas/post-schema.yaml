@@ -1,0 +1,178 @@
+PostId:
+  name: postId
+  in: path
+  required: true
+  schema:
+    type: integer
+    format: int64
+
+####### enum dto #######
+SearchTypeEnumDto:
+  type: string
+  enum: [ title, content, title_content ]
+
+PostOrderEnumDto:
+  type: string
+  enum: [ asc, desc ]
+  description: 정렬 방향 (오름차순 또는 내림차순)
+
+PostSortEnumDto:
+  type: string
+  enum: [ createdAt, viewCount, likeCount ]
+  description: 게시글 정렬 기준 (작성일, 조회수, 좋아요 수)
+
+######## request dto ########
+
+CreatePostRequest:
+  type: object
+  required:
+    - title
+    - content
+    - categoryId
+  properties:
+    title:
+      type: string
+      example: "게시글 제목"
+    content:
+      type: string
+      example: "게시글 내용입니다."
+    categoryId:
+      type: integer
+      format: int64
+      example: 1
+
+UpdatePostRequest:
+  type: object
+  properties:
+    title:
+      type: string
+      example: "수정된 제목"
+    content:
+      type: string
+      example: "수정된 내용"
+
+PostVoteRequest:
+  type: object
+  required:
+    - isLike
+  properties:
+    isLike:
+      type: boolean
+      description: true면 추천, false면 비추천
+      example: true
+
+###### response dto ######
+
+CreatePostResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      format: int64
+      example: 101
+
+PostSummaryResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      format: int64
+      example: 101
+    title:
+      type: string
+      example: "게시글 제목"
+    category:
+      type: string
+      example: "공지"
+    createdAt:
+      type: string
+      format: date-time
+      example: "2024-05-15T12:34:56"
+    viewCount:
+      type: integer
+      format: int64
+      example: 123
+    likeCount:
+      type: integer
+      format: int64
+      example: 10
+    commentCount:
+      type: integer
+      format: int64
+      example: 5
+
+PostDetailResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      format: int64
+      example: 101
+    title:
+      type: string
+      example: "상세 게시글 제목"
+    content:
+      type: string
+      example: "상세 게시글 내용입니다."
+    category:
+      type: string
+      example: "공지"
+    createdAt:
+      type: string
+      format: date-time
+      example: "2024-05-15T12:34:56"
+    updatedAt:
+      type: string
+      format: date-time
+      example: "2024-05-15T13:00:00"
+    viewCount:
+      type: integer
+      format: int64
+      example: 123
+    likeCount:
+      type: integer
+      format: int64
+      example: 10
+    dislikeCount:
+      type: integer
+      format: int64
+      example: 1
+    commentCount:
+      type: integer
+      example: 5
+    author:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        nickname:
+          type: string
+          example: "john_doe"
+        profileImgUrl:
+            type: string
+            format: uri
+            example: "https://example.com/profile.jpg"
+
+GetPostListResponse:
+  type: object
+  properties:
+    content:
+      type: array
+      items:
+        $ref: "#/PostSummaryResponse"
+    pageable:
+      $ref: "../schemas/page-schema.yaml#/PageDto"
+
+VoteResponse:
+  type: object
+  properties:
+    likeCount:
+      type: integer
+      format: int64
+      example: 12
+    dislikeCount:
+      type: integer
+      format: int64
+      example: 2

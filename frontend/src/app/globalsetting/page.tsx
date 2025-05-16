@@ -1,12 +1,12 @@
 "use client"
 
-import { useRef, useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from 'next/navigation'
-import Sidebar from "@/components/globalsetting/Sidebar"
+import useAuthStore from "@/app/store/useAuthStore"
 import ContentArea from "@/components/globalsetting/ContentArea"
 import Floatingbutton from "@/components/globalsetting/FloatingButton"
+import Sidebar from "@/components/globalsetting/Sidebar"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
-import useAuthStore from "@/app/store/useAuthStore"
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from "react"
 
 // 파일 객체 타입 정의
 interface FileWithContent {
