@@ -32,7 +32,7 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: string[];
+  dependencyFile: { name: string; content: string }[];  // 항상 배열로 관리
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue;
@@ -82,7 +82,7 @@ export default function GlobalSettingPage() {
     serverUrl: "",
     requirementSpec: [] as FileWithContent[],
     erd: [] as FileWithContent[],
-    dependencyFile: [] as string[],
+    dependencyFile: [] as { name: string; content: string }[],
     utilityClass: [] as FileWithContent[],
     errorCode: [] as FileWithContent[],
     securitySetting: { type: "SECURITY_DEFAULT_JWT", label: "SECURITY_DEFAULT_JWT" },
@@ -161,49 +161,101 @@ export default function GlobalSettingPage() {
   }
 
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string | string[] | FileWithContent | FileWithContent[] | SelectionValue) => {
+  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[]) => {
     setSettings((prev) => {
       const newSettings = { ...prev };
       
-      // 타입 가드를 사용하여 각 키에 맞는 값 할당
       switch(key) {
-        case 'errorCode':
-          newSettings.errorCode = value as FileWithContent[];
+        case 'dependencyFile':
+          if (typeof value === 'object') {
+            if (Array.isArray(value)) {
+              // 배열이 들어오면 기존 배열과 병합
+              newSettings.dependencyFile = [...prev.dependencyFile, ...value];
+            } else {
+              // dependency.txt 파일이 있으면 업데이트, 없으면 추가
+              const dependencyTxtIndex = prev.dependencyFile.findIndex(
+                file => file.name === 'dependency.txt'
+              );
+              if (dependencyTxtIndex >= 0) {
+                newSettings.dependencyFile = [...prev.dependencyFile];
+                newSettings.dependencyFile[dependencyTxtIndex] = value as { name: string; content: string };
+              } else {
+                newSettings.dependencyFile = [...prev.dependencyFile, value as { name: string; content: string }];
+              }
+            }
+          }
           break;
         case 'title':
         case 'description':
         case 'serverUrl':
-          newSettings[key] = value as string;
+          if (typeof value === 'string') {
+            newSettings[key] = value;
+          }
           break;
         case 'securitySetting':
         case 'architectureStructure':
-          newSettings[key] = value as SelectionValue;
-          break;
-        case 'dependencyFile':
-          newSettings[key] = value as string[];
+          if (typeof value === 'object' && 'type' in value) {
+            newSettings[key] = value as SelectionValue;
+          }
           break;
         case 'requirementSpec':
         case 'erd':
         case 'utilityClass':
         case 'codeConvention':
-          newSettings[key] = value as FileWithContent[];
+        case 'errorCode':
+          if (Array.isArray(value)) {
+            newSettings[key] = value as FileWithContent[];
+          }
           break;
       }
       
       return newSettings;
     });
 
-    // 값이 있으면 완료 상태로 변경
-    if (
-      (typeof value === 'string' && value.trim() !== "") ||
-      (Array.isArray(value) && value.length > 0) ||
-      (value && typeof value === 'object' && 'name' in value) ||  // FileWithContent 객체인 경우
-      (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && 'name' in value[0])  // FileWithContent 배열인 경우
-    ) {
-      setCompleted((prev) => ({ ...prev, [key as SettingKey]: true }))
-    } else {
-      setCompleted((prev) => ({ ...prev, [key as SettingKey]: false }))
-    }
+    // 완료 상태 업데이트
+    setCompleted((prev) => {
+      let isCompleted = false;
+
+      switch(key) {
+        case 'dependencyFile':
+          if (typeof value === 'object') {
+            if (Array.isArray(value)) {
+              isCompleted = value.length > 0;
+            } else {
+              isCompleted = true;  // 단일 파일이 추가되면 항상 완료로 처리
+            }
+          }
+          break;
+        case 'title':
+        case 'description':
+        case 'serverUrl':
+          if (typeof value === 'string') {
+            isCompleted = value.trim() !== "";
+          }
+          break;
+        case 'securitySetting':
+        case 'architectureStructure':
+          if (typeof value === 'object' && 'type' in value) {
+            const type = (value as SelectionValue).type;
+            isCompleted = type.startsWith('SECURITY_DEFAULT_') || type.startsWith('ARCHITECTURE_DEFAULT_') || type.startsWith('SECURITY_') || type.startsWith('ARCHITECTURE_');
+          }
+          break;
+        case 'requirementSpec':
+        case 'erd':
+        case 'utilityClass':
+        case 'codeConvention':
+        case 'errorCode':
+          if (Array.isArray(value)) {
+            isCompleted = value.length > 0;
+          }
+          break;
+      }
+
+      return {
+        ...prev,
+        [key]: isCompleted
+      };
+    });
   }
 
   // 필수 항목이 모두 완료되었는지 확인
@@ -228,13 +280,18 @@ export default function GlobalSettingPage() {
     setError(null);
     
     try {
+      // 의존성 파일 로깅 추가
+      console.log('=== 의존성 파일 전송 데이터 ===');
+      console.log('의존성 파일 타입:', typeof settings.dependencyFile);
+      console.log('의존성 파일 값:', settings.dependencyFile);
+      
       // Next.js API 라우트 호출
       console.log('API 라우트 호출 시작');
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Bearer 접두어 추가
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(settings)
       });
