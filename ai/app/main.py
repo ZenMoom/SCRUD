@@ -8,40 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.api_routes import api_router
 from app.api.chat_routes import chat_router
 from app.api.diagram_routes import diagram_router
-from app.config.config import settings
-from app.infrastructure.kafka.consumer import kafka_consumer
-from app.infrastructure.kafka.handler.handlers import handle_user_chat_request
-from app.infrastructure.kafka.producer import kafka_producer
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # 시작 시 실행
-    await kafka_producer.start()
-    logger.info("Kafka producer started")
-
-    kafka_consumer.register_handler(
-        settings.KAFKA_TOPIC_CHAT_REQUEST,
-        handle_user_chat_request
-    )
-    await kafka_consumer.start()
-    logger.info("Kafka consumer started")
-
-    yield
-
-    # 종료 시 실행
-    await kafka_producer.stop()
-    await kafka_consumer.stop()
-    logger.info("Kafka clients stopped")
-
-
-# FastAPI 앱 생성에 lifespan 추가
-app = FastAPI(title="FastAPI Kafka Tutorial", lifespan=lifespan)
+app = FastAPI(title="SCRUD project")
 # CORS 미들웨어 설정
 app.add_middleware(
     CORSMiddleware,

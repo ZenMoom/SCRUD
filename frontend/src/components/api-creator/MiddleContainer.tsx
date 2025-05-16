@@ -485,7 +485,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
       <div className="py-4 px-4">
         <h2 className="text-lg font-bold text-gray-800">API 관리</h2>
       </div>
-      <div className="overflow-y-auto overflow-x-hidden" style={{ height: "calc(100vh - 105px)" }}>
+      <div className="overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ height: "calc(100vh - 105px)" }}>
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>

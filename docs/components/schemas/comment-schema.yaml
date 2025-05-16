@@ -1,0 +1,115 @@
+CommentId:
+  name: commentId
+  in: path
+  required: true
+  schema:
+    type: integer
+    format: int64
+
+####### request dto #######
+CreateCommentRequest:
+  type: object
+  required:
+    - content
+  properties:
+    content:
+      type: string
+      example: 댓글입니다.
+    parentCommentId:
+      type: integer
+      format: int64
+      nullable: true
+      example: 123
+
+UpdateCommentRequest:
+  type: object
+  required:
+    - content
+  properties:
+    content:
+      type: string
+      example: 수정된 댓글입니다.
+
+CommentVoteRequest:
+  type: object
+  required:
+    - isLike
+  properties:
+    isLike:
+    type: boolean
+    description: true면 추천, false면 비추천
+    example: true
+
+######### response dto #######
+CommentResponse:
+  type: object
+  properties:
+    commentId:
+      type: integer
+      format: int64
+      example: 101
+    postId:
+      type: integer
+      format: int64
+      example: 5
+    content:
+      type: string
+      example: 댓글 내용입니다.
+    parentCommentId:
+      type: integer
+      nullable: true
+      format: int64
+      example: 12
+    replies:
+      type: array
+      items:
+        $ref: '#/CommentResponse'
+    likeCount:
+      type: integer
+      format: int64
+      example: 3
+    dislikeCount:
+      type: integer
+      format: int64
+      example: 1
+    isEdited:
+      type: boolean
+      example: true
+    createdAt:
+      type: string
+      format: date-time
+      example: 2024-05-15T12:34:56
+    updatedAt:
+      type: string
+      format: date-time
+      example: 2024-05-15T12:36:00
+    author:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        username:
+          type: string
+          example: "john_doe"
+
+GetCommentListResponse:
+  type: object
+  properties:
+    comments:
+      type: array
+      items:
+        $ref: '#/CommentResponse'
+
+VoteCommentResponse:
+  type: object
+  properties:
+    likeCount:
+      type: integer
+      format: int64
+      example: 4
+    dislikeCount:
+      type: integer
+      format: int64
+      example: 2

@@ -28,8 +28,8 @@ const architectureOptions = [
 ];
 
 const layeredOptions = [
-  { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A', imageUrl: '/layered-a.png' },
-  { type: 'ARCHITECTURE_DEFAULT_LAYERED_B', label: '레이어드 아키텍처 B', imageUrl: '/layered-b.png' },
+  { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A - 도메인 중심 구조', imageUrl: '/layered-a.png' },
+  { type: 'ARCHITECTURE_DEFAULT_LAYERED_B', label: '레이어드 아키텍처 B - 계층 중심 구조', imageUrl: '/layered-b.png' },
 ];
 
 // 기본값 설정
@@ -153,6 +153,21 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
     }
 
+    // 입력 타입 변경 핸들러
+    const handleInputTypeChange = () => {
+      const newInputType = inputType === 'select' ? 'file' : 'select';
+      setInputType(newInputType);
+      
+      // 입력 타입이 변경될 때 이전 선택값 초기화
+      if (newInputType === 'file') {
+        // 파일 모드로 변경 시 빈 배열로 초기화
+        onChange([] as FileWithContent[]);
+      } else {
+        // 선택 모드로 변경 시 기본값으로 초기화
+        onChange({ type: "ARCHITECTURE_DEFAULT_LAYERED_A", label: "ARCHITECTURE_DEFAULT_LAYERED_A" });
+      }
+    };
+
     return (
       <div ref={ref} className="mb-10 p-10 bg-white rounded-lg">
         <div className="flex items-center mb-4 justify-between">
@@ -170,7 +185,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
           <button
             type="button"
             className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
-             onClick={() => setInputType(inputType === 'select' ? 'file' : 'select')}
+            onClick={handleInputTypeChange}
           >
             {inputType === 'select' ? (
               <>
@@ -197,17 +212,10 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                   }`}
                   onClick={() => handleOptionChange(option)}
                 >
-                  <div className="text-center mb-3">
+                  <div className="text-center">
                     <span className="text-sm font-medium text-gray-700">
                       {option.label}
                     </span>
-                  </div>
-                  <div className="flex-1 flex items-center justify-center">
-                    <img 
-                      src={option.imageUrl} 
-                      alt={option.label} 
-                      className="w-full h-auto max-h-[200px] object-contain rounded-lg shadow-sm"
-                    />
                   </div>
                 </div>
               ))}
