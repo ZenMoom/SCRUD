@@ -2,6 +2,7 @@ package com.barcoder.scrud.post.domain.entity;
 
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
 import com.barcoder.scrud.global.config.generator.SnowflakeId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -53,6 +54,7 @@ public class Post extends BaseTimeEntity {
 	@Builder.Default
 	private Long dislikeCount = 0L;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "post")
 	private List<Comment> comments = new ArrayList<>();
 }
