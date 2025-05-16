@@ -49,4 +49,5 @@ CategoryIdParam:
   required: false
   schema:
     type: integer
+    format: int64
 ###### end of params #######
