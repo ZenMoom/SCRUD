@@ -86,22 +86,24 @@ class DiagramCreateGenerator:
             """현재 날짜와 시간을 ISO 형식으로 반환합니다."""
             return datetime.now().isoformat()
 
-        @tool
-        def validate_diagram_fields(diagram_str: str) -> bool:
-            """
-            [입력] 생성한 다이어그램 JSON
-            [출력]
-            입력된 다이어그램 데이터가 유효한지 검증합니다.
-            True: 검증 성공, False: 검증 실패
-            """
-            try:
-                diagram: Diagram = Diagram.model_validate_json(diagram_str)
-                return diagram.validate_diagram_ids()
-            except ValidationError:
-                return False
+        # @tool
+        # def validate_diagram_fields(diagram_str: str) -> bool:
+        #     """
+        #     [입력] 생성한 다이어그램 JSON
+        #     [출력]
+        #     입력된 다이어그램 데이터가 유효한지 검증합니다.
+        #     True: 검증 성공, False: 검증 실패
+        #     """
+        #     try:
+        #         diagram: Diagram = Diagram.model_validate_json(diagram_str)
+        #         # return diagram.validate_diagram_ids()
+        #         return True
+        #     except ValidationError:
+        #         return False
 
 
-        return [generate_uuid, get_current_datetime, validate_diagram_fields]
+        # return [generate_uuid, get_current_datetime, validate_diagram_fields]
+        return [generate_uuid, get_current_datetime]
 
     async def _call_agent(
         self,

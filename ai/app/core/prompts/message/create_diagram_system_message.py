@@ -42,10 +42,6 @@ def prepare_diagram_generate_system_message(
    - 다이어그램 자체에 대한 generate_uuid를 사용하여 diagramId를 부여합니다
    - 메타데이터(버전, 수정일시 등)를 채웁니다
 
-6. 최종 검증
-   - validate_diagram_fields를 사용하여 다이어그램 구조를 검증합니다
-   - 검증 실패 시 문제가 된 필드의 ID를 generate_uuid로 재생성합니다
-
 [컴포넌트 위치 규칙]
 - Controller 컴포넌트는 positionX, positionY (0, 0)으로 시작합니다
 - 서로 다른 컴포넌트 유형 간의 positionX 간격은 500입니다
