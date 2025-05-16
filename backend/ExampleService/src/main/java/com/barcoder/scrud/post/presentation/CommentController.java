@@ -3,13 +3,13 @@ package com.barcoder.scrud.post.presentation;
 import com.barcoder.scrud.api.CommentApi;
 import com.barcoder.scrud.global.common.util.SecurityUtil;
 import com.barcoder.scrud.model.CommentResponse;
+import com.barcoder.scrud.model.CommentVoteRequest;
 import com.barcoder.scrud.model.CreateCommentRequest;
 import com.barcoder.scrud.model.GetCommentListResponse;
 import com.barcoder.scrud.model.UpdateCommentRequest;
 import com.barcoder.scrud.model.VoteCommentResponse;
 import com.barcoder.scrud.post.application.dto.in.CreateCommentIn;
 import com.barcoder.scrud.post.application.dto.out.CommentOut;
-import com.barcoder.scrud.post.application.dto.out.GetCommentListOut;
 import com.barcoder.scrud.post.application.facade.CommentCreateFacade;
 import com.barcoder.scrud.post.application.facade.CommentGetFacade;
 import lombok.RequiredArgsConstructor;
@@ -107,11 +107,11 @@ public class CommentController implements CommentApi {
      * POST /api/v1/comments/{commentId}/vote : 댓글 추천/비추천
      *
      * @param commentId (required)
-     * @param body      댓글 추천/비추천 요청입니다. (required)
+     * @param commentVoteRequest      댓글 추천/비추천 요청입니다. (required)
      * @return VoteCommentResponse 댓글 추천/비추천 성공 (status code 200)
      */
     @Override
-    public ResponseEntity<VoteCommentResponse> voteComment(Long commentId, Object body) {
+    public ResponseEntity<VoteCommentResponse> voteComment(Long commentId, CommentVoteRequest commentVoteRequest) {
         return null;
     }
 }

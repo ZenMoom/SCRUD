@@ -3814,7 +3814,13 @@ components:
       - content
       type: object
     CommentVoteRequest:
-      properties: {}
+      example:
+        isLike: true
+      properties:
+        isLike:
+          description: "true면 추천, false면 비추천"
+          example: true
+          type: boolean
       required:
       - isLike
       type: object

@@ -36,9 +36,9 @@ CommentVoteRequest:
     - isLike
   properties:
     isLike:
-    type: boolean
-    description: true면 추천, false면 비추천
-    example: true
+      type: boolean
+      description: true면 추천, false면 비추천
+      example: true
 
 ######### response dto #######
 CommentResponse:
