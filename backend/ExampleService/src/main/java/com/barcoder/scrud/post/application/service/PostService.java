@@ -58,6 +58,7 @@ public class PostService {
      * @param inDto 게시글 수정 요청 DTO
      */
     public void updatePost(UpdatePostIn inDto) {
+
         // 게시글 조회
         Post post = postJpaRepository.findById(inDto.getPostId())
                 .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
@@ -79,6 +80,11 @@ public class PostService {
         // 게시글 조회
         Post post = postJpaRepository.findById(inDto.getPostId())
                 .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
+
+        // 이미 추천한 게시글인지 확인
+        if (post.isAlreadyVoted(inDto.getUserId())) {
+            throw new BaseException(PostErrorStatus.POST_ALREADY_LIKED);
+        }
 
         // 응답 DTO를 위한 값 +1 처리 (응답에서 증가된 값 보여줌)
         long likeCount = post.getLikeCount();

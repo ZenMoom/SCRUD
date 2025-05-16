@@ -83,6 +83,16 @@ public class Post extends BaseTimeEntity {
 		this.content = content;
 	}
 
+	// 이미 추천했는지 확인
+	public boolean isAlreadyVoted(UUID userId) {
+		for (PostVote postVote : this.postVotes) {
+			if (postVote.getUserId().equals(userId)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	// 좋아요, 싫어요 수 증가
 	public void addPostVoteCount(Boolean isLike, UUID userId) {
 
