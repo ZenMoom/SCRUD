@@ -1,7 +1,6 @@
 package com.barcoder.scrud.post.application.service;
 
 import com.barcoder.scrud.global.common.exception.BaseException;
-import com.barcoder.scrud.post.application.assembler.PostAssembler;
 import com.barcoder.scrud.post.application.dto.in.GetPostListIn;
 import com.barcoder.scrud.post.application.dto.out.PostListOut;
 import com.barcoder.scrud.post.application.dto.out.PostOut;
@@ -10,7 +9,6 @@ import com.barcoder.scrud.post.domain.exception.PostErrorStatus;
 import com.barcoder.scrud.post.domain.query.in.PostListQueryIn;
 import com.barcoder.scrud.post.domain.query.out.PostListQueryOut;
 import com.barcoder.scrud.post.infrastructure.event.PostViewEvent;
-import com.barcoder.scrud.post.infrastructure.jpa.CategoryJpaRepository;
 import com.barcoder.scrud.post.infrastructure.jpa.PostJpaRepository;
 import com.barcoder.scrud.post.infrastructure.querydsl.PostQueryDsl;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PostGetService {
 
-    private final PostAssembler postAssembler;
-    private final CategoryJpaRepository categoryJpaRepository;
     private final PostJpaRepository postJpaRepository;
     private final PostQueryDsl postQueryDsl;
     private final ModelMapper modelMapper;
@@ -53,6 +49,12 @@ public class PostGetService {
         return outDto;
     }
 
+    /**
+     * 게시글 상세 조회
+     *
+     * @param postId 게시글 ID
+     * @return PostOut 게시글 상세 응답 DTO
+     */
     @Transactional(readOnly = true)
     public PostOut getPostById(Long postId) {
 

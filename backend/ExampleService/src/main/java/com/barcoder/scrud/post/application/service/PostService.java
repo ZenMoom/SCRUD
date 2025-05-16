@@ -3,22 +3,14 @@ package com.barcoder.scrud.post.application.service;
 import com.barcoder.scrud.global.common.exception.BaseException;
 import com.barcoder.scrud.post.application.assembler.PostAssembler;
 import com.barcoder.scrud.post.application.dto.in.CreatePostIn;
-import com.barcoder.scrud.post.application.dto.in.GetPostListIn;
 import com.barcoder.scrud.post.application.dto.out.CreatePostOut;
-import com.barcoder.scrud.post.application.dto.out.PostListOut;
-import com.barcoder.scrud.post.application.dto.out.PostOut;
 import com.barcoder.scrud.post.domain.entity.Category;
 import com.barcoder.scrud.post.domain.entity.Post;
 import com.barcoder.scrud.post.domain.exception.PostErrorStatus;
-import com.barcoder.scrud.post.domain.query.in.PostListQueryIn;
-import com.barcoder.scrud.post.domain.query.out.PostListQueryOut;
-import com.barcoder.scrud.post.infrastructure.event.PostViewEvent;
 import com.barcoder.scrud.post.infrastructure.jpa.CategoryJpaRepository;
 import com.barcoder.scrud.post.infrastructure.jpa.PostJpaRepository;
-import com.barcoder.scrud.post.infrastructure.querydsl.PostQueryDsl;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,9 +22,7 @@ public class PostService {
     private final PostAssembler postAssembler;
     private final CategoryJpaRepository categoryJpaRepository;
     private final PostJpaRepository postJpaRepository;
-    private final PostQueryDsl postQueryDsl;
     private final ModelMapper modelMapper;
-    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 게시글 생성

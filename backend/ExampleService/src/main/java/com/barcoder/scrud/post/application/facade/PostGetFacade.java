@@ -21,7 +21,12 @@ public class PostGetFacade {
     private final UserUseCase userUseCase;
     private final ModelMapper modelMapper;
 
-
+    /**
+     * 게시글 상세 조회
+     *
+     * @param postId 게시글 ID
+     * @return GetPostOut 게시글 상세 응답 DTO
+     */
     public GetPostOut getPostById(Long postId) {
 
         // 게시글 정보 조회
