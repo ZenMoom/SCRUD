@@ -25,7 +25,7 @@ public class CommentVote extends BaseTimeEntity {
 	@SnowflakeId
 	private Long commentVoteId;
 
-	@Column(nullable = false, columnDefinition = "UNIQUE")
+	@Column(nullable = false)
 	private UUID userId;
 
 	@Column(nullable = false)
