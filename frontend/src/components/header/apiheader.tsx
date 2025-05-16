@@ -52,7 +52,7 @@ export default function ApiHeader({ project }: { projectId: number; project: Pro
   }, [showProfileMenu])
 
   return (
-    <header className="sticky top-0 w-full h-[60px] bg-blue-50 z-50 ">
+    <header className="sticky top-1 w-full h-[60px] bg-blue-50 z-50 ">
       <div className="flex items-center justify-between h-full w-full px-4">
         {/* 로고 및 프로젝트명 영역 */}
         <div className="flex items-center gap-4">
@@ -67,9 +67,6 @@ export default function ApiHeader({ project }: { projectId: number; project: Pro
         <div className="flex items-center gap-3">
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3">
-              {/* 파싱된 사용자 이름 표시 */}
-              <span className="text-gray-700 font-medium">{user.username ? user.username.split("@")[0] : "사용자"}</span>
-
               <div className="relative profile-menu-container">
                 <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center focus:outline-none">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-colors">
