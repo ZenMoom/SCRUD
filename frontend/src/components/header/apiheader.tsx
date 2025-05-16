@@ -52,7 +52,7 @@ export default function ApiHeader({ project }: { projectId: number; project: Pro
   }, [showProfileMenu])
 
   return (
-    <header className="sticky top-0 w-full h-[60px] bg-blue-50 z-50 ">
+    <header className="sticky top-1 w-full h-[60px] bg-blue-50 z-50 ">
       <div className="flex items-center justify-between h-full w-full px-4">
         {/* 로고 및 프로젝트명 영역 */}
         <div className="flex items-center gap-4">
