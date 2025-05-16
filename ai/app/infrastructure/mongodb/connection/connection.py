@@ -28,7 +28,7 @@ class MongoDBConnection:
                 db_name = settings.MONGO_DB_NAME
 
                 # MongoDB 클라이언트 생성 (비동기)
-                cls._client = AsyncIOMotorClient(mongo_uri)
+                cls._client = AsyncIOMotorClient(mongo_uri, ssl=True, tlsAllowInvalidCertificates=True)
                 cls._db = cls._client[db_name]
 
                 # 연결 상태 검증
