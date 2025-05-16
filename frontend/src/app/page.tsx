@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import useAuthStore from "./store/useAuthStore"
 import ProjectCard from "@/components/project-card/project-card"
-import ProjectForm from "@/components/project-card/project-form"
 import { Project } from "@/components/project-card/project-card"
 import { isTokenExpired } from "./utils/auth"
 
@@ -98,48 +97,6 @@ const getProjects = async (): Promise<Project[]> => {
   }
 }
 
-// 프로젝트 수정 더미 함수
-const updateProject = async (id: string, projectData: Omit<Project, "id" | "createdAt">): Promise<Project> => {
-  // 로컬 스토리지에서 기존 프로젝트 불러오기
-  let projects: Project[] = []
-
-  try {
-    if (typeof window !== "undefined") {
-      const savedProjects = localStorage.getItem("projects")
-      projects = savedProjects ? JSON.parse(savedProjects) : []
-    }
-  } catch (error) {
-    console.error("로컬 스토리지 접근 오류:", error)
-    throw new Error("프로젝트를 찾을 수 없습니다.")
-  }
-
-  // 해당 ID의 프로젝트 찾기
-  const projectIndex = projects.findIndex((p: Project) => p.id === id)
-  if (projectIndex === -1) {
-    throw new Error("프로젝트를 찾을 수 없습니다.")
-  }
-
-  // 프로젝트 수정
-  const updatedProject: Project = {
-    ...projects[projectIndex],
-    ...projectData,
-  }
-
-  // 업데이트된 프로젝트 저장
-  projects[projectIndex] = updatedProject
-
-  try {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("projects", JSON.stringify(projects))
-    }
-  } catch (error) {
-    console.error("로컬 스토리지 저장 오류:", error)
-    throw new Error("프로젝트 저장에 실패했습니다.")
-  }
-
-  return updatedProject
-}
-
 // 프로젝트 삭제 함수 - 오류 처리 개선
 const deleteProject = async (id: string): Promise<void> => {
   try {
@@ -229,17 +186,12 @@ function HomeContent() {
   // 인증 및 라우터
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { login, isAuthenticated, user } = useAuthStore() // logout 변수 제거
+  const { login, isAuthenticated, user } = useAuthStore()
 
   // 프로젝트 데이터 상태
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-
-  // 모달 상태
-  const [showEditModal, setShowEditModal] = useState<boolean>(false)
-  const [currentProject, setCurrentProject] = useState<Project | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
   // 구글 OAuth 콜백 처리
   useEffect(() => {
@@ -329,58 +281,20 @@ function HomeContent() {
     window.location.href = "/globalsetting"
   }
 
-  // 프로젝트 편집 함수
-  const handleEditProject = (project: Project) => {
-    setCurrentProject(project)
-    setShowEditModal(true)
-  }
-
-  // 프로젝트 편집 제출 처리
-  const handleEditSubmit = async (projectData: Omit<Project, "id" | "createdAt">) => {
-    if (!currentProject) return
-
-    setIsSubmitting(true)
-    try {
-      const updatedProject = await updateProject(currentProject.id, projectData)
-      setProjects(projects.map((p) => (p.id === updatedProject.id ? updatedProject : p)))
-      setShowEditModal(false)
-      setCurrentProject(null)
-    } catch (err) {
-      console.error("프로젝트 수정 오류:", err)
-      alert("프로젝트 수정에 실패했습니다.")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   // 프로젝트 삭제 처리
   const handleDeleteProject = async (id: string) => {
-    setIsSubmitting(true)
     try {
       await deleteProject(id)
       setProjects(projects.filter((p) => p.id !== id))
-      setShowEditModal(false)
-      setCurrentProject(null)
     } catch (err: Error | unknown) {
       console.error("프로젝트 삭제 오류:", err)
-
       const error = err as Error
-
-      // 토큰 만료 에러인 경우 다른 메시지 표시
       if (error.message?.includes("토큰이 만료되었습니다") || error.message?.includes("다시 로그인해주세요")) {
         alert("세션이 만료되었습니다. 다시 로그인해주세요.")
       } else {
         alert("프로젝트 삭제에 실패했습니다.")
       }
-    } finally {
-      setIsSubmitting(false)
     }
-  }
-
-  // 모달 취소 함수
-  const handleCancel = () => {
-    setShowEditModal(false)
-    setCurrentProject(null)
   }
 
   // 인증되지 않은 경우 아무것도 렌더링하지 않음 (로그인 페이지로 리다이렉트될 때까지)
@@ -392,7 +306,7 @@ function HomeContent() {
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-8 md:py-20">
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+          <h1 className="text-5xl md:text-5xl font-bold text-gray-800">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">{user?.username || "바코드"}</span> 님의 프로젝트
           </h1>
         </div>
@@ -413,7 +327,7 @@ function HomeContent() {
             {/* 새 프로젝트 버튼 */}
             <button
               onClick={handleNewProject}
-              className="flex flex-col items-center justify-center p-6 h-[220px] rounded-xl border-2 border-dashed border-gray-200 text-inherit no-underline transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
+              className="flex flex-col items-center justify-center p-6 h-[240px] rounded-xl border-2 border-dashed border-gray-200 text-inherit no-underline transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
             >
               <div className="mb-3 bg-gray-50 p-4 rounded-full">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -426,35 +340,12 @@ function HomeContent() {
             {/* 프로젝트 카드 목록 */}
             {projects.map((project, index) => (
               <div key={project.id} className="relative group">
-                <ProjectCard project={project} index={index} />
-
-                {/* 편집 버튼 오버레이 (호버 시 표시) */}
-                <button
-                  className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    handleEditProject(project)
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
+                <ProjectCard project={project} index={index} onDelete={handleDeleteProject} />
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {/* 프로젝트 편집 모달 */}
-      {showEditModal && currentProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="max-w-md w-full">
-            <ProjectForm project={currentProject} onSubmit={handleEditSubmit} onDelete={handleDeleteProject} onCancel={handleCancel} isSubmitting={isSubmitting} />
-          </div>
-        </div>
-      )}
     </div>
   )
 }

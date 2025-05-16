@@ -1,20 +1,18 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import FormItem from "./Form"
 import InfoModal from "./InfoModal"
 import RequirementSpecForm from "./form/RequirementSpecForm"
 import ERDForm from "./form/ERDForm"
 import DependencyFileForm from "./form/DependencyFileForm"
-import DependencySelector, { springDependencies } from "./form/DependencySelector"
+import DependencySelector from "./form/DependencySelector"
 import UtilityClassForm from "./form/UtilityClassForm"
 import ErrorCodeForm from "./form/ErrorCodeForm"
 import SecuritySettingForm from "./form/SecuritySettingForm"
 import CodeConventionForm from "./form/CodeConventionForm"
 import ArchitectureStructureForm from "./form/ArchitectureStructureForm"
-import { HelpCircle } from "lucide-react"
 
 // 파일 객체 타입 정의 (다른 컴포넌트와 일치시킴)
 interface FileWithContent {
@@ -28,6 +26,11 @@ interface SelectionValue {
   label: string;   // 표시 텍스트
 }
 
+interface DependencyFile {
+  name: string;
+  content: string;
+}
+
 // 프로젝트 설정 타입 정의
 interface ProjectSettings {
   title: string;
@@ -35,7 +38,7 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: string[];
+  dependencyFile: DependencyFile[];
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue;
@@ -48,7 +51,7 @@ type FileValue = FileWithContent | FileWithContent[];
 
 interface ContentAreaProps {
   settings: ProjectSettings;
-  onSettingChange: (key: string, value: string | string[] | FileWithContent | FileWithContent[] | SelectionValue) => void;
+  onSettingChange: (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string }) => void;
   refs: {
     title: React.RefObject<HTMLDivElement | null>
     description: React.RefObject<HTMLDivElement | null>
@@ -67,38 +70,16 @@ interface ContentAreaProps {
 
 export default function ContentArea({ settings, onSettingChange, refs, setActiveItem }: ContentAreaProps) {
   const [modalOpen, setModalOpen] = useState<string | null>(null)
-  const [dependencyInputType, setDependencyInputType] = useState<'select' | 'file'>('select')
-  const [selectedDependencies, setSelectedDependencies] = useState<string[]>(
-    Array.isArray(settings.dependencyFile) ? settings.dependencyFile : []
-  )
 
-  // settings.dependencyFile이 변경될 때 selectedDependencies 업데이트
-  useEffect(() => {
-    if (Array.isArray(settings.dependencyFile)) {
-      setSelectedDependencies(settings.dependencyFile);
-    }
-  }, [settings.dependencyFile]);
-
-  // 의존성 입력 방식 변경 핸들러
-  const handleDependencyInputTypeChange = (type: 'select' | 'file') => {
-    setDependencyInputType(type);
+  // 의존성 선택 핸들러
+  const handleDependencySelect = (file: DependencyFile) => {
+    onSettingChange("dependencyFile", file);
   };
 
-  // 의존성 변경 핸들러
-  const handleDependencyChange = (value: string[] | FileWithContent | FileWithContent[]) => {
-  // 배열인 경우에만 처리
-  if (Array.isArray(value)) {
-    // 빈 배열이면 string[] 타입으로 간주
-    if (!value.length) {
-      setSelectedDependencies(value as string[]);
-    }
-    // 첫 번째 요소가 string 타입인 경우 string[] 타입으로 간주
-    else if (typeof value[0] === 'string') {
-      setSelectedDependencies(value as string[]);
-    }
-  }
-  onSettingChange("dependencyFile", value);
-};
+  // 파일 선택 핸들러
+  const handleDependencyFile = (file: DependencyFile) => {
+    onSettingChange("dependencyFile", [file]);
+  };
 
   const openModal = (key: string) => {
     setModalOpen(key)
@@ -198,53 +179,33 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
         />
 
         <div ref={refs.dependencyFile} className="mb-10 p-10 bg-white rounded-lg">
-          <div className="flex items-center mb-4 justify-between">
-            <div className="flex items-center">
-              <h2 className="text-xl font-semibold m-0">의존성 파일 {isRequired('dependencyFile') && <span className="text-red-500">*</span>}</h2>
-              <button
-                type="button"
-                className="bg-transparent border-none text-gray-400 cursor-pointer ml-2 p-0 flex items-center justify-center transition-colors duration-200 hover:text-gray-600"
-                onClick={() => openModal("dependencyFile")}
-                aria-label="의존성 파일 정보"
-              >
-                <HelpCircle size={20} />
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <button
-                className={`px-4 py-2 rounded ${dependencyInputType === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-                onClick={() => handleDependencyInputTypeChange('select')}
-              >
-                선택
-              </button>
-              <button
-                className={`px-4 py-2 rounded ${dependencyInputType === 'file' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-                onClick={() => handleDependencyInputTypeChange('file')}
-              >
-                파일
-              </button>
-            </div>
-          </div>
-
-          {dependencyInputType === 'select' ? (
-            <DependencySelector
-              selectedDependencies={selectedDependencies}
-              onDependencyChange={handleDependencyChange}
-            />
-          ) : (
+          <div className="mb-6">
+            <h3 className="text-lg font-medium mb-4">의존성 파일</h3>
             <DependencyFileForm
-              title=""
-              value={{
-                name: "의존성.txt",
-                content: selectedDependencies.map(depId => {
-                  const dep = springDependencies.find(d => d.id === depId);
-                  return dep ? dep.name : depId;
-                }).join(", ")
-              }}
-              onChange={handleDependencyChange}
+              title="의존성 파일"
+              onFileSelect={handleDependencyFile}
               onFocus={() => handleItemFocus("dependencyFile")}
             />
-          )}
+          </div>
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium mb-4">Spring 의존성 추가 선택</h3>
+            <DependencySelector
+              selectedDependencies={
+                settings.dependencyFile.find(file => file.name === 'dependency.txt')
+                  ? settings.dependencyFile
+                      .find(file => file.name === 'dependency.txt')!
+                      .content
+                      .split('\n')
+                      .map(line => {
+                        const match = line.match(/\((.*?)\)/);
+                        return match ? match[1] : '';
+                      })
+                      .filter(Boolean)
+                  : []
+              }
+              onChange={handleDependencySelect}
+            />
+          </div>
         </div>
 
         <UtilityClassForm

@@ -1,6 +1,7 @@
 "use client"
 
 import ApiCreator from "@/components/api-creator/ApiCreator"
+import ApiHeader from "@/components/header/apiheader"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import axios from "axios"
@@ -80,8 +81,11 @@ export default function ProjectApiPage() {
   }
 
   return (
-    <main className="p-0">
-      <ApiCreator projectId={projectId} />
-    </main>
+    <>
+      <ApiHeader projectId={projectId} project={projectInfo} />
+      <main className="p-0">
+        <ApiCreator projectId={projectId} />
+      </main>
+    </>
   )
 }

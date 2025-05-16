@@ -10,21 +10,30 @@ class GlobalFile(BaseModel):
     fileUrl: Optional[str] = None
     fileContent: Optional[str] = None
 
+
 class GlobalFileList(BaseModel):
+    class ScrudProject(BaseModel):
+        scrudProjectId: Optional[int] = None
+        title: Optional[str] = None
+        description: Optional[str] = None
+        serverUrl: Optional[str] = None
+        updatedAt: Optional[str] = None
+
+    project: Optional[ScrudProject] = []
     content: Optional[List[GlobalFile]] = []
 
 class ApiSpec(BaseModel):
-    summary: str
+    summary: Optional[str] = None
     pathParameters: Optional[str] = None
-    endpoint: str
-    apiGroup: str
+    endpoint: Optional[str] = None
+    apiGroup: Optional[str] = None
     queryParameters: Optional[str] = None
     requestBody: Optional[str] = None
     response: Optional[str] = None
-    description: str
-    httpMethod: str
-    apiSpecVersionId: int
-    version: int
+    description: Optional[str] = None
+    httpMethod: Optional[str] = None
+    apiSpecVersionId: Optional[int] = None
+    version: Optional[int] = None
 
 class ApiClient:
     """

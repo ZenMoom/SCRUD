@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
             console.log('선택된 아키텍처 타입:', architectureValue.type);
             
             globalFiles.push({
-              fileName: `Architecture-${architectureValue.type}`,
+              fileName: `${architectureValue.type}`,
               fileType: architectureValue.type,
               fileUrl: "",
               fileContent: ""
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
           } else {
             // 선택된 보안 타입 처리
             globalFiles.push({
-              fileName: `Security-${securityValue.type}`,
+              fileName: `${securityValue.type}`,
               fileType: securityValue.type,
               fileUrl: "",
               fileContent: ""
@@ -141,26 +141,20 @@ export async function POST(request: NextRequest) {
       }
       // 의존성 파일 처리
       else if (key === 'dependencyFile') {
-        // 선택지에서 선택한 경우 (string[])
-        if (Array.isArray(value) && typeof value[0] === 'string') {
+        console.log('\n=== 의존성 파일 처리 시작 ===');
+        const files = value as Array<{ name: string; content: string }>;
+        console.log("의존성 파일 받은 거 있나?", files)
+        files.forEach(file => {
           globalFiles.push({
-            fileName: 'dependencies.txt',
+            fileName: file.name,
             fileType: 'DEPENDENCY',
             fileUrl: '',
-            fileContent: value.join('\n')
+            fileContent: file.content
           });
-        }
-        // 파일 업로드한 경우 (FileWithContent[])
-        else if (Array.isArray(value) && value[0]?.name) {
-          value.forEach(file => {
-            globalFiles.push({
-              fileName: file.name,
-              fileType: 'DEPENDENCY',
-              fileUrl: '',
-              fileContent: file.content
-            });
-          });
-        }
+        });
+        
+        console.log('처리된 의존성 파일 수:', files.length);
+        console.log('=== 의존성 파일 처리 완료 ===\n');
       }
       // GitHub 파일 처리
       else if (Array.isArray(value) && value.length > 0 && value[0].isGitHub === true) {

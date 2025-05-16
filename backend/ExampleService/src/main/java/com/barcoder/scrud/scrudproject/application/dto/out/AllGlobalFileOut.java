@@ -10,5 +10,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AllGlobalFileOut {
+    private ScrudProjectOut project;
     private List<GlobalFileOut> content;
 }

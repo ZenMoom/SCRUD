@@ -573,7 +573,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
         
         {/* 일반 모드일 때만 파일 탐색기 표시 */}
         {!isArchitecture && (
-          <>
+          <div className="flex flex-col flex-1 max-h-[calc(100vh-400px)]">
             {/* 파일 탐색기 헤더 */}
             {selectedRepo && (
               <div className="flex items-center bg-gray-100 p-2 rounded mb-2">
@@ -591,7 +591,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
             )}
             
             {/* 파일 목록 영역 */}
-            <div className="flex-1 overflow-y-auto border rounded mb-4 min-h-[300px]">
+            <div className="flex-1 overflow-y-auto border rounded mb-4 min-h-0">
               {isLoading ? (
                 <div className="flex justify-center items-center h-full">
                   <p className="text-gray-500">로딩 중...</p>
@@ -612,7 +612,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
                 <ul className="divide-y">
                   {contents.map((item) => (
                     <li key={item.path} className="p-3 flex items-center hover:bg-gray-100">
-                      {/* 체크박스 추가 */}
+                      {/* 체크박스 */}
                       <div className="mr-2">
                         <div 
                           className={`w-5 h-5 rounded border flex items-center justify-center 
@@ -631,15 +631,26 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
                       
                       {/* 아이콘 및 이름 부분 */}
                       <div 
-                        className="flex items-center flex-grow cursor-pointer"
-                        onClick={() => item.type === 'dir' ? openFolder(item) : null}
+                        className={`flex items-center flex-grow ${
+                          item.type === 'dir' ? 'cursor-pointer' : 
+                          (!isArchitecture && isTextFile(item.name)) ? 'cursor-pointer' : ''
+                        }`}
+                        onClick={() => {
+                          if (item.type === 'dir') {
+                            openFolder(item)
+                          } else if (!isArchitecture && isTextFile(item.name)) {
+                            handleItemSelection(item)
+                          }
+                        }}
                       >
                         {item.type === 'dir' ? (
                           <span className="text-yellow-500 mr-3"><Folder size={16} /></span>
                         ) : (
                           <span className="text-gray-500 mr-3"><FileIcon size={16} /></span>
                         )}
-                        <span className={item.type === 'dir' ? "underline" : ""}>
+                        <span className={`${item.type === 'dir' ? "underline" : ""} ${
+                          (!isArchitecture && isTextFile(item.name)) ? "hover:text-blue-500" : ""
+                        }`}>
                           {item.name}
                         </span>
                       </div>
@@ -649,28 +660,33 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
               )}
             </div>
             
-            {/* 선택된 항목 목록 (일반 모드) */}
+            {/* 선택된 항목 목록 */}
             <div className="mb-4">
               <p className="text-sm font-medium mb-2">선택된 항목: {selectedItems.length}개</p>
               {selectedItems.length > 0 && (
-                <ul className="text-sm max-h-[100px] overflow-y-auto border p-2 rounded">
-                  {selectedItems.map((item, index) => (
-                    <li key={index} className="flex items-center justify-between py-1">
-                      <span className="truncate">
-                        {item.type === 'directory' ? `📁 ${item.path}` : item.path}
-                      </span>
-                      <button
-                        onClick={() => setSelectedItems(items => items.filter((_, i) => i !== index))}
-                        className="text-red-500 hover:text-red-700 ml-2"
+                <div className="text-sm border rounded p-2 overflow-x-auto whitespace-nowrap">
+                  <div className="flex gap-2">
+                    {selectedItems.map((item, index) => (
+                      <div
+                        key={index}
+                        className="inline-flex items-center bg-gray-100 text-gray-800 rounded-full px-3 py-1"
                       >
-                        &times;
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                        <span className="truncate max-w-[200px]">
+                          {item.type === 'directory' ? `📁 ${item.path}` : item.path}
+                        </span>
+                        <button
+                          onClick={() => setSelectedItems(items => items.filter((_, i) => i !== index))}
+                          className="ml-2 text-gray-500 hover:text-red-500"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-          </>
+          </div>
         )}
         
         {/* 에러 메시지 표시 */}

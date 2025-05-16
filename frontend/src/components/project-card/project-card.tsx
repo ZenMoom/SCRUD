@@ -16,6 +16,7 @@ export interface Project {
 interface ProjectCardProps {
   project: Project
   index?: number // 카드 순서 인덱스 (색상 결정에 사용)
+  onDelete?: (id: string) => void // 삭제 핸들러 추가
 }
 
 // 더 진한 파스텔 배경색 배열
@@ -36,7 +37,7 @@ const pastelColors = [
 const defaultEmojis = ["📊", "📈", "🚀", "💡", "✨", "🔍", "📱", "💻", "🎨", "🛠️", "📝", "🎯", "🧩", "⚙️", "📚", "🔬", "🏆", "🌟", "📦", "🔮"]
 
 // 프로젝트 카드 컴포넌트
-export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
+export default function ProjectCard({ project, index = 0, onDelete }: ProjectCardProps) {
   // 카드 마다 랜덤한 파스텔 색상 지정 (컴포넌트가 리렌더링되어도 색상 유지)
   const backgroundColor = useMemo(() => {
     // index가 있으면 index 기반으로, 없으면 프로젝트 ID 기반으로 색상 결정
@@ -65,13 +66,31 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
   return (
     <Link
       href={`/project/${project.id}/api`}
-      className="flex flex-col p-6 h-[220px] rounded-xl text-inherit no-underline border border-gray-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
+      className="flex flex-col p-6 h-[240px] rounded-xl text-inherit no-underline border border-gray-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] hover:z-10"
       style={{ backgroundColor }}
     >
       {/* 이모지와 제목 */}
       <div className="flex justify-between items-start mb-3">
         <h2 className="text-xl font-semibold text-gray-800 truncate max-w-[80%]">{project.title}</h2>
-        <div className="text-2xl ml-2 flex-shrink-0">{projectEmoji}</div>
+        <div className="flex items-center gap-2">
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                if (window.confirm('이 프로젝트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                  onDelete(project.id)
+                }
+              }}
+              className="text-red-500"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </button>
+          )}
+          <div className="text-2xl ml-2 flex-shrink-0">{projectEmoji}</div>
+        </div>
       </div>
 
       {/* 설명 (2줄로 제한) */}
