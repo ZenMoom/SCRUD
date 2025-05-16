@@ -56,7 +56,7 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         );
 
         scrudProjectRepository.save(project);
-         eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
+        eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
 
         return project.getScrudProjectId();
     }
@@ -135,17 +135,20 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
 
     // 6. 해당 프로젝트의 전체 전역 설정 파일 가져오기
     @Override
-    public AllGlobalFileOut getAllGlobalFile(Long projectId, UUID userId) {
+    public AllGlobalFileOut getProject(Long projectId, UUID userId) {
         getUser(userId);
 
         ScrudProject project = scrudProjectRepository.findByScrudProjectIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new ExceptionHandler(ErrorStatus.SCRUDPROJECT_NOT_FOUND));
+
+        ScrudProjectOut projectInfo = modelMapper.map(project, ScrudProjectOut.class);
 
         List<GlobalFileOut> globalFiles = project.getGlobalFileList().stream()
                 .map(globalFile ->
                         modelMapper.map(globalFile, GlobalFileOut.class)).toList();
 
         AllGlobalFileOut outDto = AllGlobalFileOut.builder()
+                .project(projectInfo)
                 .content(globalFiles)
                 .build();
 
