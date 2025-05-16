@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
             console.log('선택된 아키텍처 타입:', architectureValue.type);
             
             globalFiles.push({
-              fileName: `Architecture-${architectureValue.type}`,
+              fileName: `${architectureValue.type}`,
               fileType: architectureValue.type,
               fileUrl: "",
               fileContent: ""
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
           } else {
             // 선택된 보안 타입 처리
             globalFiles.push({
-              fileName: `Security-${securityValue.type}`,
+              fileName: `${securityValue.type}`,
               fileType: securityValue.type,
               fileUrl: "",
               fileContent: ""
@@ -142,35 +142,18 @@ export async function POST(request: NextRequest) {
       // 의존성 파일 처리
       else if (key === 'dependencyFile') {
         console.log('\n=== 의존성 파일 처리 시작 ===');
-        console.log('받은 key:', key);
-        console.log('받은 value 타입:', typeof value);
-        console.log('받은 value 값:', value);
-
-        // 선택지에서 선택한 경우 (string)
-        if (typeof value === 'string') {
-          console.log('의존성 선택지 처리');
-          globalFiles.push({
-            fileName: 'dependencies.txt',
-            fileType: 'DEPENDENCY',
-            fileUrl: '',
-            fileContent: value
-          });
-        }
-        // 파일 업로드한 경우 (객체)
-        else if (typeof value === 'object' && 'fileName' in value) {
-          console.log('의존성 파일 처리');
-          console.log('파일명:', value.fileName);
-          console.log('파일 내용:', value.fileContent);
-          
-          globalFiles.push({
-            fileName: value.fileName,
-            fileType: 'DEPENDENCY',
-            fileUrl: '',
-            fileContent: value.fileContent
-          });
-        }
+        const files = value as Array<{ fileName: string; fileContent: string }>;
         
-        console.log('처리 후 globalFiles:', globalFiles);
+        files.forEach(file => {
+          globalFiles.push({
+            fileName: file.fileName,
+            fileType: 'DEPENDENCY',
+            fileUrl: '',
+            fileContent: file.fileContent
+          });
+        });
+        
+        console.log('처리된 의존성 파일 수:', files.length);
         console.log('=== 의존성 파일 처리 완료 ===\n');
       }
       // GitHub 파일 처리

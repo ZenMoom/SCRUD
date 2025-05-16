@@ -1,14 +1,13 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import FormItem from "./Form"
 import InfoModal from "./InfoModal"
 import RequirementSpecForm from "./form/RequirementSpecForm"
 import ERDForm from "./form/ERDForm"
 import DependencyFileForm from "./form/DependencyFileForm"
-import DependencySelector, { springDependencies } from "./form/DependencySelector"
+import DependencySelector from "./form/DependencySelector"
 import UtilityClassForm from "./form/UtilityClassForm"
 import ErrorCodeForm from "./form/ErrorCodeForm"
 import SecuritySettingForm from "./form/SecuritySettingForm"
@@ -28,6 +27,11 @@ interface SelectionValue {
   label: string;   // 표시 텍스트
 }
 
+interface DependencyFile {
+  fileName: string;
+  fileContent: string;
+}
+
 // 프로젝트 설정 타입 정의
 interface ProjectSettings {
   title: string;
@@ -35,7 +39,7 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: string | { fileName: string; fileContent: string };
+  dependencyFile: DependencyFile[];
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue;
@@ -69,13 +73,13 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
   const [modalOpen, setModalOpen] = useState<string | null>(null)
 
   // 의존성 선택 핸들러
-  const handleDependencySelect = (file: { fileName: string; fileContent: string }) => {
+  const handleDependencySelect = (file: DependencyFile) => {
     onSettingChange("dependencyFile", file);
   };
 
   // 파일 선택 핸들러
-  const handleDependencyFile = (file: { fileName: string; fileContent: string }) => {
-    onSettingChange("dependencyFile", file);
+  const handleDependencyFile = (file: DependencyFile) => {
+    onSettingChange("dependencyFile", [file]);
   };
 
   const openModal = (key: string) => {
@@ -187,9 +191,19 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium mb-4">Spring 의존성 추가 선택</h3>
             <DependencySelector
-              selectedDependencies={typeof settings.dependencyFile === 'object' && 'fileContent' in settings.dependencyFile && settings.dependencyFile.fileName === 'dependency.txt'
-                ? settings.dependencyFile.fileContent.split('\n').map(line => line.match(/\((.*?)\)/)?.[1] || '').filter(Boolean)
-                : []}
+              selectedDependencies={
+                settings.dependencyFile.find(file => file.fileName === 'dependency.txt')
+                  ? settings.dependencyFile
+                      .find(file => file.fileName === 'dependency.txt')!
+                      .fileContent
+                      .split('\n')
+                      .map(line => {
+                        const match = line.match(/\((.*?)\)/);
+                        return match ? match[1] : '';
+                      })
+                      .filter(Boolean)
+                  : []
+              }
               onChange={handleDependencySelect}
             />
           </div>

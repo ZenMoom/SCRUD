@@ -32,7 +32,7 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: { fileName: string; fileContent: string } | { fileName: string; fileContent: string }[];
+  dependencyFile: { fileName: string; fileContent: string }[];  // 항상 배열로 관리
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue;
@@ -169,9 +169,19 @@ export default function GlobalSettingPage() {
         case 'dependencyFile':
           if (typeof value === 'object') {
             if (Array.isArray(value)) {
-              newSettings.dependencyFile = value as { fileName: string; fileContent: string }[];
+              // 배열이 들어오면 기존 배열과 병합
+              newSettings.dependencyFile = [...prev.dependencyFile, ...value];
             } else {
-              newSettings.dependencyFile = value as { fileName: string; fileContent: string };
+              // dependency.txt 파일이 있으면 업데이트, 없으면 추가
+              const dependencyTxtIndex = prev.dependencyFile.findIndex(
+                file => file.fileName === 'dependency.txt'
+              );
+              if (dependencyTxtIndex >= 0) {
+                newSettings.dependencyFile = [...prev.dependencyFile];
+                newSettings.dependencyFile[dependencyTxtIndex] = value as { fileName: string; fileContent: string };
+              } else {
+                newSettings.dependencyFile = [...prev.dependencyFile, value as { fileName: string; fileContent: string }];
+              }
             }
           }
           break;
@@ -211,8 +221,8 @@ export default function GlobalSettingPage() {
           if (typeof value === 'object') {
             if (Array.isArray(value)) {
               isCompleted = value.length > 0;
-            } else if ('fileName' in value && 'fileContent' in value) {
-              isCompleted = value.fileContent.trim() !== '';
+            } else {
+              isCompleted = true;  // 단일 파일이 추가되면 항상 완료로 처리
             }
           }
           break;
