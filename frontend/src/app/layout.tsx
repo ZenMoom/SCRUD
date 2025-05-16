@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import Header from "@/components/header/header"
 import AuthProvider from "@/components/AuthProvider"
+import { pretendard } from "./fonts"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={`${pretendard.variable}`}>
       <body className={inter.className}>
         <Header />
         <AuthProvider>
