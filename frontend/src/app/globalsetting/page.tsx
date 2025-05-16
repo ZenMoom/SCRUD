@@ -32,7 +32,7 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: string[];
+  dependencyFile: string | { fileName: string; fileContent: string };
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue;
@@ -82,7 +82,7 @@ export default function GlobalSettingPage() {
     serverUrl: "",
     requirementSpec: [] as FileWithContent[],
     erd: [] as FileWithContent[],
-    dependencyFile: [] as string[],
+    dependencyFile: "",
     utilityClass: [] as FileWithContent[],
     errorCode: [] as FileWithContent[],
     securitySetting: { type: "SECURITY_DEFAULT_JWT", label: "SECURITY_DEFAULT_JWT" },
@@ -161,32 +161,35 @@ export default function GlobalSettingPage() {
   }
 
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string | string[] | FileWithContent | FileWithContent[] | SelectionValue) => {
+  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { fileName: string; fileContent: string }) => {
     setSettings((prev) => {
       const newSettings = { ...prev };
       
-      // 타입 가드를 사용하여 각 키에 맞는 값 할당
       switch(key) {
-        case 'errorCode':
-          newSettings.errorCode = value as FileWithContent[];
+        case 'dependencyFile':
+          newSettings.dependencyFile = value as string | { fileName: string; fileContent: string };
           break;
         case 'title':
         case 'description':
         case 'serverUrl':
-          newSettings[key] = value as string;
+          if (typeof value === 'string') {
+            newSettings[key] = value;
+          }
           break;
         case 'securitySetting':
         case 'architectureStructure':
-          newSettings[key] = value as SelectionValue;
-          break;
-        case 'dependencyFile':
-          newSettings[key] = value as string[];
+          if (typeof value === 'object' && 'type' in value) {
+            newSettings[key] = value as SelectionValue;
+          }
           break;
         case 'requirementSpec':
         case 'erd':
         case 'utilityClass':
         case 'codeConvention':
-          newSettings[key] = value as FileWithContent[];
+        case 'errorCode':
+          if (Array.isArray(value)) {
+            newSettings[key] = value as FileWithContent[];
+          }
           break;
       }
       
@@ -197,25 +200,43 @@ export default function GlobalSettingPage() {
     setCompleted((prev) => {
       let isCompleted = false;
 
-      // securitySetting과 architectureStructure의 특별 처리
-      if (key === 'securitySetting' || key === 'architectureStructure') {
-        if (Array.isArray(value)) {
-          // 파일이 선택된 경우
-          isCompleted = value.length > 0;
-        } else if (value && typeof value === 'object' && 'type' in value) {
-          // SelectionValue 타입인 경우 (기본값 포함)
-          const type = (value as SelectionValue).type;
-          isCompleted = type.startsWith('SECURITY_DEFAULT_') || type.startsWith('ARCHITECTURE_DEFAULT_') || type.startsWith('SECURITY_') || type.startsWith('ARCHITECTURE_');
-        }
-      } else if (typeof value === 'string') {
-        // 문자열 타입 (title, description, serverUrl)
-        isCompleted = value.trim() !== "";
-      } else if (Array.isArray(value)) {
-        // 배열 타입 (파일 목록)
-        isCompleted = value.length > 0;
+      switch(key) {
+        case 'dependencyFile':
+          if (typeof value === 'string') {
+            isCompleted = value.trim() !== '';
+          } else if (typeof value === 'object' && 'fileName' in value) {
+            isCompleted = value.fileContent.trim() !== '';
+          }
+          break;
+        case 'title':
+        case 'description':
+        case 'serverUrl':
+          if (typeof value === 'string') {
+            isCompleted = value.trim() !== "";
+          }
+          break;
+        case 'securitySetting':
+        case 'architectureStructure':
+          if (typeof value === 'object' && 'type' in value) {
+            const type = (value as SelectionValue).type;
+            isCompleted = type.startsWith('SECURITY_DEFAULT_') || type.startsWith('ARCHITECTURE_DEFAULT_') || type.startsWith('SECURITY_') || type.startsWith('ARCHITECTURE_');
+          }
+          break;
+        case 'requirementSpec':
+        case 'erd':
+        case 'utilityClass':
+        case 'codeConvention':
+        case 'errorCode':
+          if (Array.isArray(value)) {
+            isCompleted = value.length > 0;
+          }
+          break;
       }
 
-      return { ...prev, [key as SettingKey]: isCompleted };
+      return {
+        ...prev,
+        [key]: isCompleted
+      };
     });
   }
 
@@ -241,13 +262,18 @@ export default function GlobalSettingPage() {
     setError(null);
     
     try {
+      // 의존성 파일 로깅 추가
+      console.log('=== 의존성 파일 전송 데이터 ===');
+      console.log('의존성 파일 타입:', typeof settings.dependencyFile);
+      console.log('의존성 파일 값:', settings.dependencyFile);
+      
       // Next.js API 라우트 호출
       console.log('API 라우트 호출 시작');
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Bearer 접두어 추가
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(settings)
       });

@@ -28,8 +28,8 @@ const architectureOptions = [
 ];
 
 const layeredOptions = [
-  { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A', imageUrl: '/layered-a.png' },
-  { type: 'ARCHITECTURE_DEFAULT_LAYERED_B', label: '레이어드 아키텍처 B', imageUrl: '/layered-b.png' },
+  { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A - 도메인 중심 구조', imageUrl: '/layered-a.png' },
+  { type: 'ARCHITECTURE_DEFAULT_LAYERED_B', label: '레이어드 아키텍처 B - 계층 중심 구조', imageUrl: '/layered-b.png' },
 ];
 
 // 기본값 설정
@@ -212,17 +212,10 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                   }`}
                   onClick={() => handleOptionChange(option)}
                 >
-                  <div className="text-center mb-3">
+                  <div className="text-center">
                     <span className="text-sm font-medium text-gray-700">
                       {option.label}
                     </span>
-                  </div>
-                  <div className="flex-1 flex items-center justify-center">
-                    <img 
-                      src={option.imageUrl} 
-                      alt={option.label} 
-                      className="w-full h-auto max-h-[200px] object-contain rounded-lg shadow-sm"
-                    />
                   </div>
                 </div>
               ))}

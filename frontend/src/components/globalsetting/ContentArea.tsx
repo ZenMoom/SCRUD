@@ -35,7 +35,7 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: string[];
+  dependencyFile: string | { fileName: string; fileContent: string };
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue;
@@ -48,7 +48,7 @@ type FileValue = FileWithContent | FileWithContent[];
 
 interface ContentAreaProps {
   settings: ProjectSettings;
-  onSettingChange: (key: string, value: string | string[] | FileWithContent | FileWithContent[] | SelectionValue) => void;
+  onSettingChange: (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { fileName: string; fileContent: string }) => void;
   refs: {
     title: React.RefObject<HTMLDivElement | null>
     description: React.RefObject<HTMLDivElement | null>
@@ -67,38 +67,16 @@ interface ContentAreaProps {
 
 export default function ContentArea({ settings, onSettingChange, refs, setActiveItem }: ContentAreaProps) {
   const [modalOpen, setModalOpen] = useState<string | null>(null)
-  const [dependencyInputType, setDependencyInputType] = useState<'select' | 'file'>('select')
-  const [selectedDependencies, setSelectedDependencies] = useState<string[]>(
-    Array.isArray(settings.dependencyFile) ? settings.dependencyFile : []
-  )
 
-  // settings.dependencyFile이 변경될 때 selectedDependencies 업데이트
-  useEffect(() => {
-    if (Array.isArray(settings.dependencyFile)) {
-      setSelectedDependencies(settings.dependencyFile);
-    }
-  }, [settings.dependencyFile]);
-
-  // 의존성 입력 방식 변경 핸들러
-  const handleDependencyInputTypeChange = (type: 'select' | 'file') => {
-    setDependencyInputType(type);
+  // 의존성 선택 핸들러
+  const handleDependencySelect = (selected: string[]) => {
+    onSettingChange("dependencyFile", selected.join(' '));
   };
 
-  // 의존성 변경 핸들러
-  const handleDependencyChange = (value: string[] | FileWithContent | FileWithContent[]) => {
-  // 배열인 경우에만 처리
-  if (Array.isArray(value)) {
-    // 빈 배열이면 string[] 타입으로 간주
-    if (!value.length) {
-      setSelectedDependencies(value as string[]);
-    }
-    // 첫 번째 요소가 string 타입인 경우 string[] 타입으로 간주
-    else if (typeof value[0] === 'string') {
-      setSelectedDependencies(value as string[]);
-    }
-  }
-  onSettingChange("dependencyFile", value);
-};
+  // 파일 선택 핸들러
+  const handleDependencyFile = (file: { fileName: string; fileContent: string }) => {
+    onSettingChange("dependencyFile", file);
+  };
 
   const openModal = (key: string) => {
     setModalOpen(key)
@@ -198,76 +176,21 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
         />
 
         <div ref={refs.dependencyFile} className="mb-10 p-10 bg-white rounded-lg">
-          <div className="flex items-center mb-4 justify-between">
-            <div className="flex items-center">
-              <h2 className="text-xl font-semibold m-0">의존성 파일 {isRequired('dependencyFile') && <span className="text-red-500">*</span>}</h2>
-              <button
-                type="button"
-                className="bg-transparent border-none text-gray-400 cursor-pointer ml-2 p-0 flex items-center justify-center transition-colors duration-200 hover:text-gray-600"
-                onClick={() => openModal("dependencyFile")}
-                aria-label="의존성 파일 정보"
-              >
-                <HelpCircle size={20} />
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <button
-                className={`px-4 py-2 rounded ${dependencyInputType === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-                onClick={() => handleDependencyInputTypeChange('select')}
-              >
-                선택
-              </button>
-              <button
-                className={`px-4 py-2 rounded ${dependencyInputType === 'file' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-                onClick={() => handleDependencyInputTypeChange('file')}
-              >
-                파일
-              </button>
-            </div>
-          </div>
-
-          {selectedDependencies.length > 0 && (
-            <div className="mb-4 overflow-x-auto">
-              <div className="flex gap-2 min-w-min">
-                {selectedDependencies.map(depId => {
-                  const dep = springDependencies.find(d => d.id === depId);
-                  if (!dep) return null;
-                  return (
-                    <div
-                      key={dep.id}
-                      className="flex items-center gap-2 bg-white px-3 py-1 rounded border border-gray-200 whitespace-nowrap"
-                    >
-                      <span className="text-sm">{dep.name}</span>
-                      <button
-                        onClick={() => {
-                          const newDeps = selectedDependencies.filter(id => id !== dep.id);
-                          setSelectedDependencies(newDeps);
-                          handleDependencyChange(newDeps);
-                        }}
-                        className="text-gray-400 hover:text-red-500"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {dependencyInputType === 'select' ? (
-            <DependencySelector
-              selectedDependencies={selectedDependencies}
-              onDependencyChange={handleDependencyChange}
-            />
-          ) : (
+          <div className="mb-6">
+            <h3 className="text-lg font-medium mb-4">의존성 파일</h3>
             <DependencyFileForm
-              title=""
-              value={settings.dependencyFile}
-              onChange={handleDependencyChange}
+              title="의존성 파일"
+              onFileSelect={handleDependencyFile}
               onFocus={() => handleItemFocus("dependencyFile")}
             />
-          )}
+          </div>
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium mb-4">Spring 의존성 추가 선택</h3>
+            <DependencySelector
+              selectedDependencies={typeof settings.dependencyFile === 'string' ? settings.dependencyFile.split(' ').filter(Boolean) : []}
+              onChange={handleDependencySelect}
+            />
+          </div>
         </div>
 
         <UtilityClassForm

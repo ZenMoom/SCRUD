@@ -4,35 +4,33 @@ import { forwardRef, useState, useRef } from "react"
 import { Upload, Github, File } from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
 
-interface FileWithContent {
-  name: string;
-  content: string;
-}
-
 interface DependencyFileFormProps {
-  title: string
-  value: FileWithContent | FileWithContent[]
-  onChange: (value: FileWithContent | FileWithContent[]) => void
-  onFocus?: () => void
+  title: string;
+  onFileSelect: (file: { fileName: string; fileContent: string }) => void;
+  onFocus?: () => void;
 }
 
 const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
-  ({ title, value, onChange, onFocus }, ref) => {
+  ({ title, onFileSelect, onFocus }, ref) => {
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
+    const [selectedFiles, setSelectedFiles] = useState<Array<{ fileName: string; fileContent: string }>>([])
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, content: string }>) => {
       if (files.length > 0) {
-        const githubFiles = files.map(file => ({
-          name: file.path,
-          content: file.content,
-          isGitHub: true
-        }));
-        onChange(githubFiles);
+        // 각 파일을 개별적으로 처리
+        files.forEach(file => {
+          const newFile = {
+            fileName: file.path,
+            fileContent: file.content
+          };
+          setSelectedFiles(prev => [...prev, newFile]);
+          onFileSelect(newFile);
+        });
       }
       setIsGitHubModalOpen(false);
     };
@@ -48,24 +46,20 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
     }
 
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setDragActive(false)
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0];
         const content = await file.text();
-        const fileWithContent = {
-          name: file.name,
-          content: content
+        const newFile = {
+          fileName: file.name,
+          fileContent: content
         };
-        
-        if (Array.isArray(value)) {
-          onChange([...value, fileWithContent]);
-        } else {
-          onChange([fileWithContent]);
-        }
+        setSelectedFiles(prev => [...prev, newFile]);
+        onFileSelect(newFile);
       }
-    }
+    };
 
     const handleFileUpload = () => {
       setDropdownOpen(false)
@@ -142,36 +136,30 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
               if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
                 const content = await file.text();
-                const fileWithContent = {
-                  name: file.name,
-                  content: content
+                const newFile = {
+                  fileName: file.name,
+                  fileContent: content
                 };
-                
-                if (Array.isArray(value)) {
-                  onChange([...value, fileWithContent]);
-                } else {
-                  onChange([fileWithContent]);
-                }
+                setSelectedFiles(prev => [...prev, newFile]);
+                onFileSelect(newFile);
               }
             }}
           />
           
           {/* 선택된 파일 표시 */}
-          {Array.isArray(value) && value.length > 0 && (
+          {selectedFiles.length > 0 && (
             <div className="mt-4">
-              <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
+              <p className="text-sm font-medium mb-2">선택된 파일: {selectedFiles.length}개</p>
               <div className="flex flex-col space-y-2">
-                {value.map((file, index) => (
+                {selectedFiles.map((file, index) => (
                   <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                     <div className="flex items-center gap-2">
                       <File size={16} className="text-gray-500" />
-                      <span className="truncate">{file.name}</span>
+                      <span className="truncate">{file.fileName}</span>
                     </div>
                     <button
                       onClick={() => {
-                        const newFiles = [...value];
-                        newFiles.splice(index, 1);
-                        onChange(newFiles);
+                        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
                       }}
                       className="text-red-500 hover:text-red-700 ml-2"
                     >
@@ -183,21 +171,15 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
             </div>
           )}
 
-          {/* 단일 값인 경우와 호환성 유지 */}
-          {!Array.isArray(value) && value && (
-            <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
-              <File size={16} className="text-gray-500" />
-              <span>{value.name}</span>
-            </div>
-          )}
-          
           {/* GitHub 레포지토리 브라우저 모달 */}
-          <GitHubRepoBrowser 
-            isOpen={isGitHubModalOpen} 
-            onClose={() => setIsGitHubModalOpen(false)} 
-            onSelect={handleGitHubFileSelect}
-            formType="dependencyFile"
-          />
+          {isGitHubModalOpen && (
+            <GitHubRepoBrowser
+              isOpen={isGitHubModalOpen}
+              onClose={() => setIsGitHubModalOpen(false)}
+              onSelect={handleGitHubFileSelect}
+              formType="dependencyFile"
+            />
+          )}
         </div>
       </div>
     )

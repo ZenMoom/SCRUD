@@ -141,26 +141,37 @@ export async function POST(request: NextRequest) {
       }
       // 의존성 파일 처리
       else if (key === 'dependencyFile') {
-        // 선택지에서 선택한 경우 (string[])
-        if (Array.isArray(value) && typeof value[0] === 'string') {
+        console.log('\n=== 의존성 파일 처리 시작 ===');
+        console.log('받은 key:', key);
+        console.log('받은 value 타입:', typeof value);
+        console.log('받은 value 값:', value);
+
+        // 선택지에서 선택한 경우 (string)
+        if (typeof value === 'string') {
+          console.log('의존성 선택지 처리');
           globalFiles.push({
             fileName: 'dependencies.txt',
             fileType: 'DEPENDENCY',
             fileUrl: '',
-            fileContent: value.join('\n')
+            fileContent: value
           });
         }
-        // 파일 업로드한 경우 (FileWithContent[])
-        else if (Array.isArray(value) && value[0]?.name) {
-          value.forEach(file => {
-            globalFiles.push({
-              fileName: file.name,
-              fileType: 'DEPENDENCY',
-              fileUrl: '',
-              fileContent: file.content
-            });
+        // 파일 업로드한 경우 (객체)
+        else if (typeof value === 'object' && 'fileName' in value) {
+          console.log('의존성 파일 처리');
+          console.log('파일명:', value.fileName);
+          console.log('파일 내용:', value.fileContent);
+          
+          globalFiles.push({
+            fileName: value.fileName,
+            fileType: 'DEPENDENCY',
+            fileUrl: '',
+            fileContent: value.fileContent
           });
         }
+        
+        console.log('처리 후 globalFiles:', globalFiles);
+        console.log('=== 의존성 파일 처리 완료 ===\n');
       }
       // GitHub 파일 처리
       else if (Array.isArray(value) && value.length > 0 && value[0].isGitHub === true) {
