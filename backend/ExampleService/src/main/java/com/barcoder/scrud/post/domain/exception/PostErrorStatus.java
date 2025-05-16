@@ -17,6 +17,10 @@ public enum PostErrorStatus implements BaseErrorCode {
 	POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST5101", "존재하지 않는 게시글입니다."),
 	POST_ALREADY_LIKED(HttpStatus.BAD_REQUEST, "POST5102", "이미 추천한 게시글입니다."),
 
+	// comment error
+	COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "POST5201", "존재하지 않는 댓글입니다."),
+
+
 	;
 
 	private final HttpStatus httpStatus;

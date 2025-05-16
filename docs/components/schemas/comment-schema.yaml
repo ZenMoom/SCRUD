@@ -36,9 +36,9 @@ CommentVoteRequest:
     - isLike
   properties:
     isLike:
-    type: boolean
-    description: true면 추천, false면 비추천
-    example: true
+      type: boolean
+      description: true면 추천, false면 비추천
+      example: true
 
 ######### response dto #######
 CommentResponse:
@@ -84,20 +84,12 @@ CommentResponse:
       format: date-time
       example: 2024-05-15T12:36:00
     author:
-      type: object
-      properties:
-        userId:
-          type: string
-          format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
-        username:
-          type: string
-          example: "john_doe"
+      $ref: './user-schema.yaml#/UserResponse'
 
 GetCommentListResponse:
   type: object
   properties:
-    comments:
+    content:
       type: array
       items:
         $ref: '#/CommentResponse'
