@@ -17,39 +17,39 @@ const ApiForm: React.FC<ApiFormProps> = ({ summary, setSummary, method, setMetho
     switch (methodType) {
       case "GET":
         return {
-          text: "text-green-400",
-          border: "border-green-500",
-          indicator: "bg-green-400",
+          text: "text-green-800",
+          border: "border-green-800",
+          indicator: "bg-green-800",
         }
       case "POST":
         return {
-          text: "text-yellow-300",
-          border: "border-yellow-400",
-          indicator: "bg-yellow-300",
+          text: "text-blue-800",
+          border: "border-blue-800",
+          indicator: "bg-blue-800",
         }
       case "PUT":
         return {
-          text: "text-blue-400",
-          border: "border-blue-500",
-          indicator: "bg-blue-400",
+          text: "text-yellow-800",
+          border: "border-yellow-800",
+          indicator: "bg-yellow-800",
         }
       case "PATCH":
         return {
-          text: "text-purple-300",
-          border: "border-purple-400",
-          indicator: "bg-purple-300",
+          text: "text-purple-800", // PATCH 없을 경우 일관성 유지
+          border: "border-purple-800",
+          indicator: "bg-purple-800",
         }
       case "DELETE":
         return {
-          text: "text-red-300",
-          border: "border-red-400",
-          indicator: "bg-red-300",
+          text: "text-red-800",
+          border: "border-red-800",
+          indicator: "bg-red-800",
         }
       default:
         return {
-          text: "text-gray-400",
-          border: "border-gray-500",
-          indicator: "bg-gray-400",
+          text: "text-gray-800",
+          border: "border-gray-800",
+          indicator: "bg-gray-800",
         }
     }
   }

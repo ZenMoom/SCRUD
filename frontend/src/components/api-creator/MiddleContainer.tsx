@@ -551,7 +551,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                       </h3>
                       <div className="flex items-center">
                         <button
-                          className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex-shrink-0"
+                          className="p-1 rounded-full  hover:bg-gray-200 transition-colors flex-shrink-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             addApiEndpoint(group.id)
@@ -563,7 +563,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                           </svg>
                         </button>
                         <button
-                          className="p-1 text-red-400 hover:text-red-600 transition-colors flex-shrink-0 ml-1"
+                          className="p-1 text-black-400 hover:text-black-600 transition-colors flex-shrink-0 ml-1"
                           onClick={(e) => {
                             e.stopPropagation()
                             deleteApiGroup(group.id)
@@ -655,14 +655,16 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                             <span
                               className={`px-2 py-0.5 text-xs rounded font-medium ${
                                 endpoint.method === "GET"
-                                  ? "bg-green-100 text-green-800"
+                                  ? " text-green-800"
                                   : endpoint.method === "POST"
-                                  ? "bg-blue-100 text-blue-800"
+                                  ? " text-blue-800"
                                   : endpoint.method === "PUT"
-                                  ? "bg-yellow-100 text-yellow-800"
+                                  ? " text-yellow-800"
+                                  : endpoint.method === "PATCH"
+                                  ? " text-purple-800" // PATCH 메서드 추가
                                   : endpoint.method === "DELETE"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-gray-100 text-gray-800"
+                                  ? " text-red-800"
+                                  : " text-gray-800"
                               }`}
                             >
                               {endpoint.method}
