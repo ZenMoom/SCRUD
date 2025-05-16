@@ -153,6 +153,21 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
     }
 
+    // 입력 타입 변경 핸들러
+    const handleInputTypeChange = () => {
+      const newInputType = inputType === 'select' ? 'file' : 'select';
+      setInputType(newInputType);
+      
+      // 입력 타입이 변경될 때 이전 선택값 초기화
+      if (newInputType === 'file') {
+        // 파일 모드로 변경 시 빈 배열로 초기화
+        onChange([] as FileWithContent[]);
+      } else {
+        // 선택 모드로 변경 시 기본값으로 초기화
+        onChange({ type: "ARCHITECTURE_DEFAULT_LAYERED_A", label: "ARCHITECTURE_DEFAULT_LAYERED_A" });
+      }
+    };
+
     return (
       <div ref={ref} className="mb-10 p-10 bg-white rounded-lg">
         <div className="flex items-center mb-4 justify-between">
@@ -170,7 +185,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
           <button
             type="button"
             className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
-             onClick={() => setInputType(inputType === 'select' ? 'file' : 'select')}
+            onClick={handleInputTypeChange}
           >
             {inputType === 'select' ? (
               <>

@@ -121,7 +121,17 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
     }
     // 입력 타입 변경 핸들러
     const handleInputTypeChange = () => {
-      setInputType(inputType === 'select' ? 'file' : 'select');
+      const newInputType = inputType === 'select' ? 'file' : 'select';
+      setInputType(newInputType);
+      
+      // 입력 타입이 변경될 때 이전 선택값 초기화
+      if (newInputType === 'file') {
+        // 파일 모드로 변경 시 빈 배열로 초기화
+        onChange([] as FileWithContent[]);
+      } else {
+        // 선택 모드로 변경 시 기본값으로 초기화
+        onChange(DEFAULT_SECURITY_OPTION);
+      }
     };
 
     const handleOptionChange = (option: SecurityOption) => {

@@ -226,6 +226,35 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             </div>
           </div>
 
+          {selectedDependencies.length > 0 && (
+            <div className="mb-4 overflow-x-auto">
+              <div className="flex gap-2 min-w-min">
+                {selectedDependencies.map(depId => {
+                  const dep = springDependencies.find(d => d.id === depId);
+                  if (!dep) return null;
+                  return (
+                    <div
+                      key={dep.id}
+                      className="flex items-center gap-2 bg-white px-3 py-1 rounded border border-gray-200 whitespace-nowrap"
+                    >
+                      <span className="text-sm">{dep.name}</span>
+                      <button
+                        onClick={() => {
+                          const newDeps = selectedDependencies.filter(id => id !== dep.id);
+                          setSelectedDependencies(newDeps);
+                          handleDependencyChange(newDeps);
+                        }}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {dependencyInputType === 'select' ? (
             <DependencySelector
               selectedDependencies={selectedDependencies}
@@ -234,13 +263,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ) : (
             <DependencyFileForm
               title=""
-              value={{
-                name: "의존성.txt",
-                content: selectedDependencies.map(depId => {
-                  const dep = springDependencies.find(d => d.id === depId);
-                  return dep ? dep.name : depId;
-                }).join(", ")
-              }}
+              value={settings.dependencyFile}
               onChange={handleDependencyChange}
               onFocus={() => handleItemFocus("dependencyFile")}
             />

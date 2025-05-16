@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
-import { CheckCircle, XCircle, Plus, Pencil, X } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { CheckCircle, Pencil } from "lucide-react"
 import useAuthStore from "@/app/store/useAuthStore"
 import { useParams } from "next/navigation"
-import FileInputModal from "./file-modal/FileInputModal"
 
 // 전역 파일 정의
 interface GlobalFile {
@@ -61,9 +60,6 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
   const [files, setFiles] = useState<GlobalFilesByType>({})
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedFileType, setSelectedFileType] = useState<string>("")
-  const addButtonRef = useRef<HTMLButtonElement>(null)
   const { token } = useAuthStore()
   const params = useParams()
   const projectId = params.id ? parseInt(params.id as string, 10) : 0
@@ -138,37 +134,6 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     fetchGlobalFiles()
   }, []) // 의존성 배열을 비워서 최초 마운트 시에만 실행
 
-  // 전역 파일 삭제 처리 함수
-  const handleDeleteFile = async (globalFileId: number | undefined) => {
-    if (!projectId || !token) return
-
-    // globalFileId가 없으면 함수 종료
-    if (globalFileId === undefined || globalFileId === null) {
-      console.error("파일 ID가 존재하지 않습니다.")
-      alert("파일 ID가 존재하지 않아 삭제할 수 없습니다.")
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/${globalFileId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: token,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Error deleting file: ${response.status}`)
-      }
-
-      // 삭제 후 데이터 다시 불러오기
-      fetchGlobalFiles()
-    } catch (err) {
-      console.error("Failed to delete file:", err)
-      alert("파일 삭제에 실패했습니다.")
-    }
-  }
-
   // 아이템 펼치기/접기
   const toggleItem = (id: string) => {
     setExpandedItems((prev) => ({
@@ -180,18 +145,6 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
   // 아이템에 파일이 있는지 확인
   const hasFiles = (fileType: string): boolean => {
     return files[fileType] && files[fileType].length > 0
-  }
-
-  // 파일 추가 핸들러
-  const handleAddFile = (fileType: string) => {
-    setSelectedFileType(fileType)
-    setIsModalOpen(true)
-  }
-
-  // 파일 업로드 성공 핸들러
-  const handleUploadSuccess = () => {
-    setIsModalOpen(false)
-    fetchGlobalFiles()
   }
 
   // 프로젝트 정보 수정 핸들러 (추후 구현)
@@ -220,29 +173,7 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
           onClick={() => handleItemClick(id)}
         >
           <div className="flex items-center">
-            {hasFilesForType ? <CheckCircle className="text-green-500 mr-2.5" size={20} /> : <XCircle className="text-red-500 mr-2.5" size={20} />}
             <span className="text-base font-medium">{label}</span>
-          </div>
-          <div className="flex items-center relative">
-            <button
-              ref={addButtonRef}
-              className="p-1 rounded-full hover:bg-gray-200"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleAddFile(fileType)
-              }}
-            >
-              <Plus size={18} className="text-blue-500" />
-            </button>
-            {isModalOpen && selectedFileType === fileType && (
-              <FileInputModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                fileType={selectedFileType}
-                projectId={projectId}
-                onSuccess={handleUploadSuccess}
-              />
-            )}
           </div>
         </div>
         {isExpanded && (
@@ -254,16 +185,6 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
                 {files[fileType].map((file) => (
                   <li key={file.globalFileId} className="pl-8 py-2 text-sm hover:bg-gray-50 rounded flex justify-between items-center">
                     <span>{file.fileName}</span>
-                    <button
-                      className="p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-red-500"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        console.log("삭제할 파일 정보:", { id: file.globalFileId, name: file.fileName, type: fileType })
-                        handleDeleteFile(file.globalFileId)
-                      }}
-                    >
-                      <X size={16} />
-                    </button>
                   </li>
                 ))}
               </ul>
