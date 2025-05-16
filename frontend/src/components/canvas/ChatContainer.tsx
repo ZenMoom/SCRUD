@@ -75,6 +75,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   const [currentMessageCompleted, setCurrentMessageCompleted] = useState<boolean>(false)
   const [versionInfo, setVersionInfo] = useState<{ newVersionId: string; description: string } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [shouldShowTempMessage, setShouldShowTempMessage] = useState<boolean>(true)
 
   // 참조 변수
   const eventSourceRef = useRef<EventSource | null>(null)
@@ -169,7 +170,12 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           disconnectSSE()
 
           setTimeout(() => {
-            onRefresh()
+            onRefresh().then(() => {
+              // 채팅 내역 새로고침 후 임시 메시지 상태 초기화
+              setShouldShowTempMessage(false)
+              setAccumulatedText("")
+              setLastSentMessage("")
+            })
             setCurrentMessageCompleted(false)
           }, 500)
         }
@@ -189,6 +195,22 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       }
     }
   }, [chatData, onVersionSelect, versionInfo])
+
+  // 채팅 데이터가 변경될 때 임시 메시지 초기화
+  useEffect(() => {
+    if (chatData && chatData.content) {
+      // 채팅 내역이 로드되면 임시 메시지 상태 초기화
+      setShouldShowTempMessage(false)
+
+      // 마지막 메시지가 이미 채팅 내역에 포함되어 있는지 확인
+      const lastMessageInHistory = chatData.content.some((item) => item.userChat?.message === lastSentMessage && lastSentMessage !== "")
+
+      if (lastMessageInHistory) {
+        setAccumulatedText("")
+        setLastSentMessage("")
+      }
+    }
+  }, [chatData, lastSentMessage])
 
   // 재연결 처리 함수
   const handleReconnect = useCallback(() => {
@@ -262,6 +284,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       setIsConnecting(true)
       setCurrentSSEId(sseId)
       setSSEError(null)
+      setShouldShowTempMessage(true)
 
       try {
         const eventSource = new EventSource(`/api/sse/connect/${sseId}`)
@@ -339,16 +362,22 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             const versionId = item.systemChat.versionInfo.newVersionId || ""
             const description = item.systemChat.versionInfo.description || ""
 
-            formattedMessages.push({
-              id: `version-${versionId}-${item.chatId}`,
-              type: "version",
-              message: description,
-              timestamp: item.createdAt,
-              versionInfo: {
-                versionId: versionId,
-                description: description,
-              },
-            })
+            // 이미 추가된 버전인지 확인
+            const versionExists = formattedMessages.some((msg) => msg.type === "version" && msg.versionInfo?.versionId === versionId)
+
+            // 새로운 버전인 경우에만 버전 메시지 추가
+            if (!versionExists) {
+              formattedMessages.push({
+                id: `version-${versionId}-${item.chatId}`,
+                type: "version",
+                message: description,
+                timestamp: item.createdAt,
+                versionInfo: {
+                  versionId: versionId,
+                  description: description,
+                },
+              })
+            }
           }
         }
       })
@@ -400,6 +429,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       setSSEError(null)
       setSending(true)
       setSendError(null)
+      setShouldShowTempMessage(true)
 
       const sentMessage = newMessage
       setLastSentMessage(sentMessage)
@@ -414,16 +444,12 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       }
 
       setNewMessage("")
-      console.log(token)
-      const response = await axios.post<SSEIdResponse>(
-        `/api/chat/${projectId}/${apiId}`,
-        chatMessageData, // 요청 본문 (필요한 경우)
-        {
-          headers: {
-            Authorization: token, // 인증 토큰 헤더에 추가
-          },
-        }
-      )
+
+      const response = await axios.post<SSEIdResponse>(`/api/chat/${projectId}/${apiId}`, chatMessageData, {
+        headers: {
+          Authorization: token,
+        },
+      })
 
       if (response.data && response.data.streamId) {
         connectToSSE(response.data.streamId)
@@ -506,8 +532,14 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
 
   // 마크다운 파싱 함수 - 볼드, 이탤릭, 링크, 제목, 글머리 기호 등 처리
   const parseMarkdown = useCallback((text: string, key: string) => {
-    // 제목 처리 (## 제목)
-    let parsedText = text.replace(/##\s+(.*?)(?:\n|$)/g, '<h2 class="text-xl font-bold my-2">$1</h2>')
+    // 제목 처리 (# 제목, ## 제목, ### 제목)
+    let parsedText = text
+      // H1 제목 처리 (# 제목)
+      .replace(/^#\s+(.*?)(?:\n|$)/gm, '<h1 class="text-2xl font-bold my-3">$1</h1>')
+      // H2 제목 처리 (## 제목)
+      .replace(/^##\s+(.*?)(?:\n|$)/gm, '<h2 class="text-xl font-bold my-2">$1</h2>')
+      // H3 제목 처리 (### 제목)
+      .replace(/^###\s+(.*?)(?:\n|$)/gm, '<h3 class="text-lg font-bold my-2">$1</h3>')
 
     // 볼드 처리 (**텍스트** 또는 __텍스트__)
     parsedText = parsedText.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>")
@@ -590,7 +622,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
               return (
                 <div key={msg.id} className="flex flex-col mb-2">
                   {/* 시스템 메시지를 좌우 가득 차지하게 변경하고 배경색을 흰색으로 */}
-                  <div className="bg-white border border-gray-200 rounded-lg py-3 px-4 w-full shadow-sm">
+                  <div className="bg-white  rounded-lg py-3 px-4 w-full ">
                     <div className="prose max-w-none">{parseMessage(msg.message)}</div>
                   </div>
                   <span className="text-xs text-gray-500 mt-1 self-start">{new Date(msg.timestamp).toLocaleTimeString()}</span>
@@ -603,12 +635,12 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
                   <button
                     onClick={() => handleVersionClick(msg.versionInfo!.versionId)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
-                      versionId === msg.versionInfo!.versionId ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                      versionId === msg.versionInfo!.versionId ? " bg-blue-500 text-white" : "border border-blue-500 bg-blue-50 text-blue-800 hover:bg-blue-200"
                     }`}
                   >
                     <Clock size={16} />
                     <div className="flex flex-col items-start">
-                      <span className="font-medium">버전 {msg.versionInfo.versionId}</span>
+                      <span className="font-medium">VERSION {msg.versionInfo.versionId}</span>
                       <span className="text-xs">{msg.versionInfo.description}</span>
                     </div>
                   </button>
@@ -623,7 +655,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         )}
 
         {/* 현재 SSE 메시지 표시 - 누적 텍스트 사용 */}
-        {(sseConnected || isConnecting || accumulatedText) && (
+        {shouldShowTempMessage && (sseConnected || isConnecting || accumulatedText) && (
           <div className="mb-4">
             {/* 사용자 메시지 (가장 최근에 보낸 메시지) */}
             <div className="flex justify-end mb-4">
@@ -638,14 +670,14 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
 
             {/* SSE 응답 메시지 - 좌우 가득 차지하게 변경하고 배경색을 흰색으로 */}
             <div className="flex flex-col mb-4">
-              <div className="w-full bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+              <div className="w-full bg-white ">
                 <div className="prose max-w-none">
                   {parseMessage(accumulatedText)}
                   {(sseConnected || isConnecting) && <span className="inline-block ml-1 w-2 h-4 bg-gray-500 animate-pulse"></span>}
                 </div>
                 {(sseConnected || isConnecting) && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
-                    <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
+                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
                     <span>{isConnecting ? "연결 중..." : "처리 중..."}</span>
                   </div>
                 )}
@@ -754,7 +786,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         </div>
 
         {(sseConnected || isConnecting) && (
-          <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+          <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
             <AlertCircle size={12} />
             <span>AI가 응답을 생성하는 중입니다. 잠시만 기다려주세요.</span>
           </div>
