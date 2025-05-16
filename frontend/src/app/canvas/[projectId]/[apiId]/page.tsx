@@ -5,7 +5,7 @@
  * 모든 React Hooks는 컴포넌트의 최상위 레벨에서 호출되어야 합니다.
  */
 
-import { useState, useEffect, useCallback, useLayoutEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import axios from "axios"
 import type { DiagramResponse } from "@generated/model"
@@ -24,6 +24,7 @@ interface ApiListItem {
   name: string
   status: string
   description?: string
+  endpoint?: string // Add this line to include endpoint information
 }
 
 // 버전 정보 타입 정의
@@ -73,6 +74,9 @@ export default function CanvasPage() {
 
   // 타겟 노드 상태
   const [targetNodes, setTargetNodes] = useState<TargetNode[]>([])
+
+  // Add this after the other state declarations
+  const [currentApiEndpoint, setCurrentApiEndpoint] = useState<string | undefined>(undefined)
 
   // 채팅 데이터 가져오기 함수
   const fetchChatData = useCallback(async () => {
@@ -272,6 +276,13 @@ export default function CanvasPage() {
     }
   }, [projectId])
 
+  // 페이지 로드 시 API 목록 데이터 가져오기
+  useEffect(() => {
+    if (projectId) {
+      fetchApiList()
+    }
+  }, [projectId, fetchApiList])
+
   // API 완료 처리 함수
   const completeApi = useCallback(async () => {
     if (!projectId || !apiId) {
@@ -290,9 +301,7 @@ export default function CanvasPage() {
       console.log("API 완료 응답:", response.data)
 
       // API 목록을 새로고침하여 최신 상태 반영
-      if (apiListVisible) {
-        fetchApiList()
-      }
+      fetchApiList()
     } catch (err) {
       console.error("API 완료 처리 오류:", err)
 
@@ -302,7 +311,7 @@ export default function CanvasPage() {
         alert("API 완료 처리 중 오류가 발생했습니다.")
       }
     }
-  }, [projectId, apiId, apiListVisible, fetchApiList])
+  }, [projectId, apiId, fetchApiList])
 
   // 버전 선택 핸들러 - 채팅 컴포넌트에서 호출됨
   const handleVersionSelect = useCallback(
@@ -315,9 +324,11 @@ export default function CanvasPage() {
       // 상태 업데이트
       setSelectedVersion(versionId)
 
-      // URL 쿼리 파라미터 업데이트 (전체 페이지 새로고침 사용)
+      // URL 쿼리 파라미터 업데이트 (새로고침 없이 URL 업데이트)
       if (projectId && apiId) {
-        window.location.href = `/canvas/${projectId}/${apiId}?version=${versionId}`
+        const url = new URL(window.location.href)
+        url.searchParams.set("version", versionId)
+        window.history.pushState({}, "", url.toString())
       }
     },
     [selectedVersion, projectId, apiId]
@@ -330,11 +341,8 @@ export default function CanvasPage() {
 
   // 마우스가 패널에 들어갈 때 호출
   const handleMouseEnter = useCallback(() => {
-    if (apiListData.length === 0 && projectId) {
-      fetchApiList()
-    }
     setApiListVisible(true)
-  }, [apiListData.length, fetchApiList, projectId])
+  }, [])
 
   // 탭 변경 핸들러
   const handleTabChange = useCallback((tab: SidePanelTab) => {
@@ -361,18 +369,15 @@ export default function CanvasPage() {
     }
   }, [projectId])
 
-  // 페이지 진입 시 일관된 Hook 실행을 보장하기 위한 useLayoutEffect
-  useLayoutEffect(() => {
-    // 페이지 로드 시 URL 상태 확인
-    const urlParams = new URLSearchParams(window.location.search)
-    const hasVersion = urlParams.has("version")
-
-    // 쿼리 파라미터가 없는 경우 페이지 새로고침
-    if (!hasVersion && projectId && apiId) {
-      // 기본 버전 1로 리디렉션
-      window.location.href = `/canvas/${projectId}/${apiId}?version=1`
+  // Add this with the other useEffect hooks
+  useEffect(() => {
+    if (apiListData.length > 0 && apiId) {
+      const currentApi = apiListData.find((item) => item.apiId === apiId)
+      if (currentApi && currentApi.endpoint) {
+        setCurrentApiEndpoint(currentApi.endpoint)
+      }
     }
-  }, [projectId, apiId])
+  }, [apiListData, apiId])
 
   return (
     <div className="bg-blue-50 p-2 relative">
@@ -391,7 +396,6 @@ export default function CanvasPage() {
                 <ArrowLeft size={16} />
                 <span>BACK</span>
               </button>
-              <h2 className="text-xl font-bold">API 정보</h2>
             </div>
             <button onClick={() => setApiListVisible(false)} className="p-2 rounded-full hover:bg-gray-100">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -443,7 +447,7 @@ export default function CanvasPage() {
                             onClick={() => handleApiItemClick(item.apiId)}
                           >
                             <div className="font-medium text-lg">{item.name || "이름 없음"}</div>
-                            <div className="text-sm text-gray-500 mb-1">ID: {item.apiId || "없음"}</div>
+
                             <div className="text-sm mb-1">
                               상태:
                               <span
@@ -454,6 +458,10 @@ export default function CanvasPage() {
                                 {item.status || "알 수 없음"}
                               </span>
                             </div>
+
+                            {/* Add endpoint display */}
+                            {item.endpoint && <div className="text-sm text-gray-700 mb-1 font-mono bg-gray-100 p-1 rounded overflow-x-auto">{item.endpoint}</div>}
+
                             {item.description && <p className="text-sm text-gray-700">{item.description}</p>}
                           </li>
                         )
@@ -464,7 +472,7 @@ export default function CanvasPage() {
               )}
 
               <div className="pt-4">
-                <button onClick={completeApi} className="w-full py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+                <button onClick={completeApi} className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
                   현재 API 완료 처리
                 </button>
               </div>
@@ -474,7 +482,7 @@ export default function CanvasPage() {
           {/* DTO 정보 탭 */}
           {activeTab === "dto" && (
             <div className="flex-1 overflow-hidden">
-              <DtoContainer diagramData={diagramData} loading={loading} isCollapsed={false} onToggleCollapse={() => {}} />
+              <DtoContainer diagramData={diagramData} loading={loading} onToggleCollapse={() => {}} />
             </div>
           )}
         </div>
@@ -482,7 +490,7 @@ export default function CanvasPage() {
 
       <div className="max-w-full mx-auto">
         {/* 3단 레이아웃 - 비율 30:70 */}
-        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-2rem)] overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-1rem)] overflow-hidden">
           {/* 왼쪽 섹션 (비율 30%) - 채팅 데이터 전달 */}
           <div className="w-full md:w-[30%] min-w-0 h-full">
             <div className="h-full">
@@ -523,6 +531,7 @@ export default function CanvasPage() {
                   selectedVersion={selectedVersion}
                   versions={versions}
                   onVersionSelect={handleVersionSelect}
+                  endpoint={currentApiEndpoint}
                 />
               )}
             </div>

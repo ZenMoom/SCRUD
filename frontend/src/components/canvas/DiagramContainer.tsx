@@ -4,24 +4,72 @@ import type React from "react"
 
 import { useCallback, useEffect, useState, useRef } from "react"
 import ReactFlow, { Background, Controls, type Edge, type Node as ReactFlowNode, useNodesState, useEdgesState, MiniMap, Panel, NodeToolbar, Position } from "reactflow"
-import { Map, MapPinOffIcon as MapOff, Target, X, ChevronDown, Clock } from "lucide-react"
+import { Map, MapPinOffIcon as MapOff, Target, X, ChevronDown, Clock, Code, Copy, Check } from "lucide-react"
 import "reactflow/dist/style.css"
 import type { DiagramResponse, DiagramDto, ComponentDto, ConnectionDto } from "@generated/model"
 import { MethodNode } from "./nodes/MethodNode"
 import { ClassNode } from "./nodes/ClassNode"
 import { InterfaceNode } from "./nodes/InterfaceNode"
 import { CustomEdge } from "./edges/CustomEdge"
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
+import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism"
+
+// 코드 모달 콘텐츠 타입 정의
+interface CodeModalContent {
+  title: string
+  code: string
+  type: "method" | "class" | "interface" // 명확한 유니온 타입 사용
+}
+
+// 코드 들여쓰기 정돈 함수
+const formatCode = (code: string): string => {
+  if (!code || code.trim() === "") return "// 코드가 없습니다."
+
+  // 각 줄로 분리
+  const lines = code.split("\n")
+
+  // 빈 줄이 아닌 줄만 필터링
+  const nonEmptyLines = lines.filter((line) => line.trim().length > 0)
+
+  if (nonEmptyLines.length === 0) return code
+
+  // 각 줄의 들여쓰기(공백) 수 계산 - null 체크 추가
+  const indentSizes = nonEmptyLines.map((line) => {
+    const match = line.match(/^\s*/)
+    return match ? match[0].length : 0
+  })
+
+  // 최소 들여쓰기 찾기 (0이 아닌 값 중에서)
+  const nonZeroIndents = indentSizes.filter((size) => size > 0)
+  const minIndent = nonZeroIndents.length > 0 ? Math.min(...nonZeroIndents) : 0
+
+  // 모든 줄에서 최소 들여쓰기만큼 제거
+  return lines
+    .map((line) => {
+      // 빈 줄은 그대로 유지
+      if (line.trim().length === 0) return ""
+
+      // 들여쓰기가 최소값보다 작으면 그대로 유지
+      const matchResult = line.match(/^\s*/)
+      const currentIndent = matchResult ? matchResult[0].length : 0
+
+      if (currentIndent < minIndent) return line
+
+      // 최소 들여쓰기만큼 제거
+      return line.substring(minIndent)
+    })
+    .join("\n")
+}
 
 // 미리 정의된 배경색 배열 추가 (파스텔톤으로 구성)
 const backgroundColors = [
-  "rgba(255, 228, 225, 0.4)", // 연한 분홍색
-  "rgba(230, 230, 250, 0.4)", // 연한 라벤더색
-  "rgba(255, 245, 238, 0.4)", // 연한 씨쉘색
-  "rgba(240, 255, 240, 0.4)", // 연한 허니듀색
-  "rgba(255, 250, 205, 0.4)", // 연한 레몬 쉬폰색
-  "rgba(245, 255, 250, 0.4)", // 연한 민트 크림색
-  "rgba(240, 248, 255, 0.4)", // 연한 앨리스 블루색
-  "rgba(255, 240, 245, 0.4)", // 연한 라벤더 블러쉬색
+  "rgba(240, 248, 255, 0.6)", // 연한 앨리스 블루색
+  "rgba(230, 230, 250, 0.6)", // 연한 라벤더색
+  "rgba(255, 245, 238, 0.6)", // 연한 씨쉘색
+  "rgba(240, 255, 240, 0.6)", // 연한 허니듀색
+  "rgba(255, 250, 205, 0.6)", // 연한 레몬 쉬폰색
+  "rgba(245, 255, 250, 0.6)", // 연한 민트 크림색
+  "rgba(255, 240, 245, 0.6)", // 연한 라벤더 블러쉬색
 ]
 
 // 노드 및 엣지 타입 정의
@@ -38,10 +86,10 @@ const edgeTypes = {
 // 메서드 노드의 기본 높이와 확장 시 추가 높이
 const METHOD_BASE_HEIGHT = 80 // 기본 높이
 const METHOD_EXPANDED_EXTRA_HEIGHT = 200 // 확장 시 추가 높이
-const METHOD_VERTICAL_SPACING = 70 // 메서드 간 수직 간격 (증가)
-const CLASS_PADDING_TOP = 150 // 클래스 상단 패딩 (제목 영역) (증가)
-const CLASS_PADDING_BOTTOM = 90 // 클래스 하단 패딩 (증가)
-const CLASS_WIDTH = 500 // 클래스 노드 너비 (증가)
+const METHOD_VERTICAL_SPACING = 50 // 메서드 간 수직 간격 (증가)
+const CLASS_PADDING_TOP = 120 // 클래스 상단 패딩 (제목 영역) (증가)
+const CLASS_PADDING_BOTTOM = 80 // 클래스 하단 패딩 (증가)
+const CLASS_WIDTH = 450 // 클래스 노드 너비 (증가)
 
 // 선택 타입 정의
 type SelectionType = "none" | "api" | "class" | "interface" | "method"
@@ -77,6 +125,7 @@ type DiagramContainerProps = {
   selectedVersion?: string | null // 선택된 버전 ID 추가
   versions?: VersionInfo[] // 사용 가능한 버전 목록 추가
   onVersionSelect?: (versionId: string) => void // 버전 선택 콜백 추가
+  endpoint?: string // Add endpoint prop
 }
 
 // 타입 가드 함수들
@@ -130,7 +179,7 @@ function isDiagramDto(data: unknown): data is DiagramDto {
 }
 
 // 명시적으로 React.ReactElement 반환 타입 지정
-export default function DiagramContainer({ diagramData, loading, error, onSelectionChange, selectedVersion, versions = [], onVersionSelect }: DiagramContainerProps): React.ReactElement {
+export default function DiagramContainer({ diagramData, loading, error, onSelectionChange, selectedVersion, versions = [], onVersionSelect, endpoint }: DiagramContainerProps): React.ReactElement {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
@@ -152,6 +201,17 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   // 버전 목록 상태 추가
   const [showVersions, setShowVersions] = useState<boolean>(false)
   const [availableVersions, setAvailableVersions] = useState<VersionInfo[]>([])
+
+  // 코드 모달 상태 추가 - 타입 명확히 지정
+  const [codeModalOpen, setCodeModalOpen] = useState(false)
+  const [codeModalContent, setCodeModalContent] = useState<CodeModalContent>({
+    title: "",
+    code: "",
+    type: "method", // 기본값 설정
+  })
+
+  // 코드 복사 상태 추가
+  const [codeCopied, setCodeCopied] = useState(false)
 
   // 버전 목록 참조 (외부 클릭 감지용)
   const versionsRef = useRef<HTMLDivElement>(null)
@@ -197,7 +257,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     [targetNodes]
   )
 
-  // 타겟 노드 제거 핸들러 (자�� 노드 제거 시 부모도 제거)
+  // 타겟 노드 제거 핸들러 (자식식 노드 제거 시 부모도 제거)
   const removeTargetNode = useCallback(
     (nodeId: string) => {
       setTargetNodes((prev) => {
@@ -417,7 +477,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
             width: CLASS_WIDTH, // 넓이 증가
             height: totalHeight,
             backgroundColor,
-            padding: "10px",
           },
         })
 
@@ -570,6 +629,20 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
       }
     }
 
+    // 코드 모달 이벤트 핸들러 추가
+    const handleOpenCodeModal = (e: Event) => {
+      const customEvent = e as CustomEvent
+      console.log("코드 모달 이벤트 수신:", customEvent.detail)
+      if (customEvent.detail) {
+        setCodeModalContent({
+          title: customEvent.detail.title || "",
+          code: customEvent.detail.code || "",
+          type: customEvent.detail.type as "method" | "class" | "interface",
+        })
+        setCodeModalOpen(true)
+      }
+    }
+
     // 버전 드롭다운 외부 클릭 감지
     const handleClickOutside = (event: MouseEvent) => {
       if (versionsRef.current && !versionsRef.current.contains(event.target as Element)) {
@@ -580,6 +653,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     // 이벤트 리스너 등록
     document.addEventListener("toggleMethodExpand", handleToggleExpand as EventListener)
     document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("openCodeModal", handleOpenCodeModal as EventListener)
 
     // 타겟 제거 이벤트 리스너 추가
     const diagramContainer = document.getElementById("diagram-container")
@@ -591,6 +665,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     return () => {
       document.removeEventListener("toggleMethodExpand", handleToggleExpand as EventListener)
       document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("openCodeModal", handleOpenCodeModal as EventListener)
 
       if (diagramContainer) {
         diagramContainer.removeEventListener("removeTarget", handleRemoveTarget as EventListener)
@@ -643,6 +718,14 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     [onVersionSelect]
   )
 
+  // 코드 복사 핸들러
+  const handleCopyCode = useCallback(() => {
+    navigator.clipboard.writeText(codeModalContent.code).then(() => {
+      setCodeCopied(true)
+      setTimeout(() => setCodeCopied(false), 2000)
+    })
+  }, [codeModalContent.code])
+
   // 로딩 상태 표시
   if (loading) {
     return (
@@ -685,6 +768,9 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        elevateEdgesOnSelect={true}
+        zoomOnScroll={false}
+        selectNodesOnDrag={false}
         fitView
         minZoom={0.5}
         maxZoom={2}
@@ -697,10 +783,25 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         selectionOnDrag
       >
         <Background />
-        <Controls position="top-left" style={{ top: "70px" }} />
+        <Controls position="top-left" style={{ top: "400px" }} />
 
         {/* 조건부로 MiniMap 렌더링 */}
         {showMiniMap && <MiniMap nodeStrokeWidth={3} zoomable pannable />}
+
+        {/* 엔드포인트 표시 패널 (왼쪽 상단) */}
+        {endpoint && (
+          <Panel position="top-left" className="ml-2 mt-2">
+            <div className="bg-white p-2 rounded-lg ">
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono text-gray-700">{endpoint}</code>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Panel>
+        )}
 
         {/* 노드 툴바 */}
         {nodes.map((node) => (
@@ -713,27 +814,48 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
             className="bg-white p-2 rounded-md shadow-md flex items-center gap-2"
           >
             {isNodeTargeted(node.id) ? (
-              <button onClick={() => removeTargetNode(node.id)} className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors">
+              <button onClick={() => removeTargetNode(node.id)} className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors">
                 <X size={14} />
                 <span>타겟 해제</span>
               </button>
             ) : (
-              <button onClick={() => addTargetNode(node)} className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors">
+              <button onClick={() => addTargetNode(node)} className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors">
                 <Target size={14} />
                 <span>타겟 추가</span>
+              </button>
+            )}
+
+            {/* 코드 자세히보기 버튼 - 메서드 노드에만 표시 */}
+            {node.type === "method" && (
+              <button
+                onClick={() => {
+                  const nodeData = node.data
+
+                  setCodeModalContent({
+                    title: nodeData.signature,
+                    code: nodeData.body || "",
+                    type: "method",
+                  })
+                  setCodeModalOpen(true)
+                  setShowToolbar(null) // 툴바 닫기
+                }}
+                className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+              >
+                <Code size={14} />
+                <span>코드 자세히보기</span>
               </button>
             )}
           </NodeToolbar>
         ))}
 
         {/* 선택된 타겟 표시 패널 */}
-        <Panel position="top-left" className="ml-4 mt-4">
-          <div className="bg-white px-4 py-3 rounded-md shadow-md">
+        <Panel position="bottom-left" className="ml-2 mt-2">
+          <div className=" px-2 py-2">
             <div className="flex flex-wrap gap-2">
               {targetNodes.length > 0 ? (
                 targetNodes.map((target) => (
                   <div key={target.id} className="relative group">
-                    <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs max-w-[150px] overflow-hidden">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs max-w-[150px] overflow-hidden">
                       <span className="truncate">
                         {target.type === "class" && "클래스: "}
                         {target.type === "interface" && "인터페이스: "}
@@ -742,10 +864,10 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
                       </span>
                       <button
                         onClick={() => removeTargetNode(target.id)}
-                        className="ml-1 p-0.5 rounded-full bg-green-200 hover:bg-green-300 transition-colors flex-shrink-0"
+                        className="ml-1 p-0.5 rounded-full bg-red-200 hover:bg-red-300 transition-colors flex-shrink-0"
                         aria-label={`${target.name} 타겟 제거`}
                       >
-                        <X size={12} className="text-green-700" />
+                        <X size={12} className="text-red-700" />
                       </button>
                     </div>
 
@@ -771,19 +893,12 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
           </div>
         </Panel>
 
-        {/* API 경로 표시 (오른쪽 상단) */}
-        <Panel position="top-right" className="mr-4 mt-4">
-          <div className="bg-white px-4 py-2 rounded-md shadow-md">
-            <div className="text-sm font-medium text-green-600">[POST] api/board/create</div>
-          </div>
-        </Panel>
-
         {/* 버전 정보 패널 (오른쪽 상단) */}
         <Panel position="top-right" className="mr-4 mt-16">
           <div className="relative" ref={versionsRef}>
-            <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-md hover:bg-gray-50 transition-colors">
+            <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-sm hover:bg-gray-50 transition-colors">
               <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">버전: {currentVersion}</span>
+                <span className="text-md font-bold">V {currentVersion}</span>
                 {currentVersionInfo && <span className="text-xs text-gray-500">{currentVersionInfo.description}</span>}
               </div>
               <ChevronDown size={16} className={`text-gray-600 transition-transform ${showVersions ? "rotate-180" : ""}`} />
@@ -791,7 +906,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
             {/* 버전 드롭다운 - 버전 1부터 최신 버전까지 순서대로 표시 */}
             {showVersions && availableVersions.length > 0 && (
-              <div className="absolute right-0 mt-1 w-64 bg-white rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+              <div className="absolute right-0 mt-1 w-44 bg-white rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
                 <div className="py-1">
                   {availableVersions.map((version) => (
                     <div
@@ -818,14 +933,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
           </div>
         </Panel>
 
-        {/* 디버그 정보 패널 */}
-        <Panel position="bottom-left" className="ml-4 mb-72">
-          <div className="bg-white p-2 rounded-md shadow-md text-xs">
-            <div>노드 수: {nodes.length}</div>
-            <div>엣지 수: {edges.length}</div>
-          </div>
-        </Panel>
-
         {/* MiniMap 토글 버튼 - 위치 조정 */}
         <Panel position="bottom-right" className="mb-72 mr-2">
           <button onClick={toggleMiniMap} className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors" title={showMiniMap ? "미니맵 숨기기" : "미니맵 표시"}>
@@ -833,6 +940,60 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
           </button>
         </Panel>
       </ReactFlow>
+
+      {/* 코드 모달 - 메서드 코드만 표시 */}
+      {codeModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setCodeModalOpen(false)}>
+          <div className="bg-white rounded-lg shadow-xl w-4/5 max-w-4xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-medium text-lg">{codeModalContent.title}</h3>
+              <button onClick={() => setCodeModalOpen(false)} className="p-1 rounded-full hover:bg-gray-100">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              <SyntaxHighlighter
+                language="typescript"
+                style={vscDarkPlus}
+                customStyle={{
+                  margin: 0,
+                  borderRadius: "6px",
+                  fontSize: "16px",
+                }}
+                showLineNumbers={true}
+                lineNumberStyle={{
+                  minWidth: "3em",
+                  color: "#606366",
+                  textAlign: "right",
+                  fontSize: "14px",
+                  borderRight: "1px solid #404040",
+                  paddingRight: "1em",
+                  marginRight: "1em",
+                }}
+                wrapLines={true}
+                wrapLongLines={false}
+              >
+                {formatCode(codeModalContent.code)}
+              </SyntaxHighlighter>
+            </div>
+            <div className="p-4 border-t flex justify-end">
+              <button onClick={handleCopyCode} className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors flex items-center gap-2">
+                {codeCopied ? (
+                  <>
+                    <Check size={16} />
+                    <span>복사됨</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} />
+                    <span>코드 복사</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

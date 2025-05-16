@@ -19,13 +19,16 @@ export const CustomEdge = memo(({ id, sourceX, sourceY, targetX, targetY, source
   const { isInterfaceRelated = false } = data || {}
 
   return (
-    <path
-      id={id}
-      className={`react-flow__edge-path ${isInterfaceRelated ? "stroke-blue-500" : "stroke-gray-700"}`}
-      d={edgePath}
-      strokeWidth={1.5}
-      strokeDasharray={isInterfaceRelated ? "5,5" : "none"}
-    />
+    <g style={{ zIndex: 1000 }}>
+      <path
+        id={id}
+        className={`react-flow__edge-path ${isInterfaceRelated ? "stroke-blue-500" : "stroke-gray-700"}`}
+        d={edgePath}
+        strokeWidth={2.5}
+        strokeDasharray={isInterfaceRelated ? "5,5" : "none"}
+        style={{ zIndex: 1000 }}
+      />
+    </g>
   )
 })
 

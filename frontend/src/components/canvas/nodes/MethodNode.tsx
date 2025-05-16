@@ -8,6 +8,46 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism"
 import { useState } from "react"
 
+// 코드 들여쓰기 정돈 함수
+const formatCode = (code: string): string => {
+  if (!code || code.trim() === "") return "// 메서드 바디가 없습니다."
+
+  // 각 줄로 분리
+  const lines = code.split("\n")
+
+  // 빈 줄이 아닌 줄만 필터링
+  const nonEmptyLines = lines.filter((line) => line.trim().length > 0)
+
+  if (nonEmptyLines.length === 0) return code
+
+  // 각 줄의 들여쓰기(공백) 수 계산 - null 체크 추가
+  const indentSizes = nonEmptyLines.map((line) => {
+    const match = line.match(/^\s*/)
+    return match ? match[0].length : 0
+  })
+
+  // 최소 들여쓰기 찾기 (0이 아닌 값 중에서)
+  const nonZeroIndents = indentSizes.filter((size) => size > 0)
+  const minIndent = nonZeroIndents.length > 0 ? Math.min(...nonZeroIndents) : 0
+
+  // 모든 줄에서 최소 들여쓰기만큼 제거
+  return lines
+    .map((line) => {
+      // 빈 줄은 그대로 유지
+      if (line.trim().length === 0) return ""
+
+      // 들여쓰기가 최소값보다 작으면 그대로 유지
+      const matchResult = line.match(/^\s*/)
+      const currentIndent = matchResult ? matchResult[0].length : 0
+
+      if (currentIndent < minIndent) return line
+
+      // 최소 들여쓰기만큼 제거
+      return line.substring(minIndent)
+    })
+    .join("\n")
+}
+
 interface MethodNodeData {
   signature: string
   body: string
@@ -48,19 +88,17 @@ export const MethodNode = memo(({ id, data, selected }: NodeProps<MethodNodeData
 
   return (
     <div
-      className={`p-2 rounded-md border ${
-        isTargeted ? "border-green-500 border-dashed animate-pulse shadow-green-100" : selected ? "border-blue-500 shadow-md" : "border-gray-300"
-      } bg-white w-[350px]`}
+      className={`p-2 rounded-md border ${isTargeted ? "border-red-500 border-dashed animate-pulse shadow-red-100" : selected ? "border-blue-500 shadow-md" : "border-gray-300"} bg-white w-[350px]`}
       style={{
         transition: "height 0.3s ease-in-out, opacity 0.2s ease-in-out, border 0.2s ease-in-out",
         opacity: isTargeted ? 1 : 0.85, // 타겟 노드는 더 밝게
       }}
     >
       {/* 시그니처 부분 */}
-      <div className={`font-mono text-sm p-2 ${isTargeted ? "bg-green-50" : "bg-gray-100"} rounded-t-md flex items-start justify-between`}>
+      <div className={`font-mono text-sm p-2 ${isTargeted ? "bg-red-50" : "bg-gray-100"} rounded-t-md flex items-start justify-between`}>
         <div className="flex-1 break-words">
           {isTargeted && (
-            <span className="inline-flex items-center justify-center bg-green-500 text-white rounded-full w-5 h-5 mr-2">
+            <span className="inline-flex items-center justify-center bg-red-500 text-white rounded-full w-5 h-5 mr-2">
               <Check className="w-3 h-3" />
             </span>
           )}
@@ -94,7 +132,7 @@ export const MethodNode = memo(({ id, data, selected }: NodeProps<MethodNodeData
 
         {!isInterface && (
           <div
-            className={`rounded-b-md border ${isTargeted ? "border-green-200" : "border-gray-200"} overflow-hidden ${isExpanded ? "max-h-60 opacity-100" : "max-h-0 opacity-0 border-0"}`}
+            className={`rounded-b-md border ${isTargeted ? "border-red-200" : "border-gray-200"} overflow-hidden ${isExpanded ? "max-h-60 opacity-100" : "max-h-0 opacity-0 border-0"}`}
             style={{
               transition: "max-height 0.3s ease-in-out, opacity 0.2s ease-in-out, border 0.1s ease-in-out",
             }}
@@ -106,14 +144,26 @@ export const MethodNode = memo(({ id, data, selected }: NodeProps<MethodNodeData
                 customStyle={{
                   margin: 0,
                   padding: "8px",
-                  fontSize: "11px",
+                  fontSize: "14px",
                   borderRadius: "0 0 6px 6px",
                   maxHeight: "240px",
                 }}
+                codeTagProps={{ style: { padding: 0, margin: 0 } }}
+                showLineNumbers={true}
+                lineNumberStyle={{
+                  minWidth: "2em",
+                  color: "#606366",
+                  textAlign: "right",
+                  fontSize: "12px",
+                  borderRight: "1px solid #404040",
+                  paddingRight: "0.5em",
+                  marginRight: "5px",
+                }}
                 wrapLines={true}
-                wrapLongLines={true}
+                wrapLongLines={false}
+                useInlineStyles={true}
               >
-                {body || "// 메서드 바디가 없습니다."}
+                {formatCode(body)}
               </SyntaxHighlighter>
             )}
           </div>
