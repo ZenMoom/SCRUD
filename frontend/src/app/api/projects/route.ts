@@ -142,14 +142,14 @@ export async function POST(request: NextRequest) {
       // 의존성 파일 처리
       else if (key === 'dependencyFile') {
         console.log('\n=== 의존성 파일 처리 시작 ===');
-        const files = value as Array<{ fileName: string; fileContent: string }>;
-        
+        const files = value as Array<{ name: string; content: string }>;
+        console.log("의존성 파일 받은 거 있나?", files)
         files.forEach(file => {
           globalFiles.push({
-            fileName: file.fileName,
+            fileName: file.name,
             fileType: 'DEPENDENCY',
             fileUrl: '',
-            fileContent: file.fileContent
+            fileContent: file.content
           });
         });
         
