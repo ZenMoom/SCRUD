@@ -96,6 +96,10 @@ PostSummaryResponse:
       type: integer
       format: int64
       example: 10
+    commentCount:
+      type: integer
+      format: int64
+      example: 5
 
 PostDetailResponse:
   type: object
@@ -143,9 +147,13 @@ PostDetailResponse:
           type: string
           format: uuid
           example: "550e8400-e29b-41d4-a716-446655440000"
-        username:
+        nickname:
           type: string
           example: "john_doe"
+        profileImgUrl:
+            type: string
+            format: uri
+            example: "https://example.com/profile.jpg"
 
 GetPostListResponse:
   type: object

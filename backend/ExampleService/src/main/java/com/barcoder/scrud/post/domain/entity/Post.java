@@ -54,7 +54,15 @@ public class Post extends BaseTimeEntity {
 	@Builder.Default
 	private Long dislikeCount = 0L;
 
+	@Column(nullable = false)
+	@Builder.Default
+	private Long commentCount = 0L;
+
 	@JsonIgnore
 	@OneToMany(mappedBy = "post")
 	private List<Comment> comments = new ArrayList<>();
+
+	public void addPostViewCount() {
+		this.viewCount++;
+	}
 }

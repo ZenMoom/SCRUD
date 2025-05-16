@@ -1194,6 +1194,7 @@ paths:
         name: categoryId
         required: false
         schema:
+          format: int64
           type: integer
       responses:
         "200":
@@ -1598,6 +1599,7 @@ components:
       name: categoryId
       required: false
       schema:
+        format: int64
         type: integer
     PostId:
       in: path
@@ -3355,12 +3357,14 @@ components:
           viewCount: 123
           title: 게시글 제목
           category: 공지
+          commentCount: 5
         - createdAt: 2000-01-23T04:56:07.000+00:00
           likeCount: 10
           postId: 101
           viewCount: 123
           title: 게시글 제목
           category: 공지
+          commentCount: 5
       properties:
         content:
           items:
@@ -3377,9 +3381,11 @@ components:
         viewCount: 123
         title: 게시글 제목
         category: 공지
+        commentCount: 5
       properties:
         postId:
           example: 101
+          format: int64
           type: integer
         title:
           example: 게시글 제목
@@ -3392,9 +3398,15 @@ components:
           type: string
         viewCount:
           example: 123
+          format: int64
           type: integer
         likeCount:
           example: 10
+          format: int64
+          type: integer
+        commentCount:
+          example: 5
+          format: int64
           type: integer
       type: object
     CreatePostResponse:
@@ -3403,14 +3415,16 @@ components:
       properties:
         postId:
           example: 101
+          format: int64
           type: integer
       type: object
     PostDetailResponse:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
         author:
+          profileImgUrl: https://example.com/profile.jpg
+          nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
-          username: john_doe
         dislikeCount: 1
         likeCount: 10
         postId: 101
@@ -3423,6 +3437,7 @@ components:
       properties:
         postId:
           example: 101
+          format: int64
           type: integer
         title:
           example: 상세 게시글 제목
@@ -3441,12 +3456,15 @@ components:
           type: string
         viewCount:
           example: 123
+          format: int64
           type: integer
         likeCount:
           example: 10
+          format: int64
           type: integer
         dislikeCount:
           example: 1
+          format: int64
           type: integer
         commentCount:
           example: 5
@@ -3461,15 +3479,20 @@ components:
       properties:
         likeCount:
           example: 12
+          format: int64
           type: integer
         dislikeCount:
           example: 2
+          format: int64
           type: integer
       type: object
     GetCommentListResponse:
       example:
         comments:
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          replies:
+          - null
+          - null
           author:
             userId: 550e8400-e29b-41d4-a716-446655440000
             username: john_doe
@@ -3482,6 +3505,9 @@ components:
           content: 댓글 내용입니다.
           updatedAt: 2000-01-23T04:56:07.000+00:00
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          replies:
+          - null
+          - null
           author:
             userId: 550e8400-e29b-41d4-a716-446655440000
             username: john_doe
@@ -3502,6 +3528,9 @@ components:
     CommentResponse:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
+        replies:
+        - null
+        - null
         author:
           userId: 550e8400-e29b-41d4-a716-446655440000
           username: john_doe
@@ -3516,22 +3545,31 @@ components:
       properties:
         commentId:
           example: 101
+          format: int64
           type: integer
         postId:
           example: 5
+          format: int64
           type: integer
         content:
           example: 댓글 내용입니다.
           type: string
         parentCommentId:
           example: 12
+          format: int64
           nullable: true
           type: integer
+        replies:
+          items:
+            $ref: '#/components/schemas/CommentResponse'
+          type: array
         likeCount:
           example: 3
+          format: int64
           type: integer
         dislikeCount:
           example: 1
+          format: int64
           type: integer
         isEdited:
           example: true
@@ -3543,7 +3581,7 @@ components:
           format: date-time
           type: string
         author:
-          $ref: '#/components/schemas/PostDetailResponse_author'
+          $ref: '#/components/schemas/CommentResponse_author'
       type: object
     VoteCommentResponse:
       example:
@@ -3552,9 +3590,11 @@ components:
       properties:
         likeCount:
           example: 4
+          format: int64
           type: integer
         dislikeCount:
           example: 2
+          format: int64
           type: integer
       type: object
     ApiSpecVersionUpdateRequest:
@@ -3706,6 +3746,7 @@ components:
           type: string
         categoryId:
           example: 1
+          format: int64
           type: integer
       required:
       - categoryId
@@ -3745,6 +3786,7 @@ components:
           type: string
         parentCommentId:
           example: 123
+          format: int64
           nullable: true
           type: integer
       required:
@@ -3790,6 +3832,24 @@ components:
           type: integer
       type: object
     PostDetailResponse_author:
+      example:
+        profileImgUrl: https://example.com/profile.jpg
+        nickname: john_doe
+        userId: 550e8400-e29b-41d4-a716-446655440000
+      properties:
+        userId:
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        nickname:
+          example: john_doe
+          type: string
+        profileImgUrl:
+          example: https://example.com/profile.jpg
+          format: uri
+          type: string
+      type: object
+    CommentResponse_author:
       example:
         userId: 550e8400-e29b-41d4-a716-446655440000
         username: john_doe

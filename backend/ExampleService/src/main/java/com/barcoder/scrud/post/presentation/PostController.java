@@ -7,6 +7,7 @@ import com.barcoder.scrud.model.CreatePostResponse;
 import com.barcoder.scrud.model.GetPostListResponse;
 import com.barcoder.scrud.model.PageDto;
 import com.barcoder.scrud.model.PostDetailResponse;
+import com.barcoder.scrud.model.PostDetailResponseAuthor;
 import com.barcoder.scrud.model.PostOrderEnumDto;
 import com.barcoder.scrud.model.PostSortEnumDto;
 import com.barcoder.scrud.model.PostSummaryResponse;
@@ -17,7 +18,10 @@ import com.barcoder.scrud.model.VoteResponse;
 import com.barcoder.scrud.post.application.dto.in.CreatePostIn;
 import com.barcoder.scrud.post.application.dto.in.GetPostListIn;
 import com.barcoder.scrud.post.application.dto.out.CreatePostOut;
+import com.barcoder.scrud.post.application.dto.out.GetPostOut;
 import com.barcoder.scrud.post.application.dto.out.PostListOut;
+import com.barcoder.scrud.post.application.facade.PostGetFacade;
+import com.barcoder.scrud.post.application.service.PostGetService;
 import com.barcoder.scrud.post.application.service.PostService;
 import com.barcoder.scrud.post.domain.enums.PostOrder;
 import com.barcoder.scrud.post.domain.enums.PostSearchType;
@@ -38,6 +42,8 @@ public class PostController implements PostApi {
 
     private final ModelMapper modelMapper;
     private final PostService postService;
+    private final PostGetService postGetService;
+    private final PostGetFacade postGetFacade;
     private final SecurityUtil securityUtil;
 
     /**
@@ -85,7 +91,26 @@ public class PostController implements PostApi {
      */
     @Override
     public ResponseEntity<PostDetailResponse> getPostById(Long postId) {
-        return null;
+
+        // 게시글 상세 조회
+        GetPostOut outDto = postGetFacade.getPostById(postId);
+
+        // author 변환
+        PostDetailResponseAuthor author = modelMapper.map(outDto.getAuthor(), PostDetailResponseAuthor.class);
+
+        // post 변환
+        PostDetailResponse response = modelMapper.map(outDto.getPost(), PostDetailResponse.class);
+
+        // response 카테고리
+        response.setCategory(outDto.getPost().getCategory().getName());
+
+        // response author
+        response.setAuthor(author);
+
+        // response viewCount +1
+        response.setViewCount(response.getViewCount() + 1);
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -115,7 +140,7 @@ public class PostController implements PostApi {
                 .build();
 
         // 게시글 목록 조회
-        PostListOut outDto = postService.getPostList(inDto);
+        PostListOut outDto = postGetService.getPostList(inDto);
 
         // pageDto 변환
         PageDto pageDto = modelMapper.map(outDto, PageDto.class);
