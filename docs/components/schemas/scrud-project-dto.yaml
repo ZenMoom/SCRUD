@@ -62,6 +62,8 @@ GlobalFileListDto:
   description: "전체 전역설정 파일 목록"
   type: object
   properties:
+    project:
+      $ref: "#/ScrudProjectDto"
     content:
       type: array
       items:
