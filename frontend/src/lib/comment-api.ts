@@ -6,7 +6,7 @@ import { GetCommentListResponse } from '@generated/model';
 
 export async function getComments(postId: string): Promise<GetCommentListResponse> {
   try {
-    const response = await fetch(`/api/v1/feedback/${postId}/comments`, {
+    const response = await fetch(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/v1/feedback/${postId}/comments`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
