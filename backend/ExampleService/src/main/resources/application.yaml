@@ -47,6 +47,7 @@ spring:
     init:
       data-locations:
         - classpath:sql/defaultGlobalFile.sql
+        - classpath:sql/defaultCategory.sql
 
       mode: ${SQL_INIT_MODE}
 
