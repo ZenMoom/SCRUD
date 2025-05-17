@@ -1,4 +1,5 @@
 import {
+  CreatePostRequest,
   type GetPostListResponse,
   type PostDetailResponse,
   PostOrderEnumDto,
@@ -61,15 +62,13 @@ export async function fetchPosts(
 /**
  * 게시글 상세 정보를 가져오는 함수
  */
-export async function fetchPostDetail(postId: number): Promise<PostDetailResponse> {
+export async function fetchPostDetail(postId: string): Promise<PostDetailResponse> {
   try {
-    const response = await fetch(`/api/feedback/posts/${postId}`, {
+    const response = await fetch(`http://localhost:3000/api/feedback/${postId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-      credentials: "include", // 쿠키 포함
-      cache: "no-store",
     });
 
     if (!response.ok) {
@@ -111,11 +110,7 @@ export async function votePost(postId: number, voteRequest: PostVoteRequest): Pr
 /**
  * 새 게시글을 작성하는 함수
  */
-export async function createPost(postData: {
-  title: string;
-  content: string;
-  category: number;
-}): Promise<PostDetailResponse> {
+export async function createPost(postData: CreatePostRequest): Promise<PostDetailResponse> {
   try {
     const response = await fetch(`/api/feedback`, {
       method: "POST",
