@@ -63,8 +63,9 @@ export async function fetchPosts(
  * 게시글 상세 정보를 가져오는 함수
  */
 export async function fetchPostDetail(postId: string): Promise<PostDetailResponse> {
+  console.log(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/comment/${postId}`);
   try {
-    const response = await fetch(`api/comment/${postId}`, {
+    const response = await fetch(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/comment/${postId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
