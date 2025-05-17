@@ -36,11 +36,9 @@ public class PostGetFacade {
         UserOut userOut = userUseCase.getUserById(postOut.getUserId());
 
         // out dto 생성
-        GetPostOut outDto = modelMapper.map(postOut, GetPostOut.class).toBuilder()
+        return GetPostOut.builder()
+                .post(postOut)
                 .author(userOut)
                 .build();
-
-        // 반환
-        return outDto;
     }
 }
