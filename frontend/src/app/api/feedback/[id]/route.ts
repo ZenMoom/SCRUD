@@ -1,4 +1,4 @@
-import { CommentApiFactory } from '@generated/api';
+import { PostApiFactory } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -12,8 +12,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       basePath: apiUrl,
     });
 
-    const commentApi = CommentApiFactory(config);
-    const response = await commentApi.getCommentList({
+    const postApi = PostApiFactory(config);
+    const response = await postApi.getPostById({
       postId: Number(id),
     });
 

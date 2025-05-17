@@ -1,18 +1,20 @@
+import { CommentApiFactory } from '@generated/api';
 import { Configuration } from '@generated/configuration';
-import { NextResponse } from 'next/server';
-import { CommentApiFactory } from './../../../../../generated/api/comment-api';
+import { NextRequest, NextResponse } from 'next/server';
 
-// API 기본 URL 설정
 const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params;
-    const config = new Configuration({
-      basePath: apiUrl,
-    });
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
 
+  if (!id) {
+    return NextResponse.json({ error: 'Post ID is required' }, { status: 400 });
+  }
+
+  try {
+    const config = new Configuration({ basePath: apiUrl });
     const commentApi = CommentApiFactory(config);
+
     const response = await commentApi.getCommentList({
       postId: Number(id),
     });
