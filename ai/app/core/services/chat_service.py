@@ -2,11 +2,12 @@ import asyncio
 import json
 import logging
 from datetime import datetime
-from typing import Optional, Tuple, Any, Dict
+from typing import Optional, Tuple, Any, Dict, Coroutine, List
 
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
+from langgraph_sdk.auth.exceptions import HTTPException
 
 from app.api.dto.diagram_dto import UserChatRequest, DiagramResponse, ChatResponse, ChatResponseList
 from app.core.generator.chat_request_evaluator import PropositionAnalysis
@@ -16,7 +17,7 @@ from app.infrastructure.http.client.api_client import ApiSpec, GlobalFileList
 from app.infrastructure.mongodb.repository.chat_repository import ChatRepository
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram, UserChat, SystemChat, Chat, VersionInfo, \
-    PromptResponseEnum
+    PromptResponseEnum, Method
 
 
 class ChatService:
@@ -143,10 +144,10 @@ class ChatService:
         self.logger.info(f"▶ 프로젝트 ID: {project_id}")
         self.logger.info(f"▶ API ID: {api_id}")
         self.logger.info(f"▶ 사용자 채팅 데이터:")
-        self.logger.info(f"   └ {user_chat_data}")
-        self.logger.info(f"▶ API 스펙 정보: {api_spec.model_dump_json()}")
-        self.logger.info(f"▶ 글로벌 파일 개수: {len(global_files.files) if hasattr(global_files, 'files') else 0}개")
-        self.logger.info(f"▶ 글로벌 파일: {global_files.model_dump_json()}")
+        self.logger.info(f"   └ \n{user_chat_data.model_dump_json(indent=2)}")
+        self.logger.info(f"▶ API 스펙 정보: {api_spec.model_dump_json(indent=2)}")
+        self.logger.info(f"▶ 글로벌 파일 개수: {len(global_files.content) if hasattr(global_files, 'content') else 0}개")
+        self.logger.info(f"▶ 글로벌 파일: {global_files.model_dump_json(indent=2)}")
         self.logger.info("-" * 80)
 
         try:
@@ -157,9 +158,14 @@ class ChatService:
                 user_chat_data=user_chat_data,
                 response_queue=response_queue
             )
+            self.logger.info(f"▶ 타겟 메서드 또는 최신 다이어그램 조회 ID: {latest_diagram.diagramId}, Version: {latest_diagram.metadata.version}")
+            self.logger.info(f"▶ 타겟 메서드 또는 최신 다이어그램 조회 결과: {latest_diagram.model_dump_json(indent=2)}")
 
             # 메서드 상세 정보 및 다이어그램 생성 여부 평가
             target_method_details = await self._get_method_details(latest_diagram, user_chat_data)
+            self.logger.info(f"▶ 타겟 메서드의 본문 내용 가져오기")
+            self.logger.info(f"▶▶ {target_method_details} ")
+
             agent_input, should_generate_diagram = await self.evaluate_diagram_generate(
                 target_method_details, user_chat_data
             )
@@ -175,7 +181,7 @@ class ChatService:
             )
 
 
-        except Exception as e:
+        except HTTPException as e:
             await self._handle_error(e, response_queue)
 
     async def _get_latest_diagram(
@@ -186,47 +192,63 @@ class ChatService:
             response_queue: asyncio.Queue
     ) -> Diagram:
         """최신 다이어그램을 조회하는 함수"""
-        self.logger.info(f"최신 다이어그램 조회: project_id={project_id}, api_id={api_id}")
-        
-        # targetMethods가 있는지 확인하고 methodId로 다이어그램 조회
-        if user_chat_data.targetMethods and len(user_chat_data.targetMethods) > 0:
-            method_id = user_chat_data.targetMethods[0].get("methodId", "")
-            if method_id:
-                self.logger.info(f"methodId로 다이어그램 조회: methodId={method_id}")
-                
-                # MongoDB 쿼리를 사용해 methodId가 포함된 다이어그램 조회
-                diagram_with_method = await self.diagram_repository.find_diagram_by_method_id(
-                    project_id=project_id,
-                    api_id=api_id,
-                    method_id=method_id
-                )
-                
-                if diagram_with_method:
-                    self.logger.info(f"methodId={method_id}로 다이어그램을 찾았습니다. version={diagram_with_method.metadata.version}")
-                    return diagram_with_method
-                
-                # methodId가 있는 다이어그램을 찾지 못한 경우
-                error_msg = f"methodId={method_id}에 해당하는 다이어그램을 찾을 수 없습니다."
-                self.logger.error(error_msg)
-                await self.sse_service.send_error(response_queue, error_msg)
-                await self.sse_service.close_stream(response_queue)
-                # 404 에러 발생시키기
-                from fastapi import HTTPException
-                raise HTTPException(status_code=404, detail=error_msg)
-        
-        # 기존 로직: 최신 다이어그램 조회 (find_latest_by_project_api 사용)
-        latest_diagram = await self.diagram_repository.find_latest_by_project_api(project_id, api_id)
 
-        if not latest_diagram:
-            error_msg = f"다이어그램을 찾을 수 없습니다: project_id={project_id}, api_id={api_id}"
+        def _has_target_methods() -> bool:
+            """타겟 메서드가 있는지 확인하는 함수"""
+            return user_chat_data.targetMethods and len(user_chat_data.targetMethods) > 0
+
+        async def _find_diagram_by_method_id() -> Diagram | None:
+            """메서드 ID로 다이어그램을 조회하는 함수"""
+            self.logger.info(f"methodId로 다이어그램 조회: methodId={method_id}")
+
+            # MongoDB 쿼리를 사용해 methodId가 포함된 다이어그램 조회
+            diagram_with_method = await self.diagram_repository.find_diagram_by_method_id(
+                project_id=project_id,
+                api_id=api_id,
+                method_id=method_id
+            )
+
+            if diagram_with_method:
+                self.logger.info(f"methodId={method_id}로 다이어그램을 찾았습니다. version={diagram_with_method.metadata.version}")
+                return diagram_with_method
+
+            # 다이어그램을 찾지 못한 경우 에러 처리
+            await _handle_diagram_not_found(
+                f"methodId={method_id}에 해당하는 다이어그램을 찾을 수 없습니다."
+            )
+
+        async def _find_latest_diagram() -> Diagram | None:
+            """최신 다이어그램을 조회하는 함수"""
+            latest_diagram = await self.diagram_repository.find_latest_by_project_api(project_id, api_id)
+
+            if latest_diagram:
+                return latest_diagram
+
+            # 다이어그램을 찾지 못한 경우 에러 처리
+            await _handle_diagram_not_found(
+                f"다이어그램을 찾을 수 없습니다: project_id={project_id}, api_id={api_id}"
+            )
+
+        async def _handle_diagram_not_found(error_msg: str):
+            """다이어그램을 찾지 못했을 때의 에러 처리 함수"""
             self.logger.error(error_msg)
             await self.sse_service.send_error(response_queue, "다이어그램을 찾을 수 없습니다.")
             await self.sse_service.close_stream(response_queue)
+
             # 404 에러 발생시키기
             from fastapi import HTTPException
             raise HTTPException(status_code=404, detail=error_msg)
 
-        return latest_diagram
+        self.logger.info(f"최신 다이어그램 조회: project_id={project_id}, api_id={api_id}")
+
+        # 타겟 메서드가 있는 경우 처리
+        if _has_target_methods():
+            method_id = user_chat_data.targetMethods[0].get("methodId", "")
+            if method_id:
+                return await _find_diagram_by_method_id()
+
+        # 최신 다이어그램 조회
+        return await _find_latest_diagram()
 
     def _generate_uuid(self) -> str:
         """UUID를 생성하는 함수"""
@@ -274,8 +296,24 @@ class ChatService:
         diagram = Diagram.model_validate_json(diagram_response_json)
         return diagram
 
+    async def _get_method_details(self, latest_diagram, user_chat_data) -> List[Method]:
+        target_method_details: List[Method] = []
+        latest_diagram_methods = latest_diagram.components
 
-    async def _get_method_details(self, latest_diagram, user_chat_data):
+        # user_chat_data의 targetMethods 리스트의 methodId와 일치하는 latest_diagram의 methods를 리턴하기
+        for method_info in user_chat_data.targetMethods:
+            method_id = method_info.get("methodId", "")
+            if not method_id:
+                continue
+
+            for method in latest_diagram_methods:
+                if method.methodId == method_id:
+                    target_method_details.append(method)
+                    break
+
+        return target_method_details
+
+    async def _get_method_details2(self, latest_diagram, user_chat_data):
         # 타겟 메서드들의 본문을 수집
 
         target_method_details = []
@@ -346,3 +384,19 @@ class ChatService:
         except Exception as e:
             self.logger.error(f"채팅 기록 조회 중 오류 발생: {str(e)}", exc_info=True)
             raise
+
+    from fastapi import HTTPException
+    async def _handle_error(self, exception: HTTPException, response_queue: asyncio.Queue) -> Dict:
+        """에러를 처리하는 함수"""
+
+        error_message = exception.detail
+        status_code = exception.status_code
+        self.logger.error(f"HTTP 오류 발생 ({status_code}): {error_message}", exc_info=True)
+
+        # 이미 SSE 에러가 전송되었을 수 있으므로 스트림이 열려있는지 확인
+        if not response_queue.empty():
+            # 오류 발생 시 클라이언트에게 알림
+            await self.sse_service.send_error(response_queue, f"오류 {status_code}: {error_message}")
+            await self.sse_service.close_stream(response_queue)
+
+        return {"error": error_message, "status_code": status_code}
