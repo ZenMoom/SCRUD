@@ -64,7 +64,7 @@ export async function fetchPosts(
  */
 export async function fetchPostDetail(postId: string): Promise<PostDetailResponse> {
   try {
-    const response = await fetch(`${process.env.NEXT_PRIVATE_API_BASE_URL}/api/v1/posts/${postId}`, {
+    const response = await fetch(`http://localhost:8080/api/v1/posts/${postId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
