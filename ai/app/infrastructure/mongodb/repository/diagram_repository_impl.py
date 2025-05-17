@@ -218,6 +218,11 @@ class DiagramRepositoryImpl(DiagramRepository):
         
         # 버전 번호를 기준으로 내림차순 정렬하여 최신 버전을 먼저 찾음
         diagram: Diagram = await self.repository.find_one(filter_dict)
+
+        # 만약 diagram이 None이라면 예외 발생
+        if diagram is None:
+            raise ValueError(f"다이어그램을 찾을 수 없습니다: projectId={project_id}, apiId={api_id}, methodId={method_id}")
+
         self.logger.info(f"다이어그램 발견: {diagram.diagramId}")
         
         # 쿼리 실행 및 결과 반환
