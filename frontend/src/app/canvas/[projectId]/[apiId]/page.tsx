@@ -5,7 +5,7 @@
  * 모든 React Hooks는 컴포넌트의 최상위 레벨에서 호출되어야 합니다.
  */
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import axios from "axios"
 import type { DiagramResponse } from "@generated/model"
@@ -62,6 +62,9 @@ export default function CanvasPage() {
   // 버전 관련 상태
   const [versions, setVersions] = useState<VersionInfo[]>([])
   const [selectedVersion, setSelectedVersion] = useState<string | null>(versionParam)
+
+  // 새 버전 감지를 위한 ref
+  const latestVersionRef = useRef<string | null>(null)
 
   // API 목록 데이터 상태
   const [apiListVisible, setApiListVisible] = useState<boolean>(false)
@@ -151,6 +154,12 @@ export default function CanvasPage() {
       })
 
       setVersions(extractedVersions)
+
+      // 최신 버전 ID 저장
+      if (extractedVersions.length > 0) {
+        const latestVersion = extractedVersions[extractedVersions.length - 1]
+        latestVersionRef.current = latestVersion.versionId
+      }
 
       // URL에서 버전 파라미터가 있는 경우 해당 버전 선택
       if (versionParam) {
@@ -300,8 +309,10 @@ export default function CanvasPage() {
       alert("API를 완료했습니다.")
       console.log("API 완료 응답:", response.data)
 
-      // API 목록을 새로고침하여 최신 상태 반영
-      fetchApiList()
+      // API 완료 후 프로젝트 페이지로 이동 (BACK 버튼과 동일한 동작)
+      if (projectId) {
+        window.location.href = `/project/${projectId}/api`
+      }
     } catch (err) {
       console.error("API 완료 처리 오류:", err)
 
@@ -311,7 +322,7 @@ export default function CanvasPage() {
         alert("API 완료 처리 중 오류가 발생했습니다.")
       }
     }
-  }, [projectId, apiId, fetchApiList])
+  }, [projectId, apiId])
 
   // 버전 선택 핸들러 - 채팅 컴포넌트에서 호출됨
   const handleVersionSelect = useCallback(
@@ -332,6 +343,43 @@ export default function CanvasPage() {
       }
     },
     [selectedVersion, projectId, apiId]
+  )
+
+  // 새 버전 정보 수신 핸들러 - 채팅 컴포넌트에서 호출됨
+  const handleNewVersionInfo = useCallback(
+    (versionInfo: { newVersionId: string; description: string }) => {
+      console.log("새 버전 정보 수신:", versionInfo)
+
+      if (versionInfo && versionInfo.newVersionId) {
+        // 새 버전이 현재 선택된 버전과 다르고, 최신 버전보다 높은 경우에만 처리
+        const newVersionNum = Number.parseInt(versionInfo.newVersionId, 10)
+        const currentVersionNum = latestVersionRef.current ? Number.parseInt(latestVersionRef.current, 10) : 0
+
+        if (newVersionNum > currentVersionNum) {
+          console.log(`새 버전 ${versionInfo.newVersionId}로 자동 전환합니다.`)
+
+          // 최신 버전 참조 업데이트
+          latestVersionRef.current = versionInfo.newVersionId
+
+          // 새 버전으로 URL 업데이트 및 페이지 이동
+          if (projectId && apiId) {
+            // 즉시 새 버전의 다이어그램 데이터 요청
+            fetchDiagramData(versionInfo.newVersionId)
+
+            // 선택된 버전 상태 업데이트
+            setSelectedVersion(versionInfo.newVersionId)
+
+            // URL 업데이트 (새로고침 없이)
+            const url = new URL(window.location.href)
+            url.searchParams.set("version", versionInfo.newVersionId)
+            window.history.pushState({}, "", url.toString())
+
+            console.log(`버전 ${versionInfo.newVersionId}의 다이어그램을 요청했습니다.`)
+          }
+        }
+      }
+    },
+    [projectId, apiId, fetchDiagramData]
   )
 
   // 타겟 노드 변경 핸들러
@@ -504,6 +552,7 @@ export default function CanvasPage() {
                 onRefresh={fetchChatData}
                 targetNodes={targetNodes}
                 onVersionSelect={handleVersionSelect}
+                onNewVersionInfo={handleNewVersionInfo}
               />
             </div>
           </div>

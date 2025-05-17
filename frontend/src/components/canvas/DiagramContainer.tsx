@@ -811,17 +811,17 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
             isVisible={showToolbar === node.id}
             position={Position.Top}
             offset={10}
-            className="bg-white p-2 rounded-md shadow-md flex items-center gap-2"
+            className="bg-gray-700 p-2 rounded-md shadow-md flex items-center gap-2"
           >
             {isNodeTargeted(node.id) ? (
-              <button onClick={() => removeTargetNode(node.id)} className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors">
+              <button onClick={() => removeTargetNode(node.id)} className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-red-200 transition-colors">
                 <X size={14} />
-                <span>타겟 해제</span>
+                <span>해제</span>
               </button>
             ) : (
-              <button onClick={() => addTargetNode(node)} className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors">
+              <button onClick={() => addTargetNode(node)} className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-red-200 transition-colors">
                 <Target size={14} />
-                <span>타겟 추가</span>
+                <span>추가</span>
               </button>
             )}
 
@@ -839,10 +839,10 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
                   setCodeModalOpen(true)
                   setShowToolbar(null) // 툴바 닫기
                 }}
-                className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-blue-200 transition-colors"
               >
                 <Code size={14} />
-                <span>코드 자세히보기</span>
+                <span>코드 상세</span>
               </button>
             )}
           </NodeToolbar>
