@@ -8,6 +8,7 @@ import com.barcoder.scrud.oauth.repository.HttpSessionOAuth2AuthorizationRequest
 import com.barcoder.scrud.user.domain.entity.Token;
 import com.barcoder.scrud.user.domain.entity.User;
 import com.barcoder.scrud.user.infrastructure.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,62 +26,79 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final JWTUtil jwtUtil;
-    private final Environment environment;
-    private final UserRepository userRepository;
-    private final HttpSessionOAuth2AuthorizationRequestRepository httpSessionRepository;
+	private final JWTUtil jwtUtil;
+	private final Environment environment;
+	private final UserRepository userRepository;
+	private final HttpSessionOAuth2AuthorizationRequestRepository httpSessionRepository;
 
-    @Override
-    public void onAuthenticationSuccess(HttpServletRequest request,
-                                        HttpServletResponse response, Authentication authentication)
-        throws IOException {
+	@Override
+	public void onAuthenticationSuccess(HttpServletRequest request,
+										HttpServletResponse response, Authentication authentication)
+			throws IOException {
 
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+		UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-        User user = userRepository.findByUsername(userPrincipal.getUsername())
-            .orElseThrow(() -> new ExceptionHandler(ErrorStatus.USER_NOT_FOUND));
+		User user = userRepository.findByUsername(userPrincipal.getUsername())
+				.orElseThrow(() -> new ExceptionHandler(ErrorStatus.USER_NOT_FOUND));
 
-        String redirectUrl = null;
-        String redirectUri = null;
-        String token = null;
+		String redirectUrl = null;
+		String redirectUri = null;
+		String token = null;
 
-        switch(userPrincipal.getProvider()) {
-            case "google":
-                Token jwtToken = jwtUtil.createAccessToken(user);
-                token = jwtToken.getAccessToken();
+		switch (userPrincipal.getProvider()) {
+			case "google":
+				Token jwtToken = jwtUtil.createAccessToken(user);
+				token = jwtToken.getAccessToken();
 
-                response.setHeader("Authorization", "Bearer " + jwtToken.getAccessToken());
+				response.setHeader("Authorization", "Bearer " + jwtToken.getAccessToken());
 
-                redirectUri = environment.getProperty("oauth2.frontRedirectUri");
+				// http only 쿠키에 토큰 저장
+				setAuthCookie(response, jwtToken.getAccessToken());
 
-                break;
+				redirectUri = environment.getProperty("oauth2.frontRedirectUri");
 
-            case "github":
-                token = user.getGithubAccount().getAccessToken();
+				break;
 
-                // 세션에서 저장된 리다이렉트 URI 가져오기
-                redirectUri = httpSessionRepository.removeRedirectUri(request);
+			case "github":
+				token = user.getGithubAccount().getAccessToken();
 
-                // 리다이렉트 URI가 없으면 기본값 사용
-                if (redirectUri == null || redirectUri.isEmpty()) {
-                    redirectUri = environment.getProperty("oauth2.frontRedirectUri");
-                }
-                break;
-        }
+				// 세션에서 저장된 리다이렉트 URI 가져오기
+				redirectUri = httpSessionRepository.removeRedirectUri(request);
 
-        log.info("token = {}", token);
-        log.info("redirectUri = {}", redirectUri);
+				// 리다이렉트 URI가 없으면 기본값 사용
+				if (redirectUri == null || redirectUri.isEmpty()) {
+					redirectUri = environment.getProperty("oauth2.frontRedirectUri");
+				}
+				break;
+		}
 
-        // 토큰과 사용자 정보를 함께 전달
-        // URL 파라미터 인코딩
-        redirectUrl = UriComponentsBuilder.fromUriString(redirectUri)
-            .queryParam("token", token)
-            .queryParam("loginId", user.getUsername())
-            .queryParam("profileImg", user.getProfileImgUrl() != null ? user.getProfileImgUrl() : "")
-            .build()
-            .encode()  // 한 번만 인코딩
-            .toUriString();
+		log.info("token = {}", token);
+		log.info("redirectUri = {}", redirectUri);
 
-        getRedirectStrategy().sendRedirect(request, response, redirectUrl);
-    }
+		// 토큰과 사용자 정보를 함께 전달
+		// URL 파라미터 인코딩
+		redirectUrl = UriComponentsBuilder.fromUriString(redirectUri)
+				.queryParam("token", token)
+				.queryParam("loginId", user.getUsername())
+				.queryParam("profileImg", user.getProfileImgUrl() != null ? user.getProfileImgUrl() : "")
+				.build()
+				.encode()  // 한 번만 인코딩
+				.toUriString();
+
+		getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+	}
+
+	private void setAuthCookie(HttpServletResponse response, String jwtToken) {
+
+		// 토큰 만료 시간
+		int tokenExpireTime = jwtUtil.getTokenExpireTime();
+
+		Cookie cookie = new Cookie("access_token", jwtToken);
+		cookie.setHttpOnly(true);                       // ✅ JS에서 접근 불가
+		cookie.setSecure(true);                         // ✅ HTTPS일 때만 전송
+		cookie.setPath("/");                            // 모든 경로에 전송
+		cookie.setMaxAge(tokenExpireTime);                      // 유효 시간
+
+		response.addCookie(cookie);
+	}
 }
