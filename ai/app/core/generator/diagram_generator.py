@@ -21,18 +21,16 @@ class DateTimeEncoder(json.JSONEncoder):
 
 
 class DiagramProcessor:
-    def __init__(self, logger, parser, diagram_repository):
+    def __init__(self, logger, parser):
         """
         DiagramProcessor 초기화
 
         Args:
             logger: 로깅을 위한 로거 객체
             parser: LLM 응답을 파싱하기 위한 파서 객체
-            diagram_repository: 다이어그램 데이터를 저장하기 위한 저장소 객체
         """
         self.logger = logger
         self.parser = parser
-        self.diagram_repository = diagram_repository
 
     def _build_prompt(self, user_chat_data, latest_diagram):
         """
@@ -188,7 +186,6 @@ class DiagramProcessor:
         version = 1
         if latest_diagram and hasattr(latest_diagram, 'metadata') and latest_diagram.metadata:
             version = latest_diagram.metadata.version + 1
-            self.logger.info(f"버전 업데이트: {latest_diagram.metadata.version} -> {version}")
         else:
             self.logger.info(f"최신 다이어그램이 없거나 메타데이터가 없어 새 버전 1로 시작합니다.")
 
@@ -207,10 +204,6 @@ class DiagramProcessor:
             diagram_data.metadata.lastModified = current_time
             # diagram_data.metadata.name과 description도 필요시 업데이트 가능
 
-        # MongoDB에 저장
-        self.logger.info(f"다이어그램 MongoDB에 저장 중: diagramId={diagram_data.diagramId}, version={version}")
-        inserted_id = await self.diagram_repository.insert_one(diagram_data)  # 비동기 저장 가정
-        self.logger.info(f"다이어그램 저장 완료: id={inserted_id}")
 
         return diagram_data  # 저장 후의 diagram_data 반환 (혹은 inserted_id 등 필요에 따라)
 
