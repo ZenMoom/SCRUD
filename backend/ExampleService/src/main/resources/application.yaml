@@ -100,6 +100,8 @@ security:
     requestMatchers:
       - /api/v1/rules:GET
       - /api/v1/api-specs:GET, POST, PUT
+      - /api/v1/posts:GET
+      - /api/v1/posts/**/comments:GET
       - /api/sse/connect/**:GET
       - /api/sse/stream/**:GET
       - /api/sse/status/**:GET

@@ -6,7 +6,7 @@ import { GetCommentListResponse } from '@generated/model';
 
 export async function getComments(postId: string): Promise<GetCommentListResponse> {
   try {
-    const response = await fetch(`${process.env.NEXT_PRIVATE_API_BASE_URL}/api/v1/posts/${postId}/comments`, {
+    const response = await fetch(`http://localhost:8080/api/v1/posts/${postId}/comments`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
