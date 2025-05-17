@@ -7,7 +7,7 @@ import {
   type PostVoteRequest,
   SearchTypeEnumDto,
   type VoteResponse,
-} from "@generated/model";
+} from '@generated/model';
 
 /**
  * 게시글 목록을 가져오는 함수
@@ -27,24 +27,24 @@ export async function fetchPosts(
     size: size.toString(),
     sort: sort,
     order: order,
-    keyword: keyword || "",
+    keyword: keyword || '',
     type: searchType || SearchTypeEnumDto.TITLE,
   });
 
   // 카테고리가 있으면 추가
-  if (category && category !== "all") {
-    params.append("category", category);
+  if (category && category !== 'all') {
+    params.append('category', category);
   }
 
   try {
     // 내부 API 라우트로 요청 (credentials: 'include' 옵션 추가)
     const response = await fetch(`/api/feedback?${params.toString()}`, {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
-      credentials: "include", // 쿠키 포함
-      cache: "no-store", // 항상 최신 데이터를 가져옴
+      credentials: 'include', // 쿠키 포함
+      cache: 'no-store', // 항상 최신 데이터를 가져옴
     });
 
     if (!response.ok) {
@@ -53,7 +53,7 @@ export async function fetchPosts(
 
     return await response.json();
   } catch (error) {
-    console.error("Failed to fetch posts:", error);
+    console.error('Failed to fetch posts:', error);
     // 에러 발생 시 빈 응답 반환
     return { content: [], pageable: { totalPages: 0, totalElements: 0 } };
   }
@@ -64,10 +64,10 @@ export async function fetchPosts(
  */
 export async function fetchPostDetail(postId: string): Promise<PostDetailResponse> {
   try {
-    const response = await fetch(`http://localhost:3000/api/feedback/${postId}`, {
-      method: "GET",
+    const response = await fetch(`/api/feedback/${postId}`, {
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
@@ -88,11 +88,11 @@ export async function fetchPostDetail(postId: string): Promise<PostDetailRespons
 export async function votePost(postId: number, voteRequest: PostVoteRequest): Promise<VoteResponse> {
   try {
     const response = await fetch(`/api/feedback/posts/${postId}/vote`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
-      credentials: "include", // 쿠키 포함
+      credentials: 'include', // 쿠키 포함
       body: JSON.stringify(voteRequest),
     });
 
@@ -113,11 +113,11 @@ export async function votePost(postId: number, voteRequest: PostVoteRequest): Pr
 export async function createPost(postData: CreatePostRequest): Promise<PostDetailResponse> {
   try {
     const response = await fetch(`/api/feedback`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
-      credentials: "include", // 쿠키 포함
+      credentials: 'include', // 쿠키 포함
       body: JSON.stringify(postData),
     });
 
@@ -127,7 +127,7 @@ export async function createPost(postData: CreatePostRequest): Promise<PostDetai
 
     return await response.json();
   } catch (error) {
-    console.error("Failed to create post:", error);
+    console.error('Failed to create post:', error);
     throw error;
   }
 }
@@ -138,11 +138,11 @@ export async function createPost(postData: CreatePostRequest): Promise<PostDetai
 export async function deletePost(postId: number): Promise<void> {
   try {
     const response = await fetch(`/api/feedback/posts/${postId}`, {
-      method: "DELETE",
+      method: 'DELETE',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
-      credentials: "include", // 쿠키 포함
+      credentials: 'include', // 쿠키 포함
     });
 
     if (!response.ok) {
