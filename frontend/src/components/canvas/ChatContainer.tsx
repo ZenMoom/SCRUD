@@ -20,6 +20,7 @@ interface ChatContainerProps {
   onRefresh: () => Promise<void>
   targetNodes: TargetNode[]
   onVersionSelect?: (versionId: string) => void
+  onNewVersionInfo?: (versionInfo: { newVersionId: string; description: string }) => void
 }
 
 // SSE 응답 타입 정의
@@ -59,7 +60,7 @@ interface ChatMessage {
 // 요청 태그 타입 정의
 type RequestTag = "EXPLAIN" | "REFACTORING" | "OPTIMIZE" | "IMPLEMENT"
 
-export default function ChatContainer({ projectId, apiId, versionId, chatData, loading, error, onRefresh, targetNodes, onVersionSelect }: ChatContainerProps) {
+export default function ChatContainer({ projectId, apiId, versionId, chatData, loading, error, onRefresh, targetNodes, onVersionSelect, onNewVersionInfo }: ChatContainerProps) {
   // 상태 관리
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
@@ -157,7 +158,14 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         }
 
         if (parsedData && parsedData.versionInfo) {
+          console.log("SSE에서 새 버전 정보 감지:", parsedData.versionInfo)
           setVersionInfo(parsedData.versionInfo)
+
+          // 새 버전 정보를 부모 컴포넌트에 즉시 전달
+          if (onNewVersionInfo) {
+            console.log("부모 컴포넌트에 새 버전 정보 전달:", parsedData.versionInfo)
+            onNewVersionInfo(parsedData.versionInfo)
+          }
         }
 
         if (
@@ -183,7 +191,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         console.error("SSE 메시지 처리 오류:", err)
       }
     },
-    [currentMessageCompleted, disconnectSSE, onRefresh]
+    [currentMessageCompleted, disconnectSSE, onRefresh, onNewVersionInfo]
   )
 
   // 시스템 응답에서 버전 정보 감지 시 부모 컴포넌트에 알림
@@ -635,7 +643,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
                   <button
                     onClick={() => handleVersionClick(msg.versionInfo!.versionId)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
-                      versionId === msg.versionInfo!.versionId ? " bg-blue-500 text-white" : "border border-blue-500 bg-blue-50 text-blue-800 hover:bg-blue-200"
+                      versionId === msg.versionInfo!.versionId ? "bg-blue-500 text-white" : "border border-blue-500 bg-blue-50 text-blue-800 hover:bg-blue-200"
                     }`}
                   >
                     <Clock size={16} />
@@ -651,7 +659,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             return null
           })
         ) : (
-          <div className="h-full flex items-center justify-center text-gray-500">채팅 내역이 없습니다.</div>
+          <div className="h-full flex items-center justify-center text-gray-500">��팅 내역이 없습니다.</div>
         )}
 
         {/* 현재 SSE 메시지 표시 - 누적 텍스트 사용 */}
@@ -778,7 +786,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
               disabled={!newMessage.trim() || sending || sseConnected || isConnecting || isSubmitting}
               className={`p-3 rounded-full ${
                 sending || !newMessage.trim() || sseConnected || isConnecting || isSubmitting ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"
-              } transition-colors`}
+              }`}
             >
               {sending || isConnecting ? <div className="animate-spin h-5 w-5 border-2 border-white rounded-full border-t-transparent"></div> : <Send size={20} />}
             </button>
