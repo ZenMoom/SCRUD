@@ -91,7 +91,6 @@ class ChatService:
             diagram = DiagramProcessor(
                 logger=self.logger,
                 parser=self.parser,
-                diagram_repository=self.diagram_repository,
             )
 
             generated_diagram = await diagram.generate_diagram_data(
@@ -108,7 +107,6 @@ class ChatService:
             # MongoDB에 저장
             await self.diagram_repository.create_new_version(
                 diagram=self._convert_diagram_response_to_diagram(generated_diagram),
-                new_version=latest_diagram.metadata.version
             )
 
             self.logger.info(f"비동기 도식화 생성 완료: diagram_id={diagram_id}")
