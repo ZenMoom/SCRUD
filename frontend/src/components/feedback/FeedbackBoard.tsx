@@ -164,7 +164,7 @@ export default function FeedbackBoard({ postsData }: { postsData: GetPostListRes
 
   // 새 피드백 작성 함수
   const handleNewFeedback = () => {
-    router.push("/feedback/new");
+    router.push(`/feedback/new`);
   };
 
   return (

@@ -114,10 +114,10 @@ export async function votePost(postId: number, voteRequest: PostVoteRequest): Pr
 export async function createPost(postData: {
   title: string;
   content: string;
-  category: string;
+  category: number;
 }): Promise<PostDetailResponse> {
   try {
-    const response = await fetch(`/api/feedback/posts`, {
+    const response = await fetch(`/api/feedback`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
