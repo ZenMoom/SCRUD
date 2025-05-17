@@ -96,6 +96,10 @@ PostSummaryResponse:
       type: integer
       format: int64
       example: 10
+    dislikeCount:
+      type: integer
+      format: int64
+      example: 1
     commentCount:
       type: integer
       format: int64

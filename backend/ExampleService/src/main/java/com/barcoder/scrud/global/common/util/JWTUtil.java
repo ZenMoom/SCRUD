@@ -9,6 +9,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import java.util.*;
 @Slf4j
 public class JWTUtil {
     //
+    @Getter
     @Value("#{${jwt.access-token.expiretime} * 60 * 1000}")
     private int tokenExpireTime;
 
