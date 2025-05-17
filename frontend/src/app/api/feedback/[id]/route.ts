@@ -1,11 +1,18 @@
 import { CommentApiFactory } from '@generated/api';
+import { Configuration } from '@generated/configuration';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params;
+const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
 
-    const commentApi = CommentApiFactory();
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  try {
+    console.log('Fetching comments for post ID:', id);
+    const config = new Configuration({
+      basePath: apiUrl,
+    });
+
+    const commentApi = CommentApiFactory(config);
     const response = await commentApi.getCommentList({
       postId: Number(id),
     });
