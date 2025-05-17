@@ -63,16 +63,14 @@ export async function fetchPosts(
  * 게시글 상세 정보를 가져오는 함수
  */
 export async function fetchPostDetail(postId: string): Promise<PostDetailResponse> {
-  console.log('Fetching post detail for ID:', postId);
   try {
-    const response = await fetch(`/api/feedback/${postId}`, {
+    const response = await fetch(`https://scrud.co.kr/api/feedback/${postId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
     });
-
-    console.log('Response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`Error fetching post detail: ${response.status}`);
