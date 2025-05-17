@@ -52,27 +52,9 @@ class ChatService:
         self.llm = None
         self.parser = None
         self.agent_executor = None
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
 
-    def setup_llm_and_parser(self, response_queue: asyncio.Queue) -> Tuple[Any, PydanticOutputParser]:
-        """
-        LLM 모델과 출력 파서를 설정하는 메서드
-
-        Returns:
-            Tuple: (LLM 모델, Pydantic 출력 파서)
-        """
-        try:
-            if not self.model_name:
-                raise ValueError("모델 이름이 설정되지 않았습니다.")
-
-            self.llm = self.model_generator.get_chat_model(self.model_name, response_queue)
-            self.parser = PydanticOutputParser(pydantic_object=Diagram)
-            return self.llm, self.parser
-        except Exception as e:
-            self.logger.info(f"LLM 및 파서 설정 중 오류 발생: {str(e)}")
-            raise
-
-    async def _create_diagram_async(
+    async def _create_diagram(
             self,
             project_id: str,
             api_id: str,
@@ -155,8 +137,19 @@ class ChatService:
         Returns:
             Dict: 응답 정보 (도식화 생성 여부, 도식화 ID 등)
         """
-        self.logger.info(f"채팅 및 다이어그램 처리 시작: project_id={project_id}, api_id={api_id}")
-        self.setup_llm_and_parser(response_queue)
+        self.logger.info("=" * 80)
+        self.logger.info("채팅 및 다이어그램 처리 시작")
+        self.logger.info("-" * 80)
+
+        # 각 파라미터 로깅
+        self.logger.info(f"▶ 프로젝트 ID: {project_id}")
+        self.logger.info(f"▶ API ID: {api_id}")
+        self.logger.info(f"▶ 사용자 채팅 데이터:")
+        self.logger.info(f"   └ {user_chat_data}")
+        self.logger.info(f"▶ API 스펙 정보: {api_spec.model_dump_json()}")
+        self.logger.info(f"▶ 글로벌 파일 개수: {len(global_files.files) if hasattr(global_files, 'files') else 0}개")
+        self.logger.info(f"▶ 글로벌 파일: {global_files.model_dump_json()}")
+        self.logger.info("-" * 80)
 
         try:
             # 최신 다이어그램 조회
@@ -242,174 +235,13 @@ class ChatService:
         import uuid
         return str(uuid.uuid4())
 
-    def _create_user_chat(self, user_chat_data: UserChatRequest) -> UserChat:
-        """UserChat 객체를 생성하는 함수"""
-        return UserChat(
-            tag=user_chat_data.tag,
-            promptType=user_chat_data.promptType,
-            message=user_chat_data.message,
-            targetMethods=user_chat_data.targetMethods
-        )
 
-    async def _process_chat_response(
-            self, project_id: str, api_id: str, chat_id: str, user_chat: UserChat,
-            user_chat_data: UserChatRequest, latest_diagram: Diagram,
-            agent_input, should_generate_diagram: bool, response_queue: asyncio.Queue,
-            api_spec: ApiSpec, global_files: GlobalFileList,
-    ) -> None:
-        """채팅 응답을 처리하는 함수"""
-
-        if should_generate_diagram:
-            await self._handle_diagram_generation(
-                project_id, api_id, chat_id, user_chat, user_chat_data,
-                latest_diagram, agent_input, response_queue,
-                api_spec, global_files
-            )
-        else:
-            await self._handle_explanation_only(
-                project_id, api_id, chat_id, user_chat, user_chat_data,
-                agent_input, response_queue, latest_diagram,
-                api_spec, global_files
-            )
-
-        await self.sse_service.close_stream(response_queue)
-
-    async def _handle_diagram_generation(
-            self, project_id: str, api_id: str, chat_id: str, user_chat: UserChat,
-            user_chat_data: UserChatRequest, latest_diagram, agent_input, response_queue: asyncio.Queue,
-            api_spec: ApiSpec, global_files: GlobalFileList,
-    ):
-        """
-        다이어그램 생성이 필요한 경우의 처리
-            agent_input: 사용가 선택한 메서드
-        """
-        self.logger.info("도식화 생성이 필요하다고 판단됨")
-
-        # 다이어그램 ID 생성 및 이벤트 전송
-        diagram_id = self._generate_uuid()
-        await self._send_diagram_event(diagram_id, response_queue)
-
-        # 응답 생성
-        response_content = await self._generate_llm_response(
-            agent_input,
-            user_chat_data.message,
-            api_spec,
-            global_files
-        )
-
-        # 비동기로 도식화 생성 작업 시작
-        await self._create_diagram_async(
-            project_id=project_id,
-            api_id=api_id,
-            user_chat_data=user_chat_data,
-            diagram_id=diagram_id,
-            diagram_code=response_content
-        )
-
-        # SystemChat 생성
-        system_chat = self._create_system_chat_with_diagram(
-            latest_diagram.metadata.version, response_content.content, diagram_id
-        )
-
-        # Chat 객체 생성 및 MongoDB에 저장
-        await self._save_chat(chat_id, project_id, api_id, user_chat, system_chat)
-
-    async def _handle_explanation_only(
-            self, project_id: str, api_id: str, chat_id: str, user_chat: UserChat,
-            user_chat_data: UserChatRequest, agent_input, response_queue: asyncio.Queue,
-            latest_diagram: Diagram,
-            api_spec: ApiSpec, global_files: GlobalFileList,
-    ) -> None:
-        """다이어그램 생성이 필요하지 않은 경우의 처리"""
-        self.logger.info("도식화 생성이 필요하지 않다고 판단됨")
-
-        # 응답 생성
-        response_content = await self._generate_llm_response(
-            agent_input, user_chat_data.message,
-            api_spec, global_files
-        )
-
-        response_text = response_content.content
-
-        # SystemChat 생성
-        system_chat = self._create_system_chat_explanation(response_text, latest_diagram)
-
-        # Chat 객체 생성 및 MongoDB에 저장
-        await self._save_chat(chat_id, project_id, api_id, user_chat, system_chat)
 
     async def _send_diagram_event(self, diagram_id: str, response_queue: asyncio.Queue) -> None:
         """다이어그램 생성 이벤트를 전송하는 함수"""
         event = f"data: {json.dumps({'token': {'diagramId': diagram_id}})}\n\n"
         response_queue.put_nowait(event)
         self.logger.info(f"생성 이벤트 발송: {event}")
-
-    async def _generate_llm_response(
-            self,
-            agent_input,
-            user_message: str,
-            api_spec: ApiSpec,
-            global_files: GlobalFileList,
-    ):
-        """LLM을 통해 응답을 생성하는 함수"""
-
-        # 시스템 메시지와 유저 메시지를 분리해서 구성합니다
-        system_content = f"""당신은 남들에게 열심히 봉사하는 10년차 시니어 스프링 개발자입니다. 오늘도 당신의 부하들은 당신에게 질문하기 위해서 줄을 섭니다.
-        당신은 부하들의 질문에 답하기 위해서 아래의 내용들을 활용해야합니다.
-        [파일 설정]
-        {global_files}
-
-        [API 스펙]
-        {api_spec}
-        """
-
-        # 실제 사용자의 메시지를 템플릿이 아닌 직접 전달합니다
-        user_content = f"다음 내용을 검토해주세요. 수정사항이 있으면 수정해주세요. {agent_input.__str__()} 유저 메시지: {user_message}"
-
-        chat_prompt = ChatPromptTemplate([
-            SystemMessage(content=system_content),
-            HumanMessage(content=user_content),  # 직접 user_content를 넣어줍니다
-        ])
-
-        # LLM 체인을 구성하고 실행합니다
-        chain = chat_prompt | self.llm
-
-        # 로깅을 위해 프롬프트 내용을 기록합니다
-        self.logger.info(f"사용된 프롬프트: {chat_prompt}")
-
-        # 이제 user_input 변수가 필요 없어졌으므로 빈 딕셔너리로 호출합니다
-        response_content = await chain.ainvoke({})
-
-        self.logger.info(f"생성된 응답 값: {response_content.content}")
-        return response_content
-
-    def _create_system_chat_with_diagram(self, current_version: int, message: str, diagram_id: str) -> SystemChat:
-        """다이어그램 ID가 포함된 SystemChat을 생성하는 함수"""
-        version_info = VersionInfo(
-            newVersionId=f"{current_version + 1}",
-            description="생성된 버전"
-        )
-
-        return SystemChat(
-            systemChatId=self._generate_uuid(),
-            status=PromptResponseEnum.MODIFIED,
-            message=message,
-            versionInfo=version_info,
-            diagramId=diagram_id
-        )
-
-    def _create_system_chat_explanation(self, message: str, latest_diagram: Diagram) -> SystemChat:
-        """설명 전용 SystemChat을 생성하는 함수"""
-        version_info = VersionInfo(
-            newVersionId=f"{latest_diagram.metadata.version}",
-            description="생성된 버전"
-        )
-        return SystemChat(
-            systemChatId=self._generate_uuid(),
-            versionInfo=version_info,
-            status=PromptResponseEnum.EXPLANATION,
-            message=message,
-            diagramId=None
-        )
 
     async def _save_chat(self, chat_id: str, project_id: str, api_id: str, user_chat: UserChat,
                          system_chat: SystemChat) -> None:
@@ -427,52 +259,8 @@ class ChatService:
         await self.chat_repository.insert_one(chat)
         self.logger.info(f"채팅 저장 완료: chatId={chat_id}")
 
-    async def _handle_error(self, exception: Exception, response_queue: asyncio.Queue) -> Dict:
-        """에러를 처리하는 함수"""
-        # HTTPException인 경우 상태 코드 확인
-        from fastapi import HTTPException
-        if isinstance(exception, HTTPException):
-            error_message = exception.detail
-            status_code = exception.status_code
-            self.logger.error(f"HTTP 오류 발생 ({status_code}): {error_message}", exc_info=True)
-            
-            # 이미 SSE 에러가 전송되었을 수 있으므로 스트림이 열려있는지 확인
-            if not response_queue.empty():
-                # 오류 발생 시 클라이언트에게 알림
-                await self.sse_service.send_error(response_queue, f"오류 {status_code}: {error_message}")
-                await self.sse_service.close_stream(response_queue)
-            
-            return {"error": error_message, "status_code": status_code}
-        else:
-            # 일반 예외 처리
-            error_message = str(exception)
-            self.logger.error(f"채팅 및 다이어그램 처리 중 오류 발생: {error_message}", exc_info=True)
 
-            # 오류 발생 시 클라이언트에게 알림
-            await self.sse_service.send_error(response_queue, f"처리 중 오류가 발생했습니다: {error_message}")
-            await self.sse_service.close_stream(response_queue)
 
-            return {"error": error_message}
-
-    async def evaluate_diagram_generate(self, target_method_details, user_chat_data):
-        # Agent에게 도식화 생성 여부를 판단하도록 요청
-        agent_input = {
-            "tag": user_chat_data.tag.value,
-            "promptType": user_chat_data.promptType.value,
-            "message": user_chat_data.message,
-            "targetMethods": target_method_details
-        }
-        # Agent 설정
-        from app.core.generator.chat_request_evaluator import ChatRequestEvaulator
-        evaluator: ChatRequestEvaulator = ChatRequestEvaulator()
-        result: PropositionAnalysis = evaluator.validate(agent_input.__str__())
-        self.logger.info(f"Agent에게 도식화 생성 여부 판단 요청: {agent_input}")
-        # Agent의 결과에서 도식화 생성 여부 추출
-        should_generate_diagram = result.is_true
-        self.logger.info(f"Agent에게 도식화 생성 여부 판단 결과: {should_generate_diagram}")
-        self.logger.info(f"Agent에게 도식화 생성 여부 판단 이유: {result.reasoning}")
-        self.logger.info(f"==============================================================")
-        return agent_input, should_generate_diagram
 
     def _convert_diagram_response_to_diagram(self, diagram_response: DiagramResponse) -> Diagram:
         """
