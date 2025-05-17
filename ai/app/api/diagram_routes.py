@@ -2,10 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Header
 
-from app.api.chat_routes import get_model_generator
 from app.api.dto.diagram_dto import PositionRequest, DiagramResponse
-from app.core.generator.model_generator import ModelGenerator
-from app.core.services.chat_service import ChatService
 from app.core.services.diagram_service import DiagramService
 from app.core.services.sse_service import SSEService
 from app.infrastructure.http.client.api_client import ApiClient, ApiSpec, GlobalFileList
@@ -50,23 +47,6 @@ def get_a_http_client():
     from app.infrastructure.http.client.api_client import ApiClient
     from app.config.config import settings
     return ApiClient(settings.A_HTTP_SPRING_BASE_URL)
-
-def get_chat_service(
-        diagram_repository: DiagramRepository = Depends(get_diagram_repository),
-        chat_repository: ChatRepository = Depends(get_chat_repository),
-        sse_service: SSEService = Depends(get_sse_service),
-        model_generator: ModelGenerator = Depends(get_model_generator),
-) -> ChatService:
-    return ChatService(
-        model_name="openai",
-        model_generator=model_generator,
-        diagram_repository=diagram_repository,
-        chat_repository=chat_repository,
-        sse_service=sse_service,
-        logger=logger,
-    )
-
-
 
 #####################################################################################################
 ###############################         Controller        ###########################################
