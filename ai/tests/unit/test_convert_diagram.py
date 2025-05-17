@@ -3,7 +3,7 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 from app.api.dto.diagram_dto import DiagramResponse
-from app.core.services.chat_service import ChatService
+from app.core.services.chat_service_facade import ChatService
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
 
 
