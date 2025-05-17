@@ -56,8 +56,8 @@ export async function POST(req: NextRequest) {
     const requestBody = await req.json()
 
     // API 기본 URL 설정 - 하드코딩된 URL 사용
-    // const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
-    const apiUrl = "http://host.docker.internal:8000"
+    const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
+    // const apiUrl = "http://host.docker.internal:8000"
 
     console.log("API 요청 정보:", {
       url: `${apiUrl}/api/chat/prompt`,
