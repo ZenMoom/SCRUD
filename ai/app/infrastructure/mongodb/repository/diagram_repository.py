@@ -65,7 +65,7 @@ class DiagramRepository(ABC):
 
     @abstractmethod
     async def update_component_position(self, project_id: str, api_id: str, component_id: str, x: float, y: float) -> \
-    Optional[Diagram]:
+            Optional[Diagram]:
         """
         특정 컴포넌트의 위치를 업데이트합니다.
 
@@ -93,7 +93,7 @@ class DiagramRepository(ABC):
             Diagram: 새 버전으로 생성된 다이어그램 객체
         """
         pass
-        
+
     @abstractmethod
     async def find_diagram_by_method_id(self, project_id: str, api_id: str, method_id: str) -> Optional[Diagram]:
         """
