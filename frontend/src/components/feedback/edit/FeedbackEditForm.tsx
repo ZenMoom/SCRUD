@@ -1,5 +1,6 @@
 'use client';
 
+import useAuthStore from '@/app/store/useAuthStore';
 import { updatePost } from '@/lib/feedback-api';
 import { PostDetailResponse } from '@generated/model';
 import Link from 'next/link';
@@ -18,6 +19,12 @@ export default function FeedbackEditForm({ post }: FeedbackEditFormProps) {
   const [category, setCategory] = useState(post.category || 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
+
+  if (!user || post.author?.username !== user.username) {
+    router.back();
+    return;
+  }
 
   // 폼 제출 처리
   const handleSubmit = async (e: React.FormEvent) => {

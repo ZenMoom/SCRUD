@@ -8,6 +8,9 @@ UserResponse:
     nickname:
       type: string
       example: "john_doe"
+    username:
+      type: string
+      example: "Jaasdfas@fasdf.com"
     profileImgUrl:
       type: string
       format: uri

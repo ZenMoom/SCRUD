@@ -30,7 +30,7 @@ export default function FeedbackActions() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  if (!post || !user) {
+  if (!post || !user || post.author?.username !== user.username) {
     return null;
   }
 
@@ -44,7 +44,7 @@ export default function FeedbackActions() {
     setIsDeleting(true);
     try {
       await deletePost(post.postId);
-      router.push('/feedback');
+      router.back();
       router.refresh();
     } catch (error) {
       console.error('Error deleting post:', error);
