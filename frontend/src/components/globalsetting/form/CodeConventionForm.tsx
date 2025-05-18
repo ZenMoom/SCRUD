@@ -80,12 +80,15 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
         };
 
         // 드롭한 파일을 현재 값 배열에 추가
+        let newFiles: FileWithContent[];
         if (Array.isArray(value)) {
-          onChange([...value, fileWithContent]);
+          newFiles = [...value, fileWithContent];
         } else {
           // 배열이 아닌 경우 새 배열 생성
-          onChange([fileWithContent]);
+          newFiles = [fileWithContent];
         }
+        onChange(newFiles);
+        setTempData({ codeConvention: newFiles });
       }
     };
 
@@ -204,12 +207,14 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
                 });
 
                 const filesWithContent = await Promise.all(filePromises);
-
+                let newFiles: FileWithContent[];
                 if (Array.isArray(value)) {
-                  onChange([...value, ...filesWithContent]);
+                  newFiles = [...value, ...filesWithContent];
                 } else {
-                  onChange(filesWithContent);
+                  newFiles = filesWithContent;
                 }
+                onChange(newFiles);
+                setTempData({ codeConvention: newFiles });
               }
             }}
             multiple
@@ -237,6 +242,7 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
                         const newFiles = [...value];
                         newFiles.splice(index, 1);
                         onChange(newFiles);
+                        setTempData({ codeConvention: newFiles });
                       }}
                       className="hover:text-red-700 ml-2 text-red-500"
                     >

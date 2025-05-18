@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import React from 'react'
+import { useProjectTempStore } from "@/store/projectTempStore"
 
 interface DependencySelectorProps {
   selectedDependencies: string[];
@@ -29,6 +30,29 @@ export const springDependencies = [
 export default function DependencySelector({ selectedDependencies, onChange }: DependencySelectorProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const { tempData, setTempData } = useProjectTempStore();
+
+  // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const isFromGithubAuth = params.get('from') === 'github-auth';
+    const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
+
+    if (isFromGithubAuth && isAuthPending && tempData.dependencySelections?.length > 0) {
+      console.log('의존성 선택 임시저장 데이터:', tempData.dependencySelections);
+      
+      // 파일 객체로 변환하여 전달
+      const fileContent = tempData.dependencySelections.map(depId => {
+        const dep = springDependencies.find(d => d.id === depId);
+        return dep ? `${dep.name} (${dep.id})` : depId;
+      }).join('\n');
+      
+      onChange({
+        name: "dependency.txt",
+        content: fileContent
+      });
+    }
+  }, []);
 
   // 검색어에 따른 의존성 필터링
   const filteredDependencies = springDependencies.filter(dep =>
@@ -52,6 +76,9 @@ export default function DependencySelector({ selectedDependencies, onChange }: D
       name: "dependency.txt",
       content: fileContent
     });
+
+    // 임시저장소에 선택된 의존성 목록 저장
+    setTempData({ dependencySelections: newDeps });
   }
 
   // 드롭다운 외부 클릭 시 닫기

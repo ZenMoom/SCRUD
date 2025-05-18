@@ -116,19 +116,41 @@ export async function POST(request: NextRequest) {
         console.log('최종 globalFiles 길이:', globalFiles.length);
       }
       else if (key === 'securitySetting') {
+        console.log('\n=== route.ts 보안 설정 처리 시작 ===');
+        console.log('받은 key:', key);
+        console.log('받은 value:', value);
+        
         const securityValue = value as SelectionValue | FileWithContent[];
         if (securityValue) {
+          console.log('securityValue 타입:', Array.isArray(securityValue) ? '파일 배열' : '선택 타입');
+          
           if (Array.isArray(securityValue)) {
-            // GitHub에서 가져온 파일 처리
-            securityValue.forEach(file => {
-              globalFiles.push({
-                fileName: file.name || 'unnamed_security_file',
-                fileType: 'SECURITY',
-                fileUrl: "",
-                fileContent: file.content
+            // 일반 파일 업로드 처리
+            if (securityValue.length > 0 && !securityValue[0].isGitHub) {
+              console.log('일반 파일 업로드 처리:', securityValue);
+              securityValue.forEach(file => {
+                globalFiles.push({
+                  fileName: file.name || 'security_file.txt',
+                  fileType: 'SECURITY',
+                  fileUrl: '',
+                  fileContent: file.content
+                });
               });
-            });
+            }
+            // GitHub에서 가져온 파일 처리
+            else if (securityValue.length > 0 && securityValue[0].isGitHub) {
+              console.log('GitHub 파일 처리:', securityValue);
+              securityValue.forEach(file => {
+                globalFiles.push({
+                  fileName: file.name || 'security_file.txt',
+                  fileType: 'SECURITY',
+                  fileUrl: "",
+                  fileContent: file.content
+                });
+              });
+            }
           } else {
+            console.log('선택 타입 처리:', securityValue);
             // 선택된 보안 타입 처리
             globalFiles.push({
               fileName: `${securityValue.type}`,
@@ -138,6 +160,7 @@ export async function POST(request: NextRequest) {
             });
           }
         }
+        console.log('=== route.ts 보안 설정 처리 완료 ===\n');
       }
       // 의존성 파일 처리
       else if (key === 'dependencyFile') {

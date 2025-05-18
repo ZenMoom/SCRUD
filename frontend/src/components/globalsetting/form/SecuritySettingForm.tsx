@@ -3,10 +3,14 @@
 import { forwardRef, useState, useRef, useEffect } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
+import { useProjectTempStore } from "@/store/projectTempStore"
+import SecuritySelector from "./SecuritySelector"
+import { SecuritySettingData } from "@/store/types/project"
 
 interface FileWithContent {
   name: string;
   content: string;
+  isGitHub?: boolean;
 }
 
 interface SelectionValue {
@@ -30,8 +34,8 @@ const DEFAULT_SECURITY_OPTION = securityOptions[0]; // JWT를 기본값으로 �
 
 interface SecuritySettingFormProps {
   title: string
-  value: SelectionValue | FileWithContent[] | SecurityOption
-  onChange: (value: SelectionValue | FileWithContent[] | SecurityOption) => void
+  value: FileWithContent | FileWithContent[] | { type: string; label: string }
+  onChange: (value: FileWithContent | FileWithContent[] | { type: string; label: string }) => void
   onInfoClick: () => void
   onFocus?: () => void
   isRequired?: boolean
@@ -39,114 +43,145 @@ interface SecuritySettingFormProps {
 
 const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>(
   ({ title, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
-    const [inputType, setInputType] = useState<'select' | 'file'>('select')
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
+    const [selectedFiles, setSelectedFiles] = useState<FileWithContent[]>([])
+    const [isFileMode, setIsFileMode] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
-    const [selectedOption, setSelectedOption] = useState<SecurityOption>(
-      // value가 있으면 value를 사용하고, 없으면 기본값 사용
-      (value as SecurityOption)?.type ? (value as SecurityOption) : DEFAULT_SECURITY_OPTION
-    );
 
-    // 컴포넌트가 마운트될 때 기본값 설정
+    const { tempData, setTempData } = useProjectTempStore();
+
+    // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
     useEffect(() => {
-      if (!value || !(value as SecurityOption)?.type) {
-        onChange(DEFAULT_SECURITY_OPTION);
+      const params = new URLSearchParams(window.location.search);
+      const isFromGithubAuth = params.get('from') === 'github-auth';
+      const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
+
+      if (isFromGithubAuth && isAuthPending && tempData.securitySetting) {
+        console.log('보안 설정 임시저장 데이터:', tempData.securitySetting);
+        
+        if (tempData.securitySetting.type === 'selection' && tempData.securitySetting.selection) {
+          setIsFileMode(false);
+          onChange(tempData.securitySetting.selection);
+        } else if (tempData.securitySetting.type === 'file' && tempData.securitySetting.files) {
+          setIsFileMode(true);
+          setSelectedFiles(tempData.securitySetting.files);
+          onChange(tempData.securitySetting.files);
+        }
       }
     }, []);
 
-    // value가 변경될 때 selectedOption 업데이트
-    useEffect(() => {
-      if ((value as SecurityOption)?.type) {
-        setSelectedOption(value as SecurityOption);
+    const toggleMode = () => {
+      setIsFileMode(!isFileMode);
+      if (isFileMode) {
+        // 파일 모드에서 선택지 모드로 전환
+        setSelectedFiles([]);
+        setTempData({
+          securitySetting: {
+            type: 'selection',
+            selection: { type: 'SECURITY_DEFAULT_JWT', label: 'JWT' }
+          }
+        });
+        onChange({ type: 'SECURITY_DEFAULT_JWT', label: 'JWT' });
+      } else {
+        // 선택지 모드에서 파일 모드로 전환
+        setTempData({
+          securitySetting: {
+            type: 'file',
+            files: []
+          }
+        });
+        onChange([]);
       }
-    }, [value]);
+    };
 
-    // GitHub에서 파일 선택 시 호출될 핸들러
-    const handleGitHubFileSelect = (files: Array<{ path: string, content: string }>) => {
+    const handleGitHubFileSelect = (files: Array<{ path: string; content: string }>) => {
       if (files.length > 0) {
-        const githubFiles = files.map(file => ({
+        const githubFiles = files.map((file) => ({
           name: file.path,
           content: file.content,
-          isGitHub: true
+          isGitHub: true,
         }));
+        
+        setSelectedFiles(githubFiles);
         onChange(githubFiles);
+        setTempData({
+          securitySetting: {
+            type: 'file',
+            files: githubFiles
+          }
+        });
       }
       setIsGitHubModalOpen(false);
     };
 
     const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
+      e.preventDefault();
+      e.stopPropagation();
       if (e.type === "dragenter" || e.type === "dragover") {
-        setDragActive(true)
+        setDragActive(true);
       } else if (e.type === "dragleave") {
-        setDragActive(false)
+        setDragActive(false);
       }
-    }
+    };
 
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setDragActive(false)
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0];
         const content = await file.text();
         const fileWithContent = {
           name: file.name,
-          content: content
+          content: content,
         };
-        
-        // 드롭한 파일을 현재 값 배열에 추가
-        if (Array.isArray(value)) {
-          onChange([...value, fileWithContent]);
-        } else {
-          // 배열이 아닌 경우 새 배열 생성
-          onChange([fileWithContent]);
-        }
+
+        const updatedFiles = [fileWithContent];
+        setSelectedFiles(updatedFiles);
+        onChange(updatedFiles);
+        setTempData({
+          securitySetting: {
+            type: 'file',
+            files: updatedFiles
+          }
+        });
       }
-    }
+    };
+
+    const handleSecuritySelect = (selection: { type: string; label: string }) => {
+      setIsFileMode(false);
+      onChange(selection);
+      setTempData({
+        securitySetting: {
+          type: 'selection',
+          selection: selection
+        }
+      });
+    };
 
     const handleFileUpload = () => {
-      setDropdownOpen(false)
-      // 파일 선택 다이얼로그 트리거
-      document.getElementById(`file-upload-${title}`)?.click()
-    }
+      setDropdownOpen(false);
+      document.getElementById(`file-upload-${title}`)?.click();
+    };
 
     const handleGithubUpload = () => {
       setDropdownOpen(false);
-      setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
-    }
-    // 입력 타입 변경 핸들러
-    const handleInputTypeChange = () => {
-      const newInputType = inputType === 'select' ? 'file' : 'select';
-      setInputType(newInputType);
-      
-      // 입력 타입이 변경될 때 이전 선택값 초기화
-      if (newInputType === 'file') {
-        // 파일 모드로 변경 시 빈 배열로 초기화
-        onChange([] as FileWithContent[]);
-      } else {
-        // 선택 모드로 변경 시 기본값으로 초기화
-        onChange(DEFAULT_SECURITY_OPTION);
-      }
-    };
-
-    const handleOptionChange = (option: SecurityOption) => {
-      setSelectedOption(option);
-      onChange(option);
+      setIsGitHubModalOpen(true);
     };
 
     return (
-      <div ref={ref} className="mb-10 p-10 bg-white rounded-lg">
-        <div className="flex items-center mb-4 justify-between">
+      <div ref={ref} className="p-10 mb-10 bg-white rounded-lg">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <h2 className="text-xl font-semibold m-0">{title} {isRequired && <span className="text-red-500">*</span>}</h2>
+            <h2 className="m-0 text-xl font-semibold">
+              {title} {isRequired && <span className="text-red-500">*</span>}
+            </h2>
             <button
               type="button"
-              className="bg-transparent border-none text-gray-400 cursor-pointer ml-2 p-0 flex items-center justify-center transition-colors duration-200 hover:text-gray-600"
+              className="hover:text-gray-600 flex items-center justify-center p-0 ml-2 text-gray-400 transition-colors duration-200 bg-transparent border-none cursor-pointer"
               onClick={onInfoClick}
               aria-label={`${title} 정보`}
             >
@@ -156,38 +191,21 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
           <button
             type="button"
             className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
-            onClick={handleInputTypeChange}
+            onClick={toggleMode}
           >
-            {inputType === 'select' ? (
+            {isFileMode ? (
+              <>선택지에서 선택하기</>
+            ) : (
               <>
                 <Upload size={14} className="mr-1" />
                 파일 추가하기
               </>
-            ) : (
-              <>선택지에서 선택하기</>
             )}
           </button>
         </div>
 
-        {inputType === 'select' ? (
-          <div className="space-y-4">
-            {securityOptions.map((option) => (
-              <div key={option.type} className="flex items-center">
-                <input
-                  type="radio"
-                  id={option.type}
-                  name="security"
-                  value={option.type}
-                  checked={selectedOption.type === option.type}
-                  onChange={() => handleOptionChange(option)}
-                  className="h-4 w-4 text-blue-600"
-                />
-                <label htmlFor={option.type} className="ml-2 text-sm text-gray-700">
-                  {option.label}
-                </label>
-              </div>
-            ))}
-          </div>
+        {!isFileMode ? (
+          <SecuritySelector onSelect={handleSecuritySelect} />
         ) : (
           <div className="w-full">
             {/* 드래그 앤 드롭 영역 */}
@@ -200,46 +218,56 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
               onDragOver={handleDrag}
               onDrop={handleDrop}
               onClick={() => {
-                setDropdownOpen(!dropdownOpen)
-                if (onFocus) onFocus()
+                setDropdownOpen(!dropdownOpen);
+                if (onFocus) onFocus();
               }}
               ref={buttonRef}
             >
-              <Upload size={24} className="text-gray-400 mb-2" />
-              <p className="text-gray-500 text-center text-sm">
-                보안 설정 파일을 드래그해서 추가하거나 <br /> 
-                <span className="text-blue-500">
-                  업로드하세요
-                </span>
+              <Upload
+                size={24}
+                className="mb-2 text-gray-400"
+              />
+              <p className="text-sm text-center text-gray-500">
+                보안 설정 파일을 드래그해서 추가하거나 <br />
+                <span className="text-blue-500">업로드하세요</span>
               </p>
             </div>
-            
+
             {/* 드롭다운 메뉴 */}
             {dropdownOpen && (
-              <div ref={dropdownRef} className="relative">
-                <div className="absolute top-2 left-0 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                  <button 
-                    type="button" 
-                    className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 first:rounded-t-lg" 
+              <div
+                ref={dropdownRef}
+                className="relative"
+              >
+                <div className="top-2 absolute left-0 z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                  <button
+                    type="button"
+                    className="hover:bg-gray-100 first:rounded-t-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleGithubUpload();
                       setDropdownOpen(false);
                     }}
                   >
-                    <Github size={16} className="text-gray-500" />
+                    <Github
+                      size={16}
+                      className="text-gray-500"
+                    />
                     <span>GitHub에서 가져오기</span>
                   </button>
-                  <button 
-                    type="button" 
-                    className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 last:rounded-b-lg" 
+                  <button
+                    type="button"
+                    className="hover:bg-gray-100 last:rounded-b-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleFileUpload();
                       setDropdownOpen(false);
                     }}
                   >
-                    <Upload size={16} className="text-gray-500" />
+                    <Upload
+                      size={16}
+                      className="text-gray-500"
+                    />
                     <span>파일 업로드</span>
                   </button>
                 </div>
@@ -256,39 +284,52 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                   const content = await file.text();
                   const fileWithContent = {
                     name: file.name,
-                    content: content
+                    content: content,
                   };
 
-                  
-                  // 현재 value가 배열인 경우 새 파일을 추가
-                  if (Array.isArray(value)) {
-                    onChange([...value, fileWithContent]);
-                  } else {
-                    // 배열이 아닌 경우 단일 항목 배열로 설정
-                    onChange([fileWithContent]);
-                  }
+                  const updatedFiles = [fileWithContent];
+                  setSelectedFiles(updatedFiles);
+                  onChange(updatedFiles);
+                  setTempData({
+                    securitySetting: {
+                      type: 'file',
+                      files: updatedFiles
+                    }
+                  });
                 }
               }}
             />
-            
+
             {/* 선택된 파일 표시 */}
-            {Array.isArray(value) && value.length > 0 && (
+            {selectedFiles.length > 0 && (
               <div className="mt-4">
-                <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
+                <p className="mb-2 text-sm font-medium">선택된 파일: {selectedFiles.length}개</p>
                 <div className="flex flex-col space-y-2">
-                  {value.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg"
+                    >
                       <div className="flex items-center gap-2">
-                        <File size={16} className="text-gray-500" />
+                        <File
+                          size={16}
+                          className="text-gray-500"
+                        />
                         <span className="truncate">{file.name}</span>
                       </div>
                       <button
                         onClick={() => {
-                          const newFiles = [...value];
-                          newFiles.splice(index, 1);
-                          onChange(newFiles);
+                          const updatedFiles = selectedFiles.filter((_, i) => i !== index);
+                          setSelectedFiles(updatedFiles);
+                          onChange(updatedFiles);
+                          setTempData({
+                            securitySetting: {
+                              type: 'file',
+                              files: updatedFiles
+                            }
+                          });
                         }}
-                        className="text-red-500 hover:text-red-700 ml-2"
+                        className="hover:text-red-700 ml-2 text-red-500"
                       >
                         &times;
                       </button>
@@ -297,24 +338,16 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                 </div>
               </div>
             )}
-
-            {/* 단일 값인 경우와 호환성 유지 */}
-            {!Array.isArray(value) && value && (
-              <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
-                <File size={16} className="text-gray-500" />
-                <span>{value.label}</span>
-              </div>
-            )}
-            
-            {/* GitHub 레포지토리 브라우저 모달 */}
-            <GitHubRepoBrowser 
-              isOpen={isGitHubModalOpen} 
-              onClose={() => setIsGitHubModalOpen(false)} 
-              onSelect={handleGitHubFileSelect}
-              formType="securitySetting"
-            />
           </div>
         )}
+
+        {/* GitHub 레포지토리 브라우저 모달 */}
+        <GitHubRepoBrowser
+          isOpen={isGitHubModalOpen}
+          onClose={() => setIsGitHubModalOpen(false)}
+          onSelect={handleGitHubFileSelect}
+          formType="securitySetting"
+        />
       </div>
     )
   }

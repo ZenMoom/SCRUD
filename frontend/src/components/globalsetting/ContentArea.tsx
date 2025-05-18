@@ -41,7 +41,7 @@ interface ProjectSettings {
   dependencyFile: DependencyFile[];
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
-  securitySetting: SelectionValue;
+  securitySetting: SelectionValue | FileWithContent[];
   codeConvention: FileWithContent[];
   architectureStructure: SelectionValue;
 }
@@ -122,6 +122,15 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
     }
   }
 
+  // 설정 항목 값 변경 시 상태 업데이트
+  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[]) => {
+    if (key === 'securitySetting') {
+      console.log('=== ContentArea 보안 설정 변경 ===');
+      console.log('변경된 보안 설정 값:', value);
+    }
+    onSettingChange(key, value);
+  }
+
   return (
     <div className="flex-1 relative bg-[#f8f8f8] shadow-[inset_0_0_10px_rgba(0,0,0,0.02)] w-full">
       <div className="h-full overflow-y-auto p-8 md:p-12">
@@ -130,7 +139,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           title={`프로젝트명`}
           type={inputTypes.title}
           value={settings.title as string}
-          onChange={(value) => onSettingChange("title", value)}
+          onChange={(value) => handleSettingChange("title", value)}
           onInfoClick={() => openModal("title")}
           onFocus={() => handleItemFocus("title")}
           isRequired={isRequired('title')}
@@ -141,7 +150,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           title={`프로젝트 설명`}
           type={inputTypes.description}
           value={settings.description as string}
-          onChange={(value) => onSettingChange("description", value)}
+          onChange={(value) => handleSettingChange("description", value)}
           onInfoClick={() => openModal("description")}
           onFocus={() => handleItemFocus("description")}
           isRequired={isRequired('description')}
@@ -152,7 +161,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           title={`Server URL`}
           type={inputTypes.serverUrl}
           value={settings.serverUrl as string}
-          onChange={(value) => onSettingChange("serverUrl", value)}
+          onChange={(value) => handleSettingChange("serverUrl", value)}
           onInfoClick={() => openModal("serverUrl")}
           onFocus={() => handleItemFocus("serverUrl")}
           isRequired={isRequired('serverUrl')}
@@ -162,7 +171,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.requirementSpec}
           title={`요구사항 명세서`}
           value={settings.requirementSpec}
-          onChange={(value) => onSettingChange("requirementSpec", value as FileValue)}
+          onChange={(value) => handleSettingChange("requirementSpec", value as FileValue)}
           onInfoClick={() => openModal("requirementSpec")}
           onFocus={() => handleItemFocus("requirementSpec")}
           isRequired={isRequired('requirementSpec')}
@@ -172,7 +181,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.erd}
           title={`ERD`}
           value={settings.erd}
-          onChange={(value) => onSettingChange("erd", value as FileValue)}
+          onChange={(value) => handleSettingChange("erd", value as FileValue)}
           onInfoClick={() => openModal("erd")}
           onFocus={() => handleItemFocus("erd")}
           isRequired={isRequired('erd')}
@@ -212,7 +221,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.utilityClass}
           title="유틸 클래스"
           value={settings.utilityClass}
-          onChange={(value) => onSettingChange("utilityClass", value as FileValue)}
+          onChange={(value) => handleSettingChange("utilityClass", value as FileValue)}
           onInfoClick={() => openModal("utilityClass")}
           onFocus={() => handleItemFocus("utilityClass")}
         />
@@ -221,7 +230,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.errorCode}
           title="에러 코드"
           value={settings.errorCode}
-          onChange={(value) => onSettingChange("errorCode", value as FileValue)}
+          onChange={(value) => handleSettingChange("errorCode", value as FileValue)}
           onInfoClick={() => openModal("errorCode")}
           onFocus={() => handleItemFocus("errorCode")}
         />
@@ -230,7 +239,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.securitySetting}
           title="보안 설정"
           value={settings.securitySetting}
-          onChange={(value) => onSettingChange("securitySetting", value)}
+          onChange={(value) => handleSettingChange("securitySetting", value)}
           onInfoClick={() => openModal("securitySetting")}
           onFocus={() => handleItemFocus("securitySetting")}
         />
@@ -239,7 +248,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           ref={refs.codeConvention}
           title="코드 컨벤션"
           value={settings.codeConvention}
-          onChange={(value) => onSettingChange("codeConvention", value as FileValue)}
+          onChange={(value) => handleSettingChange("codeConvention", value as FileValue)}
           onInfoClick={() => openModal("codeConvention")}
           onFocus={() => handleItemFocus("codeConvention")}
         />
@@ -251,7 +260,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           onChange={(value) => {
             console.log('=== ContentArea architectureStructure onChange ===');
             console.log('ArchitectureStructureForm에서 받은 값:', value);
-            onSettingChange("architectureStructure", value);
+            handleSettingChange("architectureStructure", value);
           }}
           onInfoClick={() => openModal("architectureStructure")}
           onFocus={() => handleItemFocus("architectureStructure")}

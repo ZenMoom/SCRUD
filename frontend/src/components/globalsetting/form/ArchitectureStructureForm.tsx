@@ -3,21 +3,12 @@
 import { forwardRef, useState, useRef, useEffect } from "react"
 import { HelpCircle, Upload, Github, File } from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
+import { useProjectTempStore } from "@/store/projectTempStore"
+import { ArchitectureOption } from "@/store/types/project"
 
 interface FileWithContent {
   name: string;
   content: string;
-}
-
-interface SelectionValue {
-  type: string;
-  label: string;
-}
-
-interface ArchitectureOption {
-  type: string;
-  label: string;
-  imageUrl: string;
 }
 
 const architectureOptions = [
@@ -33,19 +24,18 @@ const layeredOptions = [
 ];
 
 // 기본값 설정
-const DEFAULT_ARCHITECTURE_OPTION = architectureOptions[0];
+const DEFAULT_ARCHITECTURE_OPTION = layeredOptions[0];
 
 interface ArchitectureStructureFormProps {
-  title: string
-  value: SelectionValue | FileWithContent[] | ArchitectureOption
-  onChange: (value: SelectionValue | FileWithContent[] | ArchitectureOption) => void
-  onInfoClick: () => void
-  onFocus?: () => void
-  isRequired?: boolean
+  title: string;
+  onChange: (value: ArchitectureOption | FileWithContent[]) => void;
+  onInfoClick: () => void;
+  onFocus?: () => void;
+  isRequired?: boolean;
 }
 
 const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructureFormProps>(
-  ({ title, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
+  ({ title, onChange, onInfoClick, onFocus, isRequired }, ref) => {
     const [inputType, setInputType] = useState<'select' | 'file'>('select')
     const [showLayeredOptions, setShowLayeredOptions] = useState(false)
     const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -53,67 +43,60 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
-    const [selectedOption, setSelectedOption] = useState<ArchitectureOption>(
-      // value가 있으면 value를 사용하고, 없으면 기본값 사용
-      (value as ArchitectureOption)?.type ? (value as ArchitectureOption) : DEFAULT_ARCHITECTURE_OPTION
-    );
+    const [selectedFiles, setSelectedFiles] = useState<FileWithContent[]>([])
+    const [selectedOption, setSelectedOption] = useState<ArchitectureOption>(DEFAULT_ARCHITECTURE_OPTION)
 
-    // 컴포넌트가 마운트될 때 기본값 설정
+    const { tempData, setTempData } = useProjectTempStore()
+
+    // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
     useEffect(() => {
-      if (!value || !(value as ArchitectureOption)?.type) {
-        onChange(DEFAULT_ARCHITECTURE_OPTION);
-      }
-    }, []);
+      const params = new URLSearchParams(window.location.search)
+      const isFromGithubAuth = params.get('from') === 'github-auth'
+      const isAuthPending = localStorage.getItem('github-auth-pending') === 'true'
 
-    // value가 변경될 때 selectedOption 업데이트
-    useEffect(() => {
-      if ((value as ArchitectureOption)?.type) {
-        setSelectedOption(value as ArchitectureOption);
+      if (isFromGithubAuth && isAuthPending && tempData.architectureStructure) {
+        if (tempData.architectureStructure.type === 'selection' && tempData.architectureStructure.selection) {
+          setInputType('select')
+          setSelectedOption(tempData.architectureStructure.selection)
+          onChange(tempData.architectureStructure.selection)
+        } else if (tempData.architectureStructure.type === 'file' && tempData.architectureStructure.files) {
+          setInputType('file')
+          const files = tempData.architectureStructure.files.map(file => ({
+            name: file.name || '',
+            content: typeof file.content === 'string' ? file.content : JSON.stringify(file.content)
+          }))
+          setSelectedFiles(files)
+          onChange(files)
+        }
       }
-    }, [value]);
+    }, [])
 
-     const handleOptionChange = (option: ArchitectureOption) => {
+    const handleOptionChange = (option: ArchitectureOption) => {
       if (option.type === 'ARCHITECTURE_DEFAULT_LAYERED') {
-        setShowLayeredOptions(true);
-        setSelectedOption(option);
+        setShowLayeredOptions(true)
+        setSelectedOption(option)
       } else {
-        setShowLayeredOptions(false);
-        setSelectedOption(option);
-        onChange(option);
+        setShowLayeredOptions(false)
+        setSelectedOption(option)
+        onChange(option)
+        setTempData({
+          architectureStructure: {
+            type: 'selection',
+            selection: option
+          }
+        })
       }
-    };
+    }
 
     const handleLayeredOptionChange = (option: ArchitectureOption) => {
-      setSelectedOption(option);
-      onChange(option);
-    };
-
-    // GitHub에서 파일 선택 시 호출될 핸들러
-    const handleGitHubFileSelect = (files: Record<string, unknown>[]) => {
-      if (files.length > 0) {
-        console.log('=== ArchitectureStructureForm handleGitHubFileSelect ===');
-        console.log('변환 전 GitHub 데이터:', files);
-        
-        const convertedFiles = files.map(file => ({
-          name: file.path as string || 'unnamed_file',
-          content: JSON.stringify(file.content),  // 객체를 문자열로 변환
-          isGitHub: true
-        }));
-        
-        console.log('변환 후 데이터:', convertedFiles);
-        onChange(convertedFiles);
-      }
-      setIsGitHubModalOpen(false);
-    };
-
-    const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
-      if (e.type === "dragenter" || e.type === "dragover") {
-        setDragActive(true)
-      } else if (e.type === "dragleave") {
-        setDragActive(false)
-      }
+      setSelectedOption(option)
+      onChange(option)
+      setTempData({
+        architectureStructure: {
+          type: 'selection',
+          selection: option
+        }
+      })
     }
 
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -121,51 +104,117 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       e.stopPropagation()
       setDragActive(false)
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        const file = e.dataTransfer.files[0];
+        const file = e.dataTransfer.files[0]
+        const content = await file.text()
+        const fileWithContent = {
+          name: file.name,
+          content: content
+        }
+
+        const updatedFiles = [fileWithContent]
+        setSelectedFiles(updatedFiles)
+        onChange(updatedFiles)
+        setTempData({
+          architectureStructure: {
+            type: 'file',
+            files: updatedFiles.map(file => ({
+              name: file.name,
+              content: file.content
+            }))
+          }
+        })
+      }
+    }
+
+    const handleFileUploadClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setDropdownOpen(false);
+      document.getElementById(`file-upload-${title}`)?.click();
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
         const content = await file.text();
         const fileWithContent = {
           name: file.name,
           content: content
         };
 
-        console.log('드래그 앤 드롭으로 추가된 파일:');
-        console.log('파일명:', fileWithContent.name);
-        console.log('파일 내용:', fileWithContent.content);
-        
-        // 드롭한 파일을 현재 값 배열에 추가
-        if (Array.isArray(value)) {
-          onChange([...value, fileWithContent]);
-        } else {
-          // 배열이 아닌 경우 새 배열 생성
-          onChange([fileWithContent]);
-        }
+        const updatedFiles = [fileWithContent];
+        setSelectedFiles(updatedFiles);
+        onChange(updatedFiles);
+        setTempData({
+          architectureStructure: {
+            type: 'file',
+            files: updatedFiles.map(file => ({
+              name: file.name,
+              content: file.content
+            }))
+          }
+        });
       }
-    }
-
-    const handleFileUpload = () => {
-      setDropdownOpen(false)
-      // 파일 선택 다이얼로그 트리거
-      document.getElementById(`file-upload-${title}`)?.click()
-    }
-
-    const handleGithubUpload = () => {
-      setDropdownOpen(false);
-      setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
-    }
+    };
 
     // 입력 타입 변경 핸들러
     const handleInputTypeChange = () => {
-      const newInputType = inputType === 'select' ? 'file' : 'select';
-      setInputType(newInputType);
+      const newInputType = inputType === 'select' ? 'file' : 'select'
+      setInputType(newInputType)
       
-      // 입력 타입이 변경될 때 이전 선택값 초기화
       if (newInputType === 'file') {
-        // 파일 모드로 변경 시 빈 배열로 초기화
-        onChange([] as FileWithContent[]);
+        // 파일 모드로 변경
+        setSelectedFiles([])
+        onChange([])
+        setTempData({
+          architectureStructure: {
+            type: 'file',
+            files: []
+          }
+        })
       } else {
-        // 선택 모드로 변경 시 기본값으로 초기화
-        onChange({ type: "ARCHITECTURE_DEFAULT_LAYERED_A", label: "ARCHITECTURE_DEFAULT_LAYERED_A" });
+        // 선택 모드로 변경
+        setSelectedOption(DEFAULT_ARCHITECTURE_OPTION)
+        onChange(DEFAULT_ARCHITECTURE_OPTION)
+        setTempData({
+          architectureStructure: {
+            type: 'selection',
+            selection: DEFAULT_ARCHITECTURE_OPTION
+          }
+        })
       }
+    }
+
+    // GitHub에서 파일 선택 시 호출될 핸들러
+    const handleGitHubFileSelect = (files: Record<string, unknown>[]) => {
+      if (files.length > 0) {
+        console.log('=== ArchitectureStructureForm handleGitHubFileSelect ===')
+        console.log('변환 전 GitHub 데이터:', files)
+        
+        const convertedFiles = files.map(file => ({
+          name: file.path as string || 'unnamed_file',
+          content: JSON.stringify(file.content),  // 객체를 문자열로 변환
+          isGitHub: true
+        }))
+        
+        console.log('변환 후 데이터:', convertedFiles)
+        onChange(convertedFiles)
+      }
+      setIsGitHubModalOpen(false)
+    }
+
+    const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.type === "dragenter" || e.type === "dragover") {
+        setDragActive(true);
+      } else if (e.type === "dragleave") {
+        setDragActive(false);
+      }
+    };
+
+    const handleGithubUpload = () => {
+      setDropdownOpen(false);
+      setIsGitHubModalOpen(true);
     };
 
     return (
@@ -288,9 +337,9 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                     type="button" 
                     className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 first:rounded-t-lg" 
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleGithubUpload();
-                      setDropdownOpen(false);
+                      e.stopPropagation()
+                      handleGithubUpload()
+                      setDropdownOpen(false)
                     }}
                   >
                     <Github size={16} className="text-gray-500" />
@@ -298,12 +347,8 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                   </button>
                   <button 
                     type="button" 
-                    className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 last:rounded-b-lg" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFileUpload();
-                      setDropdownOpen(false);
-                    }}
+                    className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 last:rounded-b-lg"
+                    onClick={handleFileUploadClick}
                   >
                     <Upload size={16} className="text-gray-500" />
                     <span>파일 업로드</span>
@@ -316,36 +361,15 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
               id={`file-upload-${title}`}
               type="file"
               className="hidden"
-              onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-                if (e.target.files && e.target.files[0]) {
-                  const file = e.target.files[0];
-                  const content = await file.text();
-                  const fileWithContent = {
-                    name: file.name,
-                    content: content
-                  };
-
-                  console.log('파일 업로드로 추가된 파일:');
-                  console.log('파일명:', fileWithContent.name);
-                  console.log('파일 내용:', fileWithContent.content);
-                  
-                  // 현재 value가 배열인 경우 새 파일을 추가
-                  if (Array.isArray(value)) {
-                    onChange([...value, fileWithContent]);
-                  } else {
-                    // 배열이 아닌 경우 단일 항목 배열로 설정
-                    onChange([fileWithContent]);
-                  }
-                }
-              }}
+              onChange={handleFileChange}
             />
             
             {/* 선택된 파일 표시 */}
-            {Array.isArray(value) && value.length > 0 && (
+            {selectedFiles.length > 0 && (
               <div className="mt-4">
-                <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
+                <p className="text-sm font-medium mb-2">선택된 파일: {selectedFiles.length}개</p>
                 <div className="flex flex-col space-y-2">
-                  {value.map((file, index) => (
+                  {selectedFiles.map((file, index) => (
                     <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
                       <div className="flex items-center gap-2">
                         <File size={16} className="text-gray-500" />
@@ -353,9 +377,9 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                       </div>
                       <button
                         onClick={() => {
-                          const newFiles = [...value];
-                          newFiles.splice(index, 1);
-                          onChange(newFiles);
+                          const newFiles = [...selectedFiles]
+                          newFiles.splice(index, 1)
+                          onChange(newFiles)
                         }}
                         className="text-red-500 hover:text-red-700 ml-2"
                       >
@@ -364,14 +388,6 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* 단일 값인 경우와 호환성 유지 */}
-            {!Array.isArray(value) && value && (
-              <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
-                <File size={16} className="text-gray-500" />
-                <span>{value.label}</span>
               </div>
             )}
             

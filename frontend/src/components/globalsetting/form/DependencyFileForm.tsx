@@ -1,12 +1,19 @@
 "use client"
 
-import { forwardRef, useState, useRef } from "react"
+import { forwardRef, useState, useRef, useEffect } from "react"
 import { Upload, Github, File } from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
+import { useProjectTempStore } from "@/store/projectTempStore"
+
+interface FileData {
+  name: string;
+  content: string;
+  isGitHub?: boolean;
+}
 
 interface DependencyFileFormProps {
   title: string;
-  onFileSelect: (file: { name: string; content: string }) => void;
+  onFileSelect: (file: FileData) => void;
   onFocus?: () => void;
 }
 
@@ -15,22 +22,42 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
-    const [selectedFiles, setSelectedFiles] = useState<Array<{ name: string; content: string }>>([])
+    const [selectedFiles, setSelectedFiles] = useState<FileData[]>([])
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
+
+    const { tempData, setTempData } = useProjectTempStore();
+
+    // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const isFromGithubAuth = params.get('from') === 'github-auth';
+      const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
+
+      if (isFromGithubAuth && isAuthPending && tempData.dependencyFile.length > 0) {
+        console.log('의존성 파일 임시저장 데이터:', tempData.dependencyFile);
+        // 한 번에 상태 업데이트
+        setSelectedFiles(tempData.dependencyFile as FileData[]);
+        // 각 파일에 대해 한 번만 onFileSelect 호출
+        tempData.dependencyFile.forEach(file => onFileSelect(file as FileData));
+      }
+    }, []);
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, content: string }>) => {
       if (files.length > 0) {
         // 각 파일을 개별적으로 처리
-        files.forEach(file => {
-          const newFile = {
-            name: file.path,
-            content: file.content
-          };
-          setSelectedFiles(prev => [...prev, newFile]);
-          onFileSelect(newFile);
+        const newFiles = files.map(file => ({
+          name: file.path,
+          content: file.content,
+          isGitHub: true
+        }));
+        
+        setSelectedFiles(prev => [...prev, ...newFiles]);
+        newFiles.forEach(file => {
+          onFileSelect(file);
         });
+        setTempData({ dependencyFile: newFiles });
       }
       setIsGitHubModalOpen(false);
     };
@@ -56,8 +83,10 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
           name: file.name,
           content: content
         };
-        setSelectedFiles(prev => [...prev, newFile]);
+        const newFiles = [...selectedFiles, newFile];
+        setSelectedFiles(newFiles);
         onFileSelect(newFile);
+        setTempData({ dependencyFile: newFiles });
       }
     };
 
@@ -68,7 +97,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
 
     const handleGithubUpload = () => {
       setDropdownOpen(false);
-      setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
+      setIsGitHubModalOpen(true);
     }
 
     return (
@@ -140,8 +169,10 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                   name: file.name,
                   content: content
                 };
-                setSelectedFiles(prev => [...prev, newFile]);
+                const newFiles = [...selectedFiles, newFile];
+                setSelectedFiles(newFiles);
                 onFileSelect(newFile);
+                setTempData({ dependencyFile: newFiles });
               }
             }}
           />
@@ -159,7 +190,10 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                     </div>
                     <button
                       onClick={() => {
-                        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+                        const newFiles = selectedFiles.filter((_, i) => i !== index);
+                        setSelectedFiles(newFiles);
+                        // 파일 삭제 시 빈 content로 전달하지 않고 삭제된 상태만 반영
+                        setTempData({ dependencyFile: newFiles });
                       }}
                       className="text-red-500 hover:text-red-700 ml-2"
                     >

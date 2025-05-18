@@ -79,12 +79,15 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
         };
 
         // 드롭한 파일을 현재 값 배열에 추가
+        let newFiles: FileWithContent[];
         if (Array.isArray(value)) {
-          onChange([...value, fileWithContent]);
+          newFiles = [...value, fileWithContent];
         } else {
           // 배열이 아닌 경우 새 배열 생성
-          onChange([fileWithContent]);
+          newFiles = [fileWithContent];
         }
+        onChange(newFiles);
+        setTempData({ utilityClass: newFiles });
       }
     };
 
@@ -203,12 +206,14 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
                 });
 
                 const filesWithContent = await Promise.all(filePromises);
-
+                let newFiles: FileWithContent[];
                 if (Array.isArray(value)) {
-                  onChange([...value, ...filesWithContent]);
+                  newFiles = [...value, ...filesWithContent];
                 } else {
-                  onChange(filesWithContent);
+                  newFiles = filesWithContent;
                 }
+                onChange(newFiles);
+                setTempData({ utilityClass: newFiles });
               }
             }}
             multiple
@@ -236,6 +241,7 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
                         const newFiles = [...value];
                         newFiles.splice(index, 1);
                         onChange(newFiles);
+                        setTempData({ utilityClass: newFiles });
                       }}
                       className="hover:text-red-700 ml-2 text-red-500"
                     >

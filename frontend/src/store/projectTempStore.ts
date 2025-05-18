@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ProjectTempData, FileData, SelectionValue } from './types/project';
+import { ProjectTempData } from './types/project';
 
 interface ProjectTempStore {
   tempData: ProjectTempData;
@@ -17,9 +17,16 @@ const initialState: ProjectTempData = {
   utilityClass: [],
   codeConvention: [],
   dependencyFile: [],
+  dependencySelections: [],
   errorCode: [],
-  architectureStructure: [],
-  securitySetting: []
+  architectureStructure: {
+    type: 'selection',
+    selection: { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A - 도메인 중심 구조', imageUrl: '/layered-a.png' }
+  },
+  securitySetting: {
+    type: 'selection',
+    selection: { type: 'SECURITY_DEFAULT_JWT', label: 'JWT' }
+  }
 };
 
 export const useProjectTempStore = create<ProjectTempStore>()(

@@ -7,9 +7,10 @@ export interface ProjectTempData {
   utilityClass: FileData[];
   codeConvention: FileData[];
   dependencyFile: FileData[];
+  dependencySelections: string[];
   errorCode: FileData[];
-  architectureStructure: FileData[] | SelectionValue;
-  securitySetting: FileData[] | SelectionValue;
+  architectureStructure: ArchitectureSettingData;
+  securitySetting: SecuritySettingData;
 }
 
 export interface FileData {
@@ -26,4 +27,22 @@ export interface SelectionValue {
   label: string;
   name?: string;
   content?: string;
+}
+
+export interface SecuritySettingData {
+  type: 'selection' | 'file';
+  selection?: SelectionValue;
+  files?: FileData[];
+}
+
+export interface ArchitectureSettingData {
+  type: 'selection' | 'file';
+  selection?: ArchitectureOption;
+  files?: FileData[];
+}
+
+export interface ArchitectureOption {
+  type: string;
+  label: string;
+  imageUrl: string;
 } 
