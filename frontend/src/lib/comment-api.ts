@@ -1,10 +1,10 @@
 import { getApiBaseUrl } from '@/util/serverUtil';
-import { CommentResponse, GetCommentListResponse } from '@generated/model';
+import { CommentResponse } from '@generated/model';
 
 /**
  * 게시글 댓글 조회하는 함수 server-side에서 사용
  */
-export async function getComments(postId: string): Promise<GetCommentListResponse> {
+export async function getComments(postId: string): Promise<CommentResponse[]> {
   try {
     // baseUrl
     const baseUrl = getApiBaseUrl();
@@ -23,7 +23,7 @@ export async function getComments(postId: string): Promise<GetCommentListRespons
     return await response.json();
   } catch (error) {
     console.error(`Failed to fetch comments for post ID ${postId}:`, error);
-    return [] as GetCommentListResponse;
+    return [] as CommentResponse[]; // 에러 발생 시 빈 배열 반환
   }
 }
 

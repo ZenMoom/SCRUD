@@ -1,7 +1,7 @@
 'use client';
 
 import { useFeedbackStore } from '@/store/useFeedbackStore';
-import type { GetCommentListResponse, PostDetailResponse } from '@generated/model';
+import type { CommentResponse, PostDetailResponse } from '@generated/model';
 import { useEffect } from 'react';
 import FeedbackBackButton from '../FeedbackBackButton';
 import FeedbackComment from '../comment/FeedbackComment';
@@ -24,13 +24,13 @@ export default function FeedbackDetail({
   initialComments,
 }: {
   feedback: PostDetailResponse;
-  initialComments?: GetCommentListResponse;
+  initialComments: CommentResponse[];
 }) {
   const { post, setPost, setComments } = useFeedbackStore();
 
   useEffect(() => {
     setPost(feedback);
-    setComments(initialComments?.content || []);
+    setComments(initialComments);
   }, [feedback, setPost, initialComments, setComments]);
 
   // // 댓글 투표 처리 함수
