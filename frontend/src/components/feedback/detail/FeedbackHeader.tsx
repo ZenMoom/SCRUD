@@ -17,7 +17,6 @@ export const FeedbackHeader = () => {
   const { post } = useFeedbackStore();
   if (!post) return null;
   const createdAt = dayjs(post.createdAt).format('YYYY.MM.DD HH:mm');
-  const updatedAt = dayjs(post.updatedAt).format('YYYY.MM.DD HH:mm');
   return (
     <>
       <div className='flex items-center justify-between mb-4'>
@@ -52,7 +51,7 @@ export const FeedbackHeader = () => {
             <div className='font-medium text-gray-900'>{post.author.nickname}</div>
             <div className='text-sm text-gray-500'>
               {createdAt}
-              {updatedAt !== createdAt && ' (수정됨)'}
+              {post.isUpdated && ' (수정됨)'}
             </div>
           </div>
         </div>
