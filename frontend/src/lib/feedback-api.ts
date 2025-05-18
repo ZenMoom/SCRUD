@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '@/app/utils/serverUtil';
 import {
   CreatePostRequest,
   type GetPostListResponse,
@@ -37,8 +38,11 @@ export async function fetchPosts(
   }
 
   try {
+    // baseUrl
+    const baseUrl = getApiBaseUrl();
+
     // 내부 API 라우트로 요청 (credentials: 'include' 옵션 추가)
-    const response = await fetch(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/feedback?${params.toString()}`, {
+    const response = await fetch(`${baseUrl}/feedback?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -63,9 +67,11 @@ export async function fetchPosts(
  * 게시글 상세 정보를 가져오는 함수
  */
 export async function fetchPostDetail(postId: string): Promise<PostDetailResponse> {
-  console.log(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/feedback/${postId}`);
   try {
-    const response = await fetch(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/feedback/${postId}`, {
+    // baseUrl
+    const baseUrl = getApiBaseUrl();
+
+    const response = await fetch(`${baseUrl}/feedback/${postId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
