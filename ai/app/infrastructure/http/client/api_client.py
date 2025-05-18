@@ -32,8 +32,8 @@ class ApiSpec(BaseModel):
     response: Optional[str] = None
     description: Optional[str] = None
     httpMethod: Optional[str] = None
-    apiSpecVersionId: Optional[str] = None
-    version: Optional[str] = None
+    apiSpecVersionId: Optional[int] = None
+    version: Optional[int] = None
 
 class ApiClient:
     """

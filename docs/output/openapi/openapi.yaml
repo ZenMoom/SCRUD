@@ -3360,6 +3360,7 @@ components:
           totalElements: 5
         content:
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          dislikeCount: 1
           likeCount: 10
           postId: 101
           viewCount: 123
@@ -3367,6 +3368,7 @@ components:
           category: 공지
           commentCount: 5
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          dislikeCount: 1
           likeCount: 10
           postId: 101
           viewCount: 123
@@ -3384,6 +3386,7 @@ components:
     PostSummaryResponse:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
+        dislikeCount: 1
         likeCount: 10
         postId: 101
         viewCount: 123
@@ -3410,6 +3413,10 @@ components:
           type: integer
         likeCount:
           example: 10
+          format: int64
+          type: integer
+        dislikeCount:
+          example: 1
           format: int64
           type: integer
         commentCount:
@@ -3478,7 +3485,7 @@ components:
           example: 5
           type: integer
         author:
-          $ref: '#/components/schemas/PostDetailResponse_author'
+          $ref: '#/components/schemas/UserResponse'
       type: object
     VoteResponse:
       example:
@@ -3496,14 +3503,12 @@ components:
       type: object
     GetCommentListResponse:
       example:
-        comments:
+        content:
         - createdAt: 2000-01-23T04:56:07.000+00:00
-          replies:
-          - null
-          - null
           author:
+            profileImgUrl: https://example.com/profile.jpg
+            nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
-            username: john_doe
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
@@ -3513,12 +3518,10 @@ components:
           content: 댓글 내용입니다.
           updatedAt: 2000-01-23T04:56:07.000+00:00
         - createdAt: 2000-01-23T04:56:07.000+00:00
-          replies:
-          - null
-          - null
           author:
+            profileImgUrl: https://example.com/profile.jpg
+            nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
-            username: john_doe
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
@@ -3528,7 +3531,7 @@ components:
           content: 댓글 내용입니다.
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
-        comments:
+        content:
           items:
             $ref: '#/components/schemas/CommentResponse'
           type: array
@@ -3536,12 +3539,10 @@ components:
     CommentResponse:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
-        replies:
-        - null
-        - null
         author:
+          profileImgUrl: https://example.com/profile.jpg
+          nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
-          username: john_doe
         dislikeCount: 1
         commentId: 101
         parentCommentId: 12
@@ -3567,10 +3568,6 @@ components:
           format: int64
           nullable: true
           type: integer
-        replies:
-          items:
-            $ref: '#/components/schemas/CommentResponse'
-          type: array
         likeCount:
           example: 3
           format: int64
@@ -3589,7 +3586,7 @@ components:
           format: date-time
           type: string
         author:
-          $ref: '#/components/schemas/CommentResponse_author'
+          $ref: '#/components/schemas/UserResponse'
       type: object
     VoteCommentResponse:
       example:
@@ -3811,7 +3808,13 @@ components:
       - content
       type: object
     CommentVoteRequest:
-      properties: {}
+      example:
+        isLike: true
+      properties:
+        isLike:
+          description: "true면 추천, false면 비추천"
+          example: true
+          type: boolean
       required:
       - isLike
       type: object
@@ -3839,7 +3842,7 @@ components:
           description: 총 데이터 개수
           type: integer
       type: object
-    PostDetailResponse_author:
+    UserResponse:
       example:
         profileImgUrl: https://example.com/profile.jpg
         nickname: john_doe
@@ -3855,19 +3858,6 @@ components:
         profileImgUrl:
           example: https://example.com/profile.jpg
           format: uri
-          type: string
-      type: object
-    CommentResponse_author:
-      example:
-        userId: 550e8400-e29b-41d4-a716-446655440000
-        username: john_doe
-      properties:
-        userId:
-          example: 550e8400-e29b-41d4-a716-446655440000
-          format: uuid
-          type: string
-        username:
-          example: john_doe
           type: string
       type: object
   securitySchemes:

@@ -96,6 +96,10 @@ PostSummaryResponse:
       type: integer
       format: int64
       example: 10
+    dislikeCount:
+      type: integer
+      format: int64
+      example: 1
     commentCount:
       type: integer
       format: int64
@@ -140,20 +144,11 @@ PostDetailResponse:
     commentCount:
       type: integer
       example: 5
+    isUpdated:
+      type: boolean
+      example: true
     author:
-      type: object
-      properties:
-        userId:
-          type: string
-          format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
-        nickname:
-          type: string
-          example: "john_doe"
-        profileImgUrl:
-            type: string
-            format: uri
-            example: "https://example.com/profile.jpg"
+      $ref: './user-schema.yaml#/UserResponse'
 
 GetPostListResponse:
   type: object

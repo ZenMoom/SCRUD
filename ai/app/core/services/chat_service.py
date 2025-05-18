@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime
-from typing import Optional, Tuple, Any, Dict
+from typing import Optional, Tuple, Any, Dict, Coroutine
 
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -79,7 +79,7 @@ class ChatService:
             user_chat_data: UserChatRequest,
             diagram_id: str,
             diagram_code: str,
-    ) -> None:
+    ) -> Diagram | None:
         """
         비동기적으로 도식화를 생성하는 메서드
 
@@ -109,7 +109,6 @@ class ChatService:
             diagram = DiagramProcessor(
                 logger=self.logger,
                 parser=self.parser,
-                diagram_repository=self.diagram_repository,
             )
 
             generated_diagram = await diagram.generate_diagram_data(
@@ -124,12 +123,13 @@ class ChatService:
             generated_diagram.diagramId = diagram_id
 
             # MongoDB에 저장
-            await self.diagram_repository.create_new_version(
+            created_diagram: Diagram = await self.diagram_repository.create_new_version(
                 diagram=self._convert_diagram_response_to_diagram(generated_diagram),
-                new_version=latest_diagram.metadata.version
             )
 
             self.logger.info(f"비동기 도식화 생성 완료: diagram_id={diagram_id}")
+
+            return created_diagram
         except Exception as e:
             self.logger.error(f"비동기 도식화 생성 중 오류 발생: {str(e)}", exc_info=True)
 
@@ -298,7 +298,7 @@ class ChatService:
         )
 
         # 비동기로 도식화 생성 작업 시작
-        await self._create_diagram_async(
+        created_diagram: Diagram = await self._create_diagram_async(
             project_id=project_id,
             api_id=api_id,
             user_chat_data=user_chat_data,
@@ -308,7 +308,7 @@ class ChatService:
 
         # SystemChat 생성
         system_chat = self._create_system_chat_with_diagram(
-            latest_diagram.metadata.version, response_content.content, diagram_id
+            created_diagram.metadata.version, response_content.content, diagram_id
         )
 
         # Chat 객체 생성 및 MongoDB에 저장

@@ -1,0 +1,17 @@
+UserResponse:
+  type: object
+  properties:
+    userId:
+      type: string
+      format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+    nickname:
+      type: string
+      example: "john_doe"
+    username:
+      type: string
+      example: "Jaasdfas@fasdf.com"
+    profileImgUrl:
+      type: string
+      format: uri
+      example: "https://example.com/profile.jpg"
