@@ -6,7 +6,7 @@ import pytest
 
 from app.api.dto.diagram_dto import ChatResponseList
 from app.core.generator.model_generator import ModelGenerator
-from app.core.services.chat_service_facade import ChatService
+from app.core.services.chat_service_facade import ChatServiceFacade
 from app.core.services.sse_service import SSEService
 from app.infrastructure.mongodb.repository.chat_repository import ChatRepository
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
@@ -32,7 +32,7 @@ class TestChatService:
         logger_mock = MagicMock(spec=logging.Logger)
 
         # ChatService 인스턴스 생성
-        chat_service = ChatService(
+        chat_service = ChatServiceFacade(
             model_name="test_model",
             model_generator=model_generator_mock,
             diagram_repository=diagram_repository_mock,
