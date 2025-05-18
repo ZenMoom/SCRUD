@@ -52,6 +52,4 @@ public class Comment extends BaseTimeEntity {
 	@Builder.Default
 	private Long dislikeCount = 0L;
 
-	@OneToMany(mappedBy = "parentComment")
-	private List<Comment> replies = new ArrayList<>();
 }
