@@ -5,7 +5,9 @@ import { notFound } from 'next/navigation';
 
 export default async function FeedbackDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [feedback, comments] = await Promise.all([fetchPostDetail(id), getComments(id)]);
+  const [postResult, commentResult] = await Promise.allSettled([fetchPostDetail(id), getComments(id)]);
+  const feedback = postResult.status === 'fulfilled' ? postResult.value : null;
+  const comments = commentResult.status === 'fulfilled' ? commentResult.value : [];
 
   if (!feedback) {
     notFound();
