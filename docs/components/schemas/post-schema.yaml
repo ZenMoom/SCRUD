@@ -144,6 +144,9 @@ PostDetailResponse:
     commentCount:
       type: integer
       example: 5
+    isUpdated:
+      type: boolean
+      example: true
     author:
       $ref: './user-schema.yaml#/UserResponse'
 

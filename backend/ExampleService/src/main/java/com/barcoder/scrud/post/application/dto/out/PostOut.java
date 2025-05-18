@@ -25,6 +25,7 @@ public class PostOut {
     private Long likeCount;
     private Long dislikeCount;
     private Long commentCount;
+    private Boolean isUpdated;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
