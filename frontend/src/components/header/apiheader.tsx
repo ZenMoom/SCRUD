@@ -27,7 +27,7 @@ export default function ApiHeader({ project }: ApiHeaderProps) {
   const [editedProject, setEditedProject] = useState<ProjectInfo>(project)
 
   // 인증 상태 및 기능 가져오기
-  const { isAuthenticated, user, logout } = useAuthStore()
+  const { isAuthenticated, user, logout, token } = useAuthStore()
   const router = useRouter()
 
   // 프로젝트 정보 수정 핸들러
@@ -40,10 +40,46 @@ export default function ApiHeader({ project }: ApiHeaderProps) {
   }
 
   // 저장 버튼 핸들러
-  const handleSave = () => {
-    console.log('저장 버튼 눌림', editedProject)
-    setShowModal(false)
-  }
+  const handleSave = async (e: React.MouseEvent) => {
+    e.preventDefault(); // 기본 동작 방지
+    
+    try {
+      console.log('저장 시도 중...', editedProject);
+
+      const response = await fetch('/api/projects', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token || ''
+        },
+        body: JSON.stringify({
+          scrudProjectId: editedProject.id,
+          title: editedProject.title,
+          description: editedProject.description || '',
+          serverUrl: editedProject.serverUrl || ''
+        })
+      });
+
+      console.log('API 응답 상태:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API 에러 응답:', errorData);
+        throw new Error(errorData.message || '프로젝트 정보 수정에 실패했습니다.');
+      }
+
+      const result = await response.json();
+      console.log('API 응답 데이터:', result);
+      
+      // 성공적으로 업데이트된 경우에만 모달 닫기 및 페이지 새로고침
+      alert('프로젝트 정보가 성공적으로 수정되었습니다.');
+      setShowModal(false);
+      window.location.reload();
+    } catch (error) {
+      console.error('프로젝트 정보 수정 중 오류 발생:', error);
+      alert('프로젝트 정보 수정에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
 
   // 취소 버튼 핸들러
   const handleCancel = () => {
@@ -158,7 +194,7 @@ export default function ApiHeader({ project }: ApiHeaderProps) {
           onClick={() => setShowModal(false)}
         >
           <div 
-            className="bg-white p-6 rounded-lg shadow-lg w-[500px]"
+            className="bg-white p-12 rounded-lg shadow-lg w-[500px]"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
