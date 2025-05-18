@@ -12,3 +12,5 @@ UserResponse:
       type: string
       format: uri
       example: "https://example.com/profile.jpg"
+    openAiApiKey:
+      type: string

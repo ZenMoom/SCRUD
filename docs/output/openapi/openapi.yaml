@@ -21,12 +21,14 @@ tags:
   name: Canvas
 - description: 프롬프트 채팅 관련 API
   name: Chat
-- description: 프로젝트 전역세팅 관련 API - 개발 전
+- description: 프로젝트 전역세팅 관련 API
   name: ScrudProject
 - description: 게시글 관련 API
   name: Post
 - description: 댓글 관련 API
   name: Comment
+- description: User 관련 API
+  name: User
 paths:
   /api/v1/examples/{exampleId}:
     get:
@@ -1327,7 +1329,11 @@ paths:
         $ref: '#/components/requestBodies/CreateCommentRequest'
       responses:
         "201":
-          description: 성공적으로 생성되었습니다
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+          description: 댓글 작성 성공
       summary: 댓글 작성
       tags:
       - Comment
@@ -1386,6 +1392,36 @@ paths:
       summary: 댓글 추천/비추천
       tags:
       - Comment
+  /api/v1/OpenAI:
+    patch:
+      operationId: updateOpenAIAPiKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                openAIApiKey:
+                  type: string
+              type: string
+      responses:
+        "200":
+          description: 성공적으로 처리되었습니다
+      summary: 사용자 OpenAI Key 받아오기
+      tags:
+      - User
+  /api/v1/users/me:
+    get:
+      operationId: getCurrentUser
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+          description: 사용자 정보
+      summary: 현재 로그인한 사용자의 정보를 조회합니다.
+      tags:
+      - User
 components:
   examples:
     ExampleDtoCase1:
@@ -2055,14 +2091,24 @@ components:
           schema:
             $ref: '#/components/schemas/GetCommentListResponse'
       description: 댓글 목록 조회 성공
-    SuccessCreated:
-      description: 성공적으로 생성되었습니다
+    CreateCommentResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommentResponse'
+      description: 댓글 작성 성공
     VoteCommentResponse:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/VoteCommentResponse'
       description: 댓글 추천/비추천 성공
+    UserInfoResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserResponse'
+      description: 사용자 정보
   schemas:
     ExampleDto:
       example:
@@ -3437,10 +3483,12 @@ components:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
         author:
+          openAiApiKey: openAiApiKey
           profileImgUrl: https://example.com/profile.jpg
           nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
         dislikeCount: 1
+        isUpdated: true
         likeCount: 10
         postId: 101
         viewCount: 123
@@ -3484,6 +3532,9 @@ components:
         commentCount:
           example: 5
           type: integer
+        isUpdated:
+          example: true
+          type: boolean
         author:
           $ref: '#/components/schemas/UserResponse'
       type: object
@@ -3506,6 +3557,7 @@ components:
         content:
         - createdAt: 2000-01-23T04:56:07.000+00:00
           author:
+            openAiApiKey: openAiApiKey
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
@@ -3519,6 +3571,7 @@ components:
           updatedAt: 2000-01-23T04:56:07.000+00:00
         - createdAt: 2000-01-23T04:56:07.000+00:00
           author:
+            openAiApiKey: openAiApiKey
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
@@ -3540,6 +3593,7 @@ components:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
         author:
+          openAiApiKey: openAiApiKey
           profileImgUrl: https://example.com/profile.jpg
           nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
@@ -3566,7 +3620,6 @@ components:
         parentCommentId:
           example: 12
           format: int64
-          nullable: true
           type: integer
         likeCount:
           example: 3
@@ -3601,6 +3654,27 @@ components:
           example: 2
           format: int64
           type: integer
+      type: object
+    UserResponse:
+      example:
+        openAiApiKey: openAiApiKey
+        profileImgUrl: https://example.com/profile.jpg
+        nickname: john_doe
+        userId: 550e8400-e29b-41d4-a716-446655440000
+      properties:
+        userId:
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        nickname:
+          example: john_doe
+          type: string
+        profileImgUrl:
+          example: https://example.com/profile.jpg
+          format: uri
+          type: string
+        openAiApiKey:
+          type: string
       type: object
     ApiSpecVersionUpdateRequest:
       example:
@@ -3792,7 +3866,6 @@ components:
         parentCommentId:
           example: 123
           format: int64
-          nullable: true
           type: integer
       required:
       - content
@@ -3841,24 +3914,6 @@ components:
         totalElements:
           description: 총 데이터 개수
           type: integer
-      type: object
-    UserResponse:
-      example:
-        profileImgUrl: https://example.com/profile.jpg
-        nickname: john_doe
-        userId: 550e8400-e29b-41d4-a716-446655440000
-      properties:
-        userId:
-          example: 550e8400-e29b-41d4-a716-446655440000
-          format: uuid
-          type: string
-        nickname:
-          example: john_doe
-          type: string
-        profileImgUrl:
-          example: https://example.com/profile.jpg
-          format: uri
-          type: string
       type: object
   securitySchemes:
     BearerAuth:

@@ -38,6 +38,8 @@ public class User extends BaseTimeEntity {
     @Column(name = "is_github_connected")
     private boolean isGithubConnected;
 
+    private String openAiApiKey;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private GithubAccount githubAccount;
 
@@ -53,5 +55,9 @@ public class User extends BaseTimeEntity {
 
     public void updateGithubConnection(boolean isConnected) {
         this.isGithubConnected = isConnected;
+    }
+
+    public void updateOpenaiApiKey(String openAIApiKey) {
+        this.openAiApiKey = openAIApiKey;
     }
 }

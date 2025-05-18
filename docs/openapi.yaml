@@ -25,11 +25,13 @@ tags:
   - name: Chat
     description: 프롬프트 채팅 관련 API
   - name: ScrudProject
-    description: 프로젝트 전역세팅 관련 API - 개발 전
+    description: 프로젝트 전역세팅 관련 API
   - name: Post
     description: 게시글 관련 API
   - name: Comment
     description: 댓글 관련 API
+  - name: User
+    description: User 관련 API
 
 components:
   securitySchemes:
@@ -670,3 +672,31 @@ paths:
       responses:
         '200':
           $ref: './components/responses/comment-response.yaml#/VoteCommentResponse'
+
+  /api/v1/OpenAI:
+    patch:
+      tags:
+        - User
+      summary: "사용자 OpenAI Key 받아오기"
+      operationId: updateOpenAIAPiKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              properties:
+                openAIApiKey:
+                  type: string
+      responses:
+        '200':
+          $ref: './components/responses/success-response.yaml#/SuccessNoContent'
+
+  /api/v1/users/me:
+    get:
+      tags:
+        - User
+      summary: "현재 로그인한 사용자의 정보를 조회합니다."
+      operationId: getCurrentUser
+      responses:
+        '200':
+          $ref: './components/responses/user-response.yaml#/UserInfoResponse'

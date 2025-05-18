@@ -79,6 +79,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 		// URL 파라미터 인코딩
 		redirectUrl = UriComponentsBuilder.fromUriString(redirectUri)
 				.queryParam("token", token)
+				.queryParam("userId", user.getUserId())
 				.queryParam("loginId", user.getUsername())
 				.queryParam("profileImg", user.getProfileImgUrl() != null ? user.getProfileImgUrl() : "")
 				.build()

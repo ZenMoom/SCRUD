@@ -1,0 +1,6 @@
+UserInfoResponse:
+  description: "사용자 정보"
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/user-schema.yaml#/UserResponse'

@@ -27,6 +27,7 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 회원 관련 오류
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4001", "존재하지 않는 계정입니다."),
+    OPENAI_API_KEY_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4002", "OpenAI API 키가 설정되어 있지 않습니다. 프로젝트를 생성하기 전에 OpenAI API 키를 설정해주세요."),
 
     // 프로젝트 관련 오류
     SCRUDPROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT4001", "존재하지 않는 프로젝트입니다."),
