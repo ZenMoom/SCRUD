@@ -11,3 +11,10 @@ VoteCommentResponse:
     application/json:
       schema:
         $ref: '../schemas/comment-schema.yaml#/VoteCommentResponse'
+
+CreateCommentResponse:
+  description: 댓글 작성 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/comment-schema.yaml#/CommentResponse'
