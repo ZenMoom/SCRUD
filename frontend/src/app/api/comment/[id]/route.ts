@@ -21,10 +21,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       postId: Number(id),
     });
 
-    return NextResponse.json(response.data);
+    return NextResponse.json(response.data.content);
   } catch (error) {
     console.error('Error fetching comments:', error);
-    return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
+    return NextResponse.json([{ error: 'Failed to fetch comments' }, { status: 500 }]);
   }
 }
 
