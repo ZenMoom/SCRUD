@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     return NextResponse.json(response.data.content);
   } catch (error) {
     console.error('Error fetching comments:', error);
-    return NextResponse.json([{ error: 'Failed to fetch comments' }, { status: 500 }]);
+    return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
   }
 }
 
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const body = await request.json();
     const createCommentRequest: CreateCommentRequest = {
       content: body.content,
-      parentCommentId: body.parentCommentId ? Number(body.parentCommentId) : null,
+      parentCommentId: body.parentCommentId ? Number(body.parentCommentId) : undefined,
     };
 
     const response = await commentApi.createComment({

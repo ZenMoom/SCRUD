@@ -44,11 +44,11 @@ public class PostEventService {
     public void addPostVoteCount(PostVoteEvent event) {
 
         // 게시글 조회
-        Post post = postJpaRepository.findById(event.postId())
+        Post post = postJpaRepository.findById(event.getPostId())
                 .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
 
         // 이미 투표한 경우
-        if (post.isAlreadyVoted(event.userId())) {
+        if (post.isAlreadyVoted(event.getUserId())) {
             throw new BaseException(PostErrorStatus.POST_ALREADY_LIKED);
         }
 

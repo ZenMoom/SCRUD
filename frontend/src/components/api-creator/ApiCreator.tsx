@@ -234,34 +234,38 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
     fetchApiSpecs(scrudProjectId)
   }, [scrudProjectId, fetchApiSpecs])
 
+  // ApiCreator 컴포넌트의 return 부분을 수정한 코드
+
   return (
     <div className="bg-blue-50 p-2 relative">
-      {/* 기존 좌측 패널 토글 버튼 - 위치 및 스타일만 수정 */}
-      <div className={`absolute top-1/2 transform -translate-y-1/2 ${isLeftPanelOpen ? "left-[300px]" : "left-0"} transition-all duration-300 z-20`}>
-        <button
-          className="bg-white w-6 h-24 flex items-center justify-center rounded-r-md shadow-md hover:bg-gray-50 transition-colors focus:outline-none"
-          onClick={toggleLeftPanel}
-          aria-label={isLeftPanelOpen ? "패널 닫기" : "패널 열기"}
-        >
-          {isLeftPanelOpen ? <ChevronLeft className="w-4 h-4 text-gray-600" /> : <ChevronRight className="w-4 h-4 text-gray-600" />}
-        </button>
-      </div>
-
       <div className="max-w-full mx-auto">
         {/* 3단 레이아웃 - 캔버스 페이지와 동일한 스타일 적용 */}
-        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-4.8rem)] overflow-hidden">
-          {/* 좌측 패널 - 스타일만 수정 */}
-          <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full rounded-lg bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto `}>
-            <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />
+        <div className="flex flex-col md:flex-row gap-3 h-[calc(100vh-4.8rem)] overflow-hidden">
+          {/* 좌측 패널 토글 버튼*/}
+          <div className="absolute top-5 left-3 z-20">
+            <button
+              className="bg-white w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-50 transition-colors focus:outline-none border"
+              onClick={toggleLeftPanel}
+              aria-label={isLeftPanelOpen ? "패널 닫기" : "패널 열기"}
+            >
+              {isLeftPanelOpen ? <ChevronLeft className="w-5 h-5 text-gray-600" /> : <ChevronRight className="w-5 h-5 text-gray-600" />}
+            </button>
           </div>
 
-          {/* 중앙 패널 - 스타일만 수정 */}
-          <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[350px]"} rounded-lg h-full bg-white shadow-sm border-r transition-all duration-300 overflow-hidden`}>
+          {/* 좌측 패널 - 자연스러운 트랜지션 효과 복원 */}
+          <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-[44px]"} h-full transition-all duration-300 ease-in-out bg-white rounded-lg`}>
+            <div className={`${isLeftPanelOpen ? "w-[300px] opacity-100" : "w-0 opacity-0"} h-full rounded-lg bg-white shadow-md overflow-y-auto transition-all duration-300 ease-in-out`}>
+              <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />
+            </div>
+          </div>
+
+          {/* 중앙 패널 - 좌측 패널이 닫히면 이 패널이 더 커지도록 수정 */}
+          <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[570px]"} rounded-lg h-full bg-white shadow-sm border-r transition-all duration-300 overflow-hidden`}>
             <MiddleContainer onApiSelect={handleApiSelect} apiGroups={apiGroups} setApiGroups={setApiGroups} isLoading={isLoading} scrudProjectId={scrudProjectId} />
           </div>
 
-          {/* 우측 패널 - 스타일만 수정 */}
-          <div className="flex-1 h-full rounded-lg bg-white shadow-sm overflow-hidden">
+          {/* 우측 패널 - 고정 너비로 수정 */}
+          <div className="w-[calc(100%-580px)] h-full rounded-lg bg-white shadow-sm overflow-hidden">
             <RightContainer
               selectedApi={selectedApi}
               selectedMethod={selectedMethod}

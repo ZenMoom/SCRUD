@@ -2,7 +2,7 @@ import { getApiBaseUrl } from '@/util/serverUtil';
 import { CommentResponse } from '@generated/model';
 
 /**
- * 게시글 댓글 조회하는 함수 server-side에서 사용
+ * 게시글 댓글 조회하는 함수
  */
 export async function getComments(postId: string): Promise<CommentResponse[]> {
   try {
@@ -19,6 +19,8 @@ export async function getComments(postId: string): Promise<CommentResponse[]> {
     if (!response.ok) {
       throw new Error(`Error fetching comments for post ID ${postId}: ${response.status}`);
     }
+
+    console.log('getComments response:', response);
 
     return await response.json();
   } catch (error) {
@@ -37,7 +39,7 @@ export async function createComment({
 }: {
   postId: number;
   content: string;
-  parentCommentId?: number | null;
+  parentCommentId: number | null;
 }): Promise<CommentResponse> {
   try {
     // baseUrl
