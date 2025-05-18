@@ -59,6 +59,7 @@ public class CommentGetFacade {
                     UserOut userOut = userUseCase.getUserById(comment.getUserId());
                     // commentOut 생성
                     return modelMapper.map(comment, CommentOut.class).toBuilder()
+                            .parentCommentId(comment.getParentComment().getCommentId())
                             .author(userOut)
                             .build();
                 })
