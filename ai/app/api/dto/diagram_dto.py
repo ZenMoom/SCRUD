@@ -1,8 +1,8 @@
-from typing import List, Optional, Dict, Any
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import List, Optional, Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class MethodPromptTagEnum(str, Enum):
@@ -26,6 +26,10 @@ class UserChatRequest(BaseModel):
     message: str
     targetMethods: list[Dict[str, str]]
 
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
 
 class ChatResponse(BaseModel):
     class UserChatResponse(BaseModel):
@@ -34,6 +38,10 @@ class ChatResponse(BaseModel):
         promptType: MethodPromptTargetEnum
         message: str
         targetMethods: List[Dict[str, str]]  # methodId를 포함하는 사전 목록
+
+        model_config = ConfigDict(
+            from_attributes=True,
+        )
 
     class SystemChatResponse(BaseModel):
         class PromptResponseEnum(str, Enum):
@@ -47,20 +55,35 @@ class ChatResponse(BaseModel):
             newVersionId: str
             description: Optional[str] = None
 
+            model_config = ConfigDict(
+                from_attributes=True,
+            )
+
         systemChatId: Optional[str] = None
         status: PromptResponseEnum
         message: str
         versionInfo: Optional[VersionInfo] = None
         diagramId: Optional[str] = None
 
+        model_config = ConfigDict(
+            from_attributes=True,
+        )
+
     chatId: Optional[str] = None
     createdAt: datetime
     userChat: Optional[UserChatResponse] = None
     systemChat: Optional[SystemChatResponse] = None
 
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
 
 class ChatResponseList(BaseModel):
     content: List[ChatResponse] = []
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
 
 
 class DiagramResponse(BaseModel):
@@ -71,7 +94,9 @@ class DiagramResponse(BaseModel):
         name: Optional[str] = None
         description: Optional[str] = None
 
-
+        model_config = ConfigDict(
+            from_attributes=True,
+        )
 
     class DtoModelResponse(BaseModel):
         dtoId: str
@@ -79,15 +104,23 @@ class DiagramResponse(BaseModel):
         description: Optional[str] = None
         body: Optional[str] = None
 
+        model_config = ConfigDict(
+            from_attributes=True,
+        )
+
     class ConnectionResponse(BaseModel):
         class MethodConnectionTypeEnum(str, Enum):
             SOLID = "SOLID"
             DOTTED = "DOTTED"
 
-        connectionId: str
-        sourceMethodId: str
-        targetMethodId: str
-        type: MethodConnectionTypeEnum
+        connectionId: Optional[str] = None
+        sourceMethodId: Optional[str] = None
+        targetMethodId: Optional[str] = None
+        type: Optional[MethodConnectionTypeEnum] = []
+
+        model_config = ConfigDict(
+            from_attributes=True,
+        )
 
     class ComponentResponse(BaseModel):
         class Method(BaseModel):
@@ -96,6 +129,10 @@ class DiagramResponse(BaseModel):
             signature: str
             body: Optional[str] = None
             description: Optional[str] = None
+
+            model_config = ConfigDict(
+                from_attributes=True,
+            )
 
         class ComponentTypeEnum(str, Enum):
             CLASS = "CLASS"
@@ -107,15 +144,19 @@ class DiagramResponse(BaseModel):
         description: Optional[str] = None
         positionX: float
         positionY: float
-        methods: List[Method]
+        methods: List[Optional[Method]] = []
 
     projectId: Optional[str] = None
     apiId: Optional[str] = None
     diagramId: str
-    components: List[ComponentResponse]
-    connections: List[ConnectionResponse]
-    dto: List[DtoModelResponse]
+    components: Optional[List[ComponentResponse]] = []
+    connections: Optional[List[ConnectionResponse]] = []
+    dto: Optional[List[DtoModelResponse]] = []
     metadata: MetadataResponse
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
 
 
 class PositionRequest(BaseModel):
