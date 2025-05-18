@@ -481,18 +481,34 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   }
 
   return (
-    <div className="bg-white h-full w-full">
-      <div className="py-4 px-4">
-        <h2 className="text-lg font-bold text-gray-800">API 관리</h2>
+    <div className="bg-white h-full w-full flex flex-col">
+      {/* 고정 헤더 영역 */}
+      <div className="flex-shrink-0">
+        <div className="py-3 px-4">
+          <h2 className="text-lg font-bold text-gray-800">API 관리</h2>
+        </div>
+        <div className="flex justify-center mt-1 px-2 pb-2">
+          <button
+            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow text-sm font-medium"
+            onClick={addApiGroup}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            <span>API 그룹 추가</span>
+          </button>
+        </div>
       </div>
-      <div className="overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ height: "calc(100vh - 105px)" }}>
+
+      {/* 스크롤 영역 - flex-1로 나머지 공간 모두 차지하도록 수정 */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             <span className="ml-2 text-gray-600">API 목록을 불러오는 중...</span>
           </div>
         ) : (
-          <div className="px-2 py-2 divide-y divide-gray-200">
+          <div className="px-2 py-1 divide-y divide-gray-200">
             {apiGroups.map((group) => (
               <div key={group.id} className="py-2 overflow-hidden px-2 relative">
                 <div className="flex justify-between items-center">
@@ -551,7 +567,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                       </h3>
                       <div className="flex items-center">
                         <button
-                          className="p-1 rounded-full  hover:bg-gray-200 transition-colors flex-shrink-0"
+                          className="p-1 rounded-full hover:bg-gray-200 transition-colors flex-shrink-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             addApiEndpoint(group.id)
@@ -650,21 +666,21 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                             </div>
                           </div>
 
-                          {/* HTTP 메서드 태그 추가 - GET, POST, PUT, DELETE 등 */}
-                          <div className="mr-2 flex-shrink-0">
+                          {/* HTTP 메서드 태그 추가 - 모든 메서드가 DELETE 크기에 맞춰 정렬됨 */}
+                          <div className="flex-shrink-0 w-16 text-center">
                             <span
-                              className={`px-2 py-0.5 text-xs rounded font-medium ${
+                              className={`px-2 py-0.5 text-xs rounded font-medium inline-block ${
                                 endpoint.method === "GET"
-                                  ? " text-green-800"
+                                  ? "text-green-800"
                                   : endpoint.method === "POST"
-                                  ? " text-blue-800"
+                                  ? "text-blue-800"
                                   : endpoint.method === "PUT"
-                                  ? " text-yellow-800"
+                                  ? "text-yellow-800"
                                   : endpoint.method === "PATCH"
-                                  ? " text-purple-800" // PATCH 메서드 추가
+                                  ? "text-purple-800"
                                   : endpoint.method === "DELETE"
-                                  ? " text-red-800"
-                                  : " text-gray-800"
+                                  ? "text-red-800"
+                                  : "text-gray-800"
                               }`}
                             >
                               {endpoint.method}
@@ -675,7 +691,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                           <span className="text-sm text-gray-800 hover:text-blue-500 transition-colors truncate flex-1" title={endpoint.path}>
                             {endpoint.path.startsWith(group.name)
                               ? endpoint.path.substring(group.name.length) || "/" // 그룹 이름 다음 부분만 표시
-                              : endpoint.path}{" "}
+                              : endpoint.path}
                           </span>
 
                           {/* 점 세개 버튼 - 클릭하면 편집 모드로 전환 */}
@@ -699,24 +715,12 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
             ))}
 
             {apiGroups.length === 0 && !isLoading && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-4 text-gray-500">
                 <p>API 그룹이 없습니다. 새 API 그룹을 추가하세요.</p>
               </div>
             )}
           </div>
         )}
-
-        <div className="flex justify-center mt-1 px-2 pb-10">
-          <button
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow text-sm font-medium"
-            onClick={addApiGroup}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            <span>API 그룹 추가</span>
-          </button>
-        </div>
       </div>
     </div>
   )
