@@ -1,8 +1,9 @@
 "use client";
 
 import { File, Github, HelpCircle, Upload } from "lucide-react";
-import { forwardRef, useRef, useState } from "react";
+import { forwardRef, useRef, useState, useEffect } from "react";
 import GitHubRepoBrowser from "../GitHubRepoBrowser";
+import { useProjectTempStore } from "@/store/projectTempStore";
 
 // 파일 객체 타입 정의
 interface FileWithContent {
@@ -27,6 +28,21 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
     const dropdownRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
 
+    const { tempData, setTempData } = useProjectTempStore();
+
+    // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const isFromGithubAuth = params.get('from') === 'github-auth';
+
+      if (isFromGithubAuth) {
+        console.log('코드 컨벤션 임시저장 데이터:', tempData.codeConvention);
+        if (tempData.codeConvention.length > 0) {
+          onChange(tempData.codeConvention as FileWithContent[]);
+        }
+      }
+    }, []);
+
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string; content: string }>) => {
       if (files.length > 0) {
@@ -36,6 +52,7 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
           isGitHub: true,
         }));
         onChange(githubFiles);
+        setTempData({ codeConvention: githubFiles });
       }
       setIsGitHubModalOpen(false);
     };
