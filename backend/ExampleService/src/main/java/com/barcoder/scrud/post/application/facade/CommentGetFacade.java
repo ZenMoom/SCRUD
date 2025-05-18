@@ -59,7 +59,10 @@ public class CommentGetFacade {
                     UserOut userOut = userUseCase.getUserById(comment.getUserId());
 
                     // parentCommentId가 null인 경우
-                    Long parentCommentId = comment.getParentComment().getCommentId() == null ? null : comment.getParentComment().getCommentId();
+                    Long parentCommentId = comment.getParentComment() != null
+                            ? comment.getParentComment().getCommentId()
+                            : null;
+
 
                     // commentOut 생성
                     return modelMapper.map(comment, CommentOut.class).toBuilder()
