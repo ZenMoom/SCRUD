@@ -623,7 +623,7 @@ paths:
         $ref: './components/requests/comment-request.yaml#/CreateCommentRequest'
       responses:
         '201':
-          $ref: './components/responses/success-response.yaml#/SuccessCreated'
+          $ref: './components/responses/comment-response.yaml#/CreateCommentResponse'
 
     get:
       tags: [ Comment ]
