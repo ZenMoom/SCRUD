@@ -4,7 +4,7 @@ import type React from 'react';
 
 import useAuthStore from '@/app/store/useAuthStore';
 import AlertLogin from '@/components/alert/AlertLogin';
-import { createComment } from '@/lib/comment-api';
+import { createComment, getComments } from '@/lib/comment-api';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
 import type { CommentResponse } from '@generated/model';
 import { useEffect, useState } from 'react';
@@ -62,17 +62,17 @@ export default function FeedbackComment() {
     setIsSubmitting(true);
 
     try {
-      const newComment = await createComment({
+      await createComment({
         postId: post!.postId!,
         content: commentText,
         parentCommentId: replyTo?.commentId || null,
       });
 
-      // 스토어에 댓글 추가
-      setComments([...comments, newComment]);
+      // 댓글 목록 업데이트
+      const updatedComments = await getComments(String(post!.postId!));
 
-      // 댓글 수 업데이트
-      updateCommentCount((post?.commentCount || 0) + 1);
+      setComments(updatedComments); // 스토어에 반영
+      updateCommentCount(updatedComments.length); // 댓글 수도 갱신
 
       // 입력 필드 초기화
       setCommentText('');

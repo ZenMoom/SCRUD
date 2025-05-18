@@ -39,7 +39,7 @@ export async function createComment({
 }: {
   postId: number;
   content: string;
-  parentCommentId?: number | null;
+  parentCommentId: number | null;
 }): Promise<CommentResponse> {
   try {
     // baseUrl

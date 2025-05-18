@@ -55,7 +55,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const body = await request.json();
     const createCommentRequest: CreateCommentRequest = {
       content: body.content,
-      parentCommentId: body.parentCommentId ? Number(body.parentCommentId) : null,
+      parentCommentId: body.parentCommentId ? Number(body.parentCommentId) : undefined,
     };
 
     const response = await commentApi.createComment({
