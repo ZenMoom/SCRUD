@@ -1,7 +1,7 @@
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 
-from app.core.models.prompt_models import Diagram
+from app.core.models.diagram_model import Diagram
 
 
 class DiagramPromptGenerator:
