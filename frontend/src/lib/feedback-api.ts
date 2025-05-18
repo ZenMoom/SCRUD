@@ -7,6 +7,7 @@ import {
   PostSortEnumDto,
   type PostVoteRequest,
   SearchTypeEnumDto,
+  UpdatePostRequest,
   type VoteResponse,
 } from '@generated/model';
 
@@ -157,6 +158,31 @@ export async function deletePost(postId: number): Promise<void> {
     }
   } catch (error) {
     console.error(`Failed to delete post ID ${postId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * 게시글을 수정하는 함수
+ */
+export async function updatePost(postId: number, postData: UpdatePostRequest): Promise<PostDetailResponse> {
+  try {
+    const response = await fetch(`/api/feedback/${postId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(postData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error updating post: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Failed to update post ID ${postId}:`, error);
     throw error;
   }
 }
