@@ -201,6 +201,12 @@ export default function FeedbackComment() {
     );
   };
 
+  useEffect(() => {
+    console.log('댓글', comments);
+    console.log('댓글 맵:', commentMap);
+    console.log('최상위 댓글:', topLevelComments);
+    console.log('댓글 수:', totalCommentCount);
+  }, [commentMap, topLevelComments, totalCommentCount, comments]);
   return (
     <div className='p-6'>
       <h2 className='mb-4 text-lg font-medium text-gray-900'>댓글 {totalCommentCount}개</h2>
