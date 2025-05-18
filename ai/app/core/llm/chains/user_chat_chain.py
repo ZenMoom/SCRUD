@@ -55,10 +55,13 @@ class UserChatChain:
         Returns:
             처리 결과
         """
+        logger.info(f"[디버깅] UserChatChain - predict 메소드 시작 - 메시지: {chat_data.message if hasattr(chat_data, 'message') else 'N/A'}")
         logger.info("채팅 기반 프롬프트 처리 시작")
         logger.info(f"chat_data: {chat_data}")
         logger.info(f"global_data: {global_files}")
         logger.info(f"current_diagram: {current_diagram}")
+        
+        logger.info(f"[디버깅] UserChatChain - 프롬프트 준비 시작")
         # 채팅 데이터 프롬프트 구성
         parser = PydanticOutputParser(pydantic_object=SystemChatChainPayload).get_format_instructions()
         logger.info(f"parser: {parser}")
@@ -75,13 +78,17 @@ class UserChatChain:
             "code_data": chat_data.targetMethods,
         }
         logger.info(f"input_variables: {input_variables}")
+        logger.info(f"[디버깅] UserChatChain - 프롬프트 준비 완료")
 
         # LLM을 사용하여 구조화된 출력 생성
+        logger.info(f"[디버깅] UserChatChain - LLM 요청 시작")
         result = await self.chain.ainvoke(
             input_variables
         )
+        logger.info(f"[디버깅] UserChatChain - LLM 요청 완료")
 
 
 
         logger.info(f"채팅 데이터: {result}")
+        logger.info(f"[디버깅] UserChatChain - predict 메소드 결과 반환 완료")
         return result

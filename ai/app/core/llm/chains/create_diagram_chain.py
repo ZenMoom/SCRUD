@@ -50,21 +50,25 @@ class CreateDiagramChain:
             api_spec: API 정보
             global_files: 전역 설정 파일 정보
         """
+        logger.info(f"[디버깅] CreateDiagramChain - predict 메소드 시작 - API명세: {api_spec.api_spec_id}, 전역파일 개수: {len(global_files.files)}")
 
         # 각 프롬프트 구성
         api_spec_prompt = self.prompt_builder.build_api_spec_prompt(api_spec)
         global_data_prompt = self.prompt_builder.build_global_data_prompt(global_files)
+        logger.info(f"[디버깅] CreateDiagramChain - 프롬프트 구성 완료")
 
         # 프롬프트 조합
         prompts = [api_spec_prompt, global_data_prompt]
         complete_prompt = self.prompt_builder.build_complete_prompt(prompts)
 
         logger.info(f"API 명세 데이터: {complete_prompt}")
+        logger.info(f"[디버깅] CreateDiagramChain - LLM 요청 시작")
         result: ComponentChainPayloadList = await self.chain.ainvoke({
             "complete_prompt" : complete_prompt,
             "output_instructions" : PydanticOutputParser(
                 pydantic_object=ComponentChainPayloadList
             ).get_format_instructions(),
         })
+        logger.info(f"[디버깅] CreateDiagramChain - predict 메소드 결과 - 컴포넌트 개수: {len(result.components)}")
 
         return result.components

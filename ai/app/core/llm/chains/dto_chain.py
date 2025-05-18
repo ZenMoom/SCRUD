@@ -46,10 +46,14 @@ class DtoModelChain:
             chat_data: 채팅 데이터
             api_spec
         """
+        logger.info(f"[디버깅] DtoModelChain - predict 메소드 시작 - API 스펙 ID: {api_spec.id if hasattr(api_spec, 'id') else 'N/A'}")
         logger.info(f"채팅 데이터: {api_spec}")
+        
+        logger.info(f"[디버깅] DtoModelChain - LLM 요청 시작")
         result: DtoModelChainList = await self.chain.ainvoke({
             "api_spec" : api_spec,
             "output_instructions" : PydanticOutputParser(pydantic_object=DtoModelChainList).get_format_instructions(),
         })
+        logger.info(f"[디버깅] DtoModelChain - predict 메소드 결과 - DTO 모델 개수: {len(result.dto)}")
 
         return result.dto

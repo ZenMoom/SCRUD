@@ -49,8 +49,10 @@ class ComponentChain:
             다이어그램 필요 여부
         """
         logger.info(f"채팅 데이터: {chat_data}")
+        logger.info(f"[디버깅] ComponentChain - predict 메소드 시작 - 입력 데이터: {chat_data}")
         result: ComponentChainPayloadList = await self.chain.ainvoke({
             "chat_data" : chat_data.model_dump_json(indent=2),
             "output_instructions" : PydanticOutputParser(pydantic_object=ComponentChainPayloadList).get_format_instructions(),
         })
+        logger.info(f"[디버깅] ComponentChain - predict 메소드 결과: {result}")
         return result.components

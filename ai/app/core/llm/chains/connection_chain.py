@@ -48,6 +48,7 @@ class ConnectionChain:
         Returns:
             다이어그램 필요 여부
         """
+        logger.info(f"[디버깅] ConnectionChain - predict 메소드 시작 - 컴포넌트 개수: {len(component_payload_list)}")
 
         component_data = json.dumps([p.model_dump() for p in component_payload_list], ensure_ascii=False)
         logger.info(f"컴포넌트 데이터: {component_data}")
@@ -56,4 +57,5 @@ class ConnectionChain:
             "connection_schema": component_data,
             "output_instructions": PydanticOutputParser(pydantic_object=ConnectionChainPayloadList).get_format_instructions(),
         })
+        logger.info(f"[디버깅] ConnectionChain - predict 메소드 결과 - 커넥션 개수: {len(result.connections)}")
         return result.connections
