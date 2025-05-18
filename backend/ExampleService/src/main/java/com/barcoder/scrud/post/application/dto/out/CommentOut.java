@@ -32,6 +32,4 @@ public class CommentOut {
 
     private UserOut author;
 
-    @Builder.Default
-    private List<CommentOut> replies = List.of(); // 대댓글
 }

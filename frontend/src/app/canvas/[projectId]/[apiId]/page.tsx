@@ -5,13 +5,14 @@
  * 모든 React Hooks는 컴포넌트의 최상위 레벨에서 호출되어야 합니다.
  */
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import axios from "axios"
 import type { DiagramResponse } from "@generated/model"
 import type { ChatHistoryResponse } from "@generated/model"
 import type { TargetNode } from "@/components/canvas/DiagramContainer"
 import { ArrowLeft } from "lucide-react"
+import { Check, X } from "lucide-react"
 
 // 컴포넌트 임포트
 import ChatContainer from "@/components/canvas/ChatContainer"
@@ -63,6 +64,9 @@ export default function CanvasPage() {
   const [versions, setVersions] = useState<VersionInfo[]>([])
   const [selectedVersion, setSelectedVersion] = useState<string | null>(versionParam)
 
+  // 새 버전 감지를 위한 ref
+  const latestVersionRef = useRef<string | null>(null)
+
   // API 목록 데이터 상태
   const [apiListVisible, setApiListVisible] = useState<boolean>(false)
   const [apiListData, setApiListData] = useState<ApiListItem[]>([])
@@ -77,6 +81,10 @@ export default function CanvasPage() {
 
   // Add this after the other state declarations
   const [currentApiEndpoint, setCurrentApiEndpoint] = useState<string | undefined>(undefined)
+
+  // 상태 변수 추가 - showCompletionAlert 아래에 추가
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false)
+  const [showCompletedMessage, setShowCompletedMessage] = useState<boolean>(false)
 
   // 채팅 데이터 가져오기 함수
   const fetchChatData = useCallback(async () => {
@@ -151,6 +159,12 @@ export default function CanvasPage() {
       })
 
       setVersions(extractedVersions)
+
+      // 최신 버전 ID 저장
+      if (extractedVersions.length > 0) {
+        const latestVersion = extractedVersions[extractedVersions.length - 1]
+        latestVersionRef.current = latestVersion.versionId
+      }
 
       // URL에서 버전 파라미터가 있는 경우 해당 버전 선택
       if (versionParam) {
@@ -283,25 +297,39 @@ export default function CanvasPage() {
     }
   }, [projectId, fetchApiList])
 
-  // API 완료 처리 함수
-  const completeApi = useCallback(async () => {
+  // completeApi 함수를 수정
+  const completeApi = useCallback(() => {
+    // 확인 모달 표시
+    setShowConfirmModal(true)
+  }, [])
+
+  // API 완료 처리 실행 함수 추가
+  const executeApiCompletion = useCallback(async () => {
     if (!projectId || !apiId) {
       alert("프로젝트 ID와 API ID가 필요합니다.")
       return
     }
 
     try {
+      // 확인 모달 닫기
+      setShowConfirmModal(false)
+
       // API 호출
       const response = await axios.put(`/api/canvas-api/${projectId}/${apiId}`, {
         status: "USER_COMPLETED",
       })
 
-      // 성공 메시지 표시
-      alert("API를 완료했습니다.")
-      console.log("API 완료 응답:", response.data)
+      // 완료 메시지 표시
+      setShowCompletedMessage(true)
 
-      // API 목록을 새로고침하여 최신 상태 반영
-      fetchApiList()
+      // 2초 후 페이지 이동
+      setTimeout(() => {
+        if (projectId) {
+          window.location.href = `/project/${projectId}/api`
+        }
+      }, 2000)
+
+      console.log("API 완료 응답:", response.data)
     } catch (err) {
       console.error("API 완료 처리 오류:", err)
 
@@ -311,7 +339,13 @@ export default function CanvasPage() {
         alert("API 완료 처리 중 오류가 발생했습니다.")
       }
     }
-  }, [projectId, apiId, fetchApiList])
+  }, [projectId, apiId])
+
+  // 모달 닫기 핸들러 수정
+  const handleCloseModal = useCallback(() => {
+    setShowConfirmModal(false)
+    setShowCompletedMessage(false)
+  }, [])
 
   // 버전 선택 핸들러 - 채팅 컴포넌트에서 호출됨
   const handleVersionSelect = useCallback(
@@ -332,6 +366,43 @@ export default function CanvasPage() {
       }
     },
     [selectedVersion, projectId, apiId]
+  )
+
+  // 새 버전 정보 수신 핸들러 - 채팅 컴포넌트에서 호출됨
+  const handleNewVersionInfo = useCallback(
+    (versionInfo: { newVersionId: string; description: string }) => {
+      console.log("새 버전 정보 수신:", versionInfo)
+
+      if (versionInfo && versionInfo.newVersionId) {
+        // 새 버전이 현재 선택된 버전과 다르고, 최신 버전보다 높은 경우에만 처리
+        const newVersionNum = Number.parseInt(versionInfo.newVersionId, 10)
+        const currentVersionNum = latestVersionRef.current ? Number.parseInt(latestVersionRef.current, 10) : 0
+
+        if (newVersionNum > currentVersionNum) {
+          console.log(`새 버전 ${versionInfo.newVersionId}로 자동 전환합니다.`)
+
+          // 최신 버전 참조 업데이트
+          latestVersionRef.current = versionInfo.newVersionId
+
+          // 새 버전으로 URL 업데이트 및 페이지 이동
+          if (projectId && apiId) {
+            // 즉시 새 버전의 다이어그램 데이터 요청
+            fetchDiagramData(versionInfo.newVersionId)
+
+            // 선택된 버전 상태 업데이트
+            setSelectedVersion(versionInfo.newVersionId)
+
+            // URL 업데이트 (새로고침 없이)
+            const url = new URL(window.location.href)
+            url.searchParams.set("version", versionInfo.newVersionId)
+            window.history.pushState({}, "", url.toString())
+
+            console.log(`버전 ${versionInfo.newVersionId}의 다이어그램을 요청했습니다.`)
+          }
+        }
+      }
+    },
+    [projectId, apiId, fetchDiagramData]
   )
 
   // 타겟 노드 변경 핸들러
@@ -504,6 +575,7 @@ export default function CanvasPage() {
                 onRefresh={fetchChatData}
                 targetNodes={targetNodes}
                 onVersionSelect={handleVersionSelect}
+                onNewVersionInfo={handleNewVersionInfo}
               />
             </div>
           </div>
@@ -538,6 +610,59 @@ export default function CanvasPage() {
           </div>
         </div>
       </div>
+      {showConfirmModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
+            <div className="bg-blue-50 p-4 flex items-start">
+              <div className="flex-shrink-0">
+                <Check className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-lg font-medium text-blue-800">API 완료 확인</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>API를 완료 하시겠습니까?</p>
+                </div>
+              </div>
+              <button onClick={handleCloseModal} className="flex-shrink-0 ml-4 bg-blue-50 rounded-md inline-flex text-blue-500 hover:text-blue-700 focus:outline-none">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-4 py-3 bg-gray-50 text-right">
+              <button
+                onClick={executeApiCompletion}
+                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                API 완료
+              </button>
+              <button
+                onClick={handleCloseModal}
+                className="ml-3 inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCompletedMessage && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
+            <div className="bg-blue-50 p-4 flex items-start">
+              <div className="flex-shrink-0">
+                <Check className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-lg font-medium text-blue-800">완료 처리됨</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>API를 완료했습니다.</p>
+                  <p className="mt-1">잠시 후 프로젝트 페이지로 이동합니다...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

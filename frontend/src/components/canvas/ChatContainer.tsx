@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Clock, Send, RefreshCw, X, AlertCircle, Info } from "lucide-react"
+import { Clock, Send, RefreshCw, X, Info } from "lucide-react"
 import type { ChatHistoryResponse } from "@generated/model"
 import type { TargetNode } from "./DiagramContainer"
 import axios from "axios"
@@ -20,6 +20,7 @@ interface ChatContainerProps {
   onRefresh: () => Promise<void>
   targetNodes: TargetNode[]
   onVersionSelect?: (versionId: string) => void
+  onNewVersionInfo?: (versionInfo: { newVersionId: string; description: string }) => void
 }
 
 // SSE 응답 타입 정의
@@ -59,7 +60,7 @@ interface ChatMessage {
 // 요청 태그 타입 정의
 type RequestTag = "EXPLAIN" | "REFACTORING" | "OPTIMIZE" | "IMPLEMENT"
 
-export default function ChatContainer({ projectId, apiId, versionId, chatData, loading, error, onRefresh, targetNodes, onVersionSelect }: ChatContainerProps) {
+export default function ChatContainer({ projectId, apiId, versionId, chatData, loading, error, onRefresh, targetNodes, onVersionSelect, onNewVersionInfo }: ChatContainerProps) {
   // 상태 관리
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
@@ -157,13 +158,20 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         }
 
         if (parsedData && parsedData.versionInfo) {
+          console.log("SSE에서 새 버전 정보 감지:", parsedData.versionInfo)
           setVersionInfo(parsedData.versionInfo)
+
+          // 새 버전 정보를 부모 컴포넌트에 즉시 전달
+          if (onNewVersionInfo) {
+            console.log("부모 컴포넌트에 새 버전 정보 전달:", parsedData.versionInfo)
+            onNewVersionInfo(parsedData.versionInfo)
+          }
         }
 
         if (
           (parsedData && parsedData.status === "COMPLETED") ||
           (parsedData && parsedData.message && (parsedData.message.includes("완료") || parsedData.message.includes("SSE 연결이 종료") || parsedData.message.includes("종료"))) ||
-          (parsedData && parsedData.token && parsedData.token.includes("완료")) ||
+          (parsedData && parsedData.token && typeof parsedData.token === "string" && parsedData.token.includes("완료")) ||
           (parsedData && parsedData.done === true)
         ) {
           setCurrentMessageCompleted(true)
@@ -183,7 +191,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         console.error("SSE 메시지 처리 오류:", err)
       }
     },
-    [currentMessageCompleted, disconnectSSE, onRefresh]
+    [currentMessageCompleted, disconnectSSE, onRefresh, onNewVersionInfo]
   )
 
   // 시스템 응답에서 버전 정보 감지 시 부모 컴포넌트에 알림
@@ -540,7 +548,8 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       .replace(/^##\s+(.*?)(?:\n|$)/gm, '<h2 class="text-xl font-bold my-2">$1</h2>')
       // H3 제목 처리 (### 제목)
       .replace(/^###\s+(.*?)(?:\n|$)/gm, '<h3 class="text-lg font-bold my-2">$1</h3>')
-
+      // H4 제목 처리 (#### 제목)
+      .replace(/^####\s+(.*?)(?:\n|$)/gm, '<h4 class="text-lg font-bold my-2">$1</h4>')
     // 볼드 처리 (**텍스트** 또는 __텍스트__)
     parsedText = parsedText.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>")
 
@@ -606,7 +615,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             if (msg.type === "user") {
               return (
                 <div key={msg.id} className="flex flex-col items-end mb-4">
-                  <div className="bg-green-50 text-blue-900 rounded-lg py-2 px-4 max-w-[80%]">
+                  <div className="bg-blue-50 text-blue-900 rounded-lg py-2 px-4 max-w-[80%]">
                     {/* 요청 태그 표시 */}
                     {msg.tag && (
                       <div className="mb-1">
@@ -622,26 +631,26 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
               return (
                 <div key={msg.id} className="flex flex-col mb-2">
                   {/* 시스템 메시지를 좌우 가득 차지하게 변경하고 배경색을 흰색으로 */}
-                  <div className="bg-white  rounded-lg py-3 px-4 w-full ">
+                  <div className="bg-white rounded-lg py-3 px-4 w-full">
                     <div className="prose max-w-none">{parseMessage(msg.message)}</div>
                   </div>
                   <span className="text-xs text-gray-500 mt-1 self-start">{new Date(msg.timestamp).toLocaleTimeString()}</span>
                 </div>
               )
             } else if (msg.type === "version" && msg.versionInfo) {
-              // 버전 메시지 표시
+              // 버전 메시지 표시 - 여기서 버튼 스타일 업데이트
               return (
                 <div key={msg.id} className="my-2">
                   <button
                     onClick={() => handleVersionClick(msg.versionInfo!.versionId)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
-                      versionId === msg.versionInfo!.versionId ? " bg-blue-500 text-white" : "border border-blue-500 bg-blue-50 text-blue-800 hover:bg-blue-200"
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                      versionId === msg.versionInfo!.versionId ? "bg-gray-700 text-white shadow-sm" : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                     }`}
                   >
-                    <Clock size={16} />
+                    <Clock size={14} />
                     <div className="flex flex-col items-start">
                       <span className="font-medium">VERSION {msg.versionInfo.versionId}</span>
-                      <span className="text-xs">{msg.versionInfo.description}</span>
+                      <span className="text-xs opacity-90">{msg.versionInfo.description}</span>
                     </div>
                   </button>
                   <hr className="mb-4 mt-2" />
@@ -659,10 +668,10 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           <div className="mb-4">
             {/* 사용자 메시지 (가장 최근에 보낸 메시지) */}
             <div className="flex justify-end mb-4">
-              <div className="max-w-[80%] p-3 rounded-lg bg-blue-500 text-white rounded-tr-none">
+              <div className="max-w-[80%] p-3 rounded-lg bg-blue-50 text-blue-900 rounded-tr-none">
                 {/* 요청 태그 표시 */}
                 <div className="mb-1">
-                  <span className="inline-block px-2 py-0.5 bg-blue-400 text-white rounded-full text-xs">{selectedTag}</span>
+                  <span className="inline-block px-2 py-0.5 bg-blue-200 text-blue-800 rounded-full text-xs">{selectedTag}</span>
                 </div>
                 <div>{lastSentMessage}</div>
               </div>
@@ -670,15 +679,36 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
 
             {/* SSE 응답 메시지 - 좌우 가득 차지하게 변경하고 배경색을 흰색으로 */}
             <div className="flex flex-col mb-4">
-              <div className="w-full bg-white ">
+              <div className="w-full bg-white">
                 <div className="prose max-w-none">
                   {parseMessage(accumulatedText)}
                   {(sseConnected || isConnecting) && <span className="inline-block ml-1 w-2 h-4 bg-gray-500 animate-pulse"></span>}
                 </div>
                 {(sseConnected || isConnecting) && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
-                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                    <span>{isConnecting ? "연결 중..." : "처리 중..."}</span>
+                  <div className="mt-2 flex items-center gap-0.5 text-xs">
+                    {"SCRUD".split("").map((letter, index) => (
+                      <span
+                        key={`scrud-${index}`}
+                        className="font-semibold transition-opacity duration-700 ease-in-out"
+                        style={{
+                          animation: `pulse 1.5s infinite ${index * 0.3}s`,
+                          color: "#3b82f6",
+                        }}
+                      >
+                        {letter}
+                      </span>
+                    ))}
+                    <style jsx>{`
+                      @keyframes pulse {
+                        0%,
+                        100% {
+                          opacity: 0.3;
+                        }
+                        50% {
+                          opacity: 1;
+                        }
+                      }
+                    `}</style>
                   </div>
                 )}
               </div>
@@ -716,30 +746,33 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            {/* 태그 선택 버튼 - 심플한 디자인으로 업데이트 */}
             <button
               onClick={() => handleTagSelect("EXPLAIN")}
-              className={`px-3 py-1 text-xs rounded-full transition-colors ${selectedTag === "EXPLAIN" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+              className={`px-3 py-1 text-xs rounded-md transition-colors ${selectedTag === "EXPLAIN" ? "bg-gray-700 text-white" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"}`}
               disabled={selectedTag === "EXPLAIN" && sending}
             >
               설명
             </button>
             <button
               onClick={() => handleTagSelect("REFACTORING")}
-              className={`px-3 py-1 text-xs rounded-full transition-colors ${selectedTag === "REFACTORING" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+              className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                selectedTag === "REFACTORING" ? "bg-gray-700 text-white" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              }`}
               disabled={selectedTag === "REFACTORING" && sending}
             >
               리팩토링
             </button>
             <button
               onClick={() => handleTagSelect("OPTIMIZE")}
-              className={`px-3 py-1 text-xs rounded-full transition-colors ${selectedTag === "OPTIMIZE" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+              className={`px-3 py-1 text-xs rounded-md transition-colors ${selectedTag === "OPTIMIZE" ? "bg-gray-700 text-white" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"}`}
               disabled={selectedTag === "OPTIMIZE" && sending}
             >
               최적화
             </button>
             <button
               onClick={() => handleTagSelect("IMPLEMENT")}
-              className={`px-3 py-1 text-xs rounded-full transition-colors ${selectedTag === "IMPLEMENT" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+              className={`px-3 py-1 text-xs rounded-md transition-colors ${selectedTag === "IMPLEMENT" ? "bg-gray-700 text-white" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"}`}
               disabled={selectedTag === "IMPLEMENT" && sending}
             >
               구현
@@ -754,10 +787,10 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           {/* 선택된 요청 태그 표시 */}
           <div className="flex items-center gap-1">
             <div className="text-xs text-gray-700">선택된 요청:</div>
-            <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
+            <div className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-800 rounded-md text-xs">
               <span>{selectedTag}</span>
-              <button onClick={handleTagClear} className="ml-1 p-0.5 rounded-full bg-blue-200 hover:bg-blue-300 transition-colors" aria-label="요청 태그 해제">
-                <X size={10} className="text-blue-700" />
+              <button onClick={handleTagClear} className="ml-1 p-0.5 rounded-full text-gray-500 hover:bg-gray-200 transition-colors" aria-label="요청 태그 해제">
+                <X size={10} />
               </button>
             </div>
           </div>
@@ -769,26 +802,47 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={sseConnected || isConnecting ? "처리 중입니다..." : "메시지를 입력하세요..."}
-              className="flex-1 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 p-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500"
               rows={2}
               disabled={sending || sseConnected || isConnecting}
             />
             <button
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || sending || sseConnected || isConnecting || isSubmitting}
-              className={`p-3 rounded-full ${
-                sending || !newMessage.trim() || sseConnected || isConnecting || isSubmitting ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"
-              } transition-colors`}
+              className={`p-2.5 rounded-md ${
+                sending || !newMessage.trim() || sseConnected || isConnecting || isSubmitting ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-gray-700 text-white hover:bg-gray-800"
+              }`}
             >
-              {sending || isConnecting ? <div className="animate-spin h-5 w-5 border-2 border-white rounded-full border-t-transparent"></div> : <Send size={20} />}
+              {sending || isConnecting ? <div className="animate-spin h-5 w-5 border-2 border-white rounded-full border-t-transparent"></div> : <Send size={18} />}
             </button>
           </div>
         </div>
 
         {(sseConnected || isConnecting) && (
-          <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
-            <AlertCircle size={12} />
-            <span>AI가 응답을 생성하는 중입니다. 잠시만 기다려주세요.</span>
+          <div className="mt-2 flex items-center gap-1">
+            {"SCRUD".split("").map((letter, index) => (
+              <span
+                key={`scrud-${index}`}
+                className="font-semibold transition-opacity duration-700 ease-in-out"
+                style={{
+                  animation: `pulse 1.5s infinite ${index * 0.3}s`,
+                  color: "#3b82f6",
+                }}
+              >
+                {letter}
+              </span>
+            ))}
+            <style jsx>{`
+              @keyframes pulse {
+                0%,
+                100% {
+                  opacity: 0.3;
+                }
+                50% {
+                  opacity: 1;
+                }
+              }
+            `}</style>
           </div>
         )}
       </div>

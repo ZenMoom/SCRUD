@@ -110,9 +110,6 @@ public class PostController implements PostApi {
         // response author
         response.setAuthor(author);
 
-        // response viewCount +1
-        response.setViewCount(response.getViewCount() + 1);
-
         return ResponseEntity.ok(response);
     }
 

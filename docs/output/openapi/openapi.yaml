@@ -3360,6 +3360,7 @@ components:
           totalElements: 5
         content:
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          dislikeCount: 1
           likeCount: 10
           postId: 101
           viewCount: 123
@@ -3367,6 +3368,7 @@ components:
           category: 공지
           commentCount: 5
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          dislikeCount: 1
           likeCount: 10
           postId: 101
           viewCount: 123
@@ -3384,6 +3386,7 @@ components:
     PostSummaryResponse:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
+        dislikeCount: 1
         likeCount: 10
         postId: 101
         viewCount: 123
@@ -3410,6 +3413,10 @@ components:
           type: integer
         likeCount:
           example: 10
+          format: int64
+          type: integer
+        dislikeCount:
+          example: 1
           format: int64
           type: integer
         commentCount:
@@ -3498,9 +3505,6 @@ components:
       example:
         content:
         - createdAt: 2000-01-23T04:56:07.000+00:00
-          replies:
-          - null
-          - null
           author:
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
@@ -3514,9 +3518,6 @@ components:
           content: 댓글 내용입니다.
           updatedAt: 2000-01-23T04:56:07.000+00:00
         - createdAt: 2000-01-23T04:56:07.000+00:00
-          replies:
-          - null
-          - null
           author:
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
@@ -3538,9 +3539,6 @@ components:
     CommentResponse:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
-        replies:
-        - null
-        - null
         author:
           profileImgUrl: https://example.com/profile.jpg
           nickname: john_doe
@@ -3570,10 +3568,6 @@ components:
           format: int64
           nullable: true
           type: integer
-        replies:
-          items:
-            $ref: '#/components/schemas/CommentResponse'
-          type: array
         likeCount:
           example: 3
           format: int64
