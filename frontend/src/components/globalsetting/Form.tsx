@@ -1,6 +1,6 @@
 "use client"
 
-import { forwardRef, useEffect } from "react"
+import { forwardRef, useEffect, useState } from "react"
 import { HelpCircle } from "lucide-react"
 import { useProjectTempStore } from "@/store/projectTempStore"
 
@@ -16,6 +16,7 @@ interface FormItemProps {
 
 const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
   const { tempData, setTempData } = useProjectTempStore()
+  const [urlError, setUrlError] = useState<string>('')
 
   // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
   useEffect(() => {
@@ -54,6 +55,27 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
     }
   }
 
+  const validateUrl = (url: string) => {
+    try {
+      new URL(url)
+      setUrlError('')
+      return true
+    } catch {
+      setUrlError('정확한 url을 입력해 주세요.')
+      return false
+    }
+  }
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value
+    handleChange(newValue)
+    if (newValue) {
+      validateUrl(newValue)
+    } else {
+      setUrlError('')
+    }
+  }
+
   // 렌더링할 컴포넌트 선택
   const renderInputComponent = () => {
     switch (type) {
@@ -62,8 +84,10 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
           <input
             type="text"
             value={value as string}
-            onChange={(e) => handleChange(e.target.value)}
-            className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={handleUrlChange}
+            className={`w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              urlError ? 'border-red-300' : ''
+            }`}
             placeholder={`${title} 입력`}
             onFocus={onFocus}
           />
@@ -99,6 +123,9 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
         </div>
       </div>
       {renderInputComponent()}
+      {urlError && (
+        <p className="mt-1 text-sm text-red-600">{urlError}</p>
+      )}
     </div>
   )
 })
