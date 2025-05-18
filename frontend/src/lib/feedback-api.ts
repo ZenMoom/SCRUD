@@ -38,7 +38,7 @@ export async function fetchPosts(
 
   try {
     // 내부 API 라우트로 요청 (credentials: 'include' 옵션 추가)
-    const response = await fetch(`/api/feedback?${params.toString()}`, {
+    const response = await fetch(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/feedback?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -63,9 +63,9 @@ export async function fetchPosts(
  * 게시글 상세 정보를 가져오는 함수
  */
 export async function fetchPostDetail(postId: string): Promise<PostDetailResponse> {
-  console.log(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/comment/${postId}`);
+  console.log(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/feedback/${postId}`);
   try {
-    const response = await fetch(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/comment/${postId}`, {
+    const response = await fetch(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/feedback/${postId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ export async function fetchPostDetail(postId: string): Promise<PostDetailRespons
  */
 export async function votePost(postId: number, voteRequest: PostVoteRequest): Promise<VoteResponse> {
   try {
-    const response = await fetch(`/api/feedback/posts/${postId}/vote`, {
+    const response = await fetch(`/api/feedback/${postId}/vote`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ export async function createPost(postData: CreatePostRequest): Promise<PostDetai
  */
 export async function deletePost(postId: number): Promise<void> {
   try {
-    const response = await fetch(`/api/feedback/posts/${postId}`, {
+    const response = await fetch(`/api/feedback/${postId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
