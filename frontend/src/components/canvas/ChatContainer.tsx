@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Clock, Send, RefreshCw, X, AlertCircle, Info } from "lucide-react"
+import { Clock, Send, RefreshCw, X, Info } from "lucide-react"
 import type { ChatHistoryResponse } from "@generated/model"
 import type { TargetNode } from "./DiagramContainer"
 import axios from "axios"
@@ -548,7 +548,8 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       .replace(/^##\s+(.*?)(?:\n|$)/gm, '<h2 class="text-xl font-bold my-2">$1</h2>')
       // H3 제목 처리 (### 제목)
       .replace(/^###\s+(.*?)(?:\n|$)/gm, '<h3 class="text-lg font-bold my-2">$1</h3>')
-
+      // H4 제목 처리 (#### 제목)
+      .replace(/^####\s+(.*?)(?:\n|$)/gm, '<h4 class="text-lg font-bold my-2">$1</h4>')
     // 볼드 처리 (**텍스트** 또는 __텍스트__)
     parsedText = parsedText.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>")
 
@@ -614,7 +615,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             if (msg.type === "user") {
               return (
                 <div key={msg.id} className="flex flex-col items-end mb-4">
-                  <div className="bg-green-50 text-blue-900 rounded-lg py-2 px-4 max-w-[80%]">
+                  <div className="bg-blue-50 text-blue-900 rounded-lg py-2 px-4 max-w-[80%]">
                     {/* 요청 태그 표시 */}
                     {msg.tag && (
                       <div className="mb-1">
@@ -667,10 +668,10 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           <div className="mb-4">
             {/* 사용자 메시지 (가장 최근에 보낸 메시지) */}
             <div className="flex justify-end mb-4">
-              <div className="max-w-[80%] p-3 rounded-lg bg-blue-500 text-white rounded-tr-none">
+              <div className="max-w-[80%] p-3 rounded-lg bg-blue-50 text-blue-900 rounded-tr-none">
                 {/* 요청 태그 표시 */}
                 <div className="mb-1">
-                  <span className="inline-block px-2 py-0.5 bg-blue-400 text-white rounded-full text-xs">{selectedTag}</span>
+                  <span className="inline-block px-2 py-0.5 bg-blue-200 text-blue-800 rounded-full text-xs">{selectedTag}</span>
                 </div>
                 <div>{lastSentMessage}</div>
               </div>
@@ -684,9 +685,30 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
                   {(sseConnected || isConnecting) && <span className="inline-block ml-1 w-2 h-4 bg-gray-500 animate-pulse"></span>}
                 </div>
                 {(sseConnected || isConnecting) && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
-                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                    <span>{isConnecting ? "연결 중..." : "처리 중..."}</span>
+                  <div className="mt-2 flex items-center gap-0.5 text-xs">
+                    {"SCRUD".split("").map((letter, index) => (
+                      <span
+                        key={`scrud-${index}`}
+                        className="font-semibold transition-opacity duration-700 ease-in-out"
+                        style={{
+                          animation: `pulse 1.5s infinite ${index * 0.3}s`,
+                          color: "#3b82f6",
+                        }}
+                      >
+                        {letter}
+                      </span>
+                    ))}
+                    <style jsx>{`
+                      @keyframes pulse {
+                        0%,
+                        100% {
+                          opacity: 0.3;
+                        }
+                        50% {
+                          opacity: 1;
+                        }
+                      }
+                    `}</style>
                   </div>
                 )}
               </div>
@@ -797,9 +819,30 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         </div>
 
         {(sseConnected || isConnecting) && (
-          <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
-            <AlertCircle size={12} />
-            <span>AI가 응답을 생성하는 중입니다. 잠시만 기다려주세요.</span>
+          <div className="mt-2 flex items-center gap-1">
+            {"SCRUD".split("").map((letter, index) => (
+              <span
+                key={`scrud-${index}`}
+                className="font-semibold transition-opacity duration-700 ease-in-out"
+                style={{
+                  animation: `pulse 1.5s infinite ${index * 0.3}s`,
+                  color: "#3b82f6",
+                }}
+              >
+                {letter}
+              </span>
+            ))}
+            <style jsx>{`
+              @keyframes pulse {
+                0%,
+                100% {
+                  opacity: 0.3;
+                }
+                50% {
+                  opacity: 1;
+                }
+              }
+            `}</style>
           </div>
         )}
       </div>

@@ -13,7 +13,7 @@ export const ClassNode = memo(({ data, selected }: NodeProps<ClassNodeData>) => 
   const { label, backgroundColor, isTargeted = false } = data
 
   // 테두리 스타일 결정 (우선순위: 타겟 > 선택 > 기본)
-  const borderStyle = isTargeted ? "rounded-md border-red-500 border-dashed animate-pulse shadow-red-100" : selected ? "border-blue-500 shadow-blue-100" : "border-gray-200"
+  const borderStyle = isTargeted ? "rounded-md border-blue-500 border-dashed animate-pulse shadow-blue-100" : selected ? "border-blue-500 shadow-blue-100" : "border-gray-200"
 
   return (
     <div
@@ -32,7 +32,7 @@ export const ClassNode = memo(({ data, selected }: NodeProps<ClassNodeData>) => 
       <div
         className={`bg-gradient-to-r rounded-md ${
           isTargeted
-            ? "from-red-600 to-red-800"
+            ? "from-blue-600 to-blue-800"
             : selected
             ? "from-blue-600 to-blue-800" // 선택된 노드는 파란색 헤더
             : "from-gray-700 to-gray-900"
@@ -49,7 +49,7 @@ export const ClassNode = memo(({ data, selected }: NodeProps<ClassNodeData>) => 
       <div
         className={`h-1 bg-gradient-to-r rounded-md ${
           isTargeted
-            ? "from-red-400 via-red-500 to-red-600"
+            ? "from-blue-400 via-blue-500 to-blue-600"
             : selected
             ? "from-blue-400 via-blue-500 to-blue-600" // 선택된 노드는 파란색 장식
             : "from-blue-400 via-purple-500 to-pink-500"
