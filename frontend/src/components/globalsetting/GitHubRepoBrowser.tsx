@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGitHubTokenStore } from '@/store/githubTokenStore';
 import { Folder, File as FileIcon, Github, ChevronLeft, Check } from 'lucide-react';
 import { getGitHubAuthUrl } from '@/auth/github';
+import { useProjectTempStore } from '@/store/projectTempStore';
 
 // 레포지토리 타입 정의
 interface Repository {
@@ -45,6 +46,7 @@ interface SelectedItem {
 
 const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, onSelect, isArchitecture = false, formType }) => {
   const { githubToken } = useGitHubTokenStore();
+  const { setTempData } = useProjectTempStore();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
   const [contents, setContents] = useState<ContentItem[]>([]);
@@ -73,7 +75,6 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
         // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
         console.log('GitHub 토큰 유효성 확인 중...');
         
-        // 간단한 API 호출로 토큰 유효성 확인 - 사용자 레포지토리 목록 요청
         const response = await fetch('/api/github/user/repos', {
           headers: {
             'Authorization': `Bearer ${storedToken}`
@@ -87,15 +88,23 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           // 토큰 삭제
           localStorage.removeItem('github-token-direct');
           
-          // 인증 요청
-          const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
+          // 현재 상태를 임시저장
+          localStorage.setItem('github-auth-pending', 'true');
+          
+          // 인증 요청 (상태 파라미터 추가)
+          const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting?from=github-auth`);
           window.location.href = oauthUrl;
           return;
         }
       } else {
-        // 토큰이 없는 경우 바로 인증 요청
+        // 토큰이 없는 경우
         console.log('GitHub 토큰 없음, 인증 요청');
-        const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
+        
+        // 현재 상태를 임시저장
+        localStorage.setItem('github-auth-pending', 'true');
+        
+        // 인증 요청 (상태 파라미터 추가)
+        const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting?from=github-auth`);
         window.location.href = oauthUrl;
         return;
       }
@@ -103,8 +112,12 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
       console.error('GitHub 토큰 검증 중 오류 발생:', error);
       // 오류 발생시 토큰 삭제 후 재인증
       localStorage.removeItem('github-token-direct');
-      // 인증 요청
-      const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
+      
+      // 현재 상태를 임시저장
+      localStorage.setItem('github-auth-pending', 'true');
+      
+      // 인증 요청 (상태 파라미터 추가)
+      const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting?from=github-auth`);
       window.location.href = oauthUrl;
       return;
     }

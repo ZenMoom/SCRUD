@@ -1,7 +1,8 @@
 "use client"
 
-import { forwardRef } from "react"
+import { forwardRef, useEffect } from "react"
 import { HelpCircle } from "lucide-react"
+import { useProjectTempStore } from "@/store/projectTempStore"
 
 interface FormItemProps {
   title: string
@@ -14,6 +15,45 @@ interface FormItemProps {
 }
 
 const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
+  const { tempData, setTempData } = useProjectTempStore()
+
+  // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const isFromGithubAuth = params.get('from') === 'github-auth'
+
+    if (isFromGithubAuth) {
+      console.log('기본 정보 임시저장 데이터:', {
+        title: tempData.title,
+        description: tempData.description,
+        serverUrl: tempData.serverUrl
+      })
+
+      // 각 필드에 해당하는 임시저장 데이터가 있으면 복원
+      if (title === '프로젝트명' && tempData.title) {
+        onChange(tempData.title)
+      } else if (title === '프로젝트 설명' && tempData.description) {
+        onChange(tempData.description)
+      } else if (title === 'Server URL' && tempData.serverUrl) {
+        onChange(tempData.serverUrl)
+      }
+    }
+  }, [])
+
+  // 값이 변경될 때마다 임시저장
+  const handleChange = (newValue: string) => {
+    onChange(newValue)
+    
+    // 각 필드에 맞는 키로 저장
+    if (title === '프로젝트명') {
+      setTempData({ title: newValue })
+    } else if (title === '프로젝트 설명') {
+      setTempData({ description: newValue })
+    } else if (title === 'Server URL') {
+      setTempData({ serverUrl: newValue })
+    }
+  }
+
   // 렌더링할 컴포넌트 선택
   const renderInputComponent = () => {
     switch (type) {
@@ -22,9 +62,9 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
           <input
             type="text"
             value={value as string}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={`${title} 입력...`}
+            placeholder={`${title} 입력`}
             onFocus={onFocus}
           />
         )
@@ -32,9 +72,9 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
         return (
           <textarea
             value={value as string}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
-            placeholder={`${title} 입력...`}
+            placeholder={`${title} 입력`}
             onFocus={onFocus}
           />
         )

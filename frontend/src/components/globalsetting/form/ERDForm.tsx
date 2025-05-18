@@ -1,8 +1,9 @@
 "use client";
 
 import { File, Github, HelpCircle, Upload } from "lucide-react";
-import { forwardRef, useRef, useState } from "react";
+import { forwardRef, useRef, useState, useEffect } from "react";
 import GitHubRepoBrowser from "../GitHubRepoBrowser";
+import { useProjectTempStore } from "@/store/projectTempStore";
 
 // 파일 객체 타입 정의
 interface FileWithContent {
@@ -27,15 +28,36 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
     const dropdownRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
 
+    const { tempData, setTempData } = useProjectTempStore();
+
+    // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const isFromGithubAuth = params.get('from') === 'github-auth';
+      const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
+
+      console.log('ERDForm - tempData 전체:', tempData);
+      console.log('ERDForm - auth 상태:', { isFromGithubAuth, isAuthPending });
+
+      if (isFromGithubAuth && isAuthPending && tempData.erd.length > 0) {
+        console.log('ERD 임시저장 데이터:', tempData.erd);
+        onChange(tempData.erd as FileWithContent[]);
+      }
+    }, []);
+
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string; content: string }>) => {
+      console.log('ERDForm - GitHub 파일 변환 전:', files);
       if (files.length > 0) {
         const githubFiles = files.map((file) => ({
           name: file.path,
           content: file.content,
           isGitHub: true,
         }));
+        console.log('ERDForm - GitHub 파일 변환 후:', githubFiles);
         onChange(githubFiles);
+        setTempData({ erd: githubFiles });
+        console.log('ERDForm - setTempData 호출 후 상태:', tempData);
       }
       setIsGitHubModalOpen(false);
     };
@@ -62,13 +84,14 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
           content: content,
         };
 
-        // 드롭한 파일을 현재 값 배열에 추가
+        let newFiles: FileWithContent[];
         if (Array.isArray(value)) {
-          onChange([...value, fileWithContent]);
+          newFiles = [...value, fileWithContent];
         } else {
-          // 배열이 아닌 경우 새 배열 생성
-          onChange([fileWithContent]);
+          newFiles = [fileWithContent];
         }
+        onChange(newFiles);
+        setTempData({ erd: newFiles });
       }
     };
 
@@ -187,12 +210,14 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
                 });
 
                 const filesWithContent = await Promise.all(filePromises);
-
+                let newFiles: FileWithContent[];
                 if (Array.isArray(value)) {
-                  onChange([...value, ...filesWithContent]);
+                  newFiles = [...value, ...filesWithContent];
                 } else {
-                  onChange(filesWithContent);
+                  newFiles = filesWithContent;
                 }
+                onChange(newFiles);
+                setTempData({ erd: newFiles });
               }
             }}
             multiple
@@ -220,6 +245,7 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
                         const newFiles = [...value];
                         newFiles.splice(index, 1);
                         onChange(newFiles);
+                        setTempData({ erd: newFiles });
                       }}
                       className="hover:text-red-700 ml-2 text-red-500"
                     >

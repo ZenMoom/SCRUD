@@ -1,8 +1,9 @@
 "use client";
 
 import { File, Github, HelpCircle, Upload } from "lucide-react";
-import { forwardRef, useRef, useState } from "react";
+import { forwardRef, useRef, useState, useEffect } from "react";
 import GitHubRepoBrowser from "../GitHubRepoBrowser";
+import { useProjectTempStore } from "@/store/projectTempStore";
 
 // 파일 객체 타입 정의
 interface FileWithContent {
@@ -27,6 +28,20 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
     const dropdownRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
 
+    const { tempData, setTempData } = useProjectTempStore();
+
+    // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const isFromGithubAuth = params.get('from') === 'github-auth';
+      const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
+
+      if (isFromGithubAuth && isAuthPending && tempData.requirementSpec.length > 0) {
+        console.log('요구사항 명세서 임시저장 데이터:', tempData.requirementSpec);
+        onChange(tempData.requirementSpec as FileWithContent[]);
+      }
+    }, []);
+
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string; content: string }>) => {
       if (files.length > 0) {
@@ -36,6 +51,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
           isGitHub: true,
         }));
         onChange(githubFiles);
+        setTempData({ requirementSpec: githubFiles });
       }
       setIsGitHubModalOpen(false);
     };
@@ -62,13 +78,14 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
           content: content,
         };
 
-        // 드롭한 파일을 현재 값 배열에 추가
+        let newFiles: FileWithContent[];
         if (Array.isArray(value)) {
-          onChange([...value, fileWithContent]);
+          newFiles = [...value, fileWithContent];
         } else {
-          // 배열이 아닌 경우 새 배열 생성
-          onChange([fileWithContent]);
+          newFiles = [fileWithContent];
         }
+        onChange(newFiles);
+        setTempData({ requirementSpec: newFiles });
       }
     };
 
@@ -187,12 +204,14 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
                 });
 
                 const filesWithContent = await Promise.all(filePromises);
-
+                let newFiles: FileWithContent[];
                 if (Array.isArray(value)) {
-                  onChange([...value, ...filesWithContent]);
+                  newFiles = [...value, ...filesWithContent];
                 } else {
-                  onChange(filesWithContent);
+                  newFiles = filesWithContent;
                 }
+                onChange(newFiles);
+                setTempData({ requirementSpec: newFiles });
               }
             }}
             multiple
@@ -220,6 +239,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
                         const newFiles = [...value];
                         newFiles.splice(index, 1);
                         onChange(newFiles);
+                        setTempData({ requirementSpec: newFiles });
                       }}
                       className="hover:text-red-700 ml-2 text-red-500"
                     >
