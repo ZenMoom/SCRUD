@@ -13,7 +13,7 @@ import { LogIn, MessageCircle, MessageSquare, Search, ThumbsUp } from 'lucide-re
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import Pagination from './Pagination';
+import Pagination from '../Pagination';
 
 // 카테고리 레이블 및 색상 매핑
 const categoryConfig: Record<string, { label: string; color: string }> = {

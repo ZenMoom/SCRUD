@@ -60,10 +60,6 @@ CommentResponse:
       nullable: true
       format: int64
       example: 12
-    replies:
-      type: array
-      items:
-        $ref: '#/CommentResponse'
     likeCount:
       type: integer
       format: int64

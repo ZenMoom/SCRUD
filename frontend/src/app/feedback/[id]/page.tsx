@@ -1,4 +1,4 @@
-import FeedbackDetail from '@/components/feedback/FeedbackDetail';
+import FeedbackDetail from '@/components/feedback/detail/FeedbackDetail';
 import { getComments } from '@/lib/comment-api';
 import { fetchPostDetail } from '@/lib/feedback-api';
 import { notFound } from 'next/navigation';
