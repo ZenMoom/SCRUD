@@ -22,8 +22,8 @@ public class PostAssembler {
 
     public PostVote toPostVoteEntity(PostVoteEvent event) {
         return PostVote.builder()
-                .userId(event.userId())
-                .isLike(event.isLike())
+                .userId(event.getUserId())
+                .isLike(event.getIsLike())
                 .build();
     }
 }
