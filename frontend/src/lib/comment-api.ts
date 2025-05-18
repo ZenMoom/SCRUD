@@ -2,7 +2,7 @@ import { getApiBaseUrl } from '@/util/serverUtil';
 import { CommentResponse } from '@generated/model';
 
 /**
- * 게시글 댓글 조회하는 함수 server-side에서 사용
+ * 게시글 댓글 조회하는 함수
  */
 export async function getComments(postId: string): Promise<CommentResponse[]> {
   try {

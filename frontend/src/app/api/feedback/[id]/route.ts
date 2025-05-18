@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
     return NextResponse.json(response.data);
   } catch (error) {
-    console.error('Error fetching comments:', error);
-    return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
+    console.error('Error fetching feedback:', error);
+    return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
   }
 }
