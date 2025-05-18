@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import axios from "axios"
 import useAuthStore from "@/app/store/useAuthStore"
-import { useRouter } from "next/navigation"
+
 import type { DiagramResponse, ApiSpecVersionResponse } from "@generated/model"
 // 컴포넌트 임포트
 import ApiHeader from "./ApiHeader"
@@ -37,9 +37,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
 
   // useAuthStore를 컴포넌트 최상위 레벨에서 호출
   const { token } = useAuthStore()
-
-  // 라우터 추가
-  const router = useRouter()
 
   // 알림 훅 사용
   const { showSuccessNotification, showErrorNotification, showWarningNotification, showInfoNotification } = useNotification()
@@ -208,10 +205,10 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
       // 목록 새로고침
       onApiSpecChanged()
 
-      // 다이어그램 페이지로 이동 - 버전 파라미터 제거
-      setTimeout(() => {
-        router.push(`/canvas/${scrudProjectId}/${apiSpecVersionId}`)
-      }, 1000)
+      // 자동 페이지 이동 제거 - 사용자가 직접 버튼을 클릭하도록 함
+      // setTimeout(() => {
+      //   router.push(`/canvas/${scrudProjectId}/${apiSpecVersionId}`)
+      // }, 1000)
     } catch (error) {
       console.error("다이어그램 생성 오류:", error)
 
