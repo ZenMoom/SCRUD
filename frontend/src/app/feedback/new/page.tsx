@@ -2,9 +2,10 @@
 
 import type React from 'react';
 
+import FeedbackBackButton from '@/components/feedback/FeedbackBackButton';
 import { createPost } from '@/lib/feedback-api';
 import { CreatePostRequest } from '@generated/model';
-import { ArrowLeft, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import useAuthStore from '../../store/useAuthStore';
@@ -99,13 +100,7 @@ export default function NewFeedbackPage() {
       <div className='max-w-3xl px-6 mx-auto'>
         {/* 헤더 */}
         <div className='mb-8'>
-          <button
-            onClick={() => router.back()}
-            className='hover:text-gray-900 inline-flex items-center mb-4 text-gray-600 transition-colors'
-          >
-            <ArrowLeft className='w-4 h-4 mr-1' />
-            <span>피드백 목록으로 돌아가기</span>
-          </button>
+          <FeedbackBackButton description='피드백 목록으로 돌아가기' />
           <h1 className='text-3xl font-bold text-gray-800'>새 피드백 작성</h1>
           <p className='mt-2 text-gray-600'>서비스 개선을 위한 의견이나 제안을 자유롭게 작성해주세요.</p>
         </div>

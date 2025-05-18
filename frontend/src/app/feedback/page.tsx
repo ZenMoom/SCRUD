@@ -1,4 +1,4 @@
-import FeedbackBoard from '@/components/feedback/FeedbackBoard';
+import FeedbackBoard from '@/components/feedback/list/FeedbackBoard';
 import { fetchPosts } from '@/lib/feedback-api';
 import { PostOrderEnumDto, PostSortEnumDto } from '@generated/model';
 

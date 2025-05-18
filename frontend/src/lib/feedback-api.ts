@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from '@/app/utils/serverUtil';
+import { getApiBaseUrl } from '@/util/serverUtil';
 import {
   CreatePostRequest,
   type GetPostListResponse,
@@ -47,7 +47,6 @@ export async function fetchPosts(
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // 쿠키 포함
       cache: 'no-store', // 항상 최신 데이터를 가져옴
     });
 
