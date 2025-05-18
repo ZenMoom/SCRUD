@@ -7,9 +7,9 @@ import AlertLogin from '@/components/alert/AlertLogin';
 import { createComment } from '@/lib/comment-api';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
 import type { CommentResponse } from '@generated/model';
-import { ThumbsDown, ThumbsUp } from 'lucide-react';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import FeedbackCommentForm from './FeedbackCommentForm';
+import FeedbackCommentItem from './FeedbackCommentItem';
 
 export default function FeedbackComment() {
   const { isAuthenticated } = useAuthStore();
@@ -113,94 +113,6 @@ export default function FeedbackComment() {
   //   }
   // };
 
-  // 댓글 렌더링 함수
-  const renderComment = (comment: CommentResponse, isReply = false) => {
-    // 해당 댓글의 대댓글 가져오기
-    const replies = commentMap.get(comment.commentId!) || [];
-
-    return (
-      <div
-        key={comment.commentId}
-        className={`p-4 rounded-lg ${
-          isReply ? 'ml-8 mt-3 bg-gray-50 border border-gray-100' : 'mb-4 bg-white border border-gray-200'
-        }`}
-      >
-        <div className='flex items-center justify-between mb-2'>
-          <div className='flex items-center gap-3'>
-            <div className='relative w-8 h-8 overflow-hidden bg-gray-200 rounded-full'>
-              {comment.author?.profileImgUrl ? (
-                <Image
-                  src={comment.author.profileImgUrl || '/placeholder.svg'}
-                  alt={comment.author.nickname || '사용자'}
-                  width={32}
-                  height={32}
-                  className='object-cover'
-                />
-              ) : (
-                <div className='flex items-center justify-center w-full h-full text-gray-500'>
-                  {comment.author?.nickname?.charAt(0) || '?'}
-                </div>
-              )}
-            </div>
-            <div>
-              <span className='font-medium text-gray-900'>{comment.author?.nickname || '익명'}</span>
-              <div className='text-xs text-gray-500'>
-                {comment.createdAt}
-                {comment.isEdited && ' (수정됨)'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className='mb-3 text-gray-700 whitespace-pre-line'>{comment.content}</div>
-
-        <div className='flex items-center gap-4'>
-          <div className='flex items-center gap-3'>
-            <button
-              // onClick={() => handleVote(comment.commentId!, true)}
-              className={`flex items-center gap-1 text-sm ${
-                isAuthenticated ? 'text-gray-500 hover:text-blue-600' : 'text-gray-400 cursor-not-allowed'
-              }`}
-              disabled={!isAuthenticated}
-              title={isAuthenticated ? '좋아요' : '로그인이 필요합니다'}
-            >
-              <ThumbsUp className='w-4 h-4' />
-              <span>{comment.likeCount || 0}</span>
-            </button>
-            <button
-              // onClick={() => handleVote(comment.commentId!, false)}
-              className={`flex items-center gap-1 text-sm ${
-                isAuthenticated ? 'text-gray-500 hover:text-red-600' : 'text-gray-400 cursor-not-allowed'
-              }`}
-              disabled={!isAuthenticated}
-              title={isAuthenticated ? '싫어요' : '로그인이 필요합니다'}
-            >
-              <ThumbsDown className='w-4 h-4' />
-              <span>{comment.dislikeCount || 0}</span>
-            </button>
-          </div>
-          {!isReply && (
-            <button
-              onClick={() => handleReply(comment)}
-              className={`text-sm ${
-                isAuthenticated ? 'text-blue-600 hover:text-blue-800' : 'text-gray-400 cursor-not-allowed'
-              }`}
-              disabled={!isAuthenticated}
-              title={isAuthenticated ? '답글 달기' : '로그인이 필요합니다'}
-            >
-              답글 달기
-            </button>
-          )}
-        </div>
-
-        {/* 대댓글 렌더링 */}
-        {replies.length > 0 && (
-          <div className='mt-3 space-y-3'>{replies.map((reply) => renderComment(reply, true))}</div>
-        )}
-      </div>
-    );
-  };
-
   useEffect(() => {
     console.log('댓글', comments);
     console.log('댓글 맵:', commentMap);
@@ -211,56 +123,32 @@ export default function FeedbackComment() {
     <div className='p-6'>
       <h2 className='mb-4 text-lg font-medium text-gray-900'>댓글 {totalCommentCount}개</h2>
 
-      <form
-        id='comment-form'
-        className='mb-6'
-        onSubmit={handleSubmitComment}
-      >
-        {replyTo && (
-          <div className='bg-blue-50 flex items-center justify-between p-3 mb-2 rounded-md'>
-            <span className='text-sm text-blue-700'>
-              <strong>{replyTo.author?.nickname || '익명'}</strong>님에게 답글 작성 중
-            </span>
-            <button
-              type='button'
-              onClick={cancelReply}
-              className='hover:text-blue-800 text-sm text-blue-600'
-            >
-              취소
-            </button>
-          </div>
-        )}
-        <div className='mb-3'>
-          <textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder={isAuthenticated ? '댓글을 작성해주세요...' : '댓글을 작성하려면 로그인하세요...'}
-            disabled={!isAuthenticated || isSubmitting}
-            className={`focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full p-3 border rounded-md ${
-              isAuthenticated ? 'border-gray-200' : 'border-gray-200 bg-gray-50'
-            }`}
-            rows={3}
-          ></textarea>
-        </div>
-        <div className='flex justify-end'>
-          <button
-            type='submit'
-            disabled={!isAuthenticated || !commentText.trim() || isSubmitting}
-            className={`px-4 py-2 rounded-md transition-colors ${
-              isAuthenticated && commentText.trim() && !isSubmitting
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {isSubmitting ? '등록 중...' : replyTo ? '답글 등록' : '댓글 등록'}
-          </button>
-        </div>
-      </form>
+      {/* 댓글 작성 폼 */}
+      <FeedbackCommentForm
+        cancelReply={cancelReply}
+        commentText={commentText}
+        setCommentText={setCommentText}
+        isAuthenticated={isAuthenticated}
+        isSubmitting={isSubmitting}
+        handleSubmitComment={handleSubmitComment}
+        replyTo={replyTo}
+      />
 
       {totalCommentCount === 0 ? (
         <div className='py-8 text-center text-gray-500'>아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!</div>
       ) : (
-        <div className='space-y-4'>{topLevelComments.map((comment) => renderComment(comment))}</div>
+        <div className='space-y-4'>
+          {topLevelComments.map((comment) => (
+            <FeedbackCommentItem
+              key={comment.commentId}
+              comment={comment}
+              isReply={false}
+              commentMap={commentMap}
+              isAuthenticated={isAuthenticated}
+              handleReply={handleReply}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
