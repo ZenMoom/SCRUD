@@ -94,7 +94,7 @@ class DiagramFacade:
         self.logger.info(f"[디버깅] DiagramFacade - 파라미터: project_id={project_id}, api_id={api_id}")
         
         # API 스펙 및 글로벌 파일 요약 로그
-        api_spec_info = f"ID: {api_spec.api_spec_id}, 경로: {api_spec.path[:30]}{'...' if len(api_spec.path) > 30 else ''}"
+        api_spec_info = f"ID: {api_spec.apiSpecVersionId if hasattr(api_spec, 'apiSpecVersionId') else 'N/A'}, 경로: {api_spec.endpoint[:30] if hasattr(api_spec, 'endpoint') else 'N/A'}{'...' if hasattr(api_spec, 'endpoint') and len(api_spec.endpoint) > 30 else ''}"
         self.logger.info(f"[디버깅] DiagramFacade - API 스펙: {api_spec_info}")
         
         file_count = len(global_files.files) if hasattr(global_files, 'files') else 0

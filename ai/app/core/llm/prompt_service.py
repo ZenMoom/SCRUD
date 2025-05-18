@@ -4,7 +4,7 @@ from typing import List
 
 from app.api.dto.diagram_dto import UserChatRequest
 from app.core.generator.streaming_handler import SSEStreamingHandler
-from app.core.llm.chains.create_diagram_chain import CreateDiagramChain
+from app.core.llm.chains.create_diagram_component_chain import CreateDiagramComponentChain
 from app.core.llm.chains.user_chat_chain import UserChatChain
 from app.core.models.diagram_model import DiagramChainPayload, ComponentChainPayload
 from app.core.models.global_setting_model import GlobalFileListChainPayload
@@ -19,7 +19,7 @@ class PromptService:
     def __init__(
             self,
             user_chat_chain: UserChatChain,
-            create_diagram_chain: CreateDiagramChain,
+            create_diagram_chain: CreateDiagramComponentChain,
     ):
         self.user_chat_chain = user_chat_chain
         self.create_diagram_chain = create_diagram_chain

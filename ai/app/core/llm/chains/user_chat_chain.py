@@ -24,7 +24,7 @@ class UserChatChain:
         self.llm = llm
         self.chain = (
             {
-                "global_files": RunnablePassthrough(),
+                # "global_files": RunnablePassthrough(),
                 "diagram": RunnablePassthrough(),
                 "output_instructions": RunnablePassthrough(),
 
@@ -69,7 +69,7 @@ class UserChatChain:
         global_file = global_files.model_json_schema()
         input_variables = {
             "output_instructions": parser,
-            "global_files": global_file,
+            # "global_files": global_file,
             "diagram": current_diagram.model_json_schema(),
 
             "tag": chat_data.tag,

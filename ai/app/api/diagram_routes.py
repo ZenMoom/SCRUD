@@ -11,7 +11,7 @@ from app.core.diagram.diagram_service import DiagramService
 from app.core.llm.base_llm import LLMFactory, ModelType
 from app.core.llm.chains.component_chain import ComponentChain
 from app.core.llm.chains.connection_chain import ConnectionChain
-from app.core.llm.chains.create_diagram_chain import CreateDiagramChain
+from app.core.llm.chains.create_diagram_component_chain import CreateDiagramComponentChain
 from app.core.llm.chains.dto_chain import DtoModelChain
 from app.core.llm.chains.user_chat_chain import UserChatChain
 from app.core.llm.prompt_service import PromptService
@@ -81,7 +81,7 @@ def get_connection_service() -> ConnectionService:
 
 def get_prompt_service() -> PromptService:
     return PromptService(
-        create_diagram_chain=CreateDiagramChain(
+        create_diagram_chain=CreateDiagramComponentChain(
             LLMFactory.create_llm(
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,

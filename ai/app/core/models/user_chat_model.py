@@ -24,13 +24,6 @@ def get_example():
 
     ```java
     // User.java
-    package com.example.board.entity;
-
-    import jakarta.persistence.*;
-    import lombok.Getter;
-    import lombok.Setter;
-    import java.time.LocalDateTime;
-
     @Entity
     @Table(name = "users")
     @Getter @Setter
@@ -47,26 +40,11 @@ def get_example():
 
         @Column(nullable = false, unique = true, length = 100)
         private String email;
-
-        @Column(name = "created_at")
-        private LocalDateTime createdAt;
-
-        @PrePersist
-        public void prePersist() {
-            this.createdAt = LocalDateTime.now();
-        }
     }
     ```
 
     ```java
     // Post.java
-    package com.example.board.entity;
-
-    import jakarta.persistence.*;
-    import lombok.Getter;
-    import lombok.Setter;
-    import java.time.LocalDateTime;
-
     @Entity
     @Table(name = "posts")
     @Getter @Setter
@@ -85,28 +63,11 @@ def get_example():
         @JoinColumn(name = "user_id", nullable = false)
         private User user;
 
-        @Column(name = "created_at")
-        private LocalDateTime createdAt;
-
-        @Column(name = "updated_at")
-        private LocalDateTime updatedAt;
-
         @Column(name = "view_count", columnDefinition = "integer default 0")
         private Integer viewCount = 0;
 
         @Column(name = "is_deleted", columnDefinition = "boolean default false")
         private Boolean isDeleted = false;
-
-        @PrePersist
-        public void prePersist() {
-            this.createdAt = LocalDateTime.now();
-            this.updatedAt = LocalDateTime.now();
-        }
-
-        @PreUpdate
-        public void preUpdate() {
-            this.updatedAt = LocalDateTime.now();
-        }
     }
     ```
 
@@ -114,12 +75,6 @@ def get_example():
 
     ```java
     // PostResponseDto.java
-    package com.example.board.dto;
-
-    import lombok.Builder;
-    import lombok.Getter;
-    import java.time.LocalDateTime;
-
     @Getter
     @Builder
     public class PostResponseDto {
@@ -127,8 +82,6 @@ def get_example():
         private String title;
         private String content;
         private AuthorDto author;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
         private Integer viewCount;
         private Boolean isDeleted;
 
@@ -145,14 +98,6 @@ def get_example():
 
     ```java
     // PostRepository.java
-    package com.example.board.repository;
-
-    import com.example.board.entity.Post;
-    import org.springframework.data.jpa.repository.JpaRepository;
-    import org.springframework.data.jpa.repository.Query;
-    import org.springframework.data.repository.query.Param;
-    import java.util.Optional;
-
     public interface PostRepository extends JpaRepository<Post, Long> {
 
         @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.id = :id AND (:includeDeleted = true OR p.isDeleted = false)")
@@ -164,16 +109,6 @@ def get_example():
 
     ```java
     // PostService.java
-    package com.example.board.service;
-
-    import com.example.board.dto.PostResponseDto;
-    import com.example.board.entity.Post;
-    import com.example.board.repository.PostRepository;
-    import lombok.RequiredArgsConstructor;
-    import lombok.extern.slf4j.Slf4j;
-    import org.springframework.stereotype.Service;
-    import org.springframework.transaction.annotation.Transactional;
-
     @Service
     @RequiredArgsConstructor
     @Slf4j
@@ -204,8 +139,6 @@ def get_example():
                             .id(post.getUser().getId())
                             .name(post.getUser().getUsername())
                             .build())
-                    .createdAt(post.getCreatedAt())
-                    .updatedAt(post.getUpdatedAt())
                     .viewCount(post.getViewCount())
                     .isDeleted(post.getIsDeleted())
                     .build();
@@ -217,15 +150,6 @@ def get_example():
 
     ```java
     // BoardController.java
-    package com.example.board.controller;
-
-    import com.example.board.dto.PostResponseDto;
-    import com.example.board.service.PostService;
-    import lombok.RequiredArgsConstructor;
-    import lombok.extern.slf4j.Slf4j;
-    import org.springframework.http.ResponseEntity;
-    import org.springframework.web.bind.annotation.*;
-
     @RestController
     @RequestMapping("/api/v1/boards")
     @RequiredArgsConstructor
@@ -246,56 +170,6 @@ def get_example():
             log.info("게시글 조회 API 응답 완료 - 게시글 ID: {}", boardId);
 
             return ResponseEntity.ok(postResponse);
-        }
-    }
-    ```
-
-    ## 6. 예외 처리를 위한 글로벌 예외 핸들러
-
-    ```java
-    // GlobalExceptionHandler.java
-    package com.example.board.exception;
-
-    import lombok.extern.slf4j.Slf4j;
-    import org.springframework.http.HttpStatus;
-    import org.springframework.http.ResponseEntity;
-    import org.springframework.web.bind.annotation.ExceptionHandler;
-    import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-    @RestControllerAdvice
-    @Slf4j
-    public class GlobalExceptionHandler {
-
-        @ExceptionHandler(IllegalArgumentException.class)
-        public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
-            log.error("게시글 조회 실패: {}", e.getMessage());
-
-            ErrorResponse errorResponse = new ErrorResponse(
-                    HttpStatus.NOT_FOUND.value(),
-                    e.getMessage()
-            );
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-        }
-
-        // 기타 예외 처리 메서드들...
-
-        static class ErrorResponse {
-            private final int status;
-            private final String message;
-
-            public ErrorResponse(int status, String message) {
-                this.status = status;
-                this.message = message;
-            }
-
-            public int getStatus() {
-                return status;
-            }
-
-            public String getMessage() {
-                return message;
-            }
         }
     }
     ```

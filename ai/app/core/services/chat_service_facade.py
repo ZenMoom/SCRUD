@@ -109,9 +109,7 @@ class ChatServiceFacade:
         self.logger.info(f"   └ 태그: {chat_request.tag}, 프롬프트 타입: {chat_request.promptType}")
         
         # API 스펙 정보는 크기가 클 수 있으므로 핵심 정보만 로깅
-        api_spec_info = f"ID: {api_spec.api_spec_id}, 경로: {api_spec.path[:50]}{'...' if len(api_spec.path) > 50 else ''}"
-        self.logger.info(f"▶ API 스펙 정보: {api_spec_info}")
-        
+
         # 글로벌 파일 정보도 간략히 로깅
         self.logger.info(f"▶ 글로벌 파일 개수: {len(global_files.files) if hasattr(global_files, 'files') else 0}개")
         file_names = [f.file_name[:30] for f in global_files.files[:3]] if hasattr(global_files, 'files') else []
@@ -218,7 +216,7 @@ class ChatServiceFacade:
             version_info=version_info,
             system_chat_payload=system_chat_payload,
         )
-        self.logger.info(f"[디버깅] ChatServiceFacade - 채팅 엔티티 조립 완료: ID={chat_entity.chat_id}")
+        self.logger.info(f"[디버깅] ChatServiceFacade - 채팅 엔티티 조립 완료: ID={chat_entity.chatId}")
 
         self.logger.info("[디버깅] ChatServiceFacade - 채팅 저장 시작")
         saved = await self.chat_service.save_chat(chat_entity)

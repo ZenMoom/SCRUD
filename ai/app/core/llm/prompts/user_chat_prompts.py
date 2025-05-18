@@ -7,9 +7,6 @@ USER_CHAT_SYSTEM_TEMPLATE = """
 [응답 지침]
 {output_instructions}
 
-[전역 설정 파일]
-{global_files}
-
 [현재 API를 구성하는 함수]
 {diagram}
 
@@ -29,7 +26,7 @@ def get_user_chat_prompt():
     return ChatPromptTemplate(
         input_variables=[
             "output_instructions",
-            "global_files",
+            # "global_files",
             "diagram",
 
             "tag",

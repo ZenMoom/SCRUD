@@ -6,7 +6,7 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.runnables import RunnablePassthrough
 
 from app.core.llm.chains.component_chain import ComponentChainPayloadList
-from app.core.llm.prompts.create_diagram_prompt import get_create_diagram_prompt
+from app.core.llm.prompts.create_diagram_component_prompt import get_create_diagram_component_prompt
 from app.core.models.diagram_model import ComponentChainPayload
 from app.infrastructure.http.client.api_client import GlobalFileList, ApiSpec
 from app.utils.prompt_builder import PromptBuilder
@@ -14,7 +14,7 @@ from app.utils.prompt_builder import PromptBuilder
 logger = logging.getLogger(__name__)
 
 
-class CreateDiagramChain:
+class CreateDiagramComponentChain:
     """다이어그램 생성 체인"""
 
     def __init__(self, llm: BaseChatModel):
@@ -28,13 +28,13 @@ class CreateDiagramChain:
 
         # LCEL을 사용한 체인 구성
         self.chain = (
-            {
+                {
                 "complete_prompt": RunnablePassthrough(),
                 "output_instructions": RunnablePassthrough(),
             }
-            | get_create_diagram_prompt()
-            | self.llm
-            | PydanticOutputParser(pydantic_object=ComponentChainPayloadList)
+                | get_create_diagram_component_prompt()
+                | self.llm
+                | PydanticOutputParser(pydantic_object=ComponentChainPayloadList)
         )
 
         logger.info("DTO 데이터 획득 체인 초기화됨")
@@ -50,25 +50,24 @@ class CreateDiagramChain:
             api_spec: API 정보
             global_files: 전역 설정 파일 정보
         """
-        logger.info(f"[디버깅] CreateDiagramChain - predict 메소드 시작 - API명세: {api_spec.api_spec_id}, 전역파일 개수: {len(global_files.files)}")
 
         # 각 프롬프트 구성
         api_spec_prompt = self.prompt_builder.build_api_spec_prompt(api_spec)
         global_data_prompt = self.prompt_builder.build_global_data_prompt(global_files)
-        logger.info(f"[디버깅] CreateDiagramChain - 프롬프트 구성 완료")
+        logger.info(f"[디버깅] CreateDiagramComponentChain - 프롬프트 구성 완료")
 
         # 프롬프트 조합
         prompts = [api_spec_prompt, global_data_prompt]
         complete_prompt = self.prompt_builder.build_complete_prompt(prompts)
 
         logger.info(f"API 명세 데이터: {complete_prompt}")
-        logger.info(f"[디버깅] CreateDiagramChain - LLM 요청 시작")
+        logger.info(f"[디버깅] CreateDiagramComponentChain - LLM 요청 시작")
         result: ComponentChainPayloadList = await self.chain.ainvoke({
             "complete_prompt" : complete_prompt,
             "output_instructions" : PydanticOutputParser(
                 pydantic_object=ComponentChainPayloadList
             ).get_format_instructions(),
         })
-        logger.info(f"[디버깅] CreateDiagramChain - predict 메소드 결과 - 컴포넌트 개수: {len(result.components)}")
+        logger.info(f"[디버깅] CreateDiagramComponentChain - predict 메소드 결과 - 컴포넌트 개수: {len(result.components)}")
 
         return result.components

@@ -146,6 +146,9 @@ class DiagramResponse(BaseModel):
         positionY: float
         methods: List[Optional[Method]] = []
 
+        model_config = ConfigDict(
+            from_attributes=True,
+        )
     projectId: Optional[str] = None
     apiId: Optional[str] = None
     diagramId: str

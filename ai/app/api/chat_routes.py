@@ -11,6 +11,7 @@ from app.core.diagram.diagram_service import DiagramService
 from app.core.llm.base_llm import LLMFactory, ModelType
 from app.core.llm.chains.component_chain import ComponentChain
 from app.core.llm.chains.connection_chain import ConnectionChain
+from app.core.llm.chains.create_diagram_component_chain import CreateDiagramComponentChain
 from app.core.llm.chains.dto_chain import DtoModelChain
 from app.core.llm.chains.user_chat_chain import UserChatChain
 from app.core.llm.prompt_service import PromptService
@@ -71,6 +72,13 @@ def get_prompt_service() -> PromptService:
                 streaming=True,
                 callbacks=[]  # 초기에는 빈 콜백 리스트
             )
+        ),
+        create_diagram_chain=CreateDiagramComponentChain(
+            LLMFactory.create_llm(
+                model=ModelType.OPENAI_GPT4,
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE,
+            )
         )
     )
 
@@ -109,13 +117,6 @@ def get_diagram_service(
 ) -> DiagramService:
     return DiagramService(
         diagram_repository=diagram_repository,
-        diagram_need_chain=DiagramNeedChain(
-            LLMFactory.create_llm(
-                model=ModelType.OPENAI_GPT4,
-                api_key=settings.OPENAI_API_KEY,
-                base_url=settings.OPENAI_API_BASE,
-            )
-        )
     )
 
 def get_chat_service_facade(
