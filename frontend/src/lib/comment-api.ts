@@ -1,12 +1,15 @@
-/**
- * 게시글 댓글 조회하는 함수
- */
-
+import { getApiBaseUrl } from '@/app/utils/serverUtil';
 import { GetCommentListResponse } from '@generated/model';
 
+/**
+ * 게시글 댓글 조회하는 함수 server-side에서 사용
+ */
 export async function getComments(postId: string): Promise<GetCommentListResponse> {
   try {
-    const response = await fetch(`${process.env.SPRING_FRONT_REDIRECT_URI}/api/comment/${postId}`, {
+    // baseUrl
+    const baseUrl = getApiBaseUrl();
+
+    const response = await fetch(`${baseUrl}/comment/${postId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
