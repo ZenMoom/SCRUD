@@ -21,6 +21,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       },
     });
 
+    console.log('body:', body);
     const postApi = PostApiFactory(config);
     const response = await postApi.votePost({
       postId: Number(id),
