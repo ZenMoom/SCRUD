@@ -42,8 +42,8 @@ class ComponentChainPayload(BaseModel):
         json_schema_extra={
             "example": {
                 "type": "CLASS",
-                "name": "UserService",
-                "description": "사용자 관련 서비스를 제공하는 클래스",
+                "name": "UserController ",
+                "description": "사용자 관련 엔드포인트를 제공하는 클래스",
                 "positionX": 100.0,
                 "positionY": 200.0,
                 "methods": [
@@ -51,7 +51,14 @@ class ComponentChainPayload(BaseModel):
                         "methodId": "12345678-1234-1234-1234-123456789012",
                         "name": "getUserById",
                         "signature": "getUserById(id: string): User",
-                        "body": "return this.userRepository.findById(id);",
+                        "body": """
+                            @GetMapping("/users/{userId}")
+    public ResponseEntity<UserDto> getUserById(@PathVariable Long userId) {
+        return userService.getUserById(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+                        """,
                         "description": "주어진 ID로 사용자 정보를 조회하는 메서드"
                     }
                 ]
@@ -136,7 +143,16 @@ class DiagramChainPayload(BaseModel):
                     {
                         "name": "UserDto",
                         "description": "사용자 정보를 전달하기 위한 DTO 모델",
-                        "body": "class UserDto { id: string; name: string; email: string; }"
+                        "body": """
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserDto {
+    private Long id;
+    private String username;
+    private String email;
+}"""
                     }
                 ]
             }
