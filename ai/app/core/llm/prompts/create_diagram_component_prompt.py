@@ -6,6 +6,7 @@ CREATE_DIAGRAM_COMPONENT_SYSTEM_TEMPLATE = """
 
 [응답 형식 지침]
 - 컴포넌트는 'components' 배열 안에 JSON 객체로 표현됩니다.
+
 - 각 컴포넌트는 다음 속성을 가집니다:
   * componentId: UUID 형식의 고유 식별자 (예: "84322822-22bc-4d00-bcb0-826328a2ed20")
   * type: 컴포넌트 유형 (예: "CLASS", "INTERFACE")
@@ -15,30 +16,34 @@ CREATE_DIAGRAM_COMPONENT_SYSTEM_TEMPLATE = """
   * methods: 메소드 목록 배열
 
 - methods 배열의 각 항목은 다음 속성을 가집니다:
-  * methodId: UUID 형식의 고유 식별자
+  * methodId: UUID 형식의 고유 식별자 (예: "84322822-22bc-4d00-bcb0-826328a2ed20")
   * name: 메소드 이름
-  * signature: 메소드 시그니처 (반환 타입, 메소드명, 매개변수 포함)
-  * body: 메소드 구현 코드
-  * description: 메소드 설명
+  * signature: 메소드 시그니처 (반환 타입, 메소드명, 매개변수,  포함)
+  * body: 어노테이션, 시그니처, 메서드 바디가 모두 포함된 코드 (시각적으로 보기 좋도록 탭 또는 띄워쓰기를 적절히 사용합니다)
+  * description: 메소드가 어떤 기능을 하는지에 대한 설명
 
 [생성 규칙]
-1. API 명세를 분석하여 최소 3개의 컴포넌트를 생성하세요:
+1. [전역 설정 파일]의 아키텍처 구조를 통해 컴포넌트를 설계합니다. 단, 아래 3개의 컴포넌트가 포함되어야 합니다.:
    - Controller: API 엔드포인트를 처리하는 컨트롤러 클래스
    - Service: 비즈니스 로직을 처리하는 서비스 클래스
    - Repository: 데이터 접근을 담당하는 인터페이스
 
-2. 위치 설정:
-   - Controller: positionX: 0, positionY: 0
-   - Service: positionX: 500.0, positionY: 0.0
-   - Repository: positionX: 1000.0, positionY: 0.0
+2. API 명세를 파악한 뒤 명세에 맞는 Controller 클래스 컴포넌트의 시그니처를 구성해야합니다.
 
-3. 각 메소드는 API 명세와 관련된 기능을 구현해야 합니다.
+3. 컴포넌트 위치 규칙
+    - Controller 컴포넌트는 positionX, positionY (0, 0)으로 시작합니다
+    - Controller 부터 Repository 까지 논리적 흐름에 맞도록 컴포넌트들을 배치합니다. 일반적으로 Controller - (Converter) - Service - Repository 의 논리 흐름을 따릅니다. 
+    - 서로 다른 컴포넌트 유형 간의 positionX 간격은 500입니다
+    - 같은 유형의 컴포넌트(예: (AService, BService) 또는 (AConverter, BConverter)는 positionY 값을 300씩 증가시켜 구분합니다
+      (예: Controller가 (0, 0), ServiceA = (500, 0), ServiceB = (500, 300))
 
-4. Controller는 적절한 Spring 어노테이션(@GetMapping, @PostMapping 등)을 포함해야 합니다.
+4. 각 메소드는 API 명세와 관련된 기능을 구현해야 합니다.
 
-5. 응답은 유효한 JSON 형식이어야 하며, 추가 설명 없이 JSON만 반환하세요.
+5. Controller는 적절한 Spring 어노테이션(@GetMapping, @PostMapping 등)을 포함해야 합니다.
 
-6. ERD와 요구사항 명세서를 참고하여 적절한 엔티티 관계를 반영하세요.
+6. 응답은 유효한 JSON 형식이어야 하며, 추가 설명 없이 JSON만 반환하세요.
+
+7. ERD와 요구사항 명세서를 참고하여 적절한 엔티티 관계를 반영하세요.
 
 [전역 설정 파일]
 {global_files_prompt}

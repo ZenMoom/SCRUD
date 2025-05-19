@@ -99,31 +99,73 @@ API 스펙 버전 ID: {str(api_spec.apiSpecVersionId or "정보 없음")}
         
         if global_files.project:
             project = global_files.project
-            prompt += f"""### 프로젝트 정보
+            prompt += f"""
+[프로젝트 정보]
 제목: {project.title or "정보 없음"}
 설명: {project.description or "정보 없음"}
 서버 URL: {project.serverUrl or "정보 없음"}
-최종 업데이트: {project.updatedAt or "정보 없음"}
-
 """
         
         if not global_files.content or len(global_files.content) == 0:
             prompt += "글로벌 파일이 존재하지 않습니다.\n"
         else:
-            prompt += "### 글로벌 파일 목록\n\n"
+
+            prompt += "[글로벌 파일 목록]\n\n"
             for idx, file in enumerate(global_files.content):
+                file_type_description = "정보 없음"
+
+                # 파일 유형에 따라 설명 추가
+                if file.fileType:
+                    try:
+                        file_type = file.fileType
+
+                        if file_type == "REQUIREMENTS":
+                            file_type_description = "요구사항 문서"
+                        elif file_type == "ERD":
+                            file_type_description = "Database Entity Table"
+                        elif file_type == "UTIL":
+                            file_type_description = "유틸리티 관련 파일"
+                        elif file_type == "CONVENTION":
+                            file_type_description = "코딩 컨벤션 관련 파일"
+                        elif file_type == "CONVENTION_DEFAULT":
+                            file_type_description = "기본 코딩 컨벤션 파일"
+                        elif file_type == "DEPENDENCY":
+                            file_type_description = "의존성 관련 파일"
+                        elif file_type == "ERROR_CODE":
+                            file_type_description = "에러 코드 정의 파일"
+                        elif file_type == "SECURITY":
+                            file_type_description = "보안 관련 파일"
+                        elif file_type == "SECURITY_DEFAULT_JWT":
+                            file_type_description = "JWT 기반 기본 보안 설정 파일"
+                        elif file_type == "SECURITY_DEFAULT_SESSION":
+                            file_type_description = "세션 기반 기본 보안 설정 파일"
+                        elif file_type == "SECURITY_DEFAULT_NONE":
+                            file_type_description = "보안 설정이 없는 기본 파일"
+                        elif file_type == "ARCHITECTURE_GITHUB":
+                            file_type_description = "GitHub 관련 아키텍처 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_LAYERED_A":
+                            file_type_description = "기본 계층형 아키텍처 A 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_LAYERED_B":
+                            file_type_description = "기본 계층형 아키텍처 B 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_CLEAN":
+                            file_type_description = "기본 클린 아키텍처 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_MSA":
+                            file_type_description = "기본 마이크로서비스 아키텍처 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_HEX":
+                            file_type_description = "기본 헥사고날 아키텍처 파일"
+                    except ValueError:
+                        file_type_description = f"알 수 없는 파일 유형: {file.fileType}"
+
                 prompt += f"""#### 파일 {idx + 1}
-파일명: {file.fileName or "정보 없음"}
-파일 유형: {file.fileType or "정보 없음"}
-파일 URL: {file.fileUrl or "정보 없음"}
+            파일명: {file.fileName or "정보 없음"}
+            파일 유형: {file.fileType or "정보 없음"} ({file_type_description})
+            파일 URL: {file.fileUrl or ""}
 
-파일 내용:
-```
-{file.fileContent or "내용 없음"}
-```
+            파일 내용:
+            {file.fileContent or "내용 없음"}
 
-"""
-        
+            """
+
         return prompt
 
     @staticmethod
