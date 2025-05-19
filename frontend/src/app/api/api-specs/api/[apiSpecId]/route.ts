@@ -7,6 +7,9 @@ import { AxiosError } from "axios"
 // API 스펙 상태 업데이트
 export async function PATCH(request: NextRequest, context: { params: Promise<{ apiSpecId: string }> }) {
   try {
+    // 요청 헤더에서 인증 토큰 추출
+    const authToken = request.headers.get("Authorization")
+
     const params = await context.params
     const apiSpecId = Number(params.apiSpecId)
 
@@ -20,6 +23,13 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ a
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
+      baseOptions: {
+        headers: authToken
+          ? {
+              Authorization: authToken,
+            }
+          : undefined,
+      },
     })
     const apiSpecApi = new ApiSpecApi(config)
 
