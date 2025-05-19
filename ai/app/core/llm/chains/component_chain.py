@@ -61,8 +61,22 @@ class ComponentChain:
         logger.info(f"[디버깅] ComponentChain - 프롬프트 구성 완료\nf{self.prompt.format(**format_instructions)}")
 
         logger.info(f"[디버깅] ComponentChain - LLM 요청 시작")
+
         result: ComponentChainPayloadList = await self.chain.ainvoke(format_instructions)
+        ComponentChain.generate_component_uuid(result.components)
+
         logger.info(f"[디버깅] ComponentChain - LLM 요청 완료 - Component 모델 개수: {len(result.components)}")
         logger.info(f"[디버깅] ComponentChain - LLM 요청 완료 - 결과 데이터: {result}")
-
         return result.components
+
+    @staticmethod
+    def generate_component_uuid(component_payloads: List[ComponentChainPayload]):
+        # ComponentChainPayload 의 methodId 를
+        def generate_uuid():
+            import uuid
+            return str(uuid.uuid4())
+
+        for component in component_payloads:
+            for method in component.methods:
+                method.methodId = generate_uuid()
+                logger.info(f"[디버깅] generate_component_uuid uuid 생성: {method.methodId}")
