@@ -20,6 +20,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -121,5 +123,21 @@ public class PostService {
         // entity 수정
         post.changeStatus(inDto.getStatus());
 
+    }
+
+    /**
+     * 게시글 삭제
+     *
+     * @param postId 게시글 ID
+     * @param userId 사용자 ID
+     */
+    public void deletePost(Long postId, UUID userId) {
+
+        // 게시글 조회
+        Post post = postJpaRepository.findById(postId)
+                .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
+
+        // 게시글 삭제
+        postJpaRepository.delete(post);
     }
 }

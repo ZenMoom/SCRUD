@@ -74,11 +74,11 @@ public class Post extends BaseTimeEntity {
     private Boolean isUpdated = false;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "post")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "post", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostVote> postVotes = new ArrayList<>();
 
     // 조회수 증가
