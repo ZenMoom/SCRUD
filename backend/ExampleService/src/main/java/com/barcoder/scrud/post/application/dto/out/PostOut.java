@@ -1,5 +1,6 @@
 package com.barcoder.scrud.post.application.dto.out;
 
+import com.barcoder.scrud.post.domain.enums.PostStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,6 +26,7 @@ public class PostOut {
     private Long likeCount;
     private Long dislikeCount;
     private Long commentCount;
+    private PostStatus status;
     private Boolean isUpdated;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

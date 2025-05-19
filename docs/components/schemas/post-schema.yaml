@@ -21,6 +21,11 @@ PostSortEnumDto:
   enum: [ createdAt, viewCount, likeCount ]
   description: 게시글 정렬 기준 (작성일, 조회수, 좋아요 수)
 
+PostStatusEnumDto:
+  type: string
+  enum: [ PENDING, REVIEWING, IN_PROGRESS, COMPLETED, REJECTED ]
+  description: 게시글 상태 (대기, 검토 중, 진행 중, 완료, 거부)
+
 ######## request dto ########
 
 CreatePostRequest:
@@ -60,6 +65,14 @@ PostVoteRequest:
       type: boolean
       description: true면 추천, false면 비추천
       example: true
+
+UpdatePostStatusRequest:
+  type: object
+  required:
+    - status
+  properties:
+    status:
+      $ref: "#/PostStatusEnumDto"
 
 ###### response dto ######
 
@@ -104,6 +117,8 @@ PostSummaryResponse:
       type: integer
       format: int64
       example: 5
+    status:
+      $ref: "#/PostStatusEnumDto"
 
 PostDetailResponse:
   type: object
@@ -147,6 +162,8 @@ PostDetailResponse:
     isUpdated:
       type: boolean
       example: true
+    status:
+      $ref: "#/PostStatusEnumDto"
     author:
       $ref: './user-schema.yaml#/UserResponse'
 

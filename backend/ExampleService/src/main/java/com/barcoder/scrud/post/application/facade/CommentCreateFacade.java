@@ -58,6 +58,9 @@ public class CommentCreateFacade {
         // 유저 정보 조회
         UserOut userOut = userService.getUserById(inDto.getUserId());
 
+        // post의 commentCount 증가
+        post.addCommentCount();
+
         return outDto.toBuilder()
                 .author(userOut)
                 .build();

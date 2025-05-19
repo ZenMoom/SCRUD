@@ -5,6 +5,7 @@ import com.barcoder.scrud.post.application.assembler.PostAssembler;
 import com.barcoder.scrud.post.application.dto.in.CreatePostIn;
 import com.barcoder.scrud.post.application.dto.in.PostVoteIn;
 import com.barcoder.scrud.post.application.dto.in.UpdatePostIn;
+import com.barcoder.scrud.post.application.dto.in.UpdatePostStatusIn;
 import com.barcoder.scrud.post.application.dto.out.CreatePostOut;
 import com.barcoder.scrud.post.application.dto.out.PostVoteOut;
 import com.barcoder.scrud.post.domain.entity.Category;
@@ -104,5 +105,21 @@ public class PostService {
                 .likeCount(likeCount)
                 .dislikeCount(dislikeCount)
                 .build();
+    }
+
+    /**
+     * 게시글 상태 변경
+     *
+     * @param inDto 게시글 상태 변경 요청 DTO
+     */
+    public void updatePostStatus(UpdatePostStatusIn inDto) {
+
+        // 게시글 조회
+        Post post = postJpaRepository.findById(inDto.getPostId())
+                .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
+
+        // entity 수정
+        post.changeStatus(inDto.getStatus());
+
     }
 }

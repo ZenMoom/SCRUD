@@ -100,7 +100,10 @@ export default function NewFeedbackPage() {
       <div className='max-w-3xl px-6 mx-auto'>
         {/* 헤더 */}
         <div className='mb-8'>
-          <FeedbackBackButton description='피드백 목록으로 돌아가기' />
+          <FeedbackBackButton
+            url='/feedback'
+            description='피드백 목록으로 돌아가기'
+          />
           <h1 className='text-3xl font-bold text-gray-800'>새 피드백 작성</h1>
           <p className='mt-2 text-gray-600'>서비스 개선을 위한 의견이나 제안을 자유롭게 작성해주세요.</p>
         </div>

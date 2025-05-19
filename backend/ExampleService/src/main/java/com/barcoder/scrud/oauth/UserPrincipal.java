@@ -1,6 +1,7 @@
 package com.barcoder.scrud.oauth;
 
 import com.barcoder.scrud.user.domain.entity.User;
+import com.barcoder.scrud.user.domain.enums.UserRole;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,6 +23,7 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     private final UUID userId;
     private final String username;
     private final String nickname;
+    private final UserRole role;
     private final Collection<? extends GrantedAuthority> authorities;
     private final String provider;
 
@@ -36,6 +38,7 @@ public class UserPrincipal implements OAuth2User, UserDetails {
                 user.getUserId(),
                 user.getUsername(),
                 user.getUsername(),
+                user.getRole(),
                 authorities,
                 null,
                 null
