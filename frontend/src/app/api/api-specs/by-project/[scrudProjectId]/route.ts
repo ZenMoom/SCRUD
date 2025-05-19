@@ -4,7 +4,6 @@ import { Configuration } from "@generated/configuration"
 
 export async function GET(request: NextRequest, context: { params: Promise<{ scrudProjectId: string }> }) {
   try {
-    // params를 Promise로 처리
     const params = await context.params
     const scrudProjectId = Number(params.scrudProjectId)
 

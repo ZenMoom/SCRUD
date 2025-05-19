@@ -49,9 +49,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
 
     const body = await request.json()
 
-    // 디버깅을 위한 로그 추가
-    console.log("클라이언트에서 받은 요청 데이터:", body)
-
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
@@ -89,12 +86,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
       apiSpecVersionId,
       apiSpecVersionUpdateRequest,
     }
-
-    // 백엔드로 보내는 최종 데이터 로깅
-    console.log("백엔드로 보내는 최종 요청 데이터:", {
-      apiSpecVersionId,
-      apiSpecVersionUpdateRequest,
-    })
 
     const response = await apiSpecApi.updateApiSpec(requestParameters)
     return NextResponse.json(response.data)
