@@ -66,6 +66,7 @@ public class CommentGetFacade {
 
                     // commentOut 생성
                     return modelMapper.map(comment, CommentOut.class).toBuilder()
+                            .postId(comment.getPost().getPostId())
                             .parentCommentId(parentCommentId)
                             .author(userOut)
                             .build();
