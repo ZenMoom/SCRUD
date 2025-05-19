@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import FormItem from "./Form"
 import InfoModal from "./InfoModal"
 import RequirementSpecForm from "./form/RequirementSpecForm"
@@ -116,11 +116,15 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
   }
 
   // 항목 포커스 시 activeItem 업데이트
-  const handleItemFocus = (key: string) => {
+  const handleItemFocus = useCallback((key: string) => {
+    console.log('=== ContentArea handleItemFocus ===');
+    console.log('포커스된 항목:', key);
+    
     if (setActiveItem) {
-      setActiveItem(key)
+      console.log('setActiveItem 호출:', key);
+      setActiveItem(key);
     }
-  }
+  }, [setActiveItem]);
 
   // 설정 항목 값 변경 시 상태 업데이트
   const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[]) => {
@@ -173,7 +177,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.requirementSpec}
           onChange={(value) => handleSettingChange("requirementSpec", value as FileValue)}
           onInfoClick={() => openModal("requirementSpec")}
-          onFocus={() => handleItemFocus("requirementSpec")}
+          onFocus={useCallback(() => handleItemFocus("requirementSpec"), [handleItemFocus])}
           isRequired={isRequired('requirementSpec')}
         />
 
@@ -183,17 +187,16 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.erd}
           onChange={(value) => handleSettingChange("erd", value as FileValue)}
           onInfoClick={() => openModal("erd")}
-          onFocus={() => handleItemFocus("erd")}
+          onFocus={useCallback(() => handleItemFocus("erd"), [handleItemFocus])}
           isRequired={isRequired('erd')}
         />
 
         <div ref={refs.dependencyFile} className="mb-10 p-10 bg-white rounded-lg">
           <div className="mb-6">
-            <h3 className="text-lg font-medium mb-4">의존성 파일</h3>
             <DependencyFileForm
               title="의존성 파일"
               onFileSelect={handleDependencyFile}
-              onFocus={() => handleItemFocus("dependencyFile")}
+              onFocus={useCallback(() => handleItemFocus("dependencyFile"), [handleItemFocus])}
             />
           </div>
           <div className="border-t pt-6">
@@ -223,7 +226,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.utilityClass}
           onChange={(value) => handleSettingChange("utilityClass", value as FileValue)}
           onInfoClick={() => openModal("utilityClass")}
-          onFocus={() => handleItemFocus("utilityClass")}
+          onFocus={useCallback(() => handleItemFocus("utilityClass"), [handleItemFocus])}
         />
 
         <ErrorCodeForm
@@ -232,7 +235,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.errorCode}
           onChange={(value) => handleSettingChange("errorCode", value as FileValue)}
           onInfoClick={() => openModal("errorCode")}
-          onFocus={() => handleItemFocus("errorCode")}
+          onFocus={useCallback(() => handleItemFocus("errorCode"), [handleItemFocus])}
         />
 
         <SecuritySettingForm
@@ -241,7 +244,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.securitySetting}
           onChange={(value) => handleSettingChange("securitySetting", value)}
           onInfoClick={() => openModal("securitySetting")}
-          onFocus={() => handleItemFocus("securitySetting")}
+          onFocus={useCallback(() => handleItemFocus("securitySetting"), [handleItemFocus])}
         />
 
         <CodeConventionForm
@@ -250,7 +253,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
           value={settings.codeConvention}
           onChange={(value) => handleSettingChange("codeConvention", value as FileValue)}
           onInfoClick={() => openModal("codeConvention")}
-          onFocus={() => handleItemFocus("codeConvention")}
+          onFocus={useCallback(() => handleItemFocus("codeConvention"), [handleItemFocus])}
         />
 
         <ArchitectureStructureForm
@@ -263,7 +266,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             handleSettingChange("architectureStructure", value);
           }}
           onInfoClick={() => openModal("architectureStructure")}
-          onFocus={() => handleItemFocus("architectureStructure")}
+          onFocus={useCallback(() => handleItemFocus("architectureStructure"), [handleItemFocus])}
         />
       </div>
 

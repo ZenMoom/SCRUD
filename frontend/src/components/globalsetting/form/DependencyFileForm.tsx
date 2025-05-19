@@ -1,7 +1,7 @@
 "use client"
 
 import { forwardRef, useState, useRef, useEffect } from "react"
-import { Upload, Github, File } from "lucide-react"
+import { Upload, Github, File, HelpCircle } from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
 import { useProjectTempStore } from "@/store/projectTempStore"
 
@@ -42,6 +42,24 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
         tempData.dependencyFile.forEach(file => onFileSelect(file as FileData));
       }
     }, []);
+
+    // 외부 클릭 감지를 위한 이벤트 리스너
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownOpen &&
+            dropdownRef.current &&
+            buttonRef.current &&
+            !dropdownRef.current.contains(event.target as Node) &&
+            !buttonRef.current.contains(event.target as Node)) {
+          setDropdownOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [dropdownOpen]);
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, content: string }>) => {
@@ -101,7 +119,20 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
     }
 
     return (
-      <div ref={ref}>
+      <div ref={ref} >
+        <div className="flex flex-col mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <h2 className="m-0 text-xl font-semibold">
+                {title}
+              </h2>
+            </div>
+          </div>
+          <p className="mt-2 text-sm text-gray-600">
+            프로젝트에서 사용할 외부 라이브러리와 프레임워크의 의존성 정보를 관리하는 파일입니다.
+          </p>
+        </div>
+
         <div className="w-full">
           {/* 드래그 앤 드롭 영역 */}
           <div
@@ -113,18 +144,20 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
             onDragOver={handleDrag}
             onDrop={handleDrop}
             onClick={() => {
-              setDropdownOpen(!dropdownOpen)
-              if (onFocus) onFocus()
+              if (onFocus) onFocus();
+              setDropdownOpen(!dropdownOpen);
             }}
             ref={buttonRef}
           >
             <Upload size={24} className="text-gray-400 mb-2" />
             <p className="text-gray-500 text-center text-sm">
-              의존성 파일을 드래그해서 추가하거나 <br /> 
-              <span className="text-blue-500">
-                업로드하세요
-              </span>
+              의존성 파일을 드래그해서 추가하거나<br />
+              <span className="text-blue-500">업로드하세요</span>
             </p>
+            <div className="mt-2 text-xs text-gray-400">
+              지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등
+            </div>
+
           </div>
           
           {/* 드롭다운 메뉴 */}
@@ -136,6 +169,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                   className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 first:rounded-t-lg" 
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (onFocus) onFocus();
                     handleGithubUpload();
                   }}
                 >
@@ -147,6 +181,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                   className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 last:rounded-b-lg" 
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (onFocus) onFocus();
                     handleFileUpload();
                   }}
                 >

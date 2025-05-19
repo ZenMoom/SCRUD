@@ -7,7 +7,7 @@ import Sidebar from "@/components/globalsetting/Sidebar"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
 import { useProjectTempStore } from "@/store/projectTempStore"
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useRef, useState } from "react"
+import { Suspense, useEffect, useRef, useState, useCallback } from "react"
 
 // 파일 객체 타입 정의
 interface FileWithContent {
@@ -328,6 +328,14 @@ export default function GlobalSettingPage() {
     };
   }, [clearTempData]);
 
+  // setActiveItem 콜백 메모이제이션
+  const handleSetActiveItem = useCallback((item: string) => {
+    const key = item as SettingKey;
+    setActiveItem(key);
+    // 스크롤 실행
+    refs[key]?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [refs]);
+
   return (
     <main className="p-4">
       {/* 토큰 처리 컴포넌트를 Suspense로 감싸서 사용 */}
@@ -342,7 +350,7 @@ export default function GlobalSettingPage() {
             settings={settings} 
             onSettingChange={handleSettingChange} 
             refs={refs}
-            setActiveItem={(item: string) => setActiveItem(item as SettingKey)}
+            setActiveItem={handleSetActiveItem}
           />
         </div>
         {error && (

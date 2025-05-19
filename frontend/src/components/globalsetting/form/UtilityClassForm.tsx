@@ -1,6 +1,6 @@
 "use client";
 
-import { File, Github, HelpCircle, Upload } from "lucide-react";
+import { File, Github, Upload } from "lucide-react";
 import { forwardRef, useRef, useState, useEffect } from "react";
 import GitHubRepoBrowser from "../GitHubRepoBrowser";
 import { useProjectTempStore } from "@/store/projectTempStore";
@@ -14,13 +14,12 @@ interface UtilityClassFormProps {
   title: string;
   value: FileWithContent | FileWithContent[];
   onChange: (value: FileWithContent | FileWithContent[]) => void;
-  onInfoClick: () => void;
   onFocus?: () => void;
   isRequired?: boolean;
 }
 
 const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
-  ({ title, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
+  ({ title, value, onChange, onFocus, isRequired }, ref) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [dragActive, setDragActive] = useState(false);
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
@@ -28,6 +27,24 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
     const buttonRef = useRef<HTMLDivElement>(null);
 
     const { tempData, setTempData } = useProjectTempStore();
+
+    // 외부 클릭 감지를 위한 이벤트 리스너
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownOpen &&
+            dropdownRef.current &&
+            buttonRef.current &&
+            !dropdownRef.current.contains(event.target as Node) &&
+            !buttonRef.current.contains(event.target as Node)) {
+          setDropdownOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [dropdownOpen]);
 
     // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
     useEffect(() => {
@@ -107,20 +124,17 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
         ref={ref}
         className="p-10 mb-10 bg-white rounded-lg"
       >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <h2 className="m-0 text-xl font-semibold">
-              {title} {isRequired && <span className="text-red-500">*</span>}
-            </h2>
-            <button
-              type="button"
-              className="hover:text-gray-600 flex items-center justify-center p-0 ml-2 text-gray-400 transition-colors duration-200 bg-transparent border-none cursor-pointer"
-              onClick={onInfoClick}
-              aria-label={`${title} 정보`}
-            >
-              <HelpCircle size={20} />
-            </button>
+        <div className="flex flex-col mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <h2 className="m-0 text-xl font-semibold">
+                {title} {isRequired && <span className="text-red-500">*</span>}
+              </h2>
+            </div>
           </div>
+          <p className="mt-2 text-sm text-gray-600">
+            프로젝트에서 공통적으로 사용되는 기능(유틸리티 메서드)을 모아두는 클래스들입니다. 중복 코드를 줄이고 코드의 재사용성을 높입니다.
+          </p>
         </div>
 
         <div className="w-full">
@@ -134,8 +148,8 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
             onDragOver={handleDrag}
             onDrop={handleDrop}
             onClick={() => {
-              setDropdownOpen(!dropdownOpen);
               if (onFocus) onFocus();
+              setDropdownOpen(!dropdownOpen);
             }}
             ref={buttonRef}
           >
@@ -144,9 +158,13 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
               className="mb-2 text-gray-400"
             />
             <p className="text-sm text-center text-gray-500">
-              유틸리티 클래스 파일을 드래그해서 추가하거나 <br />
+              유틸리티 클래스 파일을 드래그해서 추가하거나<br />
               <span className="text-blue-500">업로드하세요</span>
             </p>
+            <div className="mt-2 text-xs text-gray-400">
+              지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등
+            </div>
+
           </div>
 
           {/* 드롭다운 메뉴 */}

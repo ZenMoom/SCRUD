@@ -53,6 +53,24 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
 
     const { tempData, setTempData } = useProjectTempStore();
 
+    // 외부 클릭 감지를 위한 이벤트 리스너
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownOpen &&
+            dropdownRef.current &&
+            buttonRef.current &&
+            !dropdownRef.current.contains(event.target as Node) &&
+            !buttonRef.current.contains(event.target as Node)) {
+          setDropdownOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [dropdownOpen]);
+
     // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
     useEffect(() => {
       const params = new URLSearchParams(window.location.search);
@@ -174,34 +192,31 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
 
     return (
       <div ref={ref} className="p-10 mb-10 bg-white rounded-lg">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <h2 className="m-0 text-xl font-semibold">
-              {title} {isRequired && <span className="text-red-500">*</span>}
-            </h2>
+        <div className="flex flex-col mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <h2 className="m-0 text-xl font-semibold">
+                {title} {isRequired && <span className="text-red-500">*</span>}
+              </h2>
+            </div>
             <button
               type="button"
-              className="hover:text-gray-600 flex items-center justify-center p-0 ml-2 text-gray-400 transition-colors duration-200 bg-transparent border-none cursor-pointer"
-              onClick={onInfoClick}
-              aria-label={`${title} 정보`}
+              className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
+              onClick={toggleMode}
             >
-              <HelpCircle size={20} />
+              {isFileMode ? (
+                <>선택지에서 선택하기</>
+              ) : (
+                <>
+                  <Upload size={14} className="mr-1" />
+                  파일 추가하기
+                </>
+              )}
             </button>
           </div>
-          <button
-            type="button"
-            className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
-            onClick={toggleMode}
-          >
-            {isFileMode ? (
-              <>선택지에서 선택하기</>
-            ) : (
-              <>
-                <Upload size={14} className="mr-1" />
-                파일 추가하기
-              </>
-            )}
-          </button>
+          <p className="mt-2 text-sm text-gray-600">
+           인증/인가 처리, CORS 정책, 비밀번호 암호화, JWT 등 보안과 관련된 설정 파일입니다.
+          </p>
         </div>
 
         {!isFileMode ? (
@@ -217,9 +232,9 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              onClick={() => {
-                setDropdownOpen(!dropdownOpen);
+              onClick={(e) => {
                 if (onFocus) onFocus();
+                setDropdownOpen(!dropdownOpen);
               }}
               ref={buttonRef}
             >
@@ -231,6 +246,9 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                 보안 설정 파일을 드래그해서 추가하거나 <br />
                 <span className="text-blue-500">업로드하세요</span>
               </p>
+              <div className="mt-2 text-xs text-gray-400">
+                지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등
+              </div>
             </div>
 
             {/* 드롭다운 메뉴 */}
@@ -245,6 +263,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                     className="hover:bg-gray-100 first:rounded-t-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150"
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (onFocus) onFocus();
                       handleGithubUpload();
                       setDropdownOpen(false);
                     }}
@@ -260,6 +279,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                     className="hover:bg-gray-100 last:rounded-b-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150"
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (onFocus) onFocus();
                       handleFileUpload();
                       setDropdownOpen(false);
                     }}

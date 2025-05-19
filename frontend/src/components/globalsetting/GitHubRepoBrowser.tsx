@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGitHubTokenStore } from '@/store/githubTokenStore';
 import { Folder, File as FileIcon, Github, ChevronLeft, Check } from 'lucide-react';
 import { getGitHubAuthUrl } from '@/auth/github';
@@ -57,6 +57,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
   const [error, setError] = useState<string>('');
   // 아키텍처 모드에서 전체 레포지토리 로딩 상태
   const [isLoadingFullRepo, setIsLoadingFullRepo] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // GitHub 인증 확인 및 처리
   useEffect(() => {
@@ -64,6 +65,22 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
       checkGitHubAuth();
     }
   }, [isOpen]);
+
+  // 외부 클릭 감지를 위한 이벤트 리스너
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isOpen && 
+          modalRef.current && 
+          !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
 
   // GitHub 인증 확인하는 함수
   const checkGitHubAuth = async () => {
@@ -507,8 +524,11 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white rounded-md p-10 w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div 
+        ref={modalRef}
+        className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col p-10"
+      >
         <div className="flex justify-between items-center mb-4 ">
           <h2 className="text-lg font-semibold flex items-center ">
             <span className="mr-2"><Github size={20} /></span> 

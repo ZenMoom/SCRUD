@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import FileContentModal from "./FileContentModal"
 
 // 전역 파일 정의
 interface GlobalFile {
@@ -52,6 +53,8 @@ const ITEMS: SidebarItem[] = [
 export default function LeftContainer({ activeItem, onItemClick, globalFiles }: LeftContainerProps) {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
   const [loading] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<GlobalFile | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // 아이템 펼치기/접기
   const toggleItem = (id: string) => {
@@ -127,7 +130,16 @@ export default function LeftContainer({ activeItem, onItemClick, globalFiles }: 
                   .filter(file => file.fileType === fileType)
                   .map((file) => (
                     <li key={file.globalFileId} className="pl-8 py-2 text-sm hover:bg-gray-50 rounded flex justify-between items-center">
-                      <span>{file.fileName}</span>
+                      <span 
+                        className="cursor-pointer hover:text-blue-500"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFile(file);
+                          setIsModalOpen(true);
+                        }}
+                      >
+                        {file.fileName}
+                      </span>
                     </li>
                   ))}
               </ul>
@@ -148,6 +160,15 @@ export default function LeftContainer({ activeItem, onItemClick, globalFiles }: 
           item.isProject ? renderProjectItem(item as ProjectItem) : renderFileItem(item as FileItem)
         ))}
       </div>
+      <FileContentModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedFile(null);
+        }}
+        fileName={selectedFile?.fileName || ""}
+        content={selectedFile?.fileContent || ""}
+      />
     </div>
   )
 }

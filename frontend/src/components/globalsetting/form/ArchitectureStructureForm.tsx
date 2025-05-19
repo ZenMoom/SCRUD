@@ -48,6 +48,24 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
 
     const { tempData, setTempData } = useProjectTempStore()
 
+    // 외부 클릭 감지를 위한 이벤트 리스너
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownOpen &&
+            dropdownRef.current &&
+            buttonRef.current &&
+            !dropdownRef.current.contains(event.target as Node) &&
+            !buttonRef.current.contains(event.target as Node)) {
+          setDropdownOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [dropdownOpen]);
+
     // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
     useEffect(() => {
       const params = new URLSearchParams(window.location.search)
@@ -219,32 +237,29 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
 
     return (
       <div ref={ref} className="mb-10 p-10 bg-white rounded-lg">
-        <div className="flex items-center mb-4 justify-between">
-          <div className="flex items-center">
-            <h2 className="text-xl font-semibold m-0">{title} {isRequired && <span className="text-red-500">*</span>}</h2>
+        <div className="flex flex-col mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <h2 className="text-xl font-semibold m-0">{title} {isRequired && <span className="text-red-500">*</span>}</h2>
+            </div>
             <button
               type="button"
-              className="bg-transparent border-none text-gray-400 cursor-pointer ml-2 p-0 flex items-center justify-center transition-colors duration-200 hover:text-gray-600"
-              onClick={onInfoClick}
-              aria-label={`${title} 정보`}
+              className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
+              onClick={handleInputTypeChange}
             >
-              <HelpCircle size={20} />
+              {inputType === 'select' ? (
+                <>
+                  <Upload size={14} className="mr-1" />
+                  파일 추가하기
+                </>
+              ) : (
+                <>선택지에서 선택하기</>
+              )}
             </button>
           </div>
-          <button
-            type="button"
-            className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
-            onClick={handleInputTypeChange}
-          >
-            {inputType === 'select' ? (
-              <>
-                <Upload size={14} className="mr-1" />
-                파일 추가하기
-              </>
-            ) : (
-              <>선택지에서 선택하기</>
-            )}
-          </button>
+          <p className="mt-2 text-sm text-gray-600">
+            프로젝트의 전반적인 구조와 계층을 정의하는 파일입니다. 각 컴포넌트 간의 관계와 책임을 명확히 합니다.
+          </p>
         </div>
 
         {inputType === 'select' ? (
@@ -314,9 +329,9 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              onClick={() => {
-                setDropdownOpen(!dropdownOpen)
-                if (onFocus) onFocus()
+              onClick={(e) => {
+                if (onFocus) onFocus();
+                setDropdownOpen(!dropdownOpen);
               }}
               ref={buttonRef}
             >
@@ -327,6 +342,9 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                   업로드하세요
                 </span>
               </p>
+              <div className="mt-2 text-xs text-gray-400">
+                지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등
+              </div>
             </div>
             
             {/* 드롭다운 메뉴 */}
@@ -337,9 +355,10 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                     type="button" 
                     className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 first:rounded-t-lg" 
                     onClick={(e) => {
-                      e.stopPropagation()
-                      handleGithubUpload()
-                      setDropdownOpen(false)
+                      e.stopPropagation();
+                      if (onFocus) onFocus();
+                      handleGithubUpload();
+                      setDropdownOpen(false);
                     }}
                   >
                     <Github size={16} className="text-gray-500" />
@@ -348,7 +367,11 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                   <button 
                     type="button" 
                     className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 last:rounded-b-lg"
-                    onClick={handleFileUploadClick}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onFocus) onFocus();
+                      handleFileUploadClick(e);
+                    }}
                   >
                     <Upload size={16} className="text-gray-500" />
                     <span>파일 업로드</span>

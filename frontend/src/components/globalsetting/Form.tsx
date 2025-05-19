@@ -9,7 +9,7 @@ interface FormItemProps {
   type: 'text' | 'textarea'
   value: string
   onChange: (value: string) => void
-  onInfoClick: () => void
+  onInfoClick?: () => void  // 선택적으로 변경
   onFocus?: () => void
   isRequired?: boolean
 }
@@ -66,13 +66,29 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
     }
   }
 
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     handleChange(newValue)
-    if (newValue) {
+    
+    // URL 검증은 Server URL 필드에만 적용
+    if (title === 'Server URL' && newValue) {
       validateUrl(newValue)
     } else {
       setUrlError('')
+    }
+  }
+
+  // 플레이스홀더 텍스트 선택
+  const getPlaceholder = () => {
+    switch (title) {
+      case '프로젝트명':
+        return '개발하는 프로젝트의 서비스명을 적어주세요.'
+      case '프로젝트 설명':
+        return '개발하는 프로젝트의 목적, 컨셉, 주요 기능 등에 관해 적어주세요.'
+      case 'Server URL':
+        return ' 서버에 연결하기 위한 주소를 적어주세요. ex)http://localhost:8080'
+      default:
+        return `${title} 입력`
     }
   }
 
@@ -84,11 +100,11 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
           <input
             type="text"
             value={value as string}
-            onChange={handleUrlChange}
+            onChange={handleInputChange}
             className={`w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               urlError ? 'border-red-300' : ''
             }`}
-            placeholder={`${title} 입력`}
+            placeholder={getPlaceholder()}
             onFocus={onFocus}
           />
         )
@@ -98,7 +114,7 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
             value={value as string}
             onChange={(e) => handleChange(e.target.value)}
             className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
-            placeholder={`${title} 입력`}
+            placeholder={getPlaceholder()}
             onFocus={onFocus}
           />
         )
@@ -112,14 +128,16 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
       <div className="flex items-center mb-4 justify-between">
         <div className="flex items-center">
           <h2 className="text-xl font-semibold m-0">{title} {isRequired && <span className="text-red-500">*</span>}</h2>
-          <button
-            type="button"
-            className="bg-transparent border-none text-gray-400 cursor-pointer ml-2 p-0 flex items-center justify-center transition-colors duration-200 hover:text-gray-600"
-            onClick={onInfoClick}
-            aria-label={`${title} 정보`}
-          >
-            <HelpCircle size={20} />
-          </button>
+          {onInfoClick && title !== '프로젝트명' && title !== '프로젝트 설명' && title !== 'Server URL' && (
+            <button
+              type="button"
+              className="bg-transparent border-none text-gray-400 cursor-pointer ml-2 p-0 flex items-center justify-center transition-colors duration-200 hover:text-gray-600"
+              onClick={onInfoClick}
+              aria-label={`${title} 정보`}
+            >
+              <HelpCircle size={20} />
+            </button>
+          )}
         </div>
       </div>
       {renderInputComponent()}
