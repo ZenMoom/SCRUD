@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface ScrudProjectRepository extends JpaRepository<ScrudProject, Long> {
-    List<ScrudProject> findScrudProjectsByUserIdOrderByUpdatedAtDesc(Pageable pageable, UUID userId);
+    List<ScrudProject> findScrudProjectsByUserIdAndIsDeletedIsFalseOrderByUpdatedAtDesc(Pageable pageable, UUID userId);
 
     Optional<ScrudProject> findByScrudProjectIdAndUserId(Long projectId, UUID userId);
 }
