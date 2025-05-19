@@ -3,7 +3,6 @@ import logging
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
 
 from app.core.llm.prompts.user_chat_prompts import get_user_chat_prompt
 from app.core.models.diagram_model import DiagramChainPayload
@@ -26,13 +25,7 @@ class UserChatChain:
         self.llm = llm
         self.prompt: ChatPromptTemplate = get_user_chat_prompt()
         self.chain = (
-            {
-                "output_instructions": RunnablePassthrough(),
-                "user_chat": RunnablePassthrough(),
-                "global_files": RunnablePassthrough(),
-                "diagram": RunnablePassthrough(),
-            }
-            | self.prompt
+              self.prompt
             | self.llm
             | PydanticOutputParser(pydantic_object=SystemChatChainPayload)
         )
@@ -60,10 +53,10 @@ class UserChatChain:
         logger.info(f"[디버깅] UserChatChain - 프롬프트 준비 시작")
         # 채팅 데이터 프롬프트 구성
         format_instructions = {
-            "output_instructions": PydanticOutputParser(pydantic_object=SystemChatChainPayload).get_format_instructions(),
             "user_chat": chat_prompt,
             "global_files": global_files_prompt,
             "diagram": diagram_prompt,
+            "output_instructions": PydanticOutputParser(pydantic_object=SystemChatChainPayload).get_format_instructions()
         }
         logger.info(f"[디버깅] UserChatChain - 프롬프트 구성 완료\nf{self.prompt.format(**format_instructions)}")
 

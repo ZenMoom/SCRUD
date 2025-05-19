@@ -31,12 +31,7 @@ class CreateDiagramComponentChain:
 
         # LCEL을 사용한 체인 구성
         self.chain = (
-            {
-                "api_spec_prompt": RunnablePassthrough(),
-                "global_files_prompt": RunnablePassthrough(),
-                "output_instructions": RunnablePassthrough(),
-            }
-            | self.prompt
+              self.prompt
             | self.llm
             | PydanticOutputParser(pydantic_object=ComponentChainPayloadList)
         )
