@@ -1,10 +1,12 @@
 package com.barcoder.scrud.post.application.facade;
 
 import com.barcoder.scrud.global.common.exception.BaseException;
+import com.barcoder.scrud.post.application.dto.in.CommentVoteIn;
 import com.barcoder.scrud.post.application.dto.in.CreateCommentCommand;
 import com.barcoder.scrud.post.application.dto.in.CreateCommentIn;
 import com.barcoder.scrud.post.application.dto.in.UpdateCommentIn;
 import com.barcoder.scrud.post.application.dto.out.CommentOut;
+import com.barcoder.scrud.post.application.dto.out.CommentVoteOut;
 import com.barcoder.scrud.post.application.service.CommentService;
 import com.barcoder.scrud.post.domain.entity.Comment;
 import com.barcoder.scrud.post.domain.entity.Post;
@@ -107,5 +109,31 @@ public class CommentFacade {
 
         // 댓글 수정
         comment.update(inDto.getContent());
+    }
+
+    /**
+     * 댓글 투표
+     *
+     * @param inDto 댓글 투표 요청 DTO
+     * @return 댓글 투표 결과 DTO
+     */
+    public CommentVoteOut voteComment(CommentVoteIn inDto) {
+
+        // 댓글 조회
+        Comment comment = commentJpaRepository.findById(inDto.getCommentId())
+                .orElseThrow(() -> new BaseException(PostErrorStatus.COMMENT_NOT_FOUND));
+
+        // 본인 확인
+        if (comment.getUserId().equals(inDto.getUserId())) {
+            throw new BaseException(PostErrorStatus.COMMENT_VOTE_SELF);
+        }
+
+        // 이미 투표한 경우
+        if (comment.isAlreadyVoted(inDto.getUserId())) {
+            throw new BaseException(PostErrorStatus.COMMENT_ALREADY_VOTED);
+        }
+
+        // 투표 처리
+        return commentService.voteComment(inDto);
     }
 }

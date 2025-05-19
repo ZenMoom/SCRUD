@@ -86,7 +86,7 @@ public class PostService {
 
         // 이미 추천한 게시글인지 확인
         if (post.isAlreadyVoted(inDto.getUserId())) {
-            throw new BaseException(PostErrorStatus.POST_ALREADY_LIKED);
+            throw new BaseException(PostErrorStatus.POST_ALREADY_VOTED);
         }
 
         // 응답 DTO를 위한 값 +1 처리 (응답에서 증가된 값 보여줌)

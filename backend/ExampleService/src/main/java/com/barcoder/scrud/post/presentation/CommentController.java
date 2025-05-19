@@ -8,9 +8,11 @@ import com.barcoder.scrud.model.CreateCommentRequest;
 import com.barcoder.scrud.model.GetCommentListResponse;
 import com.barcoder.scrud.model.UpdateCommentRequest;
 import com.barcoder.scrud.model.VoteCommentResponse;
+import com.barcoder.scrud.post.application.dto.in.CommentVoteIn;
 import com.barcoder.scrud.post.application.dto.in.CreateCommentIn;
 import com.barcoder.scrud.post.application.dto.in.UpdateCommentIn;
 import com.barcoder.scrud.post.application.dto.out.CommentOut;
+import com.barcoder.scrud.post.application.dto.out.CommentVoteOut;
 import com.barcoder.scrud.post.application.facade.CommentFacade;
 import com.barcoder.scrud.post.application.facade.CommentGetFacade;
 import lombok.RequiredArgsConstructor;
@@ -139,6 +141,17 @@ public class CommentController implements CommentApi {
 	 */
 	@Override
 	public ResponseEntity<VoteCommentResponse> voteComment(Long commentId, CommentVoteRequest commentVoteRequest) {
+		// userId 조회
+		UUID userId = securityUtil.getCurrentUserId();
+
+		// inDto 생성
+		CommentVoteIn inDto = modelMapper.map(commentVoteRequest, CommentVoteIn.class).toBuilder()
+				.userId(userId)
+				.commentId(commentId)
+				.build();
+
+		// 댓글 추천/비추천
+		CommentVoteOut outDto = commentFacade.voteComment(inDto);
 		return null;
 	}
 }
