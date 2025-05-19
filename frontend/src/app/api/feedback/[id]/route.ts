@@ -8,6 +8,7 @@ const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
+
   try {
     const config = new Configuration({
       basePath: apiUrl,
