@@ -7,7 +7,7 @@ from app.core.generator.streaming_handler import SSEStreamingHandler
 from app.core.llm.chains.create_diagram_component_chain import CreateDiagramComponentChain
 from app.core.llm.chains.user_chat_chain import UserChatChain
 from app.core.models.diagram_model import DiagramChainPayload, ComponentChainPayload
-from app.core.models.global_setting_model import GlobalFileListChainPayload
+from app.core.models.global_setting_model import GlobalFileListChainPayload, ApiSpecChainPayload
 from app.core.models.user_chat_model import UserChatChainPayload, SystemChatChainPayload
 from app.infrastructure.http.client.api_client import GlobalFileList, ApiSpec
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
@@ -44,10 +44,11 @@ class PromptService:
             처리 결과
         """
         logger.info("Processing API spec flow")
-
+        global_files_payload = GlobalFileListChainPayload.model_validate(global_files)
+        api_spec_payload = ApiSpecChainPayload.model_validate(api_spec)
         return await self.create_diagram_chain.predict(
-            api_spec=api_spec,
-            global_files=global_files,
+            api_spec=api_spec_payload,
+            global_files=global_files_payload,
         )
 
     async def process_chat_flow(

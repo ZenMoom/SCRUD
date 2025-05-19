@@ -9,6 +9,7 @@ from app.core.llm.prompts.user_chat_prompts import get_user_chat_prompt
 from app.core.models.diagram_model import DiagramChainPayload
 from app.core.models.global_setting_model import GlobalFileListChainPayload
 from app.core.models.user_chat_model import UserChatChainPayload, SystemChatChainPayload
+from app.utils.prompt_builder import PromptBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +27,10 @@ class UserChatChain:
         self.prompt: ChatPromptTemplate = get_user_chat_prompt()
         self.chain = (
             {
-                # "global_files": RunnablePassthrough(),
-                "diagram": RunnablePassthrough(),
                 "output_instructions": RunnablePassthrough(),
-
-                "tag": RunnablePassthrough(),
-                "prompt_type": RunnablePassthrough(),
-                "message": RunnablePassthrough(),
-                "code_data": RunnablePassthrough(),
+                "user_chat": RunnablePassthrough(),
+                "global_files": RunnablePassthrough(),
+                "diagram": RunnablePassthrough(),
             }
             | self.prompt
             | self.llm
@@ -56,20 +53,19 @@ class UserChatChain:
         Returns:
             처리 결과
         """
+        chat_prompt = PromptBuilder.build_user_chat_prompt(chat_data)
+        global_files_prompt = PromptBuilder.build_global_file_list_prompt(global_files)
+        diagram_prompt =  PromptBuilder.build_diagram_prompt(current_diagram)
+
         logger.info(f"[디버깅] UserChatChain - 프롬프트 준비 시작")
         # 채팅 데이터 프롬프트 구성
         format_instructions = {
             "output_instructions": PydanticOutputParser(pydantic_object=SystemChatChainPayload).get_format_instructions(),
-            # "global_files": global_files.model_json_schema(),
-            "diagram": current_diagram.model_json_schema(),
-
-            "tag": chat_data.tag,
-            "prompt_type": chat_data.promptType,
-            "message": chat_data.message,
-            "code_data": chat_data.targetMethods,
+            "user_chat": chat_prompt,
+            "global_files": global_files_prompt,
+            "diagram": diagram_prompt,
         }
         logger.info(f"[디버깅] UserChatChain - 프롬프트 구성 완료\nf{self.prompt.format(**format_instructions)}")
-
 
         logger.info(f"[디버깅] UserChatChain - LLM 요청 시작")
         result = await self.chain.ainvoke(

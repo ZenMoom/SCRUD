@@ -3,6 +3,7 @@ from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTempla
 CREATE_DIAGRAM_COMPONENT_SYSTEM_TEMPLATE = """
 당신은 시스템 아키텍처 다이어그램을 위한 컴포넌트 생성 전문가입니다. 주어진 API 명세와 데이터를 기반으로 정확한 형식의 JSON 컴포넌트를 생성해야 합니다.
 
+
 [응답 형식 지침]
 - 컴포넌트는 'components' 배열 안에 JSON 객체로 표현됩니다.
 - 각 컴포넌트는 다음 속성을 가집니다:
@@ -39,6 +40,9 @@ CREATE_DIAGRAM_COMPONENT_SYSTEM_TEMPLATE = """
 
 6. ERD와 요구사항 명세서를 참고하여 적절한 엔티티 관계를 반영하세요.
 
+[전역 설정 파일]
+{global_files_prompt}
+
 [출력 지침]
 {output_instructions}
 """
@@ -70,15 +74,16 @@ CREATE_DIAGRAM_COMPONENT_HUMAN_TEMPLATE = """
 5. 모든 UUID는 임의의 고유 값 사용 (예: "84322822-22bc-4d00-bcb0-826328a2ed20" 형식)
 6. 메소드 구현은 실제 작동 코드여야 함 (스켈레톤이 아닌 구체적인 구현)
 
-[구현 데이터]
-{complete_prompt}
+[구현하려는 API 정보]
+{api_spec_prompt}
 """
 
 
 def get_create_diagram_component_prompt():
     return ChatPromptTemplate(
         input_variables=[
-            "complete_prompt",
+            "api_spec_prompt",
+            "global_files_prompt",
             "output_instructions"
         ],
         messages=[

@@ -12,12 +12,12 @@ COMPONENT_SYSTEM_TEMPLATE = """
 
 COMPONENT_HUMAN_TEMPLATE = """
 [응답 값]
-{chat_data}
+{system_chat_prompt}
 """
 def get_component_prompt():
     return ChatPromptTemplate(
         input_variables=[
-            "chat_data",
+            "system_chat_prompt",
             "output_instructions"
         ],
         messages=[

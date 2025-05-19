@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class MethodChainPayload(BaseModel):
-    methodId: str = Field(None, description="메서드의 아이디 (uuid4)")
+    methodId: Optional[str] = Field(None, description="메서드의 아이디 (uuid4)")
     name: Optional[str] = Field(None, description="메서드의 이름")
     signature: Optional[str] = Field(None, description="메서드의 서명(파라미터 및 반환 타입)")
     body: Optional[str] = Field(None, description="메서드의 구현 내용")

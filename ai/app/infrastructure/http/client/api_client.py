@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from app.config.config import settings
 
 class GlobalFile(BaseModel):
-    globalFileId: int
+    globalFileId: Optional[int] = None
     fileName: Optional[str] = None
     fileType: Optional[str] = None
     fileUrl: Optional[str] = None
@@ -19,7 +19,7 @@ class GlobalFileList(BaseModel):
         serverUrl: Optional[str] = None
         updatedAt: Optional[str] = None
 
-    project: Optional[ScrudProject] = []
+    project: Optional[ScrudProject] = None
     content: Optional[List[GlobalFile]] = []
 
 class ApiSpec(BaseModel):
