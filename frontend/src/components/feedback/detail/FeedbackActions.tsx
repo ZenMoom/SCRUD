@@ -111,6 +111,17 @@ export default function FeedbackActions() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 전체 화면 오버레이 - 삭제 중일 때만 표시 */}
+      {isDeleting && (
+        <div className='bg-black/50 backdrop-blur-sm fixed inset-0 z-50 flex items-center justify-center'>
+          <div className='flex flex-col items-center gap-3 p-6 bg-white rounded-lg shadow-lg'>
+            <div className='border-t-transparent animate-spin w-10 h-10 border-4 border-blue-500 rounded-full'></div>
+            <p className='text-lg font-medium text-gray-700'>삭제 중입니다...</p>
+            <p className='text-sm text-gray-500'>잠시만 기다려주세요.</p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

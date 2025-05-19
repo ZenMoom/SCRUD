@@ -10,15 +10,6 @@ import { FeedbackHeader } from './FeedbackHeader';
 import FeedbackStatusChanger from './FeedbackStatusChanger';
 import FeedbackVote from './FeedbackVote';
 
-// 상태 레이블 및 색상 매핑
-// const statusConfig: Record<string, { label: string; color: string }> = {
-//   pending: { label: '대기 중', color: 'bg-gray-100 text-gray-800' },
-//   reviewing: { label: '검토 중', color: 'bg-yellow-100 text-yellow-800' },
-//   inprogress: { label: '진행 중', color: 'bg-blue-100 text-blue-800' },
-//   completed: { label: '완료', color: 'bg-green-100 text-green-800' },
-//   rejected: { label: '거절됨', color: 'bg-red-100 text-red-800' },
-// };
-
 // 피드백 헤더
 
 export default function FeedbackDetail({
