@@ -1,6 +1,6 @@
 import { CommentApiCreateCommentRequest, CommentApiFactory } from '@generated/api';
 import { Configuration } from '@generated/configuration';
-import { CreateCommentRequest } from '@generated/model';
+import { CreateCommentRequest, UpdateCommentRequest } from '@generated/model';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -102,5 +102,42 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   } catch (error) {
     console.error('Error deleting comment:', error);
     return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Comment ID is required' }, { status: 400 });
+  }
+
+  try {
+    const authToken = (await cookies()).get('access_token')?.value;
+
+    if (!authToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const config = new Configuration({
+      basePath: apiUrl,
+      baseOptions: {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    });
+    const commentApi = CommentApiFactory(config);
+
+    const body = await request.json();
+
+    const response = await commentApi.updateComment({
+      commentId: Number(id),
+      updateCommentRequest: body.content as UpdateCommentRequest,
+    });
+    return NextResponse.json(response.data);
+  } catch (error) {
+    console.error('Error updating comment:', error);
+    return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 });
   }
 }

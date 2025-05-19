@@ -98,21 +98,6 @@ export default function FeedbackComment() {
   // 답글 작성 취소
   const cancelReply = () => setReplyTo(null);
 
-  // 댓글 좋아요/싫어요 처리
-  // const handleVote = async (commentId: number, isLike: boolean) => {
-  //   if (!isAuthenticated) {
-  //     <AlertLogin />;
-  //     return;
-  //   }
-
-  //   try {
-  //     const updatedComment = await voteComment(commentId, { isLike });
-  //     updateComment(updatedComment);
-  //   } catch (error) {
-  //     console.error('댓글 투표 실패:', error);
-  //   }
-  // };
-
   return (
     <div className='p-6'>
       <h2 className='mb-4 text-lg font-medium text-gray-900'>댓글 {totalCommentCount}개</h2>
