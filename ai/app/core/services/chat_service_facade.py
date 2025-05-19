@@ -8,7 +8,7 @@ from app.core.diagram.component.component_service import ComponentService
 from app.core.diagram.connection.connection_service import ConnectionService
 from app.core.diagram.diagram_service import DiagramService
 from app.core.llm.prompt_service import PromptService
-from app.core.models.diagram_model import ComponentChainPayload, DtoModelChainPayload
+from app.core.models.diagram_model import ComponentChainPayload, DtoModelChainPayload, DiagramChainPayload
 from app.core.models.global_setting_model import ApiSpecChainPayload
 from app.core.models.user_chat_model import SystemChatChainPayload
 from app.core.services.chat_service import ChatService
@@ -118,6 +118,7 @@ class ChatServiceFacade:
         self.logger.info("-" * 80)
 
         target_diagram = None
+        target_diagram_payload: DiagramChainPayload = None
         # 스트리밍 핸들러 설정
         self.prompt_service.set_streaming_handler(queue)
         self.logger.info("[디버깅] ChatServiceFacade - 스트리밍 핸들러 설정 완료")
@@ -163,7 +164,9 @@ class ChatServiceFacade:
             
             self.logger.info("[디버깅] ChatServiceFacade - 컴포넌트 생성 시작")
             components: List[ComponentChainPayload] = await self._component_service.create_components_with_system_chat(
-                system_chat_payload)
+                system_chat_payload,
+                target_diagram
+            )
             self.logger.info(f"[디버깅] ChatServiceFacade - 컴포넌트 생성 완료: {len(components)}개")
             
             self.logger.info("[디버깅] ChatServiceFacade - DTO 생성 시작")

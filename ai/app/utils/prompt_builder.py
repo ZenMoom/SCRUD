@@ -59,11 +59,11 @@ API 스펙 버전 ID: {str(api_spec.apiSpecVersionId or "정보 없음")}
 요청 태그: {chat_data.tag.value if chat_data.tag else "지정되지 않음"}
 프롬프트 타입: {chat_data.promptType.value if chat_data.promptType else "지정되지 않음"}
 
-## 대상 메서드 정보
+## 선택한 메서드 정보
 """
         
         if not chat_data.targetMethods or len(chat_data.targetMethods) == 0:
-            prompt += "대상 메서드가 지정되지 않았습니다.\n"
+            prompt += "메서드가 지정되지 않았습니다.\n"
         else:
             for idx, method in enumerate(chat_data.targetMethods):
                 prompt += f"""
