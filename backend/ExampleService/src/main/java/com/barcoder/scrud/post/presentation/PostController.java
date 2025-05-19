@@ -90,9 +90,11 @@ public class PostController implements PostApi {
 
         // userId 조회
         UUID userId = securityUtil.getCurrentUserId();
+
         // 게시글 삭제
         postService.deletePost(postId, userId);
-        return null;
+
+        return ResponseEntity.ok().build();
     }
 
     /**

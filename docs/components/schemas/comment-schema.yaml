@@ -66,9 +66,12 @@ CommentResponse:
       type: integer
       format: int64
       example: 1
-    isEdited:
+    isUpdated:
       type: boolean
       example: true
+    isDeleted:
+      type: boolean
+      example: false
     createdAt:
       type: string
       format: date-time

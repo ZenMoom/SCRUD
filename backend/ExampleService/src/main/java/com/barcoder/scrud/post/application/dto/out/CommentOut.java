@@ -26,6 +26,7 @@ public class CommentOut {
     private Long dislikeCount;
 
     private Boolean isEdited;
+    private Boolean isDeleted;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

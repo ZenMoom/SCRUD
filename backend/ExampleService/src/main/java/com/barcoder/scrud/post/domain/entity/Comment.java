@@ -52,4 +52,18 @@ public class Comment extends BaseTimeEntity {
 	@Builder.Default
 	private Long dislikeCount = 0L;
 
+	@Column(nullable = false)
+	@Builder.Default
+	private Boolean isUpdated = false;
+
+	@Column(nullable = false)
+	@Builder.Default
+	private Boolean isDeleted = false;
+
+	/**
+	 * 댓글 삭제
+	 */
+	public void delete() {
+		this.isDeleted = true;
+	}
 }

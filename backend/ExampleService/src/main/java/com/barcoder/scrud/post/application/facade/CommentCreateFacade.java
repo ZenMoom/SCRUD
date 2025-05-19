@@ -17,6 +17,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -64,5 +66,25 @@ public class CommentCreateFacade {
         return outDto.toBuilder()
                 .author(userOut)
                 .build();
+    }
+
+    /**
+     * 댓글 삭제
+     *
+     * @param commentId 댓글 ID
+     * @param userId    유저 ID
+     */
+    public void deleteComment(Long commentId, UUID userId) {
+        // 댓글 조회
+        Comment comment = commentJpaRepository.findById(commentId)
+                .orElseThrow(() -> new BaseException(PostErrorStatus.COMMENT_NOT_FOUND));
+
+        // 댓글 작성자와 현재 유저가 같은지 확인
+        if (!comment.getUserId().equals(userId)) {
+            throw new BaseException(PostErrorStatus.COMMENT_NOT_AUTHORIZED);
+        }
+
+        // 댓글 삭제
+        comment.delete();
     }
 }

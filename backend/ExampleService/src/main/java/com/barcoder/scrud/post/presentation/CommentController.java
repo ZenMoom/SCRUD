@@ -67,7 +67,11 @@ public class CommentController implements CommentApi {
 	 */
 	@Override
 	public ResponseEntity<Void> deleteComment(Long commentId) {
-		return null;
+		// userId 조회
+		UUID userId = securityUtil.getCurrentUserId();
+		// 댓글 삭제
+		commentCreateFacade.deleteComment(commentId, userId);
+		return ResponseEntity.ok().build();
 	}
 
 	/**
@@ -84,7 +88,13 @@ public class CommentController implements CommentApi {
 
 		// response 변환
 		List<CommentResponse> content = outDtoList.stream()
-				.map(commentOut -> modelMapper.map(commentOut, CommentResponse.class))
+				.map(commentOut -> {
+					CommentResponse comment = modelMapper.map(commentOut, CommentResponse.class);
+					if (comment.getIsDeleted()) {
+						comment.setContent("삭제된 댓글입니다.");
+					}
+					return comment;
+				})
 				.toList();
 
 		GetCommentListResponse response = GetCommentListResponse.builder()
