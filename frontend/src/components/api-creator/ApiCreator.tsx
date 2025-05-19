@@ -7,9 +7,8 @@ import LeftContainer from "./LeftContainer"
 import MiddleContainer from "./MiddleContainer"
 import RightContainer from "./right-container"
 import { ApiProcessStateEnumDto, ApiSpecVersionResponse } from "@generated/model"
-import useAuthStore from "@/app/store/useAuthStore" // useAuthStore import 추가
+import useAuthStore from "@/app/store/useAuthStore"
 
-// API 엔드포인트 인터페이스 (MiddleContainer에서 사용하는 형식)
 interface ApiEndpoint {
   id: string
   path: string
@@ -38,7 +37,7 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
   const [scrudProjectId, setScrudProjectId] = useState<number>(projectId) // 기본값으로
   const [apiGroups, setApiGroups] = useState<ApiGroup[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState<boolean>(true)
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState<boolean>(false) // 여기를 false로 변경
   const [activeItem, setActiveItem] = useState<string>("title")
   const [completed, setCompleted] = useState<Record<string, boolean>>({
     title: false,
@@ -56,10 +55,7 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
 
   // URL에서 프로젝트 ID가 변경될 때 상태 업데이트
   useEffect(() => {
-    console.log("ApiCreator - projectId from props:", projectId)
-    console.log("ApiCreator - current scrudProjectId:", scrudProjectId)
     if (projectId && projectId !== scrudProjectId) {
-      console.log("프로젝트 ID 변경:", projectId)
       setScrudProjectId(projectId)
       // 프로젝트 변경 시 선택된 API 초기화
       setSelectedApi(null)
@@ -70,7 +66,6 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
   // API 스펙 목록 조회 및 변환 (그룹화 로직)
   const fetchApiSpecs = useCallback(
     async (projectId: number) => {
-      console.log("fetchApiSpecs 호출됨 - projectId:", projectId)
       setIsLoading(true)
       try {
         // 백엔드에서 API 스펙 목록 조회 - Bearer 토큰 추가
@@ -82,8 +77,6 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
 
         // 응답 데이터를 ApiGroup 형식으로 변환
         const apiSpecsList = response.data.content || []
-
-        console.log(`프로젝트 ${projectId}의 API 스펙 목록 가져옴:`, apiSpecsList)
 
         // 경로별로 API 그룹화
         const groupMap = new Map<string, ApiEndpoint[]>()
@@ -185,8 +178,6 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
             endpoints: [],
           })
         }
-
-        console.log(`프로젝트 ${projectId}의 그룹화된 API 목록:`, newGroups)
         setApiGroups(newGroups)
       } catch (error) {
         console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
@@ -199,7 +190,6 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
 
   // 처음 로드 시 API 스펙 목록 조회 및 프로젝트 ID가 변경될 때마다 다시 조회
   useEffect(() => {
-    console.log("API 스펙 목록 조회 useEffect 실행 - scrudProjectId:", scrudProjectId)
     fetchApiSpecs(scrudProjectId)
   }, [scrudProjectId, fetchApiSpecs])
 
@@ -230,11 +220,8 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
 
   // API 스펙이 변경되었을 때 목록 새로고침
   const handleApiSpecChanged = useCallback(() => {
-    console.log("API 스펙 변경 감지: 목록 새로고침 - scrudProjectId:", scrudProjectId)
     fetchApiSpecs(scrudProjectId)
   }, [scrudProjectId, fetchApiSpecs])
-
-  // ApiCreator 컴포넌트의 return 부분을 수정한 코드
 
   return (
     <div className="bg-blue-50 p-2 relative">

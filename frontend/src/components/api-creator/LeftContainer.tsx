@@ -147,12 +147,6 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     return files[fileType] && files[fileType].length > 0
   }
 
-  // 프로젝트 정보 수정 핸들러 (추후 구현)
-  const handleEditProject = (field: string) => {
-    console.log(`Edit project ${field}`)
-    // 추후 API 구현 시 여기에 추가
-  }
-
   // 아이템 클릭 처리 - 아코디언 토글 및 onItemClick 호출
   const handleItemClick = (id: string) => {
     toggleItem(id)
@@ -217,7 +211,6 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
               className="p-1 rounded-full hover:bg-gray-200"
               onClick={(e) => {
                 e.stopPropagation()
-                handleEditProject(id)
               }}
             >
               <Pencil size={18} className="text-blue-500" />

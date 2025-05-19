@@ -7,12 +7,22 @@ import { AxiosError } from "axios"
 // API 스펙 생성
 export async function POST(request: NextRequest) {
   try {
+    // 요청 헤더에서 인증 토큰 추출
+    const authToken = request.headers.get("Authorization")
+
     // 클라이언트에서 전송한 데이터 파싱
     const body = await request.json()
 
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
+      baseOptions: {
+        headers: authToken
+          ? {
+              Authorization: authToken,
+            }
+          : undefined,
+      },
     })
     const apiSpecApi = new ApiSpecApi(config)
 

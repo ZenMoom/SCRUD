@@ -1,5 +1,3 @@
-// 공통으로 사용되는 타입 정의
-
 export interface BodyParam {
   key: string
   value: string

@@ -29,10 +29,7 @@ interface MiddleContainerProps {
   scrudProjectId: number
 }
 
-export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading, scrudProjectId }: MiddleContainerProps) {
-  console.log("MiddleContainer 렌더링 - scrudProjectId:", scrudProjectId)
-
-  // useAuthStore에서 토큰 가져오기
+export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading }: MiddleContainerProps) {
   const { token } = useAuthStore()
 
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null)
@@ -56,7 +53,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
   // API 그룹 추가 함수 - 랜덤 이모지 추가
   const addApiGroup = () => {
-    console.log("그룹 추가 - 현재 프로젝트:", scrudProjectId)
     const newGroupId = `group-${Date.now()}`
     setApiGroups([
       ...apiGroups,
@@ -73,7 +69,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
   // API 엔드포인트 추가 함수
   const addApiEndpoint = (groupId: string) => {
-    console.log("엔드포인트 추가 - 현재 프로젝트:", scrudProjectId)
     const group = apiGroups.find((g) => g.id === groupId)
     if (!group) return
 
@@ -145,8 +140,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         if (selectedEndpointId === endpointId) {
           setSelectedEndpointId(null)
         }
-
-        console.log("엔드포인트 삭제 완료:", endpointId, "프로젝트:", scrudProjectId)
       } catch (error) {
         console.error("API 스펙 삭제 중 오류 발생:", error)
         alert("API 스펙 삭제 중 오류가 발생했습니다.")
@@ -175,7 +168,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
               // 백엔드 API 호출하여 실제 데이터 삭제
               await axios.delete(`/api/api-specs/${endpoint.apiSpecVersionId}`, { headers })
-              console.log(`엔드포인트 삭제 완료: ${endpoint.path}`)
               return true
             } catch (error) {
               console.error(`엔드포인트 ${endpoint.path} 삭제 중 오류 발생:`, error)
@@ -208,8 +200,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         if (hasSelectedEndpoint) {
           setSelectedEndpointId(null)
         }
-
-        console.log("그룹 삭제 완료:", groupId, "프로젝트:", scrudProjectId)
       } catch (error) {
         console.error("그룹 삭제 중 오류 발생:", error)
         alert("그룹 삭제 중 오류가 발생했습니다.")
@@ -287,8 +277,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   const saveGroupName = () => {
     if (!editingGroupId || !newGroupName.trim()) return
 
-    console.log("그룹명 저장 - 프로젝트:", scrudProjectId)
-
     setApiGroups(
       apiGroups.map((group) => {
         if (group.id === editingGroupId) {
@@ -315,8 +303,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   // API 엔드포인트 저장
   const saveEndpoint = (groupId: string) => {
     if (!editingEndpointId || !newEndpointPath.trim()) return
-
-    console.log("엔드포인트 저장 - 프로젝트:", scrudProjectId)
 
     setApiGroups(
       apiGroups.map((group) => {
@@ -393,8 +379,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
     // API 스펙 상태 업데이트 요청
     try {
-      console.log(`API 스펙 ID ${endpoint.apiSpecVersionId}의 상태를 '${status}'로 업데이트 요청`)
-
       // 헤더에 Bearer 토큰 추가
       const headers = {
         Authorization: token ? `Bearer ${token}` : "",

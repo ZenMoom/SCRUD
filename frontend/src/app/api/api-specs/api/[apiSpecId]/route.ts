@@ -7,7 +7,9 @@ import { AxiosError } from "axios"
 // API 스펙 상태 업데이트
 export async function PATCH(request: NextRequest, context: { params: Promise<{ apiSpecId: string }> }) {
   try {
-    // params를 Promise로 처리
+    // 요청 헤더에서 인증 토큰 추출
+    const authToken = request.headers.get("Authorization")
+
     const params = await context.params
     const apiSpecId = Number(params.apiSpecId)
 
@@ -18,12 +20,16 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ a
     // 클라이언트에서 전송한 데이터 파싱
     const body = await request.json()
 
-    // 디버깅을 위한 로그 추가
-    console.log("클라이언트에서 받은 요청 데이터:", body)
-
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
+      baseOptions: {
+        headers: authToken
+          ? {
+              Authorization: authToken,
+            }
+          : undefined,
+      },
     })
     const apiSpecApi = new ApiSpecApi(config)
 
@@ -31,12 +37,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ a
     const apiSpecVersionStatusRequest: ApiSpecVersionStatusRequest = {
       apiSpecStatus: body.apiSpecStatus as ApiSpecVersionStatusRequestApiSpecStatusEnum,
     }
-
-    // 백엔드로 보내는 최종 데이터 로깅 - 수정: 변수명 변경
-    console.log("백엔드로 보내는 최종 요청 데이터:", {
-      apiSpecId,
-      apiSpecVersionStatusRequest,
-    })
 
     // API 스펙 상태 업데이트 요청
     const requestParameters = {
