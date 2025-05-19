@@ -4,7 +4,10 @@ import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
 import com.barcoder.scrud.global.config.generator.SnowflakeId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,7 +31,15 @@ public class CommentVote extends BaseTimeEntity {
 	@Column(nullable = false)
 	private UUID userId;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "comment_id")
+	private Comment comment;
+
 	@Column(nullable = false)
 	@Builder.Default
 	private Boolean isLike = true;
+
+	public void addComment(Comment comment) {
+		this.comment = comment;
+	}
 }

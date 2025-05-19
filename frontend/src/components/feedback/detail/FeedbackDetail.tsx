@@ -1,7 +1,8 @@
 'use client';
 
+import { getComments } from '@/lib/comment-api';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
-import type { CommentResponse, PostDetailResponse } from '@generated/model';
+import type { PostDetailResponse } from '@generated/model';
 import { useEffect } from 'react';
 import FeedbackBackButton from '../FeedbackBackButton';
 import FeedbackComment from '../comment/FeedbackComment';
@@ -12,19 +13,18 @@ import FeedbackVote from './FeedbackVote';
 
 // 피드백 헤더
 
-export default function FeedbackDetail({
-  feedback,
-  initialComments,
-}: {
-  feedback: PostDetailResponse;
-  initialComments: CommentResponse[];
-}) {
+export default function FeedbackDetail({ feedback }: { feedback: PostDetailResponse }) {
   const { post, setPost, setComments } = useFeedbackStore();
 
   useEffect(() => {
+    if (!feedback) return;
     setPost(feedback);
-    setComments(initialComments);
-  }, [feedback, setPost, initialComments, setComments]);
+    const comments = async () => {
+      const res = await getComments(String(feedback.postId));
+      setComments(res);
+    };
+    comments();
+  }, [feedback, setPost, setComments]);
 
   return (
     <div className='bg-gradient-to-b from-white to-gray-50 min-h-screen'>

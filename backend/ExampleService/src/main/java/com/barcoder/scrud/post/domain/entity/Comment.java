@@ -2,6 +2,7 @@ package com.barcoder.scrud.post.domain.entity;
 
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
 import com.barcoder.scrud.global.config.generator.SnowflakeId;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -60,6 +61,9 @@ public class Comment extends BaseTimeEntity {
 	@Builder.Default
 	private Boolean isDeleted = false;
 
+	@OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<CommentVote> commentVotes = new ArrayList<>();
+
 	/**
 	 * 댓글 삭제
 	 */
@@ -73,5 +77,38 @@ public class Comment extends BaseTimeEntity {
 	public void update(String content) {
 		this.content = content;
 		this.isUpdated = true;
+	}
+
+	/**
+	 * 이미 추천했는지 확인
+	 */
+	public boolean isAlreadyVoted(UUID userId) {
+		return this.commentVotes.stream()
+			.anyMatch(commentVote -> commentVote.getUserId().equals(userId));
+	}
+
+	/**
+	 * 댓글 추천 수 증가
+	 */
+	public void addCommentVoteCount(CommentVote commentVote) {
+		commentVote.addComment(this);
+		this.commentVotes.add(commentVote);
+
+		if (commentVote.getIsLike()) {
+			this.likeCount++;
+		} else {
+			this.dislikeCount++;
+		}
+	}
+
+	/**
+	 * 사용자가 추천한 댓글인지 확인
+	 */
+	public String getUserVote(UUID userId) {
+		return this.commentVotes.stream()
+			.filter(commentVote -> commentVote.getUserId().equals(userId))
+			.map(commentVote -> commentVote.getIsLike() ? "LIKE" : "DISLIKE")
+			.findFirst()
+			.orElse("NONE");
 	}
 }

@@ -13,9 +13,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class PostVoteIn {
+public class CommentVoteIn {
 
-    private Long postId;
-    private UUID userId;
-    private Boolean isLike;
+	private UUID userId;
+	private Long commentId;
+	private Boolean isLike;
 }

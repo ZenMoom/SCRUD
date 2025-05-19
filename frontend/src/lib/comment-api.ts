@@ -13,6 +13,7 @@ export async function getComments(postId: string): Promise<CommentResponse[]> {
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include', // 쿠키 포함
   });
 
   if (!response.ok) {
@@ -102,6 +103,29 @@ export async function updateComment(commentId: number, content: string) {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || '댓글 수정 중 오류가 발생했습니다.');
+  }
+
+  return response.json();
+}
+
+/**
+ * 댓글에 좋아요/싫어요 처리하는 함수
+ */
+export async function commentVote(commentId: number, isLike: boolean) {
+  // baseUrl
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/comment/${commentId}/vote`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ isLike }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || '댓글 투표 중 오류가 발생했습니다.');
   }
 
   return response.json();

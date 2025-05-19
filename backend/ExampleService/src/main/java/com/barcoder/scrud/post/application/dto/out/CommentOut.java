@@ -28,6 +28,8 @@ public class CommentOut {
     private Boolean isUpdated;
     private Boolean isDeleted;
 
+    private String userVote;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

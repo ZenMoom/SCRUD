@@ -12,9 +12,17 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   if (!id) {
     return NextResponse.json({ error: 'Post ID is required' }, { status: 400 });
   }
-
+  const authToken = (await cookies()).get('access_token')?.value;
   try {
-    const config = new Configuration({ basePath: apiUrl });
+    const config = new Configuration({
+      basePath: apiUrl,
+      baseOptions: {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    });
+
     const commentApi = CommentApiFactory(config);
 
     const response = await commentApi.getCommentList({
