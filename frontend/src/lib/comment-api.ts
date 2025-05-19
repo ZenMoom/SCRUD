@@ -5,26 +5,22 @@ import { CommentResponse } from '@generated/model';
  * 게시글 댓글 조회하는 함수
  */
 export async function getComments(postId: string): Promise<CommentResponse[]> {
-  try {
-    // baseUrl
-    const baseUrl = getApiBaseUrl();
+  // baseUrl
+  const baseUrl = getApiBaseUrl();
 
-    const response = await fetch(`${baseUrl}/comment/${postId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  const response = await fetch(`${baseUrl}/comment/${postId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
-    if (!response.ok) {
-      throw new Error(`Error fetching comments for post ID ${postId}: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`Failed to fetch comments for post ID ${postId}:`, error);
+  if (!response.ok) {
+    console.error(`Failed to fetch comments for post ID ${postId}`);
     return [] as CommentResponse[]; // 에러 발생 시 빈 배열 반환
   }
+
+  return await response.json();
 }
 
 /**
@@ -83,6 +79,29 @@ export async function deleteComment(commentId: number) {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || '댓글 삭제 중 오류가 발생했습니다.');
+  }
+
+  return response.json();
+}
+
+/**
+ * 댓글 수정하는 함수
+ */
+export async function updateComment(commentId: number, content: string) {
+  // baseUrl
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/comment/${commentId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ content }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || '댓글 수정 중 오류가 발생했습니다.');
   }
 
   return response.json();

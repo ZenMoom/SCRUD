@@ -3,6 +3,7 @@ package com.barcoder.scrud.post.application.facade;
 import com.barcoder.scrud.global.common.exception.BaseException;
 import com.barcoder.scrud.post.application.dto.in.CreateCommentCommand;
 import com.barcoder.scrud.post.application.dto.in.CreateCommentIn;
+import com.barcoder.scrud.post.application.dto.in.UpdateCommentIn;
 import com.barcoder.scrud.post.application.dto.out.CommentOut;
 import com.barcoder.scrud.post.application.service.CommentService;
 import com.barcoder.scrud.post.domain.entity.Comment;
@@ -22,7 +23,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class CommentCreateFacade {
+public class CommentFacade {
 
     private final PostJpaRepository postJpaRepository;
     private final CommentJpaRepository commentJpaRepository;
@@ -86,5 +87,25 @@ public class CommentCreateFacade {
 
         // 댓글 삭제
         comment.delete();
+    }
+
+    /**
+     * 댓글 수정
+     *
+     * @param inDto 댓글 수정 요청 DTO
+     */
+    public void updateComment(UpdateCommentIn inDto) {
+
+        // 댓글 조회
+        Comment comment = commentJpaRepository.findById(inDto.getCommentId())
+                .orElseThrow(() -> new BaseException(PostErrorStatus.COMMENT_NOT_FOUND));
+
+        // 댓글 작성자와 현재 유저가 같은지 확인
+        if (!comment.getUserId().equals(inDto.getUserId())) {
+            throw new BaseException(PostErrorStatus.COMMENT_NOT_AUTHORIZED);
+        }
+
+        // 댓글 수정
+        comment.update(inDto.getContent());
     }
 }

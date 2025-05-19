@@ -9,8 +9,9 @@ import com.barcoder.scrud.model.GetCommentListResponse;
 import com.barcoder.scrud.model.UpdateCommentRequest;
 import com.barcoder.scrud.model.VoteCommentResponse;
 import com.barcoder.scrud.post.application.dto.in.CreateCommentIn;
+import com.barcoder.scrud.post.application.dto.in.UpdateCommentIn;
 import com.barcoder.scrud.post.application.dto.out.CommentOut;
-import com.barcoder.scrud.post.application.facade.CommentCreateFacade;
+import com.barcoder.scrud.post.application.facade.CommentFacade;
 import com.barcoder.scrud.post.application.facade.CommentGetFacade;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -24,7 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CommentController implements CommentApi {
 
-	private final CommentCreateFacade commentCreateFacade;
+	private final CommentFacade commentFacade;
 	private final CommentGetFacade commentGetFacade;
 	private final SecurityUtil securityUtil;
 	private final ModelMapper modelMapper;
@@ -50,7 +51,7 @@ public class CommentController implements CommentApi {
 				.build();
 
 		// 댓글 작성
-		CommentOut outDto = commentCreateFacade.createComment(inDto);
+		CommentOut outDto = commentFacade.createComment(inDto);
 
 		// response 변환
 		CommentResponse response = modelMapper.map(outDto, CommentResponse.class);
@@ -70,7 +71,7 @@ public class CommentController implements CommentApi {
 		// userId 조회
 		UUID userId = securityUtil.getCurrentUserId();
 		// 댓글 삭제
-		commentCreateFacade.deleteComment(commentId, userId);
+		commentFacade.deleteComment(commentId, userId);
 		return ResponseEntity.ok().build();
 	}
 
@@ -113,7 +114,20 @@ public class CommentController implements CommentApi {
 	 */
 	@Override
 	public ResponseEntity<Void> updateComment(Long commentId, UpdateCommentRequest updateCommentRequest) {
-		return null;
+
+		// userId 조회
+		UUID userId = securityUtil.getCurrentUserId();
+
+		// inDto 생성
+		UpdateCommentIn inDto = modelMapper.map(updateCommentRequest, UpdateCommentIn.class).toBuilder()
+				.commentId(commentId)
+				.userId(userId)
+				.build();
+
+		// 댓글 수정
+		commentFacade.updateComment(inDto);
+
+		return ResponseEntity.ok().build();
 	}
 
 	/**
