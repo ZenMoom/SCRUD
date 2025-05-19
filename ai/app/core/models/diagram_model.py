@@ -42,22 +42,21 @@ class ComponentChainPayload(BaseModel):
         json_schema_extra={
             "example": {
                 "type": "CLASS",
-                "name": "UserController ",
-                "description": "사용자 관련 엔드포인트를 제공하는 클래스",
+                "name": "UserService",
+                "description": "사용자 관련 서비스를 제공하는 클래스",
                 "positionX": 100.0,
                 "positionY": 200.0,
                 "methods": [
                     {
                         "methodId": "12345678-1234-1234-1234-123456789012",
                         "name": "getUserById",
-                        "signature": "getUserById(id: string): User",
+                        "signature": "public ResponseEntity<UserDto> getUserById(@PathVariable(\"userId\") Long userId)",
                         "body": """
-                            @GetMapping("/users/{userId}")
-    public ResponseEntity<UserDto> getUserById(@PathVariable Long userId) {
-        return userService.getUserById(userId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+@GetMapping(\"/api/v1/users/{userId}\")
+public ResponseEntity<UserDto> getUserById(@PathVariable(\"userId\") Long userId) {
+    UserDto user = userService.getUserById(userId);
+    return ResponseEntity.ok(user);
+}
                         """,
                         "description": "주어진 ID로 사용자 정보를 조회하는 메서드"
                     }
@@ -99,7 +98,16 @@ class DtoModelChainPayload(BaseModel):
             "example": {
                 "name": "UserDto",
                 "description": "사용자 정보를 전달하기 위한 DTO 모델",
-                "body": "class UserDto { id: string; name: string; email: string; }"
+                "body": """
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserDto {
+    private Long id;
+    private String username;
+    private String email;
+}"""
             }
         }
     )
