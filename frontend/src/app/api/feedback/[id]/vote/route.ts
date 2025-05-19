@@ -28,7 +28,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         isLike: body.isLike,
       } as PostVoteRequest,
     });
-
     return NextResponse.json(response.data);
   } catch (error) {
     console.error('Error fetching feedback:', error);

@@ -22,19 +22,18 @@ export interface Feedback {
   comments: number;
 }
 
-// 카테고리 설정
-export const categoryConfig: Record<FeedbackCategory, { label: string; color: string }> = {
-  feature: { label: '기능 요청', color: 'bg-blue-100 text-blue-800' },
-  bug: { label: '버그 리포트', color: 'bg-red-100 text-red-800' },
-  improvement: { label: '개선 제안', color: 'bg-green-100 text-green-800' },
-  question: { label: '질문', color: 'bg-purple-100 text-purple-800' },
+// 카테고리 레이블 및 색상 매핑
+export const categoryConfig: Record<string, { label: string; color: string; number: string }> = {
+  feature: { label: '기능 요청', color: 'bg-blue-100 text-blue-800', number: '1' },
+  bug: { label: '버그 리포트', color: 'bg-red-100 text-red-800', number: '2' },
+  improvement: { label: '개선 제안', color: 'bg-green-100 text-green-800', number: '3' },
+  question: { label: '질문', color: 'bg-purple-100 text-purple-800', number: '4' },
 };
 
-// 상태 설정
-export const statusConfig: Record<FeedbackStatus, { label: string; color: string }> = {
-  pending: { label: '대기 중', color: 'bg-gray-100 text-gray-800' },
-  reviewing: { label: '검토 중', color: 'bg-yellow-100 text-yellow-800' },
-  inprogress: { label: '진행 중', color: 'bg-blue-100 text-blue-800' },
-  completed: { label: '완료', color: 'bg-green-100 text-green-800' },
-  rejected: { label: '거절됨', color: 'bg-red-100 text-red-800' },
+// 숫자로 카테고리 조회를 위한 매핑
+export const numberToCategoryMap: Record<string, string> = {
+  '1': 'feature',
+  '2': 'bug',
+  '3': 'improvement',
+  '4': 'question',
 };

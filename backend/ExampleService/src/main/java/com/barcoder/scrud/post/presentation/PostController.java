@@ -13,16 +13,19 @@ import com.barcoder.scrud.model.PostSummaryResponse;
 import com.barcoder.scrud.model.PostVoteRequest;
 import com.barcoder.scrud.model.SearchTypeEnumDto;
 import com.barcoder.scrud.model.UpdatePostRequest;
+import com.barcoder.scrud.model.UpdatePostStatusRequest;
 import com.barcoder.scrud.model.UserResponse;
 import com.barcoder.scrud.model.VoteResponse;
 import com.barcoder.scrud.post.application.dto.in.CreatePostIn;
 import com.barcoder.scrud.post.application.dto.in.GetPostListIn;
 import com.barcoder.scrud.post.application.dto.in.PostVoteIn;
 import com.barcoder.scrud.post.application.dto.in.UpdatePostIn;
+import com.barcoder.scrud.post.application.dto.in.UpdatePostStatusIn;
 import com.barcoder.scrud.post.application.dto.out.CreatePostOut;
 import com.barcoder.scrud.post.application.dto.out.GetPostOut;
 import com.barcoder.scrud.post.application.dto.out.PostListOut;
 import com.barcoder.scrud.post.application.dto.out.PostVoteOut;
+import com.barcoder.scrud.post.application.facade.PostAdminFacade;
 import com.barcoder.scrud.post.application.facade.PostGetFacade;
 import com.barcoder.scrud.post.application.service.PostGetService;
 import com.barcoder.scrud.post.application.service.PostService;
@@ -48,6 +51,7 @@ public class PostController implements PostApi {
     private final PostGetService postGetService;
     private final PostGetFacade postGetFacade;
     private final SecurityUtil securityUtil;
+    private final PostAdminFacade postAdminFacade;
 
     /**
      * POST /api/v1/posts : 게시글 작성
@@ -213,4 +217,28 @@ public class PostController implements PostApi {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * PUT /api/v1/posts/{postId}/status : 게시글 상태 변경
+     *
+     * @param postId                  (required)
+     * @param updatePostStatusRequest 게시글 상태를 변경합니다. (required)
+     * @return Void 성공적으로 처리되었습니다 (status code 200)
+     */
+    @Override
+    public ResponseEntity<Void> updatePostStatus(Long postId, UpdatePostStatusRequest updatePostStatusRequest) {
+
+        // userId 조회
+        UUID userId = securityUtil.getCurrentUserId();
+
+        // inDto 생성
+        UpdatePostStatusIn inDto = modelMapper.map(updatePostStatusRequest, UpdatePostStatusIn.class).toBuilder()
+                .postId(postId)
+                .userId(userId)
+                .build();
+
+        // 게시글 상태 변경
+        postAdminFacade.updatePostStatus(inDto);
+
+        return ResponseEntity.ok().build();
+    }
 }

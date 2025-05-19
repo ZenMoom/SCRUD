@@ -51,8 +51,8 @@ export default function FeedbackEditForm({ post }: FeedbackEditFormProps) {
         content,
       });
 
-      // 성공 시 상세 페이지로 리다이렉트
-      router.back();
+      // 성공 시  상세 페이지로 리다이렉트
+      router.push(`/feedback/${post.postId}`);
       router.refresh(); // 캐시된 데이터 갱신
     } catch (err) {
       console.error('Failed to update feedback:', err);
@@ -66,7 +66,7 @@ export default function FeedbackEditForm({ post }: FeedbackEditFormProps) {
     <div className='rounded-xl overflow-hidden bg-white border border-gray-100 shadow-sm'>
       {/* 뒤로 가기 링크 */}
       <div className='p-6 border-b border-gray-100'>
-        <FeedbackBackButton description='피드백 목록으로 돌아가기' />
+        <FeedbackBackButton description='피드백으로 돌아가기' />
       </div>
 
       {/* 수정 폼 */}
@@ -109,7 +109,7 @@ export default function FeedbackEditForm({ post }: FeedbackEditFormProps) {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className='focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full px-4 py-2 border border-gray-300 rounded-md'
-            disabled={isSubmitting}
+            disabled={true}
           >
             <option value='feature'>기능 요청</option>
             <option value='bug'>버그 리포트</option>

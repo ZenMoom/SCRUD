@@ -81,6 +81,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 				.queryParam("token", token)
 				.queryParam("loginId", user.getUsername())
 				.queryParam("profileImg", user.getProfileImgUrl() != null ? user.getProfileImgUrl() : "")
+				.queryParam("role", user.getRole().toString())
 				.build()
 				.encode()  // 한 번만 인코딩
 				.toUriString();
