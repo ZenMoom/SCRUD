@@ -14,7 +14,6 @@ interface ApiHeaderProps {
   apiStatus?: string
   handleSaveApi: () => Promise<void>
   handleDeleteApi: () => Promise<void>
-  // handleTestApi: () => Promise<void>
   handleCreateDiagram?: () => Promise<void>
   handleCancelDiagramCreation?: () => void
 }
@@ -268,18 +267,6 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
               <span className={textClass}>삭제하기</span>
             </button>
           )}
-
-          {/* <button
-            onClick={handleTestApi}
-            disabled={isLoading || isCreatingDiagram}
-            className={`${googleButtonClass} ${isLoading || isCreatingDiagram ? "opacity-50 cursor-not-allowed" : ""}`}
-            title="테스트하기"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-            </svg>
-            <span className={textClass}>테스트하기</span>
-          </button> */}
         </div>
       </div>
 
