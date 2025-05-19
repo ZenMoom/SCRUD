@@ -21,7 +21,6 @@ class SSEStreamingHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         """새 토큰이 생성될 때마다 호출됩니다."""
         self.buffer += token
-        print(f"[디버깅] 토큰 추가: {token}")
 
         # message 키 탐색
         if not self.in_message and '"message"' in self.buffer:
@@ -34,7 +33,6 @@ class SSEStreamingHandler(BaseCallbackHandler):
                     self.escape = False
                     self.buffer = self.buffer[quote_start_idx + 1:]
                     self.message_content = ""
-                    print(f"[디버깅] message 값 추출 시작")
 
         if self.in_message:
             i = 0
@@ -52,9 +50,9 @@ class SSEStreamingHandler(BaseCallbackHandler):
                     new_text += char
                     self.escape = True
                 elif char == '"':
-                    event = f"data: {new_text}\n\n"
+                    # event = f"data: {new_text}\n\n"
+                    event = f"data: {json.dumps({'token': new_text})}\n\n"
                     self.queue.put_nowait(event)
-                    print(f"[디버깅] 메시지 최종 전송: {new_text}")
 
                     self.in_message = False
                     self.message_content = ""
@@ -68,9 +66,10 @@ class SSEStreamingHandler(BaseCallbackHandler):
 
             # 중간 메시지 전송 (이번 토큰에서 파싱된 새 텍스트만 전송)
             if new_text:
-                event = f"data: {new_text}\n\n"
+                # event = f"data: {new_text}\n\n"
+                event = f"data: {json.dumps({'token': new_text})}\n\n"
+
                 self.queue.put_nowait(event)
-                print(f"[디버깅] 메시지 부분 전송: {new_text}")
             self.buffer = ""
 
     # def on_llm_new_token(self, token: str, **kwargs) -> None:
