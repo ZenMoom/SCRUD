@@ -25,7 +25,7 @@ interface ChatContainerProps {
 
 // SSE 응답 타입 정의
 interface SSEResponse {
-  token?: string
+  token?: string | { newVersionId?: string }
   chunk?: string
   message?: string
   status?: string
@@ -78,6 +78,9 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [shouldShowTempMessage, setShouldShowTempMessage] = useState<boolean>(true)
 
+  // 최신 버전을 추적하기 위한 참조 변수 추가 (useState 선언 아래에 추가)
+  const latestVersionIdRef = useRef<string | null>(null)
+
   // 참조 변수
   const eventSourceRef = useRef<EventSource | null>(null)
   const retryCountRef = useRef<number>(0)
@@ -118,7 +121,15 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         let parsedData: SSEResponse | null = null
 
         try {
-          parsedData = JSON.parse(event.data)
+          // 'event:message\ndata:{"token": {"newVersionId": "2"}}' 형식 처리
+          if (event.data.includes("event:message") && event.data.includes("data:")) {
+            const dataMatch = event.data.match(/data:(.*)/)
+            if (dataMatch && dataMatch[1]) {
+              parsedData = JSON.parse(dataMatch[1].trim())
+            }
+          } else {
+            parsedData = JSON.parse(event.data)
+          }
         } catch {
           if (event.data.startsWith("data:")) {
             try {
@@ -137,8 +148,61 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           return
         }
 
-        if (parsedData && parsedData.token) {
-          setAccumulatedText((prev) => prev + parsedData!.token!)
+        // token이 객체인 경우 newVersionId 확인
+        if (parsedData && parsedData.token && typeof parsedData.token === "object") {
+          const tokenObj = parsedData.token as { newVersionId?: string }
+          if (tokenObj.newVersionId) {
+            console.log("새 버전 ID 감지:", tokenObj.newVersionId)
+
+            // 현재 버전이 더 높은 경우에만 업데이트
+            const newVersionNum = Number.parseInt(tokenObj.newVersionId, 10)
+            const currentVersionNum = latestVersionIdRef.current ? Number.parseInt(latestVersionIdRef.current, 10) : 0
+
+            if (newVersionNum > currentVersionNum) {
+              console.log(`버전 업데이트: ${currentVersionNum} -> ${newVersionNum}`)
+
+              // 최신 버전 ID 업데이트
+              latestVersionIdRef.current = tokenObj.newVersionId
+
+              // 새 버전 정보 저장
+              const newVersionInfo = {
+                newVersionId: tokenObj.newVersionId,
+                description: "새 버전",
+              }
+              setVersionInfo(newVersionInfo)
+
+              // 즉시 URL 업데이트 및 다이어그램 요청
+              if (onNewVersionInfo) {
+                console.log("새 버전 정보 즉시 전달:", newVersionInfo)
+                onNewVersionInfo(newVersionInfo)
+              }
+
+              // URL 직접 업데이트 (필요한 경우)
+              if (projectId && apiId) {
+                const newUrl = `/canvas/${projectId}/${apiId}?version=${tokenObj.newVersionId}`
+                console.log("URL 업데이트:", newUrl)
+
+                // 현재 URL과 다른 경우에만 업데이트
+                if (window.location.pathname.includes(`/canvas/${projectId}/${apiId}`) && !window.location.search.includes(`version=${tokenObj.newVersionId}`)) {
+                  window.history.pushState({}, "", newUrl)
+                }
+              }
+            } else {
+              console.log(`무시된 버전 업데이트: 현재 ${currentVersionNum}, 수신 ${newVersionNum}`)
+            }
+
+            // 텍스트 표시를 위해 객체를 문자열로 변환
+            try {
+              const tokenStr = JSON.stringify(parsedData.token)
+              setAccumulatedText((prev) => prev + tokenStr)
+            } catch (e) {
+              console.error("토큰 객체 변환 오류:", e)
+            }
+          }
+        }
+        // token이 문자열인 경우 기존 처리 유지
+        else if (parsedData && parsedData.token && typeof parsedData.token === "string") {
+          setAccumulatedText((prev) => (prev + parsedData!.token) as string)
         }
 
         if (parsedData && parsedData.text) {
@@ -159,12 +223,38 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
 
         if (parsedData && parsedData.versionInfo) {
           console.log("SSE에서 새 버전 정보 감지:", parsedData.versionInfo)
-          setVersionInfo(parsedData.versionInfo)
 
-          // 새 버전 정보를 부모 컴포넌트에 즉시 전달
-          if (onNewVersionInfo) {
-            console.log("부모 컴포넌트에 새 버전 정보 전달:", parsedData.versionInfo)
-            onNewVersionInfo(parsedData.versionInfo)
+          // 현재 버전이 더 높은 경우에만 업데이트
+          const newVersionNum = Number.parseInt(parsedData.versionInfo.newVersionId, 10)
+          const currentVersionNum = latestVersionIdRef.current ? Number.parseInt(latestVersionIdRef.current, 10) : 0
+
+          if (newVersionNum > currentVersionNum) {
+            console.log(`버전 업데이트: ${currentVersionNum} -> ${newVersionNum}`)
+
+            // 최신 버전 ID 업데이트
+            latestVersionIdRef.current = parsedData.versionInfo.newVersionId
+
+            // 버전 정보 저장
+            setVersionInfo(parsedData.versionInfo)
+
+            // 새 버전 정보 즉시 전달 및 URL 업데이트
+            if (onNewVersionInfo) {
+              console.log("부모 컴포넌트에 새 버전 정보 전달:", parsedData.versionInfo)
+              onNewVersionInfo(parsedData.versionInfo)
+            }
+
+            // URL 직접 업데이트 (필요한 경우)
+            if (projectId && apiId && parsedData.versionInfo.newVersionId) {
+              const newUrl = `/canvas/${projectId}/${apiId}?version=${parsedData.versionInfo.newVersionId}`
+              console.log("URL 업데이트:", newUrl)
+
+              // 현재 URL과 다른 경우에만 업데이트
+              if (window.location.pathname.includes(`/canvas/${projectId}/${apiId}`) && !window.location.search.includes(`version=${parsedData.versionInfo.newVersionId}`)) {
+                window.history.pushState({}, "", newUrl)
+              }
+            }
+          } else {
+            console.log(`무시된 버전 업데이트: 현재 ${currentVersionNum}, 수신 ${newVersionNum}`)
           }
         }
 
@@ -176,6 +266,28 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         ) {
           setCurrentMessageCompleted(true)
           disconnectSSE()
+
+          // 저장된 최신 버전 정보가 있으면 SSE 완료 후 다시 한번 확인
+          if (latestVersionIdRef.current && onNewVersionInfo) {
+            const finalVersionInfo = {
+              newVersionId: latestVersionIdRef.current,
+              description: "최종 버전",
+            }
+
+            console.log("SSE 완료 후 최종 버전 정보 확인:", finalVersionInfo)
+            onNewVersionInfo(finalVersionInfo)
+
+            // URL 직접 업데이트 (필요한 경우)
+            if (projectId && apiId) {
+              const newUrl = `/canvas/${projectId}/${apiId}?version=${latestVersionIdRef.current}`
+              console.log("SSE 완료 후 최종 URL 업데이트:", newUrl)
+
+              // 현재 URL과 다른 경우에만 업데이트
+              if (window.location.pathname.includes(`/canvas/${projectId}/${apiId}`) && !window.location.search.includes(`version=${latestVersionIdRef.current}`)) {
+                window.history.pushState({}, "", newUrl)
+              }
+            }
+          }
 
           setTimeout(() => {
             onRefresh().then(() => {
@@ -191,18 +303,18 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         console.error("SSE 메시지 처리 오류:", err)
       }
     },
-    [currentMessageCompleted, disconnectSSE, onRefresh, onNewVersionInfo]
+    [currentMessageCompleted, disconnectSSE, onRefresh, onNewVersionInfo, versionInfo, projectId, apiId]
   )
 
-  // 시스템 응답에서 버전 정보 감지 시 부모 컴포넌트에 알림
-  useEffect(() => {
-    if (chatData && chatData.content && chatData.content.length > 0 && onVersionSelect && versionInfo) {
-      const newVersionId = versionInfo.newVersionId
-      if (newVersionId) {
-        onVersionSelect(newVersionId)
-      }
-    }
-  }, [chatData, onVersionSelect, versionInfo])
+  // 시스템 응답에서 버전 정보 감지 시 부모 컴포넌트에 알림 - 이 부분은 제거하거나 주석 처리
+  // useEffect(() => {
+  //   if (chatData && chatData.content && chatData.content.length > 0 && onVersionSelect && versionInfo) {
+  //     const newVersionId = versionInfo.newVersionId
+  //     if (newVersionId) {
+  //       onVersionSelect(newVersionId)
+  //     }
+  //   }
+  // }, [chatData, onVersionSelect, versionInfo])
 
   // 채팅 데이터가 변경될 때 임시 메시지 초기화
   useEffect(() => {
@@ -433,7 +545,8 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       retryCountRef.current = 0
       setCurrentMessageCompleted(false)
       setAccumulatedText("")
-      setVersionInfo(null)
+      setVersionInfo(null) // 새 메시지 전송 시 버전 정보 초기화
+      latestVersionIdRef.current = null // 최신 버전 ID 참조 초기화
       setSSEError(null)
       setSending(true)
       setSendError(null)
