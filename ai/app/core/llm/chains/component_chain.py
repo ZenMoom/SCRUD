@@ -3,12 +3,14 @@ from typing import List
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel
 
 from app.core.llm.prompts.component_prompts import get_component_prompt
 from app.core.models.diagram_model import ComponentChainPayload
 from app.core.models.user_chat_model import SystemChatChainPayload
+from app.utils.prompt_builder import PromptBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -25,16 +27,16 @@ class ComponentChain:
             llm: LLM 인터페이스
         """
         self.llm = llm
-        self.prompt = get_component_prompt()
+        self.prompt: ChatPromptTemplate  = get_component_prompt()
 
         # LCEL을 사용한 체인 구성
         self.chain = (
                 {
-                    "chat_data": RunnablePassthrough(),
+                    "system_chat_prompt": RunnablePassthrough(),
                     "output_instructions": RunnablePassthrough(),
                 }
                 | self.prompt
-                | llm
+                | self.llm
                 | PydanticOutputParser(pydantic_object=ComponentChainPayloadList)
         )
 
@@ -50,9 +52,9 @@ class ComponentChain:
         """
         logger.info(f"[디버깅] ComponentChain - 프롬프트 준비 시작")
 
-
+        system_chat_prompt = PromptBuilder.build_system_chat_prompt(chat_data)
         format_instructions = {
-            "chat_data": chat_data.model_dump_json(indent=2),
+            "system_chat_prompt": system_chat_prompt,
             "output_instructions": PydanticOutputParser(
                 pydantic_object=ComponentChainPayloadList).get_format_instructions(),
         }

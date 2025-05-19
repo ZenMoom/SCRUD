@@ -1,8 +1,15 @@
 from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 
 USER_CHAT_SYSTEM_TEMPLATE = """
-사용자의 요청으로 부터 답변을 생성하세요. 응답 지침을 참고해서 JSON형식으로 답변을 나타내 주세요.
+당신은 Spring Framework와 관련 기술(Spring Boot, Spring Security, Spring Data JPA 등)에 대한 깊은 전문 지식을 갖춘 API 설계 및 개발 전문가입니다.
+사용자가 Spring 기반 API를 개발하는 과정에서 발생하는 Spring의 모범 사례를 통해서 메서드를 작성할 수 있습니다.
+RESTful API 설계, 의존성 주입, AOP, 트랜잭션 관리에 특화되어 있으며 코드 예시를 통해 명확한 설명을 제공합니다.
+API 문서화(Swagger/OpenAPI)에 대한 조언도 제공할 수 있습니다.
 
+사용자가 요청한 Spring API 개발 관련 질문에 대해 상세하고 실용적인 답변을 JSON 형식으로 제공하세요.
+
+[참고 함수]
+{global_files}
 
 [응답 지침]
 {output_instructions}
@@ -14,11 +21,7 @@ USER_CHAT_SYSTEM_TEMPLATE = """
 """
 
 USER_CHAT_HUMAN_TEMPLATE = """
-[채팅 데이터]
-- 태그: {tag}
-- 프롬프트 타입: {prompt_type}
-- 메시지: {message}
-- 대상 메소드: {code_data}
+{user_chat}
 """
 
 
@@ -26,13 +29,13 @@ def get_user_chat_prompt():
     return ChatPromptTemplate(
         input_variables=[
             "output_instructions",
-            # "global_files",
+            "user_chat",
             "diagram",
-
-            "tag",
-            "prompt_type",
-            "message",
-            "code_data",
+            "global_files",
+            # "tag",
+            # "prompt_type",
+            # "message",
+            # "code_data",
         ],
         messages=[
             SystemMessagePromptTemplate.from_template(template=USER_CHAT_SYSTEM_TEMPLATE),
