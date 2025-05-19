@@ -92,7 +92,7 @@ const getProjects = async (): Promise<Project[]> => {
       emoji: undefined,
       serverUrl: item.serverUrl || "",
     }))
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("프로젝트 목록 조회 오류:", error)
     throw error
   }
@@ -167,7 +167,7 @@ const deleteProject = async (id: string): Promise<void> => {
     }
 
     console.log("프로젝트가 성공적으로 삭제되었습니다.")
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("프로젝트 삭제 오류:", error)
     throw error
   }
@@ -257,9 +257,9 @@ function HomeContent() {
         const data = await getProjects()
         setProjects(data)
         setError(null)
-      } catch (err: any) {
+      } catch (err: unknown) {
         // 에러 타입 체크
-        const error = err as Error
+        const error = err instanceof Error ? err : new Error(String(err))
 
         // 토큰 만료 에러인 경우 다른 메시지 표시
         if (error.message?.includes("토큰이 만료되었습니다") || error.message?.includes("다시 로그인해주세요")) {
@@ -288,9 +288,9 @@ function HomeContent() {
     try {
       await deleteProject(id)
       setProjects(projects.filter((p) => p.id !== id))
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("프로젝트 삭제 오류:", err)
-      const error = err as Error
+      const error = err instanceof Error ? err : new Error(String(err))
       if (error.message?.includes("토큰이 만료되었습니다") || error.message?.includes("다시 로그인해주세요")) {
         alert("세션이 만료되었습니다. 다시 로그인해주세요.")
       } else {
