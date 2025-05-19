@@ -20,8 +20,6 @@ export async function getComments(postId: string): Promise<CommentResponse[]> {
       throw new Error(`Error fetching comments for post ID ${postId}: ${response.status}`);
     }
 
-    console.log('getComments response:', response);
-
     return await response.json();
   } catch (error) {
     console.error(`Failed to fetch comments for post ID ${postId}:`, error);
