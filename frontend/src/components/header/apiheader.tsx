@@ -72,7 +72,6 @@ export default function ApiHeader({ project }: ApiHeaderProps) {
       console.log('API 응답 데이터:', result);
       
       // 성공적으로 업데이트된 경우에만 모달 닫기 및 페이지 새로고침
-      alert('프로젝트 정보가 성공적으로 수정되었습니다.');
       setShowModal(false);
       window.location.reload();
     } catch (error) {
@@ -193,8 +192,10 @@ export default function ApiHeader({ project }: ApiHeaderProps) {
           className="fixed inset-0 flex items-center justify-center z-50"
           onClick={() => setShowModal(false)}
         >
+          {/* 검은색 반투명 오버레이 */}
+          <div className="absolute inset-0 bg-black opacity-40 z-0" />
           <div 
-            className="bg-white p-12 rounded-lg shadow-lg w-[500px]"
+            className="bg-white p-12 rounded-lg shadow-lg w-[500px] z-10"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
