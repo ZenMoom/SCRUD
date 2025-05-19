@@ -5,7 +5,6 @@ from typing import List
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel
 
 from app.core.llm.prompts.connection_prompts import get_connection_prompt
@@ -46,11 +45,13 @@ class ConnectionChain:
             다이어그램 필요 여부
         """
         logger.info(f"[디버깅] ConnectionChain - 프롬프트 준비 시작")
+        component_dict = {
+            "components": json.dumps([p.model_dump() for p in component_payload_list], ensure_ascii=False)
+        }
 
-        component_data = json.dumps([p.model_dump() for p in component_payload_list], ensure_ascii=False)
 
         format_instructions = {
-            "connection_schema": component_data,
+            "connection_schema": component_dict,
             "output_instructions": PydanticOutputParser(
                 pydantic_object=ConnectionChainPayloadList
             ).get_format_instructions(),

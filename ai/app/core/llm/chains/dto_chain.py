@@ -8,8 +8,9 @@ from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel
 
 from app.core.llm.prompts.dto_prompts import get_dto_prompt
-from app.core.models.diagram_model import DtoModelChainPayload
+from app.core.models.diagram_model import DtoModelChainPayload, ComponentChainPayload
 from app.core.models.global_setting_model import ApiSpecChainPayload
+from app.utils.prompt_builder import PromptBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -35,19 +36,27 @@ class DtoModelChain:
         )
 
 
-    async def predict(self, api_spec: ApiSpecChainPayload) -> List[DtoModelChainPayload]:
+    async def predict(
+            self,
+            api_spec: ApiSpecChainPayload,
+            components: List[ComponentChainPayload]
+    ) -> List[DtoModelChainPayload]:
         """DTO 기반으로 다이어그램 필요 여부 예측
 
         Args:
-            chat_data: 채팅 데이터
+            components: 채팅 데이터
             api_spec
         """
         logger.info(f"[디버깅] DtoModelChain - 프롬프트 준비 시작")
 
+        components_prompt = PromptBuilder.build_component_prompt(components)
+        api_spec_prompt = PromptBuilder.build_api_spec_prompt(api_spec)
         format_instructions = {
-            "api_spec": api_spec,
+            "api_spec": api_spec_prompt,
+            "components_prompt": components_prompt,
             "output_instructions": PydanticOutputParser(pydantic_object=DtoModelChainList).get_format_instructions(),
         }
+
         logger.info(f"[디버깅] DtoModelChain - 프롬프트 구성 완료\nf{self.prompt.format(**format_instructions)}")
         logger.info(f"[디버깅] ComponentChain - LLM 요청 시작")
         result: DtoModelChainList = await self.chain.ainvoke(format_instructions)

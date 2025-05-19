@@ -4,9 +4,7 @@ from typing import List
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel
-from tenacity import before_log
 
 from app.core.llm.prompts.component_prompts import get_component_prompt
 from app.core.models.diagram_model import ComponentChainPayload, DiagramChainPayload
