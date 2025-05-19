@@ -1,6 +1,8 @@
 package com.barcoder.scrud.post.presentation;
 
 import com.barcoder.scrud.api.CommentApi;
+import com.barcoder.scrud.global.common.error.ErrorStatus;
+import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.global.common.util.SecurityUtil;
 import com.barcoder.scrud.model.CommentResponse;
 import com.barcoder.scrud.model.CommentVoteRequest;
@@ -16,6 +18,7 @@ import com.barcoder.scrud.post.application.dto.out.CommentVoteOut;
 import com.barcoder.scrud.post.application.facade.CommentFacade;
 import com.barcoder.scrud.post.application.facade.CommentGetFacade;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +28,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class CommentController implements CommentApi {
 
 	private final CommentFacade commentFacade;
@@ -86,8 +90,21 @@ public class CommentController implements CommentApi {
 	@Override
 	public ResponseEntity<GetCommentListResponse> getCommentList(Long postId) {
 
+		// userId 조회
+		UUID userId = null;
+
+		try {
+			userId = securityUtil.getCurrentUserId(); // 로그인 사용자면 userId 반환
+		} catch (ExceptionHandler e) {
+			if (e.getCode() == ErrorStatus._UNAUTHORIZED) {
+				log.info("비로그인 사용자 → 댓글 투표 상태 없음");
+			} else {
+				throw e; // 그 외는 예외 터뜨림
+			}
+		}
+
 		// 댓글 목록 조회
-		List<CommentOut> outDtoList = commentGetFacade.getCommentList(postId);
+		List<CommentOut> outDtoList = commentGetFacade.getCommentList(postId, userId);
 
 		// response 변환
 		List<CommentResponse> content = outDtoList.stream()
@@ -152,6 +169,9 @@ public class CommentController implements CommentApi {
 
 		// 댓글 추천/비추천
 		CommentVoteOut outDto = commentFacade.voteComment(inDto);
-		return null;
+
+		// response 변환
+		VoteCommentResponse response = modelMapper.map(outDto, VoteCommentResponse.class);
+		return ResponseEntity.ok(response);
 	}
 }

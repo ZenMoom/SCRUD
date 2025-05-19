@@ -66,6 +66,13 @@ CommentResponse:
       type: integer
       format: int64
       example: 1
+    userVote:
+      type: string
+      enum:
+        - LIKE
+        - DISLIKE
+        - NONE
+      example: LIKE
     isUpdated:
       type: boolean
       example: true

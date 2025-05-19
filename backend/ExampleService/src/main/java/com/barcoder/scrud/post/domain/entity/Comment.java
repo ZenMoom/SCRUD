@@ -100,4 +100,15 @@ public class Comment extends BaseTimeEntity {
 			this.dislikeCount++;
 		}
 	}
+
+	/**
+	 * 사용자가 추천한 댓글인지 확인
+	 */
+	public String getUserVote(UUID userId) {
+		return this.commentVotes.stream()
+			.filter(commentVote -> commentVote.getUserId().equals(userId))
+			.map(commentVote -> commentVote.getIsLike() ? "LIKE" : "DISLIKE")
+			.findFirst()
+			.orElse("NONE");
+	}
 }

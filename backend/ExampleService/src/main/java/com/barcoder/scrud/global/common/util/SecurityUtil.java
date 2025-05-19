@@ -24,6 +24,12 @@ public class SecurityUtil {
         // 요청 헤더에서 Authorization 값을 가져옴
         String authorizationHeader = request.getHeader("Authorization");
         log.info("Authorization header: {}", authorizationHeader);
+
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            log.error("Authorization 헤더가 없거나 Bearer 토큰이 아닙니다.");
+            throw new ExceptionHandler(ErrorStatus._UNAUTHORIZED);
+        }
+
         if(authorizationHeader.equals("Bearer Admin")) {
             User user = userRepository.findByUsername("admin")
                 .orElseThrow(() -> new ExceptionHandler(ErrorStatus.USER_NOT_FOUND));
@@ -31,10 +37,6 @@ public class SecurityUtil {
             return user.getUserId();
         }
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            log.error("Authorization 헤더가 없거나 Bearer 토큰이 아닙니다.");
-            throw new ExceptionHandler(ErrorStatus._UNAUTHORIZED);
-        }
         // JWTUtil을 사용하여 토큰에서 memberId 추출
         return jwtUtil.getUserId(authorizationHeader);
     }
