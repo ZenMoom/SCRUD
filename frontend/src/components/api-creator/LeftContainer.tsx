@@ -229,11 +229,9 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
   }
 
   return (
-    <div className="w-full h-full bg-white p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <h2 className="text-lg font-bold text-gray-800 mb-4">프로젝트 설정</h2>
-      <div className="space-y-2">
-        {ITEMS.map((item) => (item.isProject ? renderProjectItem(item) : renderFileItem(item as FileItem)))}
-      </div>
+    <div className="w-full h-full bg-white p-4 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <h2 className="text-lg font-bold text-gray-800 mb-4 ml-10">프로젝트 설정</h2>
+      <div className="space-y-2">{ITEMS.map((item) => (item.isProject ? renderProjectItem(item) : renderFileItem(item as FileItem)))}</div>
     </div>
   )
 }
