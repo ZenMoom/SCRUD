@@ -77,9 +77,9 @@ class SSEService:
             self.logger.info(f"SSE 스트림 제거: stream_id={stream_id}")
             del SSEService._sse_clients[stream_id]
 
-    async def send_diagram_event(self, diagram_id: str, response_queue: asyncio.Queue) -> None:
-        """다이어그램 생성 이벤트를 전송하는 함수"""
-        event = f"data: {json.dumps({'token': {'diagramId': diagram_id}})}\n\n"
+    async def send_version_event(self, version_id: str, response_queue: asyncio.Queue) -> None:
+        """버전 생성 이벤트를 전송하는 함수"""
+        event = f"data: {json.dumps({'token': {'newVersionId': version_id}})}\n\n"
         response_queue.put_nowait(event)
         self.logger.info(f"생성 이벤트 발송: {event}")
 

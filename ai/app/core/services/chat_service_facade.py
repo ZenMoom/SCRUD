@@ -139,7 +139,7 @@ class ChatServiceFacade:
             await self.sse_service.close_stream(queue)
 
         # 2. 요청/글로벌 데이터 준비
-        version_info = None
+        version_id = None
         diagram_id: str = str(uuid.uuid4())
         self.logger.info(f"[디버깅] ChatServiceFacade - 새 다이어그램 ID 생성: {diagram_id}")
 
@@ -187,18 +187,25 @@ class ChatServiceFacade:
             )
             self.logger.info(f"[디버깅] ChatServiceFacade - 다이어그램 저장 완료: 버전 {diagram.metadata.version}")
 
+            version_id = str(diagram.metadata.version)
             version_info: VersionInfo = VersionInfo(
-                newVersionId=str(diagram.metadata.version),
+                newVersionId=version_id,
                 description="다이어그램을 새로 생성했기 때문에 버전 업"
             )
             self.logger.info(f"[디버깅] ChatServiceFacade - 버전 정보 생성: 새 버전 ID={version_info.newVersionId}")
         else:
+            version_id = str(target_diagram.metadata.version)
             version_info: VersionInfo = VersionInfo(
                 newVersionId=str(target_diagram.metadata.version),
                 description="버전 유지"
             )
             self.logger.info(f"[디버깅] ChatServiceFacade - 버전 유지: 버전 ID={version_info.newVersionId}")
 
+        self.logger.info("[디버깅] ChatServiceFacade - 버전 이벤트 전송")
+        await self.sse_service.send_version_event(
+            version_id=version_id,
+            response_queue=queue
+        )
         # 6. Chat 엔티티 조립 및 저장
         self.logger.info("[디버깅] ChatServiceFacade - 채팅 엔티티 조립 시작")
         self.logger.info("[디버깅] ChatServiceFacade - 채팅 엔티티 조립 시작")
