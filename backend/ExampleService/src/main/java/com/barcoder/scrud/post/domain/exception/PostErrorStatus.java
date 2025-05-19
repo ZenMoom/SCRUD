@@ -21,7 +21,8 @@ public enum PostErrorStatus implements BaseErrorCode {
 	COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "POST5201", "존재하지 않는 댓글입니다."),
 
 
-	;
+    COMMENT_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "POST5202", "댓글 작성자가 아닙니다."),
+	POST_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "POST5103", "게시글 작성자가 아닙니다."),;
 
 	private final HttpStatus httpStatus;
 	private final String code;

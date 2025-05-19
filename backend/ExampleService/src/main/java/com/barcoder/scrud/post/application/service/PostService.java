@@ -137,6 +137,11 @@ public class PostService {
         Post post = postJpaRepository.findById(postId)
                 .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
 
+        // 게시글 작성자와 요청자가 다를 경우 예외 처리
+        if (!post.getUserId().equals(userId)) {
+            throw new BaseException(PostErrorStatus.POST_NOT_AUTHORIZED);
+        }
+
         // 게시글 삭제
         postJpaRepository.delete(post);
     }
