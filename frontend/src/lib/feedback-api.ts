@@ -90,28 +90,24 @@ export async function fetchPostDetail(postId: string): Promise<PostDetailRespons
  * 게시글에 투표하는 함수
  */
 export async function votePost(postId: number, voteRequest: PostVoteRequest): Promise<VoteResponse> {
-  try {
-    // baseUrl
-    const baseUrl = getApiBaseUrl();
+  // baseUrl
+  const baseUrl = getApiBaseUrl();
 
-    const response = await fetch(`${baseUrl}/feedback/${postId}/vote`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 쿠키 포함
-      body: JSON.stringify(voteRequest),
-    });
+  const response = await fetch(`${baseUrl}/feedback/${postId}/vote`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // 쿠키 포함
+    body: JSON.stringify(voteRequest),
+  });
 
-    if (!response.ok) {
-      throw new Error(`Error voting post: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`Failed to vote for post ID ${postId}:`, error);
-    throw error;
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || '댓글 투표 중 오류가 발생했습니다.');
   }
+
+  return await response.json();
 }
 
 /**
