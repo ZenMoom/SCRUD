@@ -81,22 +81,13 @@ class ConnectionChainPayload(BaseModel):
     targetMethodId: str = Field("87654321-4321-4321-4321-210987654321", description="대상 메서드 ID")
     type: str = Field(MethodConnectionTypeEnum.SOLID, description="연결 타입 (SOLID, DOTTED)")
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "example": {
-                "sourceMethodId": "12345678-1234-1234-1234-123456789012",
-                "targetMethodId": "87654321-4321-4321-4321-210987654321",
-                "type": "SOLID"
-            }
-        }
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DtoModelChainPayload(BaseModel):
-    name: str = Field("default_dto_name", description="DTO 모델 이름")
+    name: str = Field("default_dto_name", description="DTO 클래스 명")
     description: Optional[str] = Field("default_dto_scription", description="DTO 모델 설명")
-    body: Optional[str] = Field("default_dto_body", description="DTO 모델 정의 내용")
+    body: Optional[str] = Field("default_dto_body", description="어노테이션을 포함하는 DTO 클래스 전체 코드")
 
     model_config = ConfigDict(
         from_attributes=True,
