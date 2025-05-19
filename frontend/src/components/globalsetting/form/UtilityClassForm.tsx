@@ -52,7 +52,7 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
       const isFromGithubAuth = params.get('from') === 'github-auth';
 
       if (isFromGithubAuth) {
-        console.log('유틸 클래스 임시저장 데이터:', tempData.utilityClass);
+  
         if (tempData.utilityClass.length > 0) {
           onChange(tempData.utilityClass as FileWithContent[]);
         }

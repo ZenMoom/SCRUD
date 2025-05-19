@@ -89,8 +89,6 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
 
     try {
       if (storedToken) {
-        // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
-        console.log('GitHub 토큰 유효성 확인 중...');
         
         const response = await fetch('/api/github/user/repos', {
           headers: {
@@ -114,8 +112,6 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           return;
         }
       } else {
-        // 토큰이 없는 경우
-        console.log('GitHub 토큰 없음, 인증 요청');
         
         // 현재 상태를 임시저장
         localStorage.setItem('github-auth-pending', 'true');
@@ -383,10 +379,8 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
         repoInfo: repo,
         content: treeData
       };
-      console.log('저장할 selectedItems 데이터:', newSelectedItem);
       
       setSelectedItems([newSelectedItem]);
-      console.log('=== fetchFullRepositoryStructure 완료 ===');
     } catch (error) {
       console.error('레포지토리 전체 구조 가져오기 실패:', error);
       setError('레포지토리 전체 구조를 가져오는데 실패했습니다.');
@@ -476,7 +470,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           }
           
           if (selectedItems[0].content) {
-            console.log('전달할 레포지토리 데이터:', selectedItems[0].content);
+
             const processedData = [{
               path: selectedItems[0].path,
               content: selectedItems[0].content,
@@ -484,7 +478,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
               fileName: selectedItems[0].path.split('/').pop() || '',
               isGitHub: true
             }];
-            console.log('onSelect에 전달할 최종 데이터:', processedData);
+          
             onSelect(processedData);
             onClose();
             return;
@@ -496,13 +490,6 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
         
         // 일반 파일 모드
         const processedFiles = selectedItems.map((item) => {
-          console.log('GitHub 파일 추가 시점 - 파일 정보:', {
-            path: item.path,
-            fileName: item.path.split('/').pop() || '',
-            content: item.content,
-            fileType: determineFileType(formType)
-          });
-          
           return {
             path: item.path,
             fileName: item.path.split('/').pop() || '',

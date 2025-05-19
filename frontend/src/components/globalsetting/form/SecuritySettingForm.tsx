@@ -78,7 +78,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
       const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
 
       if (isFromGithubAuth && isAuthPending && tempData.securitySetting) {
-        console.log('보안 설정 임시저장 데이터:', tempData.securitySetting);
+
         
         if (tempData.securitySetting.type === 'selection' && tempData.securitySetting.selection) {
           setIsFileMode(false);

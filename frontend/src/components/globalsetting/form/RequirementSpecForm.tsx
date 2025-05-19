@@ -54,7 +54,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
       const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
 
       if (isFromGithubAuth && isAuthPending && tempData.requirementSpec.length > 0) {
-        console.log('요구사항 명세서 임시저장 데이터:', tempData.requirementSpec);
+    
         onChange(tempData.requirementSpec as FileWithContent[]);
       }
     }, []);

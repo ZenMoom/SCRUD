@@ -52,7 +52,7 @@ const ErrorCodeForm = forwardRef<HTMLDivElement, ErrorCodeFormProps>(
       const isFromGithubAuth = params.get('from') === 'github-auth';
 
       if (isFromGithubAuth) {
-        console.log('에러 코드 임시저장 데이터:', tempData.errorCode);
+
         if (tempData.errorCode.length > 0) {
           onChange(tempData.errorCode as FileWithContent[]);
         }

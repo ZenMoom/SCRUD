@@ -53,7 +53,6 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
       const isFromGithubAuth = params.get('from') === 'github-auth';
 
       if (isFromGithubAuth) {
-        console.log('코드 컨벤션 임시저장 데이터:', tempData.codeConvention);
         if (tempData.codeConvention.length > 0) {
           onChange(tempData.codeConvention as FileWithContent[]);
         }

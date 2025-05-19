@@ -64,9 +64,9 @@ export default function LeftContainer({ activeItem, onItemClick, globalFiles }: 
     }))
   }
 
-  // 아이템에 파일이 있는지 확인
+  // 아이템에 파일이 있는지 확인 (prefix 매칭)
   const hasFiles = (fileType: string): boolean => {
-    return globalFiles.some(file => file.fileType === fileType)
+    return globalFiles.some(file => file.fileType.startsWith(fileType));
   }
 
   // 아이템 클릭 처리 - 아코디언 토글 및 onItemClick 호출
@@ -127,7 +127,7 @@ export default function LeftContainer({ activeItem, onItemClick, globalFiles }: 
             ) : hasFilesForType ? (
               <ul className="space-y-1">
                 {globalFiles
-                  .filter(file => file.fileType === fileType)
+                  .filter(file => file.fileType.startsWith(fileType))
                   .map((file) => (
                     <li key={file.globalFileId} className="pl-8 py-2 text-sm hover:bg-gray-50 rounded flex justify-between items-center">
                       <span 

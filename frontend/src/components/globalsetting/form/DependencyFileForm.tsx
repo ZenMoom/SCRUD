@@ -35,7 +35,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
       const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
 
       if (isFromGithubAuth && isAuthPending && tempData.dependencyFile.length > 0) {
-        console.log('의존성 파일 임시저장 데이터:', tempData.dependencyFile);
+
         // 한 번에 상태 업데이트
         setSelectedFiles(tempData.dependencyFile as FileData[]);
         // 각 파일에 대해 한 번만 onFileSelect 호출

@@ -23,11 +23,6 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
     const isFromGithubAuth = params.get('from') === 'github-auth'
 
     if (isFromGithubAuth) {
-      console.log('기본 정보 임시저장 데이터:', {
-        title: tempData.title,
-        description: tempData.description,
-        serverUrl: tempData.serverUrl
-      })
 
       // 각 필드에 해당하는 임시저장 데이터가 있으면 복원
       if (title === '프로젝트명' && tempData.title) {

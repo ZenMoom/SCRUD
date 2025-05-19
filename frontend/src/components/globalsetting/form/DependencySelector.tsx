@@ -35,7 +35,7 @@ export default function DependencySelector({ selectedDependencies, onChange }: D
     const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
 
     if (isFromGithubAuth && isAuthPending && tempData.dependencySelections?.length > 0) {
-      console.log('의존성 선택 임시저장 데이터:', tempData.dependencySelections);
+
       
       // 파일 객체로 변환하여 전달
       const fileContent = tempData.dependencySelections.map(depId => {

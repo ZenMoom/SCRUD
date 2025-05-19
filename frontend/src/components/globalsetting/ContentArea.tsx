@@ -117,21 +117,15 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
 
   // 항목 포커스 시 activeItem 업데이트
   const handleItemFocus = useCallback((key: string) => {
-    console.log('=== ContentArea handleItemFocus ===');
-    console.log('포커스된 항목:', key);
     
     if (setActiveItem) {
-      console.log('setActiveItem 호출:', key);
       setActiveItem(key);
     }
   }, [setActiveItem]);
 
   // 설정 항목 값 변경 시 상태 업데이트
   const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[]) => {
-    if (key === 'securitySetting') {
-      console.log('=== ContentArea 보안 설정 변경 ===');
-      console.log('변경된 보안 설정 값:', value);
-    }
+
     onSettingChange(key, value);
   }
 
@@ -198,27 +192,32 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             <div className="mb-3">
               <DependencyFileForm
                 title="의존성 파일"
-                onFileSelect={handleDependencyFile}
+                onFileSelect={(file) => {
+                  // 파일 업로드 시 기존 배열에 추가
+                  const newFiles = Array.isArray(settings.dependencyFiles)
+                    ? [...settings.dependencyFiles, file]
+                    : [file];
+                  handleSettingChange('dependencyFiles', newFiles);
+                }}
                 onFocus={useCallback(() => handleItemFocus("dependencyFile"), [handleItemFocus])}
               />
             </div>
             <div className="border-t pt-6">
               <h3 className="text-lg font-medium mb-4">Spring 의존성 추가 선택</h3>
               <DependencySelector
-                selectedDependencies={
-                  settings.dependencyFile.find(file => file.name === 'dependency.txt')
-                    ? settings.dependencyFile
-                        .find(file => file.name === 'dependency.txt')!
-                        .content
-                        .split('\n')
-                        .map(line => {
-                          const match = line.match(/\((.*?)\)/);
-                          return match ? match[1] : '';
-                        })
-                        .filter(Boolean)
-                    : []
-                }
-                onChange={handleDependencySelect}
+                selectedDependencies={settings.dependencySelections}
+                onChange={(file) => {
+                  // file.content: "Spring Web (web)\nSpring Data JPA (data-jpa)" 등
+                  // id만 추출해서 배열로 저장
+                  const ids = file.content
+                    .split('\n')
+                    .map(line => {
+                      const match = line.match(/\((.*?)\)/);
+                      return match ? match[1] : '';
+                    })
+                    .filter(Boolean);
+                  handleSettingChange('dependencySelections', ids);
+                }}
               />
             </div>
           </div>
@@ -264,7 +263,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             title="아키텍처 구조"
             value={settings.architectureStructure}
             onChange={(value) => {
-              console.log('[ContentArea] ArchitectureStructureForm onChange:', { value, type: typeof value, isArray: Array.isArray(value) });
               handleSettingChange("architectureStructure", value);
             }}
             onInfoClick={() => openModal("architectureStructure")}

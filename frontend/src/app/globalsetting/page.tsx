@@ -35,7 +35,9 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: { name: string; content: string }[];
+  dependencySelections: string[]; // 선택지용
+  dependencyFiles: { name: string; content: string }[]; // 파일 첨부용
+  dependencyFile: { name: string; content: string }[]; // <- 추가: 항상 최종 합쳐진 값
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue | FileWithContent[];
@@ -53,9 +55,6 @@ function TokenHandler() {
     const tokenFromStorage = localStorage.getItem('github-token-direct');
     const { githubToken } = useGitHubTokenStore.getState();
     
-    console.log('===== GitHub 토큰 확인 (전역 설정 페이지) =====');
-    console.log('Zustand 토큰:', githubToken ? '존재함' : '없음');
-    console.log('로컬스토리지 토큰:', tokenFromStorage ? '존재함' : '없음');
     
     if (!githubToken && tokenFromStorage) {
       useGitHubTokenStore.getState().setGithubToken(tokenFromStorage);
@@ -85,7 +84,9 @@ export default function GlobalSettingPage() {
     serverUrl: "",
     requirementSpec: [] as FileWithContent[],
     erd: [] as FileWithContent[],
-    dependencyFile: [] as { name: string; content: string }[],
+    dependencySelections: [],
+    dependencyFiles: [],
+    dependencyFile: [],
     utilityClass: [] as FileWithContent[],
     errorCode: [] as FileWithContent[],
     securitySetting: { type: 'SECURITY_DEFAULT_JWT', label: 'JWT' },
@@ -176,25 +177,19 @@ export default function GlobalSettingPage() {
     return typeof value === 'object' && value !== null && 'type' in value && 'label' in value;
   }
 
-  function isFileWithContent(value: unknown): value is FileWithContent {
-    return typeof value === 'object' && value !== null && 'name' in value && 'content' in value;
-  }
-
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[]) => {
-    if (key === 'architectureStructure') {
-      console.log('[GlobalSettingPage] handleSettingChange:', { key, value, type: typeof value, isArray: Array.isArray(value), valueContent: value });
-    }
+  const handleSettingChange = (
+    key: string,
+    value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[] | string[]
+  ) => {
     setSettings((prev) => {
       const newSettings = { ...prev };
-      
       switch(key) {
-        case 'dependencyFile':
-          if (Array.isArray(value)) {
-            newSettings.dependencyFile = value as { name: string; content: string }[];
-          } else if (isFileWithContent(value)) {
-            newSettings.dependencyFile = [value];
-          }
+        case 'dependencySelections':
+          newSettings.dependencySelections = value as string[];
+          break;
+        case 'dependencyFiles':
+          newSettings.dependencyFiles = value as { name: string; content: string }[];
           break;
         case 'title':
         case 'description':
@@ -227,7 +222,16 @@ export default function GlobalSettingPage() {
           }
           break;
       }
-      
+      // 항상 dependencyFile을 최신화
+      const depFiles = newSettings.dependencyFiles || [];
+      let depSelections: { name: string; content: string }[] = [];
+      if (newSettings.dependencySelections && newSettings.dependencySelections.length > 0) {
+        depSelections = [{
+          name: 'dependency.txt',
+          content: newSettings.dependencySelections.join('\n'),
+        }];
+      }
+      newSettings.dependencyFile = [...depFiles, ...depSelections];
       return newSettings;
     });
 
@@ -259,7 +263,6 @@ export default function GlobalSettingPage() {
         case 'utilityClass':
         case 'errorCode':
         case 'codeConvention':
-        case 'dependencyFile':
           if (Array.isArray(value)) {
             isCompleted = value.length > 0;
           }
@@ -286,44 +289,30 @@ export default function GlobalSettingPage() {
       return;
     }
     
-    console.log('클라이언트에서 사용하는 토큰:', token);
-    
     setIsLoading(true);
     setError(null);
     
     try {
-      // 의존성 파일 로깅 추가
-      console.log('=== 의존성 파일 전송 데이터 ===');
-      console.log('의존성 파일 타입:', typeof settings.dependencyFile);
-      console.log('의존성 파일 값:', settings.dependencyFile);
-      // 아키텍처 구조 값 로깅 추가
-      console.log('=== 아키텍처 구조 전송 데이터 ===');
-      console.log('architectureStructure 타입:', typeof architectureStructureRef.current);
-      console.log('architectureStructure 값:', architectureStructureRef.current);
-      console.log('전송 직전 architectureStructure:', JSON.stringify(architectureStructureRef.current, null, 2));
-      
-      // Next.js API 라우트 호출
-      console.log('API 라우트 호출 시작');
-      const payload = {
+      // dependencyFile은 항상 최신 상태로 settings에 있음
+      const payloadObj: Record<string, unknown> = {
         ...settings,
         architectureStructure: architectureStructureRef.current,
       };
+      // 중복 방지: 서버로 보낼 때 불필요한 배열 제거
+      delete payloadObj.dependencyFiles;
+      delete payloadObj.dependencySelections;
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payloadObj)
       });
-      
-      console.log('함수 호출 함', `Bearer ${token}`);
-      console.log('응답 상태:', response.status);
       
       // 응답 본문 로깅 (스트림은 한 번만 읽을 수 있으므로 복제)
       const responseClone = response.clone();
       const responseText = await responseClone.text();
-      console.log('응답 본문:', responseText);
       
       if (!response.ok) {
         const data = await response.json();

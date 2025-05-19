@@ -1,7 +1,7 @@
 "use client"
 
 import { forwardRef, useState, useRef, useEffect } from "react"
-import { Upload, Github, File } from "lucide-react"
+import { Github} from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
 import { useProjectTempStore } from "@/store/projectTempStore"
 import { ArchitectureOption } from "@/store/types/project"
@@ -167,7 +167,6 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
           content: content
         };
         const updatedFiles = [fileWithContent];
-        console.log('[ArchForm] handleFileChange: updatedFiles', updatedFiles);
         setSelectedFiles(updatedFiles);
         onChange(updatedFiles);
         setTempData({
@@ -184,7 +183,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
 
     // 입력 타입 변경 핸들러
     const handleInputTypeChange = () => {
-      console.log('[ArchForm] handleInputTypeChange: inputType ->', inputType === 'select' ? 'file' : 'select');
+     
       const newInputType = inputType === 'select' ? 'file' : 'select'
       setInputType(newInputType)
       
