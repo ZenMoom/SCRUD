@@ -1,5 +1,6 @@
 import { CommentApiFactory } from '@generated/api';
 import { Configuration } from '@generated/configuration';
+import { AxiosError } from 'axios';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -36,11 +37,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     });
     console.log('response', response);
     return NextResponse.json(response.data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating comment:', error);
-    return NextResponse.json(
-      { error: error?.response?.data?.message || 'An error occurred' },
-      { status: error?.status || 500 }
-    );
+
+    const axiosError = error as AxiosError<{ message: string }>;
+    const message = axiosError.response?.data?.message ?? 'An error occurred';
+    const status = axiosError.response?.status ?? 500;
+
+    return NextResponse.json({ error: message }, { status });
   }
 }
