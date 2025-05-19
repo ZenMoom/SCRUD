@@ -74,7 +74,7 @@ public class PostService {
      * @param inDto 게시글 추천/비추천 요청 DTO
      * @return PostVoteOut 게시글 추천/비추천 응답 DTO
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public PostVoteOut votePost(PostVoteIn inDto) {
 
         // 게시글 조회
