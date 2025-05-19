@@ -25,7 +25,7 @@ interface ChatContainerProps {
 
 // SSE 응답 타입 정의
 interface SSEResponse {
-  token?: string
+  token?: string | { newVersionId?: string }
   chunk?: string
   message?: string
   status?: string
@@ -137,8 +137,29 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           return
         }
 
-        if (parsedData && parsedData.token) {
-          setAccumulatedText((prev) => prev + parsedData!.token!)
+        // token이 객체인 경우 newVersionId 확인
+        if (parsedData && parsedData.token && typeof parsedData.token === "object") {
+          const tokenObj = parsedData.token as { newVersionId?: string }
+          if (tokenObj.newVersionId) {
+            console.log("새 버전 ID 감지:", tokenObj.newVersionId)
+            // 새 버전 정보 저장
+            setVersionInfo({
+              newVersionId: tokenObj.newVersionId,
+              description: "새 버전",
+            })
+
+            // 텍스트 표시를 위해 객체를 문자열로 변환
+            try {
+              const tokenStr = JSON.stringify(parsedData.token)
+              setAccumulatedText((prev) => prev + tokenStr)
+            } catch (e) {
+              console.error("토큰 객체 변환 오류:", e)
+            }
+          }
+        }
+        // token이 문자열인 경우 기존 처리 유지
+        else if (parsedData && parsedData.token && typeof parsedData.token === "string") {
+          setAccumulatedText((prev) => (prev + parsedData!.token) as string)
         }
 
         if (parsedData && parsedData.text) {
@@ -161,11 +182,12 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           console.log("SSE에서 새 버전 정보 감지:", parsedData.versionInfo)
           setVersionInfo(parsedData.versionInfo)
 
-          // 새 버전 정보를 부모 컴포넌트에 즉시 전달
-          if (onNewVersionInfo) {
-            console.log("부모 컴포넌트에 새 버전 정보 전달:", parsedData.versionInfo)
-            onNewVersionInfo(parsedData.versionInfo)
-          }
+          // 새 버전 정보를 즉시 전달하지 않고 SSE 완료 후 전달하도록 변경
+          // 아래 코드는 주석 처리
+          // if (onNewVersionInfo) {
+          //   console.log("부모 컴포넌트에 새 버전 정보 전달:", parsedData.versionInfo)
+          //   onNewVersionInfo(parsedData.versionInfo)
+          // }
         }
 
         if (
@@ -176,6 +198,12 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         ) {
           setCurrentMessageCompleted(true)
           disconnectSSE()
+
+          // 저장된 버전 정보가 있으면 SSE 완료 후 부모 컴포넌트에 전달
+          if (versionInfo && versionInfo.newVersionId && onNewVersionInfo) {
+            console.log("SSE 완료 후 새 버전 정보 전달:", versionInfo)
+            onNewVersionInfo(versionInfo)
+          }
 
           setTimeout(() => {
             onRefresh().then(() => {
@@ -191,18 +219,18 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         console.error("SSE 메시지 처리 오류:", err)
       }
     },
-    [currentMessageCompleted, disconnectSSE, onRefresh, onNewVersionInfo]
+    [currentMessageCompleted, disconnectSSE, onRefresh, onNewVersionInfo, versionInfo]
   )
 
-  // 시스템 응답에서 버전 정보 감지 시 부모 컴포넌트에 알림
-  useEffect(() => {
-    if (chatData && chatData.content && chatData.content.length > 0 && onVersionSelect && versionInfo) {
-      const newVersionId = versionInfo.newVersionId
-      if (newVersionId) {
-        onVersionSelect(newVersionId)
-      }
-    }
-  }, [chatData, onVersionSelect, versionInfo])
+  // 시스템 응답에서 버전 정보 감지 시 부모 컴포넌트에 알림 - 이 부분은 제거하거나 주석 처리
+  // useEffect(() => {
+  //   if (chatData && chatData.content && chatData.content.length > 0 && onVersionSelect && versionInfo) {
+  //     const newVersionId = versionInfo.newVersionId
+  //     if (newVersionId) {
+  //       onVersionSelect(newVersionId)
+  //     }
+  //   }
+  // }, [chatData, onVersionSelect, versionInfo])
 
   // 채팅 데이터가 변경될 때 임시 메시지 초기화
   useEffect(() => {
@@ -433,7 +461,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       retryCountRef.current = 0
       setCurrentMessageCompleted(false)
       setAccumulatedText("")
-      setVersionInfo(null)
+      setVersionInfo(null) // 새 메시지 전송 시 버전 정보 초기화
       setSSEError(null)
       setSending(true)
       setSendError(null)
