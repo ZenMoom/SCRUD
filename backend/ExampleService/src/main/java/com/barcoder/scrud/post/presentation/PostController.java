@@ -87,6 +87,11 @@ public class PostController implements PostApi {
      */
     @Override
     public ResponseEntity<Void> deletePost(Long postId) {
+
+        // userId 조회
+        UUID userId = securityUtil.getCurrentUserId();
+        // 게시글 삭제
+        postService.deletePost(postId, userId);
         return null;
     }
 
