@@ -21,6 +21,7 @@ class LLMFactory:
             model: ModelType,
             api_key: str,
             base_url: str,
+            temperature: float,
             **kwargs
     ) -> BaseChatModel:
         """지정된 유형의 LLM 모델 생성
@@ -28,7 +29,8 @@ class LLMFactory:
         Args:
             model: 모델 유형
             api_key: API 키 (선택)
-            base_url
+            base_url:
+            temperature
             **kwargs: 추가 매개변수
 
         Returns:
@@ -41,7 +43,7 @@ class LLMFactory:
                 model=model,
                 api_key=api_key,
                 base_url=base_url,
-                temperature=0,
+                temperature=temperature,
                 **kwargs
             )
         else:
