@@ -6,241 +6,96 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.core.models.diagram_model import MethodChainPayload
 
 
-def get_example():
-    return """
-    네, Spring Web MVC를 사용하여 게시판 ID로 게시글을 조회하는 API를 구현하겠습니다. 주어진 명세에 따라 코드를 작성해 드리겠습니다.
-
-    먼저 필요한 클래스들을 모듈별로 나누어 구현하겠습니다:
-
-    1. 엔티티 클래스
-    2. DTO 클래스
-    3. Repository 인터페이스
-    4. Service 클래스
-    5. Controller 클래스
-
-    각 모듈을 차례대로 구현해 보겠습니다.
-
-    ## 1. 엔티티 클래스
-
-    ```java
-    // User.java
-    @Entity
-    @Table(name = "users")
-    @Getter @Setter
-    public class User {
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
-
-        @Column(nullable = false, unique = true, length = 50)
-        private String username;
-
-        @Column(nullable = false)
-        private String password;
-
-        @Column(nullable = false, unique = true, length = 100)
-        private String email;
-    }
-    ```
-
-    ```java
-    // Post.java
-    @Entity
-    @Table(name = "posts")
-    @Getter @Setter
-    public class Post {
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
-
-        @Column(nullable = false, length = 200)
-        private String title;
-
-        @Column(nullable = false, columnDefinition = "TEXT")
-        private String content;
-
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "user_id", nullable = false)
-        private User user;
-
-        @Column(name = "view_count", columnDefinition = "integer default 0")
-        private Integer viewCount = 0;
-
-        @Column(name = "is_deleted", columnDefinition = "boolean default false")
-        private Boolean isDeleted = false;
-    }
-    ```
-
-    ## 2. DTO 클래스
-
-    ```java
-    // PostResponseDto.java
-    @Getter
-    @Builder
-    public class PostResponseDto {
-        private Long id;
-        private String title;
-        private String content;
-        private AuthorDto author;
-        private Integer viewCount;
-        private Boolean isDeleted;
-
-        @Getter
-        @Builder
-        public static class AuthorDto {
-            private Long id;
-            private String name;
-        }
-    }
-    ```
-
-    ## 3. Repository 인터페이스
-
-    ```java
-    // PostRepository.java
-    public interface PostRepository extends JpaRepository<Post, Long> {
-
-        @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.id = :id AND (:includeDeleted = true OR p.isDeleted = false)")
-        Optional<Post> findByIdWithUser(@Param("id") Long id, @Param("includeDeleted") boolean includeDeleted);
-    }
-    ```
-
-    ## 4. Service 클래스
-
-    ```java
-    // PostService.java
-    @Service
-    @RequiredArgsConstructor
-    @Slf4j
-    public class PostService {
-
-        private final PostRepository postRepository;
-
-        @Transactional
-        public PostResponseDto getPostById(Long boardId, boolean includeDeleted) {
-            log.info("게시글 조회 요청 - 게시글 ID: {}, 삭제된 게시글 포함 여부: {}", boardId, includeDeleted);
-
-            Post post = postRepository.findByIdWithUser(boardId, includeDeleted)
-                    .orElseThrow(() -> {
-                        log.error("게시글을 찾을 수 없음 - 게시글 ID: {}", boardId);
-                        return new IllegalArgumentException("해당 게시글을 찾을 수 없습니다. ID: " + boardId);
-                    });
-
-            // 조회수 증가
-            post.setViewCount(post.getViewCount() + 1);
-
-            log.info("게시글 조회 성공 - 게시글 ID: {}, 제목: {}", post.getId(), post.getTitle());
-
-            return PostResponseDto.builder()
-                    .id(post.getId())
-                    .title(post.getTitle())
-                    .content(post.getContent())
-                    .author(PostResponseDto.AuthorDto.builder()
-                            .id(post.getUser().getId())
-                            .name(post.getUser().getUsername())
-                            .build())
-                    .viewCount(post.getViewCount())
-                    .isDeleted(post.getIsDeleted())
-                    .build();
-        }
-    }
-    ```
-
-    ## 5. Controller 클래스
-
-    ```java
-    // BoardController.java
-    @RestController
-    @RequestMapping("/api/v1/boards")
-    @RequiredArgsConstructor
-    @Slf4j
-    public class BoardController {
-
-        private final PostService postService;
-
-        @GetMapping("/{boardId}")
-        public ResponseEntity<PostResponseDto> getBoardById(
-                @PathVariable Long boardId,
-                @RequestParam(required = false, defaultValue = "false") boolean includeDeleted) {
-
-            log.info("게시글 조회 API 호출 - 게시글 ID: {}, 삭제된 게시글 포함 여부: {}", boardId, includeDeleted);
-
-            PostResponseDto postResponse = postService.getPostById(boardId, includeDeleted);
-
-            log.info("게시글 조회 API 응답 완료 - 게시글 ID: {}", boardId);
-
-            return ResponseEntity.ok(postResponse);
-        }
-    }
-    ```
-    """
-
-
 class UserChatChainPayload(BaseModel):
     class MethodPromptTargetEnum(str, Enum):
         """메서드 프롬프트 대상 유형을 정의하는 열거형"""
-        SIGNATURE = "SIGNATURE"  # 메서드 서명(파라미터, 반환 타입 등)을 대상으로 함
-        BODY = "BODY"  # 메서드 본문(구현 내용)을 대상으로 함
+        SIGNATURE = "SIGNATURE"  # 메서드의 선언부(매개변수, 반환 타입, 메서드명 등)만을 대상으로 함
+        BODY = "BODY"  # 메서드의 구현부(실제 로직과 코드)를 대상으로 함
 
     class MethodPromptTagEnum(str, Enum):
         """사용자의 요청 유형을 분류하는 태그 열거형"""
-        EXPLAIN = "EXPLAIN"  # 코드 설명 요청
-        REFACTORING = "REFACTORING"  # 코드 리팩토링 요청
-        OPTIMIZE = "OPTIMIZE"  # 코드 최적화 요청
-        DOCUMENT = "DOCUMENT"  # 문서화 요청
-        TEST = "TEST"  # 테스트 코드 생성 요청
-        SECURITY = "SECURITY"  # 보안 관련 개선 요청
-        CONVENTION = "CONVENTION"  # 코딩 컨벤션 적용 요청
-        ANALYZE = "ANALYZE"  # 코드 분석 요청
-        IMPLEMENT = "IMPLEMENT"  # 기능 구현 요청
+        EXPLAIN = "EXPLAIN"
+        REFACTORING = "REFACTORING"
+        OPTIMIZE = "OPTIMIZE"
+        DOCUMENT = "DOCUMENT"
+        TEST = "TEST"
+        SECURITY = "SECURITY"
+        CONVENTION = "CONVENTION"
+        ANALYZE = "ANALYZE"
+        IMPLEMENT = "IMPLEMENT"
 
-    tag: Optional[MethodPromptTagEnum] = Field(None, description="사용자 요청의 유형 태그(설명, 리팩토링, 최적화 등)")
-    promptType: Optional[MethodPromptTargetEnum] = Field(None, description="요청 대상 유형(메서드 시그니처 또는 본문)")
-    message: Optional[str] = Field(None, description="사용자가 입력한 메시지 내용")
-    targetMethods: List[MethodChainPayload] = Field([], description="작업 대상 메서드 목록")
+    tag: Optional[MethodPromptTagEnum] = Field(
+        None,
+        description="""
+사용자 요청의 유형 태그로, 코드에 대한 작업 의도를 명확히 분류함 (설명, 리팩토링, 최적화 등)
+EXPLAIN: 코드 동작 방식과 의도를 설명해달라는 요청
+REFACTORING: 코드 구조 개선 및 재구성에 관한 요청
+OPTIMIZE: 코드 실행 성능 및 자원 사용 효율성 향상에 관한 요청
+CONVENTION: 코딩 표준 및 스타일 가이드 적용에 관한 요청
+ANALYZE: 코드 품질, 복잡도, 의존성 등에 대한 분석 요청
+IMPLEMENT: 신규 기능 또는 누락된 기능 구현에 관한 요청
+"""
+    )
+    promptType: Optional[MethodPromptTargetEnum] = Field(
+        None,
+        description="""
+요청이 적용될 코드 영역 유형으로, 메서드 시그니처(선언부)만 다룰지 또는 메서드 본문(구현부)까지 다룰지 지정함
+SIGNATURE: 메서드의 선언부를 변경하는 요청으로 다이어그램의 대부분이 수정이 필요함
+BODY: 메서드의 구현부를 대상으로 하며 targetMethods에서 요청한 메소드의 구현부에 대한 수정만 필요함
+        """
+    )
+    message: Optional[str] = Field(
+        None,
+        description="""
+사용자가 입력한 실제 요청 메시지 전문으로, 구체적인 작업 지시나 질문 내용이 포함됨
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "example": {
-                "tag": "IMPLEMENT",
-                "promptType": "SIGNATURE",
-                "message": "API 하나를 새로 구현해주세요.",
-                "targetMethods": [
-                    {
-                        "name": "getUserById",
-                        "signature": "getUserById(id: string): User",
-                        "body": "return this.userRepository.findById(id);",
-                        "description": "주어진 ID로 사용자 정보를 조회하는 메서드"
-                    }
-                ]
-            }
-        }
+tag, promptType보다 더 높은 우선 순위를 가지며 promptType가 구현을 필요로하는 IMPLEMENT 라더라도 사용자가 targetMethods에 대한 설명을 요청하면
+다이어그램을 변경하지않음
+"""
+    )
+    targetMethods: List[MethodChainPayload] = Field(
+        [],
+        description="작업 대상이 되는 메서드 목록으로, 각 메서드의 정보(이름, 위치, 코드 등)를 담고 있는 MethodChainPayload 객체들의 리스트"
     )
 
+    model_config = ConfigDict(from_attributes=True)
 
 class SystemChatChainPayload(BaseModel):
     class PromptResponseEnum(str, Enum):
         """시스템 응답 상태를 나타내는 열거형"""
-        MODIFIED = "MODIFIED"  # 코드가 수정됨
-        UNCHANGED = "UNCHANGED"  # 코드가 변경되지 않음
-        EXPLANATION = "EXPLANATION"  # 설명만 제공
-        MODIFIED_WITH_NEW_COMPONENTS = "MODIFIED_WITH_NEW_COMPONENTS"  # 새 컴포넌트가 추가된 수정
-        ERROR = "ERROR"  # 오류 발생
+        MODIFIED = "MODIFIED"
+        UNCHANGED = "UNCHANGED"
+        EXPLANATION = "EXPLANATION"
+        MODIFIED_WITH_NEW_COMPONENTS = "MODIFIED_WITH_NEW_COMPONENTS"
+        ERROR = "ERROR"
 
-    status: Optional[PromptResponseEnum] = Field(None, description="시스템 응답 상태(수정됨, 변경 없음, 설명, 오류 등)")
-    message: Optional[str] = Field(None, description="시스템 응답 메시지 내용")
+    status: Optional[PromptResponseEnum] = Field(
+        None,
+        description="""
+사용자가 요청한 message, tag, promptType을 종합적으로 고려하여 다음과 같은 ENUM으로 표현
+
+message를 보고 현재 Diagram이 변경이 필요하다고 판단되는경우 -> MODIFIED, MODIFIED_WITH_NEW_COMPONENTS
+message를 보고 현재 Diagram이 변경이 필요하지 않은 경우 -> UNCHANGED, EXPLANATION
+
+[추가 설명]
+MODIFIED: 요청을 처리하기 위해서 다이어그램의 변경이 필요함
+UNCHANGED: 사용자의 요청에 따른 다이어그램의 변경이 필요하지않음
+EXPLANATION: 다이어그램을 통한 설명이나 분석 결과만 제공함
+MODIFIED_WITH_NEW_COMPONENTS: 기존 코드 수정과 함께 새로운 컴포넌트(클래스, 메서드 등)가 추가 필요할 것으로 판단됨
+ERROR: 위에서 처리하지 못한 예외의 상황이 발생함
+"""
+    )
+    message: Optional[str] = Field(
+        None,
+        description="""
+사용자가 요청한 채팅, 프롬프트 타입, 태그를 확인하고 
+
+"""
+    )
 
     model_config = ConfigDict(
         from_attributes=True,
-        json_schema_extra={
-            "example": {
-                "status": "MODIFIED",
-                "message": get_example()
-            }
-        }
     )
-
 
 class ChatChainPayload(BaseModel):
     userChat: Optional[UserChatChainPayload] = Field(None, description="사용자 채팅 요청 정보")
@@ -248,17 +103,4 @@ class ChatChainPayload(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
-        json_schema_extra={
-            "example": {
-                "userChat": {
-                    "tag": "OPTIMIZE",
-                    "promptType": "BODY",
-                    "message": "이 코드를 최적화해주세요."
-                },
-                "systemChat": {
-                    "status": "MODIFIED",
-                    "message": "코드가 최적화되었습니다."
-                }
-            }
-        }
     )

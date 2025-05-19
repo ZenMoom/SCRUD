@@ -57,6 +57,7 @@ def get_component_service() -> ComponentService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0,
             )
         ),
         dto_chain=DtoModelChain(
@@ -64,6 +65,7 @@ def get_component_service() -> ComponentService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0,
             )
         )
     )
@@ -75,6 +77,7 @@ def get_connection_service() -> ConnectionService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0,
             )
         )
     )
@@ -86,6 +89,7 @@ def get_prompt_service() -> PromptService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0,
             )
         ),
         user_chat_chain=UserChatChain(
@@ -93,6 +97,7 @@ def get_prompt_service() -> PromptService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0,
             )
         ),
     )
