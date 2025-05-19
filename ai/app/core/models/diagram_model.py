@@ -125,8 +125,14 @@ class DiagramChainPayload(BaseModel):
                             {
                                 "methodId": "12345678-1234-1234-1234-123456789012",
                                 "name": "getUserById",
-                                "signature": "getUserById(id: string): User",
-                                "body": "return this.userRepository.findById(id);",
+                                "signature": "public ResponseEntity<UserDto> getUserById(@PathVariable(\"userId\") Long userId)",
+                                "body": """
+@GetMapping(\"/api/v1/users/{userId}\")
+public ResponseEntity<UserDto> getUserById(@PathVariable(\"userId\") Long userId) {
+    UserDto user = userService.getUserById(userId);
+    return ResponseEntity.ok(user);
+}
+                                """,
                                 "description": "주어진 ID로 사용자 정보를 조회하는 메서드"
                             }
                         ]
