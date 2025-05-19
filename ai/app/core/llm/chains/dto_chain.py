@@ -3,6 +3,7 @@ from typing import List
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel
 
@@ -25,19 +26,18 @@ class DtoModelChain:
             llm: LLM 인터페이스
         """
         self.llm = llm
-
+        self.prompt: ChatPromptTemplate = get_dto_prompt()
         # LCEL을 사용한 체인 구성
         self.chain = (
             {
                 "api_spec": RunnablePassthrough(),
                 "output_instructions": RunnablePassthrough(),
             }
-            | get_dto_prompt()
+            | self.prompt
             | llm
             | PydanticOutputParser(pydantic_object=DtoModelChainList)
         )
 
-        logger.info("DTO 데이터 획득 체인 초기화됨")
 
     async def predict(self, api_spec: ApiSpecChainPayload) -> List[DtoModelChainPayload]:
         """DTO 기반으로 다이어그램 필요 여부 예측
@@ -46,14 +46,16 @@ class DtoModelChain:
             chat_data: 채팅 데이터
             api_spec
         """
-        logger.info(f"[디버깅] DtoModelChain - predict 메소드 시작 - API 스펙 ID: {api_spec.id if hasattr(api_spec, 'id') else 'N/A'}")
-        logger.info(f"채팅 데이터: {api_spec}")
-        
-        logger.info(f"[디버깅] DtoModelChain - LLM 요청 시작")
-        result: DtoModelChainList = await self.chain.ainvoke({
-            "api_spec" : api_spec,
-            "output_instructions" : PydanticOutputParser(pydantic_object=DtoModelChainList).get_format_instructions(),
-        })
-        logger.info(f"[디버깅] DtoModelChain - predict 메소드 결과 - DTO 모델 개수: {len(result.dto)}")
+        logger.info(f"[디버깅] DtoModelChain - 프롬프트 준비 시작")
+
+        format_instructions = {
+            "api_spec": api_spec,
+            "output_instructions": PydanticOutputParser(pydantic_object=DtoModelChainList).get_format_instructions(),
+        }
+        logger.info(f"[디버깅] DtoModelChain - 프롬프트 구성 완료\nf{self.prompt.format(**format_instructions)}")
+        logger.info(f"[디버깅] ComponentChain - LLM 요청 시작")
+        result: DtoModelChainList = await self.chain.ainvoke(format_instructions)
+        logger.info(f"[디버깅] DtoModelChain - LLM 요청 완료 - DTO 모델 개수: {len(result.dto)}")
+        logger.info(f"[디버깅] DtoModelChain - LLM 요청 완료 - 결과 데이터\n {result}")
 
         return result.dto

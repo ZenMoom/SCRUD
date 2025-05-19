@@ -25,6 +25,7 @@ class ComponentChain:
             llm: LLM 인터페이스
         """
         self.llm = llm
+        self.prompt = get_component_prompt()
 
         # LCEL을 사용한 체인 구성
         self.chain = (
@@ -32,12 +33,11 @@ class ComponentChain:
                     "chat_data": RunnablePassthrough(),
                     "output_instructions": RunnablePassthrough(),
                 }
-                | get_component_prompt()
+                | self.prompt
                 | llm
                 | PydanticOutputParser(pydantic_object=ComponentChainPayloadList)
         )
 
-        logger.info("컴포넌트 데이터 획득 체인 초기화됨")
 
     async def predict(self, chat_data: SystemChatChainPayload) -> List[ComponentChainPayload]:
         """채팅 데이터를 기반으로 다이어그램 필요 여부 예측
@@ -48,11 +48,19 @@ class ComponentChain:
         Returns:
             다이어그램 필요 여부
         """
-        logger.info(f"채팅 데이터: {chat_data}")
-        logger.info(f"[디버깅] ComponentChain - predict 메소드 시작 - 입력 데이터: {chat_data}")
-        result: ComponentChainPayloadList = await self.chain.ainvoke({
-            "chat_data" : chat_data.model_dump_json(indent=2),
-            "output_instructions" : PydanticOutputParser(pydantic_object=ComponentChainPayloadList).get_format_instructions(),
-        })
-        logger.info(f"[디버깅] ComponentChain - predict 메소드 결과: {result}")
+        logger.info(f"[디버깅] ComponentChain - 프롬프트 준비 시작")
+
+
+        format_instructions = {
+            "chat_data": chat_data.model_dump_json(indent=2),
+            "output_instructions": PydanticOutputParser(
+                pydantic_object=ComponentChainPayloadList).get_format_instructions(),
+        }
+        logger.info(f"[디버깅] ComponentChain - 프롬프트 구성 완료\nf{self.prompt.format(**format_instructions)}")
+
+        logger.info(f"[디버깅] ComponentChain - LLM 요청 시작")
+        result: ComponentChainPayloadList = await self.chain.ainvoke(format_instructions)
+        logger.info(f"[디버깅] ComponentChain - LLM 요청 완료 - Component 모델 개수: {len(result.components)}")
+        logger.info(f"[디버깅] ComponentChain - LLM 요청 완료 - 결과 데이터: {result}")
+
         return result.components
