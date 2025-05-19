@@ -1,6 +1,6 @@
 package com.barcoder.scrud.post.application.facade;
 
-import com.barcoder.scrud.global.common.exception.BaseException;
+import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.post.application.dto.out.CommentOut;
 import com.barcoder.scrud.post.domain.entity.Comment;
 import com.barcoder.scrud.post.domain.entity.Post;
@@ -23,57 +23,57 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CommentGetFacade {
 
-    private final PostJpaRepository postJpaRepository;
-    private final UserUseCase userUseCase;
-    private final ModelMapper modelMapper;
+	private final PostJpaRepository postJpaRepository;
+	private final UserUseCase userUseCase;
+	private final ModelMapper modelMapper;
 
-    public List<CommentOut> getCommentList(Long postId) {
+	public List<CommentOut> getCommentList(Long postId) {
 
-        // 게시글 조회
-        Post post = postJpaRepository.findById(postId)
-                .orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
+		// 게시글 조회
+		Post post = postJpaRepository.findById(postId)
+				.orElseThrow(() -> new ExceptionHandler(PostErrorStatus.POST_NOT_FOUND));
 
-        // 댓글 리스트 조회
-        List<Comment> allComents = post.getComments();
+		// 댓글 리스트 조회
+		List<Comment> allComents = post.getComments();
 
-        // 댓글이 없는 경우
-        if (allComents.isEmpty()){
-            return List.of();
-        }
+		// 댓글이 없는 경우
+		if (allComents.isEmpty()) {
+			return List.of();
+		}
 
-        // userId 리스트 생성
-        Set<UUID> userIdList = allComents.stream()
-                .map(Comment::getUserId)
-                .collect(Collectors.toSet());
-        
-        // userOut 조회
-        for (UUID uuid : userIdList) {
-            userUseCase.getUserById(uuid);
-        }
+		// userId 리스트 생성
+		Set<UUID> userIdList = allComents.stream()
+				.map(Comment::getUserId)
+				.collect(Collectors.toSet());
 
-        // commentOut 리스트 생성
-        List<CommentOut> content = allComents.stream()
-                .map(comment -> {
+		// userOut 조회
+		for (UUID uuid : userIdList) {
+			userUseCase.getUserById(uuid);
+		}
 
-                    // userOut 조회
-                    UserOut userOut = userUseCase.getUserById(comment.getUserId());
+		// commentOut 리스트 생성
+		List<CommentOut> content = allComents.stream()
+				.map(comment -> {
 
-                    // parentCommentId가 null인 경우
-                    Long parentCommentId = comment.getParentComment() != null
-                            ? comment.getParentComment().getCommentId()
-                            : null;
+					// userOut 조회
+					UserOut userOut = userUseCase.getUserById(comment.getUserId());
+
+					// parentCommentId가 null인 경우
+					Long parentCommentId = comment.getParentComment() != null
+							? comment.getParentComment().getCommentId()
+							: null;
 
 
-                    // commentOut 생성
-                    return modelMapper.map(comment, CommentOut.class).toBuilder()
-                            .postId(comment.getPost().getPostId())
-                            .parentCommentId(parentCommentId)
-                            .author(userOut)
-                            .build();
-                })
-                .toList();
+					// commentOut 생성
+					return modelMapper.map(comment, CommentOut.class).toBuilder()
+							.postId(comment.getPost().getPostId())
+							.parentCommentId(parentCommentId)
+							.author(userOut)
+							.build();
+				})
+				.toList();
 
-        // outDto 생성
-        return content;
-    }
+		// outDto 생성
+		return content;
+	}
 }

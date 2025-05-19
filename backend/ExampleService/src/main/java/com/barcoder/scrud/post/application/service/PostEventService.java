@@ -1,6 +1,6 @@
 package com.barcoder.scrud.post.application.service;
 
-import com.barcoder.scrud.global.common.exception.BaseException;
+import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.post.application.assembler.CommentAssembler;
 import com.barcoder.scrud.post.application.assembler.PostAssembler;
 import com.barcoder.scrud.post.domain.entity.Comment;
@@ -37,7 +37,7 @@ public class PostEventService {
 	public void addPostViewCount(Long postId) {
 		// 게시글 조회
 		Post post = postJpaRepository.findById(postId)
-				.orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
+				.orElseThrow(() -> new ExceptionHandler(PostErrorStatus.POST_NOT_FOUND));
 
 		// 조회수 증가
 		post.addPostViewCount();
@@ -52,11 +52,11 @@ public class PostEventService {
 
 		// 게시글 조회
 		Post post = postJpaRepository.findById(event.getPostId())
-				.orElseThrow(() -> new BaseException(PostErrorStatus.POST_NOT_FOUND));
+				.orElseThrow(() -> new ExceptionHandler(PostErrorStatus.POST_NOT_FOUND));
 
 		// 이미 투표한 경우
 		if (post.isAlreadyVoted(event.getUserId())) {
-			throw new BaseException(PostErrorStatus.POST_ALREADY_VOTED);
+			throw new ExceptionHandler(PostErrorStatus.POST_ALREADY_VOTED);
 		}
 
 		// PostVoteEntity 생성
@@ -75,11 +75,11 @@ public class PostEventService {
 	public void addCommentVoteCount(CommentVoteEvent event) {
 		// 댓글 조회
 		Comment comment = commentJpaRepository.findById(event.getCommentId())
-				.orElseThrow(() -> new BaseException(PostErrorStatus.COMMENT_NOT_FOUND));
+				.orElseThrow(() -> new ExceptionHandler(PostErrorStatus.COMMENT_NOT_FOUND));
 
 		// 이미 투표한 경우
 		if (comment.isAlreadyVoted(event.getUserId())) {
-			throw new BaseException(PostErrorStatus.COMMENT_ALREADY_VOTED);
+			throw new ExceptionHandler(PostErrorStatus.COMMENT_ALREADY_VOTED);
 		}
 
 		// CommentVoteEntity 생성
