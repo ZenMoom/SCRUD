@@ -69,3 +69,38 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Comment ID is required' }, { status: 400 });
+  }
+
+  try {
+    const authToken = (await cookies()).get('access_token')?.value;
+
+    if (!authToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const config = new Configuration({
+      basePath: apiUrl,
+      baseOptions: {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    });
+    const commentApi = CommentApiFactory(config);
+
+    await commentApi.deleteComment({
+      commentId: Number(id),
+    });
+
+    return NextResponse.json({ message: 'Comment deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
+  }
+}

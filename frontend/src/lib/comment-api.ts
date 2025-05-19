@@ -50,6 +50,7 @@ export async function createComment({
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({
         content,
         parentCommentId,
@@ -65,4 +66,26 @@ export async function createComment({
     console.error('Failed to create comment:', error);
     throw error;
   }
+}
+
+/**
+ * 댓글 삭제하는 함수
+ */
+export async function deleteComment(commentId: number) {
+  // baseUrl
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/comment/${commentId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || '댓글 삭제 중 오류가 발생했습니다.');
+  }
+
+  return response.json();
 }
