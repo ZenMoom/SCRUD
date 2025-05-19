@@ -69,6 +69,7 @@ def get_prompt_service() -> PromptService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0.5,
                 streaming=True,
                 callbacks=[]  # 초기에는 빈 콜백 리스트
             )
@@ -78,6 +79,7 @@ def get_prompt_service() -> PromptService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0,
             )
         )
     )
@@ -89,6 +91,7 @@ def get_component_service() -> ComponentService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0,
             )
         ),
         dto_chain=DtoModelChain(
@@ -96,6 +99,7 @@ def get_component_service() -> ComponentService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0,
             )
         )
     )
@@ -108,6 +112,7 @@ def get_connection_service() -> ConnectionService:
                 model=ModelType.OPENAI_GPT4,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
+                temperature=0,
             )
         )
     )
@@ -275,7 +280,7 @@ async def connect_sse(
                     break
 
                 # SSE 형식으로 데이터 전송
-                yield f"data: {data}\n\n"
+                yield f"{data}\n\n"
 
         except Exception as e:
             logger.error(f"SSE 스트리밍 중 오류 발생: {str(e)}", exc_info=True)
