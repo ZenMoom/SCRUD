@@ -1,4 +1,4 @@
-package com.barcoder.scrud.post.application.dto.in;
+package com.barcoder.scrud.post.infrastructure.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,9 +13,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class PostVoteIn {
+public class CommentVoteEvent {
 
-    private Long postId;
-    private UUID userId;
-    private Boolean isLike;
+	private UUID userId;
+	private Long commentId;
+	private Boolean isLike;
 }

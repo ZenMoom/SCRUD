@@ -1,7 +1,8 @@
-from app.core.models.diagram_model import DiagramChainPayload
+from typing import List
+
+from app.core.models.diagram_model import DiagramChainPayload, ComponentChainPayload, DtoModelChainPayload
 from app.core.models.global_setting_model import GlobalFileListChainPayload, ApiSpecChainPayload
 from app.core.models.user_chat_model import UserChatChainPayload, SystemChatChainPayload
-from app.infrastructure.http.client.api_client import ApiSpec
 
 
 class PromptBuilder:
@@ -98,105 +99,144 @@ API 스펙 버전 ID: {str(api_spec.apiSpecVersionId or "정보 없음")}
         
         if global_files.project:
             project = global_files.project
-            prompt += f"""### 프로젝트 정보
+            prompt += f"""
+[프로젝트 정보]
 제목: {project.title or "정보 없음"}
 설명: {project.description or "정보 없음"}
 서버 URL: {project.serverUrl or "정보 없음"}
-최종 업데이트: {project.updatedAt or "정보 없음"}
-
 """
         
         if not global_files.content or len(global_files.content) == 0:
             prompt += "글로벌 파일이 존재하지 않습니다.\n"
         else:
-            prompt += "### 글로벌 파일 목록\n\n"
+
+            prompt += "[글로벌 파일 목록]\n\n"
             for idx, file in enumerate(global_files.content):
+                file_type_description = "정보 없음"
+
+                # 파일 유형에 따라 설명 추가
+                if file.fileType:
+                    try:
+                        file_type = file.fileType
+
+                        if file_type == "REQUIREMENTS":
+                            file_type_description = "요구사항 문서"
+                        elif file_type == "ERD":
+                            file_type_description = "Database Entity Table"
+                        elif file_type == "UTIL":
+                            file_type_description = "유틸리티 관련 파일"
+                        elif file_type == "CONVENTION":
+                            file_type_description = "코딩 컨벤션 관련 파일"
+                        elif file_type == "CONVENTION_DEFAULT":
+                            file_type_description = "기본 코딩 컨벤션 파일"
+                        elif file_type == "DEPENDENCY":
+                            file_type_description = "의존성 관련 파일"
+                        elif file_type == "ERROR_CODE":
+                            file_type_description = "에러 코드 정의 파일"
+                        elif file_type == "SECURITY":
+                            file_type_description = "보안 관련 파일"
+                        elif file_type == "SECURITY_DEFAULT_JWT":
+                            file_type_description = "JWT 기반 기본 보안 설정 파일"
+                        elif file_type == "SECURITY_DEFAULT_SESSION":
+                            file_type_description = "세션 기반 기본 보안 설정 파일"
+                        elif file_type == "SECURITY_DEFAULT_NONE":
+                            file_type_description = "보안 설정이 없는 기본 파일"
+                        elif file_type == "ARCHITECTURE_GITHUB":
+                            file_type_description = "GitHub 관련 아키텍처 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_LAYERED_A":
+                            file_type_description = "기본 계층형 아키텍처 A 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_LAYERED_B":
+                            file_type_description = "기본 계층형 아키텍처 B 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_CLEAN":
+                            file_type_description = "기본 클린 아키텍처 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_MSA":
+                            file_type_description = "기본 마이크로서비스 아키텍처 파일"
+                        elif file_type == "ARCHITECTURE_DEFAULT_HEX":
+                            file_type_description = "기본 헥사고날 아키텍처 파일"
+                    except ValueError:
+                        file_type_description = f"알 수 없는 파일 유형: {file.fileType}"
+
                 prompt += f"""#### 파일 {idx + 1}
-파일명: {file.fileName or "정보 없음"}
-파일 유형: {file.fileType or "정보 없음"}
-파일 URL: {file.fileUrl or "정보 없음"}
+            파일명: {file.fileName or "정보 없음"}
+            파일 유형: {file.fileType or "정보 없음"} ({file_type_description})
+            파일 URL: {file.fileUrl or ""}
 
-파일 내용:
-```
-{file.fileContent or "내용 없음"}
-```
+            파일 내용:
+            {file.fileContent or "내용 없음"}
 
-"""
-        
+            """
+
         return prompt
 
     @staticmethod
-    def build_diagram_prompt(
-            current_diagram: DiagramChainPayload,
-    ) -> str:
-        """
-        다이어그램 정보로부터 프롬프트를 생성합니다.
-        
-        Args:
-            current_diagram: 다이어그램 정보를 담은 DiagramChainPayload 객체
-            
-        Returns:
-            다이어그램에 대한 프롬프트 문자열
-        """
-        prompt = """## 현재 다이어그램 상태\n\n"""
-        
-        # 컴포넌트 정보 추가
-        if not current_diagram.components or len(current_diagram.components) == 0:
-            prompt += "### 컴포넌트\n컴포넌트가 존재하지 않습니다.\n\n"
-        else:
-            prompt += "### 컴포넌트\n\n"
-            for idx, component in enumerate(current_diagram.components):
-                prompt += f"""#### {component.type}: {component.name}
+    def build_component_prompt(component_payloads: List[ComponentChainPayload]) -> str:
+        if not component_payloads:
+            return "### 컴포넌트\n컴포넌트가 존재하지 않습니다.\n\n"
+
+        prompt = "### 컴포넌트\n\n"
+        for idx, component in enumerate(component_payloads):
+            prompt += f"""#### {component.type}: {component.name}
 설명: {component.description or "설명 없음"}
-위치: X={component.positionX or "미지정"}, Y={component.positionY or "미지정"}
+위치: X={component.positionX or 0}, Y={component.positionY or 0}
 
 """
-                if component.methods and len(component.methods) > 0:
-                    prompt += "##### 메서드 목록\n"
-                    for midx, method in enumerate(component.methods):
-                        prompt += f"""###### 메서드 {midx + 1}: {method.name or "이름 없음"}
+            if component.methods:
+                prompt += "##### 메서드 목록\n"
+                for midx, method in enumerate(component.methods):
+                    prompt += f"""###### 메서드 {midx + 1}: {method.name or "이름 없음"}
 메서드 ID: {method.methodId or "정보 없음"}
 서명: {method.signature or "정보 없음"}
 설명: {method.description or "설명 없음"}
 
 본문:
-```
 {method.body or "구현 정보 없음"}
-```
-
 """
-                else:
-                    prompt += "메서드가 없습니다.\n\n"
-        
-        # 연결 정보 추가
-        if not current_diagram.connections or len(current_diagram.connections) == 0:
+            else:
+                prompt += "메서드가 없습니다.\n\n"
+        return prompt
+
+    @staticmethod
+    def build_dto_prompt(dto_payload: List[DtoModelChainPayload]) -> str:
+
+
+        prompt = "### DTO 모델\n\n"
+        for idx, dto in enumerate(dto_payload):
+            prompt += f"""#### DTO {idx + 1}: {dto.name}
+설명: {dto.description or "설명 없음"}
+
+본문:
+{dto.body or "정의 정보 없음"}
+"""
+        return prompt
+
+    @staticmethod
+    def build_diagram_prompt(current_diagram: DiagramChainPayload) -> str:
+        """
+        다이어그램 정보로부터 프롬프트를 생성합니다.
+
+        Args:
+            current_diagram: 다이어그램 정보를 담은 DiagramChainPayload 객체
+
+        Returns:
+            다이어그램에 대한 프롬프트 문자열
+        """
+        prompt = "## 현재 다이어그램 상태\n\n"
+        prompt += PromptBuilder.build_component_prompt(current_diagram.components)
+
+        # 연결 정보
+        if not current_diagram.connections:
             prompt += "### 연결\n연결이 존재하지 않습니다.\n\n"
         else:
             prompt += "### 연결\n\n"
             for idx, connection in enumerate(current_diagram.connections):
                 prompt += f"""#### 연결 {idx + 1}
-유형: {connection.type.value if connection.type else "정보 없음"}
+유형: {connection.type if connection.type else "정보 없음"}
 소스 메서드 ID: {connection.sourceMethodId or "정보 없음"}
 대상 메서드 ID: {connection.targetMethodId or "정보 없음"}
 
 """
-        
-        # DTO 모델 정보 추가
-        if not current_diagram.dto or len(current_diagram.dto) == 0:
-            prompt += "### DTO 모델\nDTO 모델이 존재하지 않습니다.\n"
-        else:
-            prompt += "### DTO 모델\n\n"
-            for idx, dto in enumerate(current_diagram.dto):
-                prompt += f"""#### DTO {idx + 1}: {dto.name}
-설명: {dto.description or "설명 없음"}
 
-본문:
-```
-{dto.body or "정의 정보 없음"}
-```
-
-"""
-        
+        prompt += PromptBuilder.build_dto_prompt(current_diagram.dto)
         return prompt
         
     @staticmethod

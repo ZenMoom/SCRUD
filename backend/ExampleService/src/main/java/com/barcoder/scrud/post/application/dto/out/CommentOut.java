@@ -25,7 +25,10 @@ public class CommentOut {
     private Long likeCount;
     private Long dislikeCount;
 
-    private Boolean isEdited;
+    private Boolean isUpdated;
+    private Boolean isDeleted;
+
+    private String userVote;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
