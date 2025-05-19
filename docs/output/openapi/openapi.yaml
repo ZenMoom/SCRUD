@@ -1255,7 +1255,7 @@ paths:
       summary: 게시글 상세 조회
       tags:
       - Post
-    patch:
+    put:
       operationId: updatePost
       parameters:
       - in: path
@@ -1327,7 +1327,11 @@ paths:
         $ref: '#/components/requestBodies/CreateCommentRequest'
       responses:
         "201":
-          description: 성공적으로 생성되었습니다
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+          description: 댓글 작성 성공
       summary: 댓글 작성
       tags:
       - Comment
@@ -2055,8 +2059,12 @@ components:
           schema:
             $ref: '#/components/schemas/GetCommentListResponse'
       description: 댓글 목록 조회 성공
-    SuccessCreated:
-      description: 성공적으로 생성되었습니다
+    CreateCommentResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommentResponse'
+      description: 댓글 작성 성공
     VoteCommentResponse:
       content:
         application/json:
@@ -3440,7 +3448,9 @@ components:
           profileImgUrl: https://example.com/profile.jpg
           nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
+          username: Jaasdfas@fasdf.com
         dislikeCount: 1
+        isUpdated: true
         likeCount: 10
         postId: 101
         viewCount: 123
@@ -3484,6 +3494,9 @@ components:
         commentCount:
           example: 5
           type: integer
+        isUpdated:
+          example: true
+          type: boolean
         author:
           $ref: '#/components/schemas/UserResponse'
       type: object
@@ -3509,6 +3522,7 @@ components:
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
+            username: Jaasdfas@fasdf.com
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
@@ -3522,6 +3536,7 @@ components:
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
+            username: Jaasdfas@fasdf.com
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
@@ -3543,6 +3558,7 @@ components:
           profileImgUrl: https://example.com/profile.jpg
           nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
+          username: Jaasdfas@fasdf.com
         dislikeCount: 1
         commentId: 101
         parentCommentId: 12
@@ -3566,7 +3582,6 @@ components:
         parentCommentId:
           example: 12
           format: int64
-          nullable: true
           type: integer
         likeCount:
           example: 3
@@ -3792,7 +3807,6 @@ components:
         parentCommentId:
           example: 123
           format: int64
-          nullable: true
           type: integer
       required:
       - content
@@ -3847,6 +3861,7 @@ components:
         profileImgUrl: https://example.com/profile.jpg
         nickname: john_doe
         userId: 550e8400-e29b-41d4-a716-446655440000
+        username: Jaasdfas@fasdf.com
       properties:
         userId:
           example: 550e8400-e29b-41d4-a716-446655440000
@@ -3854,6 +3869,9 @@ components:
           type: string
         nickname:
           example: john_doe
+          type: string
+        username:
+          example: Jaasdfas@fasdf.com
           type: string
         profileImgUrl:
           example: https://example.com/profile.jpg
