@@ -171,7 +171,8 @@ class ChatServiceFacade:
             
             self.logger.info("[디버깅] ChatServiceFacade - DTO 생성 시작")
             dtos: List[DtoModelChainPayload] = await self._component_service.create_dtos_with_api_spec(
-                api_spec=ApiSpecChainPayload.model_validate(api_spec.model_dump())
+                api_spec=ApiSpecChainPayload.model_validate(api_spec.model_dump()),
+                components=components
             )
             self.logger.info(f"[디버깅] ChatServiceFacade - DTO 생성 완료: {len(dtos)}개")
             

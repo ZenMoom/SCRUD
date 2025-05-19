@@ -97,7 +97,7 @@ class DiagramFacade:
         api_spec_info = f"ID: {api_spec.apiSpecVersionId if hasattr(api_spec, 'apiSpecVersionId') else 'N/A'}, 경로: {api_spec.endpoint[:30] if hasattr(api_spec, 'endpoint') else 'N/A'}{'...' if hasattr(api_spec, 'endpoint') and len(api_spec.endpoint) > 30 else ''}"
         self.logger.info(f"[디버깅] DiagramFacade - API 스펙: {api_spec_info}")
         
-        file_count = len(global_files.files) if hasattr(global_files, 'files') else 0
+        file_count = len(global_files.content) if hasattr(global_files, 'content') else 0
         self.logger.info(f"[디버깅] DiagramFacade - 글로벌 파일 개수: {file_count}")
         
         try:
@@ -158,7 +158,8 @@ class DiagramFacade:
 
         self.logger.info("[디버깅] DiagramFacade - DTO 생성 시작")
         dtos = await self._component_service.create_dtos_with_api_spec(
-            ApiSpecChainPayload.model_validate(api_spec)
+            api_spec=ApiSpecChainPayload.model_validate(api_spec),
+            components=components,
         )
         self.logger.info(f"[디버깅] DiagramFacade - DTO 생성 완료: {len(dtos)}개 DTO 생성")
 
