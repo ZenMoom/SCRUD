@@ -84,6 +84,11 @@ public class PostService {
 		Post post = postJpaRepository.findById(inDto.getPostId())
 				.orElseThrow(() -> new ExceptionHandler(PostErrorStatus.POST_NOT_FOUND));
 
+		// 본인 게시글 추천/비추천 방지
+		if (post.getUserId().equals(inDto.getUserId())) {
+			throw new ExceptionHandler(PostErrorStatus.POST_VOTE_SELF);
+		}
+
 		// 이미 추천한 게시글인지 확인
 		if (post.isAlreadyVoted(inDto.getUserId())) {
 			throw new ExceptionHandler(PostErrorStatus.POST_ALREADY_VOTED);

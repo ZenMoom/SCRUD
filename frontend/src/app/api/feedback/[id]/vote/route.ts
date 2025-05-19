@@ -1,6 +1,7 @@
 import { PostApiFactory } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { PostVoteRequest } from '@generated/model';
+import { AxiosError } from 'axios';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -29,8 +30,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       } as PostVoteRequest,
     });
     return NextResponse.json(response.data);
-  } catch (error) {
-    console.error('Error fetching feedback:', error);
-    return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('Error creating comment:', error);
+
+    const axiosError = error as AxiosError<{ message: string }>;
+    const message = axiosError.response?.data?.message ?? 'An error occurred';
+    const status = axiosError.response?.status ?? 500;
+
+    return NextResponse.json({ error: message }, { status });
   }
 }
