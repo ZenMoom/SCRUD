@@ -151,13 +151,6 @@ class ChatServiceFacade:
             diagram=target_diagram
         )
         self.logger.info(f"[디버깅] ChatServiceFacade - 채팅 흐름 처리 완료: 상태={system_chat_payload.status}")
-
-        # diagramId를 전송
-        self.logger.info(f"[디버깅] ChatServiceFacade - 다이어그램 ID 이벤트 전송 시작: {diagram_id}")
-        await self.sse_service.send_diagram_event(
-            diagram_id,
-            response_queue=queue
-        )
         self.logger.info("[디버깅] ChatServiceFacade - 다이어그램 ID 이벤트 전송 완료")
 
         # 4. 다이어그램 필요 여부 판단
@@ -207,6 +200,7 @@ class ChatServiceFacade:
             self.logger.info(f"[디버깅] ChatServiceFacade - 버전 유지: 버전 ID={version_info.newVersionId}")
 
         # 6. Chat 엔티티 조립 및 저장
+        self.logger.info("[디버깅] ChatServiceFacade - 채팅 엔티티 조립 시작")
         self.logger.info("[디버깅] ChatServiceFacade - 채팅 엔티티 조립 시작")
         chat_entity: Chat = self.chat_service.assemble_chat_entity(
             project_id=project_id,
