@@ -23,8 +23,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-50 ">
-      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-lg">
+    <div className="h-screen flex items-center justify-center bg-white ">
+      <div className="max-w-md w-full p-8 bg-blue-50 rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold text-center mb-6">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">SCRUD</span>
         </h1>
