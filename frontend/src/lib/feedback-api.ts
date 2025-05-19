@@ -29,14 +29,10 @@ export async function fetchPosts(
     size: size.toString(),
     sort: sort,
     order: order,
+    categoryId: category || '',
     keyword: keyword || '',
     type: searchType || SearchTypeEnumDto.TITLE,
   });
-
-  // 카테고리가 있으면 추가
-  if (category && category !== 'all') {
-    params.append('category', category);
-  }
 
   try {
     // baseUrl
@@ -193,6 +189,31 @@ export async function updatePost(postId: number, postData: UpdatePostRequest): P
     return await response.json();
   } catch (error) {
     console.error(`Failed to update post ID ${postId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * 게시글 상태를 업데이트하는 함수
+ */
+export async function updatePostStatus(postId: number, status: string): Promise<void> {
+  try {
+    // baseUrl
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/feedback/${postId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error updating post status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error(`Failed to update post ID ${postId} status:`, error);
     throw error;
   }
 }

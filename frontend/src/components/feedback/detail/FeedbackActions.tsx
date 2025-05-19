@@ -30,12 +30,12 @@ export default function FeedbackActions() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  if (!post || !user || post.author?.username !== user.username) {
+  if (!post || !user || user.username !== post.author?.username) {
     return null;
   }
 
   const handleEdit = () => {
-    router.push(`/feedback/edit/${post.postId}`);
+    router.push(`/feedback/${post.postId}/edit`);
   };
 
   const handleDelete = async () => {
@@ -44,7 +44,7 @@ export default function FeedbackActions() {
     setIsDeleting(true);
     try {
       await deletePost(post.postId);
-      router.back();
+      router.push('/feedback');
       router.refresh();
     } catch (error) {
       console.error('Error deleting post:', error);
@@ -58,21 +58,24 @@ export default function FeedbackActions() {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger className='hover:bg-gray-100 flex items-center justify-center w-8 h-8 rounded-full'>
+        <DropdownMenuTrigger className='hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 flex items-center justify-center w-8 h-8 transition-colors rounded-full'>
           <MoreHorizontal className='w-5 h-5 text-gray-500' />
           <span className='sr-only'>피드백 관리</span>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align='end'>
+        <DropdownMenuContent
+          align='end'
+          className='w-36'
+        >
           <DropdownMenuItem
             onClick={handleEdit}
-            className='cursor-pointer'
+            className='flex items-center cursor-pointer'
           >
             <Pencil className='w-4 h-4 mr-2' />
             수정하기
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setIsDeleteDialogOpen(true)}
-            className='focus:text-red-600 text-red-600 cursor-pointer'
+            className='focus:text-red-600 flex items-center text-red-600 cursor-pointer'
           >
             <Trash2 className='w-4 h-4 mr-2' />
             삭제하기
@@ -84,7 +87,7 @@ export default function FeedbackActions() {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className='max-w-md'>
           <AlertDialogHeader>
             <AlertDialogTitle>피드백 삭제</AlertDialogTitle>
             <AlertDialogDescription>
@@ -92,17 +95,33 @@ export default function FeedbackActions() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={isDeleting}
+              className='font-medium'
+            >
+              취소
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className='hover:bg-red-700 focus:ring-red-600 bg-red-600'
+              className='hover:bg-red-700 focus:ring-red-600 font-medium bg-red-600'
             >
               {isDeleting ? '삭제 중...' : '삭제'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 전체 화면 오버레이 - 삭제 중일 때만 표시 */}
+      {isDeleting && (
+        <div className='bg-black/50 backdrop-blur-sm fixed inset-0 z-50 flex items-center justify-center'>
+          <div className='flex flex-col items-center gap-3 p-6 bg-white rounded-lg shadow-lg'>
+            <div className='border-t-transparent animate-spin w-10 h-10 border-4 border-blue-500 rounded-full'></div>
+            <p className='text-lg font-medium text-gray-700'>삭제 중입니다...</p>
+            <p className='text-sm text-gray-500'>잠시만 기다려주세요.</p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

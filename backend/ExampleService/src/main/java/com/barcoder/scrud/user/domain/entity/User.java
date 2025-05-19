@@ -2,6 +2,7 @@ package com.barcoder.scrud.user.domain.entity;
 
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
 import com.barcoder.scrud.github.domain.entity.GithubAccount;
+import com.barcoder.scrud.user.domain.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Comment;
@@ -34,6 +35,11 @@ public class User extends BaseTimeEntity {
     @Column(name = "profile_img_url", nullable = true)
     @Comment("프로필 이미지")
     private String profileImgUrl;
+
+    @Column(name = "role", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private UserRole role = UserRole.USER;
 
     @Column(name = "is_github_connected")
     private boolean isGithubConnected;

@@ -27,6 +27,7 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 회원 관련 오류
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4001", "존재하지 않는 계정입니다."),
+    USER_NOT_ADMIN(HttpStatus.FORBIDDEN, "USER4002", "관리자 권한이 없습니다."),
 
     // 프로젝트 관련 오류
     SCRUDPROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT4001", "존재하지 않는 프로젝트입니다."),

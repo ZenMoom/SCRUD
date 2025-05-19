@@ -56,3 +56,33 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     return NextResponse.json({ error: 'Failed to update feedback' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  try {
+    const authToken = (await cookies()).get('access_token')?.value;
+
+    if (!authToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const config = new Configuration({
+      basePath: apiUrl,
+      baseOptions: {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    });
+
+    const postApi = PostApiFactory(config);
+    await postApi.deletePost({
+      postId: Number(id),
+    });
+
+    return NextResponse.json({ message: 'Feedback deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting feedback:', error);
+    return NextResponse.json({ error: 'Failed to delete feedback' }, { status: 500 });
+  }
+}
