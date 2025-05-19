@@ -26,7 +26,10 @@ class ComponentService:
             system_chat: SystemChatChainPayload,
             diagram: DiagramChainPayload
     ) -> List[ComponentChainPayload]:
-        return await self.component_chain.predict(system_chat)
+        return await self.component_chain.predict(
+            chat_data=system_chat,
+            diagram=diagram
+        )
 
     async def _process_dto_flow(
             self,
@@ -44,7 +47,7 @@ class ComponentService:
 
         Args:
             system_chat
-            result: 프롬프트 처리 결과
+            diagram: 프롬프트 처리 결과
 
         Returns:
             생성된 컴포넌트 목록

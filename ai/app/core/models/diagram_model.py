@@ -5,11 +5,11 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class MethodChainPayload(BaseModel):
-    methodId: Optional[str] = Field(None, description="메서드의 아이디 (uuid4)")
-    name: Optional[str] = Field(None, description="메서드의 이름")
-    signature: Optional[str] = Field(None, description="메서드의 서명(파라미터 및 반환 타입)")
-    body: Optional[str] = Field(None, description="메서드의 구현 내용")
-    description: Optional[str] = Field(None, description="메서드에 대한 설명")
+    methodId: Optional[str] = Field("12345678-1234-1234-1234-123456789012", description="메서드의 아이디 (uuid4)")
+    name: Optional[str] = Field("default_method", description="메서드의 이름")
+    signature: Optional[str] = Field("default_signature", description="메서드의 서명(파라미터 및 반환 타입)")
+    body: Optional[str] = Field("default_body", description="메서드의 구현 내용")
+    description: Optional[str] = Field("default_description", description="메서드에 대한 설명")
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -17,8 +17,14 @@ class MethodChainPayload(BaseModel):
             "example": {
                 "methodId": "12345678-1234-1234-1234-123456789012",
                 "name": "getUserById",
-                "signature": "getUserById(id: string): User",
-                "body": "return this.userRepository.findById(id);",
+                "signature": "public ResponseEntity<UserDto> getUserById(@PathVariable(\"userId\") Long userId)",
+                "body": """
+@GetMapping(\"/api/v1/users/{userId}\")
+public ResponseEntity<UserDto> getUserById(@PathVariable(\"userId\") Long userId) {
+    UserDto user = userService.getUserById(userId);
+    return ResponseEntity.ok(user);
+}
+""",
                 "description": "주어진 ID로 사용자 정보를 조회하는 메서드"
             }
         }
@@ -30,12 +36,12 @@ class ComponentChainPayload(BaseModel):
         CLASS = "CLASS"
         INTERFACE = "INTERFACE"
 
-    type: ComponentTypeEnum = Field(..., description="컴포넌트 타입 (CLASS, INTERFACE)")
-    name: str = Field(..., description="컴포넌트 이름")
-    description: Optional[str] = Field(None, description="컴포넌트 설명")
-    positionX: Optional[float] = Field(None, description="컴포넌트 X 위치")
-    positionY: Optional[float] = Field(None, description="컴포넌트 Y 위치")
-    methods: Optional[List[MethodChainPayload]] = Field(None, description="컴포넌트의 메서드 목록")
+    type: ComponentTypeEnum = Field(ComponentTypeEnum.CLASS, description="컴포넌트 타입 (CLASS, INTERFACE)")
+    name: str = Field("default_component_name", description="컴포넌트 이름")
+    description: Optional[str] = Field("default_component_description", description="컴포넌트 설명")
+    positionX: float = Field(0, description="컴포넌트 X 위치")
+    positionY: float = Field(0, description="컴포넌트 Y 위치")
+    methods: List[MethodChainPayload] = Field([], description="컴포넌트의 메서드 목록")
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -71,9 +77,9 @@ class ConnectionChainPayload(BaseModel):
         SOLID = "SOLID"
         DOTTED = "DOTTED"
 
-    sourceMethodId: Optional[str] = Field(None, description="소스 메서드 ID")
-    targetMethodId: Optional[str] = Field(None, description="대상 메서드 ID")
-    type: Optional[MethodConnectionTypeEnum] = Field(None, description="연결 타입 (SOLID, DOTTED)")
+    sourceMethodId: str = Field("12345678-1234-1234-1234-123456789012", description="소스 메서드 ID")
+    targetMethodId: str = Field("87654321-4321-4321-4321-210987654321", description="대상 메서드 ID")
+    type: str = Field(MethodConnectionTypeEnum.SOLID, description="연결 타입 (SOLID, DOTTED)")
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -88,9 +94,9 @@ class ConnectionChainPayload(BaseModel):
 
 
 class DtoModelChainPayload(BaseModel):
-    name: str = Field(..., description="DTO 모델 이름")
-    description: Optional[str] = Field(None, description="DTO 모델 설명")
-    body: Optional[str] = Field(None, description="DTO 모델 정의 내용")
+    name: str = Field("default_dto_name", description="DTO 모델 이름")
+    description: Optional[str] = Field("default_dto_scription", description="DTO 모델 설명")
+    body: Optional[str] = Field("default_dto_body", description="DTO 모델 정의 내용")
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -181,10 +187,10 @@ class ApiSummary(BaseModel):
         USER_COMPLETED = "USER_COMPLETED"
 
     name: str = Field(..., description="API 이름")
-    description: Optional[str] = Field(None, description="API 설명")
-    method: Optional[str] = Field(None, description="HTTP 메서드 (GET, POST, PUT, DELETE 등)")
-    endpoint: Optional[str] = Field(None, description="API 엔드포인트")
-    status: Optional[ApiProcessStateEnum] = Field(None, description="API 상태")
+    description: Optional[str] = Field("default_api_summary_description", description="API 설명")
+    method: Optional[str] = Field("default_api_summary_method", description="HTTP 메서드 (GET, POST, PUT, DELETE 등)")
+    endpoint: Optional[str] = Field("default_api_summary_endpoint", description="API 엔드포인트")
+    status: Optional[ApiProcessStateEnum] = Field(ApiProcessStateEnum.AI_GENERATED, description="API 상태")
 
     model_config = ConfigDict(
         from_attributes=True,

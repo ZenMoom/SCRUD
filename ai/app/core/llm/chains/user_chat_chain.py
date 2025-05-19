@@ -1,11 +1,9 @@
 import logging
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
+from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
 
-from app.core.llm.prompts.diagram_need_prompts import diagram_need_prompt
 from app.core.llm.prompts.user_chat_prompts import get_user_chat_prompt
 from app.core.models.diagram_model import DiagramChainPayload
 from app.core.models.global_setting_model import GlobalFileListChainPayload
@@ -68,21 +66,4 @@ class UserChatChain:
         )
         logger.info(f"[디버깅] UserChatChain - LLM 요청 완료 - 결과 데이터\n {result}")
 
-        # status = await self.evaulate(result)
         return result
-
-    async def evaulate(self, chat_prompt: str):
-        chain = (
-                {
-                    "user_chat": RunnablePassthrough(),
-                }
-                | diagram_need_prompt
-                | self.llm
-                | StrOutputParser()
-        )
-        response = await chain.ainvoke({
-            "user_chat": chat_prompt,
-        })
-        is_needed = "true" in response.lower()
-        logger.info(f"다이어그램 필요 여부 예측 결과: {is_needed}")
-        return SystemChatChainPayload.PromptResponseEnum.MODIFIED if is_needed else SystemChatChainPayload.PromptResponseEnum.UNCHANGED
