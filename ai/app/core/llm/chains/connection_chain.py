@@ -30,11 +30,7 @@ class ConnectionChain:
 
         # LCEL을 사용한 체인 구성
         self.chain = (
-                {
-                    "connection_schema": RunnablePassthrough(),
-                    "output_instructions": RunnablePassthrough(),
-                }
-                | self.prompt
+                  self.prompt
                 | self.llm
                 | PydanticOutputParser(pydantic_object=ConnectionChainPayloadList)
         )

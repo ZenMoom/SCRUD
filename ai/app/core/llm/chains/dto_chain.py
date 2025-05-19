@@ -29,11 +29,7 @@ class DtoModelChain:
         self.prompt: ChatPromptTemplate = get_dto_prompt()
         # LCEL을 사용한 체인 구성
         self.chain = (
-            {
-                "api_spec": RunnablePassthrough(),
-                "output_instructions": RunnablePassthrough(),
-            }
-            | self.prompt
+              self.prompt
             | llm
             | PydanticOutputParser(pydantic_object=DtoModelChainList)
         )
