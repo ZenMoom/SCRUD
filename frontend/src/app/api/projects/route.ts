@@ -79,8 +79,9 @@ export async function POST(request: NextRequest) {
         console.log('\n=== 아키텍처 처리 시작 ===');
         console.log('받은 key:', key);
         console.log('받은 value 전체:', value);
-        
         const architectureValue = value as SelectionValue | FileWithContent[];
+        console.log('route.ts 받은 architectureStructure value:', JSON.stringify(architectureValue, null, 2));
+        
         if (architectureValue) {
           if (Array.isArray(architectureValue)) {
             // GitHub에서 가져온 파일 처리

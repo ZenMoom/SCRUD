@@ -43,7 +43,7 @@ interface ProjectSettings {
   errorCode: FileWithContent[];
   securitySetting: SelectionValue | FileWithContent[];
   codeConvention: FileWithContent[];
-  architectureStructure: SelectionValue;
+  architectureStructure: SelectionValue | FileWithContent[];
 }
 
 // FileValue 타입 정의 수정 - 기존 파일 업로드 컴포넌트용
@@ -136,138 +136,141 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
   }
 
   return (
-    <div className="flex-1 relative bg-[#f8f8f8] shadow-[inset_0_0_10px_rgba(0,0,0,0.02)] w-full">
-      <div className="h-full overflow-y-auto p-8 md:p-12">
-        <FormItem
-          ref={refs.title}
-          title={`프로젝트명`}
-          type={inputTypes.title}
-          value={settings.title as string}
-          onChange={(value) => handleSettingChange("title", value)}
-          onInfoClick={() => openModal("title")}
-          onFocus={() => handleItemFocus("title")}
-          isRequired={isRequired('title')}
-        />
+    <div className="flex-1 relative bg-white rounded-lg shadow-sm ml-2 overflow-hidden">
+      <div className="h-full overflow-y-auto">
 
-        <FormItem
-          ref={refs.description}
-          title={`프로젝트 설명`}
-          type={inputTypes.description}
-          value={settings.description as string}
-          onChange={(value) => handleSettingChange("description", value)}
-          onInfoClick={() => openModal("description")}
-          onFocus={() => handleItemFocus("description")}
-          isRequired={isRequired('description')}
-        />
+        
+        <div className="p-8">
+          <FormItem
+            ref={refs.title}
+            title={`프로젝트명`}
+            type={inputTypes.title}
+            value={settings.title as string}
+            onChange={(value) => handleSettingChange("title", value)}
+            onInfoClick={() => openModal("title")}
+            onFocus={() => handleItemFocus("title")}
+            isRequired={isRequired('title')}
+          />
 
-        <FormItem
-          ref={refs.serverUrl}
-          title={`Server URL`}
-          type={inputTypes.serverUrl}
-          value={settings.serverUrl as string}
-          onChange={(value) => handleSettingChange("serverUrl", value)}
-          onInfoClick={() => openModal("serverUrl")}
-          onFocus={() => handleItemFocus("serverUrl")}
-          isRequired={isRequired('serverUrl')}
-        />
+          <FormItem
+            ref={refs.description}
+            title={`프로젝트 설명`}
+            type={inputTypes.description}
+            value={settings.description as string}
+            onChange={(value) => handleSettingChange("description", value)}
+            onInfoClick={() => openModal("description")}
+            onFocus={() => handleItemFocus("description")}
+            isRequired={isRequired('description')}
+          />
 
-        <RequirementSpecForm
-          ref={refs.requirementSpec}
-          title={`요구사항 명세서`}
-          value={settings.requirementSpec}
-          onChange={(value) => handleSettingChange("requirementSpec", value as FileValue)}
-          onInfoClick={() => openModal("requirementSpec")}
-          onFocus={useCallback(() => handleItemFocus("requirementSpec"), [handleItemFocus])}
-          isRequired={isRequired('requirementSpec')}
-        />
+          <FormItem
+            ref={refs.serverUrl}
+            title={`Server URL`}
+            type={inputTypes.serverUrl}
+            value={settings.serverUrl as string}
+            onChange={(value) => handleSettingChange("serverUrl", value)}
+            onInfoClick={() => openModal("serverUrl")}
+            onFocus={() => handleItemFocus("serverUrl")}
+            isRequired={isRequired('serverUrl')}
+          />
 
-        <ERDForm
-          ref={refs.erd}
-          title={`ERD`}
-          value={settings.erd}
-          onChange={(value) => handleSettingChange("erd", value as FileValue)}
-          onInfoClick={() => openModal("erd")}
-          onFocus={useCallback(() => handleItemFocus("erd"), [handleItemFocus])}
-          isRequired={isRequired('erd')}
-        />
+          <RequirementSpecForm
+            ref={refs.requirementSpec}
+            title={`요구사항 명세서`}
+            value={settings.requirementSpec}
+            onChange={(value) => handleSettingChange("requirementSpec", value as FileValue)}
+            onInfoClick={() => openModal("requirementSpec")}
+            onFocus={useCallback(() => handleItemFocus("requirementSpec"), [handleItemFocus])}
+            isRequired={isRequired('requirementSpec')}
+          />
 
-        <div ref={refs.dependencyFile} className="mb-10 p-10 bg-white rounded-lg">
-          <div className="mb-6">
-            <DependencyFileForm
-              title="의존성 파일"
-              onFileSelect={handleDependencyFile}
-              onFocus={useCallback(() => handleItemFocus("dependencyFile"), [handleItemFocus])}
-            />
+          <ERDForm
+            ref={refs.erd}
+            title={`ERD`}
+            value={settings.erd}
+            onChange={(value) => handleSettingChange("erd", value as FileValue)}
+            onInfoClick={() => openModal("erd")}
+            onFocus={useCallback(() => handleItemFocus("erd"), [handleItemFocus])}
+            isRequired={isRequired('erd')}
+          />
+
+          <div ref={refs.dependencyFile} className="mb-5 p-10 bg-white rounded-lg">
+            <div className="mb-3">
+              <DependencyFileForm
+                title="의존성 파일"
+                onFileSelect={handleDependencyFile}
+                onFocus={useCallback(() => handleItemFocus("dependencyFile"), [handleItemFocus])}
+              />
+            </div>
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium mb-4">Spring 의존성 추가 선택</h3>
+              <DependencySelector
+                selectedDependencies={
+                  settings.dependencyFile.find(file => file.name === 'dependency.txt')
+                    ? settings.dependencyFile
+                        .find(file => file.name === 'dependency.txt')!
+                        .content
+                        .split('\n')
+                        .map(line => {
+                          const match = line.match(/\((.*?)\)/);
+                          return match ? match[1] : '';
+                        })
+                        .filter(Boolean)
+                    : []
+                }
+                onChange={handleDependencySelect}
+              />
+            </div>
           </div>
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-medium mb-4">Spring 의존성 추가 선택</h3>
-            <DependencySelector
-              selectedDependencies={
-                settings.dependencyFile.find(file => file.name === 'dependency.txt')
-                  ? settings.dependencyFile
-                      .find(file => file.name === 'dependency.txt')!
-                      .content
-                      .split('\n')
-                      .map(line => {
-                        const match = line.match(/\((.*?)\)/);
-                        return match ? match[1] : '';
-                      })
-                      .filter(Boolean)
-                  : []
-              }
-              onChange={handleDependencySelect}
-            />
-          </div>
+
+          <UtilityClassForm
+            ref={refs.utilityClass}
+            title="유틸 클래스"
+            value={settings.utilityClass}
+            onChange={(value) => handleSettingChange("utilityClass", value as FileValue)}
+            onInfoClick={() => openModal("utilityClass")}
+            onFocus={useCallback(() => handleItemFocus("utilityClass"), [handleItemFocus])}
+          />
+
+          <ErrorCodeForm
+            ref={refs.errorCode}
+            title="에러 코드"
+            value={settings.errorCode}
+            onChange={(value) => handleSettingChange("errorCode", value as FileValue)}
+            onInfoClick={() => openModal("errorCode")}
+            onFocus={useCallback(() => handleItemFocus("errorCode"), [handleItemFocus])}
+          />
+
+          <SecuritySettingForm
+            ref={refs.securitySetting}
+            title="보안 설정"
+            value={settings.securitySetting}
+            onChange={(value) => handleSettingChange("securitySetting", value)}
+            onInfoClick={() => openModal("securitySetting")}
+            onFocus={useCallback(() => handleItemFocus("securitySetting"), [handleItemFocus])}
+          />
+
+          <CodeConventionForm
+            ref={refs.codeConvention}
+            title="코드 컨벤션"
+            value={settings.codeConvention}
+            onChange={(value) => handleSettingChange("codeConvention", value as FileValue)}
+            onInfoClick={() => openModal("codeConvention")}
+            onFocus={useCallback(() => handleItemFocus("codeConvention"), [handleItemFocus])}
+          />
+
+          <ArchitectureStructureForm
+            ref={refs.architectureStructure}
+            title="아키텍처 구조"
+            value={settings.architectureStructure}
+            onChange={(value) => {
+              console.log('[ContentArea] ArchitectureStructureForm onChange:', { value, type: typeof value, isArray: Array.isArray(value) });
+              handleSettingChange("architectureStructure", value);
+            }}
+            onInfoClick={() => openModal("architectureStructure")}
+            onFocus={useCallback(() => handleItemFocus("architectureStructure"), [handleItemFocus])}
+          />
         </div>
-
-        <UtilityClassForm
-          ref={refs.utilityClass}
-          title="유틸 클래스"
-          value={settings.utilityClass}
-          onChange={(value) => handleSettingChange("utilityClass", value as FileValue)}
-          onInfoClick={() => openModal("utilityClass")}
-          onFocus={useCallback(() => handleItemFocus("utilityClass"), [handleItemFocus])}
-        />
-
-        <ErrorCodeForm
-          ref={refs.errorCode}
-          title="에러 코드"
-          value={settings.errorCode}
-          onChange={(value) => handleSettingChange("errorCode", value as FileValue)}
-          onInfoClick={() => openModal("errorCode")}
-          onFocus={useCallback(() => handleItemFocus("errorCode"), [handleItemFocus])}
-        />
-
-        <SecuritySettingForm
-          ref={refs.securitySetting}
-          title="보안 설정"
-          value={settings.securitySetting}
-          onChange={(value) => handleSettingChange("securitySetting", value)}
-          onInfoClick={() => openModal("securitySetting")}
-          onFocus={useCallback(() => handleItemFocus("securitySetting"), [handleItemFocus])}
-        />
-
-        <CodeConventionForm
-          ref={refs.codeConvention}
-          title="코드 컨벤션"
-          value={settings.codeConvention}
-          onChange={(value) => handleSettingChange("codeConvention", value as FileValue)}
-          onInfoClick={() => openModal("codeConvention")}
-          onFocus={useCallback(() => handleItemFocus("codeConvention"), [handleItemFocus])}
-        />
-
-        <ArchitectureStructureForm
-          ref={refs.architectureStructure}
-          title="아키텍처 구조"
-          value={settings.architectureStructure}
-          onChange={(value) => {
-            console.log('=== ContentArea architectureStructure onChange ===');
-            console.log('ArchitectureStructureForm에서 받은 값:', value);
-            handleSettingChange("architectureStructure", value);
-          }}
-          onInfoClick={() => openModal("architectureStructure")}
-          onFocus={useCallback(() => handleItemFocus("architectureStructure"), [handleItemFocus])}
-        />
       </div>
 
       {modalOpen && <InfoModal title={modalOpen} description={descriptions[modalOpen]} onClose={closeModal} />}

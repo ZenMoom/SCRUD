@@ -1,7 +1,6 @@
 "use client"
 
 import { forwardRef, useEffect, useState } from "react"
-import { HelpCircle } from "lucide-react"
 import { useProjectTempStore } from "@/store/projectTempStore"
 
 interface FormItemProps {
@@ -135,7 +134,6 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
               onClick={onInfoClick}
               aria-label={`${title} 정보`}
             >
-              <HelpCircle size={20} />
             </button>
           )}
         </div>

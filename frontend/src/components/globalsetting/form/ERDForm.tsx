@@ -53,28 +53,25 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
       const isFromGithubAuth = params.get('from') === 'github-auth';
       const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
 
-      console.log('ERDForm - tempData 전체:', tempData);
-      console.log('ERDForm - auth 상태:', { isFromGithubAuth, isAuthPending });
-
+      
       if (isFromGithubAuth && isAuthPending && tempData.erd.length > 0) {
-        console.log('ERD 임시저장 데이터:', tempData.erd);
         onChange(tempData.erd as FileWithContent[]);
       }
     }, []);
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string; content: string }>) => {
-      console.log('ERDForm - GitHub 파일 변환 전:', files);
+
       if (files.length > 0) {
         const githubFiles = files.map((file) => ({
           name: file.path,
           content: file.content,
           isGitHub: true,
         }));
-        console.log('ERDForm - GitHub 파일 변환 후:', githubFiles);
+       
         onChange(githubFiles);
         setTempData({ erd: githubFiles });
-        console.log('ERDForm - setTempData 호출 후 상태:', tempData);
+        
       }
       setIsGitHubModalOpen(false);
     };

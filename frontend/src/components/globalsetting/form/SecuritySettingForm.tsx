@@ -1,7 +1,7 @@
 "use client"
 
 import { forwardRef, useState, useRef, useEffect } from "react"
-import { HelpCircle, Upload, Github, File } from "lucide-react"
+import { Upload, Github, File } from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
 import { useProjectTempStore } from "@/store/projectTempStore"
 import SecuritySelector from "./SecuritySelector"

@@ -27,8 +27,9 @@ export default function Header() {
     // 현재 경로가 canvas/{projectId}/{apiId} 패턴인지 확인
     const isCanvasRoute = pathname && /^\/canvas\/[^/]+\/[^/]+/.test(pathname);
     const isProjectApiRoute = pathname && /^\/project\/[^/]+\/api/.test(pathname);
-    // canvas 경로에서는 헤더를 표시하지 않음
-    setShowHeader(!isCanvasRoute && !isProjectApiRoute);
+    const isGlobalSettingRoute = pathname && /^\/globalsetting/.test(pathname);
+    // canvas, project/api, globalsetting 경로에서는 헤더를 표시하지 않음
+    setShowHeader(!isCanvasRoute && !isProjectApiRoute && !isGlobalSettingRoute);
   }, [pathname]);
 
   // 로그인 버튼 클릭 핸들러

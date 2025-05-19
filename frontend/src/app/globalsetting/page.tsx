@@ -8,6 +8,8 @@ import { useGitHubTokenStore } from "@/store/githubTokenStore"
 import { useProjectTempStore } from "@/store/projectTempStore"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useRef, useState, useCallback } from "react"
+import LoadingOverlay from "@/components/globalsetting/LoadingOverlay"
+import GlobalHeader from "@/components/header/globalheader"
 
 // 파일 객체 타입 정의
 interface FileWithContent {
@@ -38,7 +40,7 @@ interface ProjectSettings {
   errorCode: FileWithContent[];
   securitySetting: SelectionValue | FileWithContent[];
   codeConvention: FileWithContent[];
-  architectureStructure: SelectionValue;
+  architectureStructure: SelectionValue | FileWithContent[];
 }
 
 // 토큰 처리 컴포넌트
@@ -86,9 +88,9 @@ export default function GlobalSettingPage() {
     dependencyFile: [] as { name: string; content: string }[],
     utilityClass: [] as FileWithContent[],
     errorCode: [] as FileWithContent[],
-    securitySetting: [] as FileWithContent[],
+    securitySetting: { type: 'SECURITY_DEFAULT_JWT', label: 'JWT' },
     codeConvention: [] as FileWithContent[],
-    architectureStructure: { type: "ARCHITECTURE_DEFAULT_LAYERED_A", label: "ARCHITECTURE_DEFAULT_LAYERED_A" },
+    architectureStructure: { type: "ARCHITECTURE_DEFAULT_LAYERED_A", label: "레이어드 아키텍처 A" },
   })
 
   // 각 설정 항목의 완료 상태를 관리
@@ -128,6 +130,14 @@ export default function GlobalSettingPage() {
     codeConvention: useRef<HTMLDivElement>(null),
     architectureStructure: useRef<HTMLDivElement>(null),
   }
+
+  // architectureStructure 최신값을 위한 ref 선언
+  const architectureStructureRef = useRef(settings.architectureStructure);
+
+  // settings.architectureStructure가 바뀔 때마다 ref 갱신
+  useEffect(() => {
+    architectureStructureRef.current = settings.architectureStructure;
+  }, [settings.architectureStructure]);
 
   // 스크롤 이벤트를 감지하여 현재 보이는 항목을 활성화
   useEffect(() => {
@@ -172,6 +182,9 @@ export default function GlobalSettingPage() {
 
   // 설정 항목 값 변경 시 상태 업데이트
   const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[]) => {
+    if (key === 'architectureStructure') {
+      console.log('[GlobalSettingPage] handleSettingChange:', { key, value, type: typeof value, isArray: Array.isArray(value), valueContent: value });
+    }
     setSettings((prev) => {
       const newSettings = { ...prev };
       
@@ -200,6 +213,8 @@ export default function GlobalSettingPage() {
         case 'architectureStructure':
           if (isSelectionValue(value)) {
             newSettings.architectureStructure = value;
+          } else if (Array.isArray(value)) {
+            newSettings.architectureStructure = value as FileWithContent[];
           }
           break;
         case 'requirementSpec':
@@ -281,16 +296,25 @@ export default function GlobalSettingPage() {
       console.log('=== 의존성 파일 전송 데이터 ===');
       console.log('의존성 파일 타입:', typeof settings.dependencyFile);
       console.log('의존성 파일 값:', settings.dependencyFile);
+      // 아키텍처 구조 값 로깅 추가
+      console.log('=== 아키텍처 구조 전송 데이터 ===');
+      console.log('architectureStructure 타입:', typeof architectureStructureRef.current);
+      console.log('architectureStructure 값:', architectureStructureRef.current);
+      console.log('전송 직전 architectureStructure:', JSON.stringify(architectureStructureRef.current, null, 2));
       
       // Next.js API 라우트 호출
       console.log('API 라우트 호출 시작');
+      const payload = {
+        ...settings,
+        architectureStructure: architectureStructureRef.current,
+      };
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(payload)
       });
       
       console.log('함수 호출 함', `Bearer ${token}`);
@@ -337,15 +361,16 @@ export default function GlobalSettingPage() {
   }, [refs]);
 
   return (
-    <main className="p-4">
+    <main className="h-[100vh] bg-blue-50">
       {/* 토큰 처리 컴포넌트를 Suspense로 감싸서 사용 */}
       <Suspense fallback={null}>
         <TokenHandler />
       </Suspense>
       
-      <div className="flex flex-col h-[90vh] w-full bg-[#fafafa]">
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar completed={completed} activeItem={activeItem} onItemClick={handleItemClick} />
+      <GlobalHeader />
+      <div className="flex flex-col h-[90vh] w-full bg-blue-50">
+        <div className="flex flex-1 overflow-hidden p-2">
+          <Sidebar activeItem={activeItem} onItemClick={handleItemClick} />
           <ContentArea 
             settings={settings} 
             onSettingChange={handleSettingChange} 
@@ -360,6 +385,7 @@ export default function GlobalSettingPage() {
         )}
         <Floatingbutton isActive={isRequiredCompleted() && !isLoading} onClick={createProject} isLoading={isLoading} />
       </div>
+      <LoadingOverlay isVisible={isLoading} />
     </main>
   )
 }
