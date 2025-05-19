@@ -346,6 +346,7 @@ pathParameters, queryParameters, requestBody, response의 값은 객체가 아�
 모든 요구사항을 빼먹지말고 api 명세로 변경해줘
 """
 
+
 # 프롬프트 생성
 def build_prompt(data: GenerateRequest, format_instructions: str) -> str:
     return f"""
@@ -371,4 +372,3 @@ def build_prompt(data: GenerateRequest, format_instructions: str) -> str:
 ❗ JSON 안의 문자열은 반드시 쌍따옴표(")로 감싸야 하며, \n 없이 작성하세요.
 ❗ ```json 코드 블록 없이 순수 JSON만 반환하세요.
 """
-

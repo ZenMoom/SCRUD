@@ -3,7 +3,7 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 from app.api.dto.diagram_dto import DiagramResponse
-from app.core.services.chat_service import ChatService
+from app.core.services.chat_service_facade import ChatServiceFacade
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
 
 
@@ -17,7 +17,7 @@ class TestConvertDiagramResponseToDiagram:
         """
         테스트를 위한 ChatService 설정
         """
-        return ChatService(model_name="test_model")
+        return ChatServiceFacade(model_name="test_model")
 
     @pytest.fixture
     def diagram_response_fixture(self):

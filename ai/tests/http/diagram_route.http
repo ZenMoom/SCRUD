@@ -4,13 +4,15 @@
 
 @baseUrl = http://localhost:8080
 @projectId = 1
-@apiId = 1
+@apiId = 3003
 @versionId = 1
-@componentId = 8e43d0dd-f51b-4cdd-9204-6bc1f0f093ed
+@componentId = 0a6860de-9ded-46b8-a8b7-1f5f2058f958
 
 ### 1. 새 다이어그램 생성 테스트
 POST {{baseUrl}}/api/v1/projects/{{projectId}}/apis/{{apiId}}/diagrams
+Authorization: Bearer Admin
 Content-Type: application/json
+
 
 ### 2. 특정 버전의 다이어그램 조회 테스트
 GET {{baseUrl}}/api/v1/projects/{{projectId}}/apis/{{apiId}}/versions/{{versionId}}
