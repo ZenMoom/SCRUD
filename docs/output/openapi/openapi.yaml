@@ -1294,6 +1294,24 @@ paths:
       summary: 게시글 추천/비추천
       tags:
       - Post
+  /api/v1/posts/{postId}/status:
+    patch:
+      operationId: updatePostStatus
+      parameters:
+      - in: path
+        name: postId
+        required: true
+        schema:
+          format: int64
+          type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/UpdatePostStatusRequest'
+      responses:
+        "200":
+          description: 성공적으로 처리되었습니다
+      summary: 게시글 상태 변경
+      tags:
+      - Post
   /api/v1/posts/{postId}/comments:
     get:
       operationId: getCommentList
@@ -1673,6 +1691,13 @@ components:
           schema:
             $ref: '#/components/schemas/PostVoteRequest'
       description: 게시글 추천/비추천 요청입니다.
+      required: true
+    UpdatePostStatusRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdatePostStatusRequest'
+      description: 게시글 상태를 변경합니다.
       required: true
     CreateCommentRequest:
       content:
@@ -3375,6 +3400,7 @@ components:
           title: 게시글 제목
           category: 공지
           commentCount: 5
+          status: PENDING
         - createdAt: 2000-01-23T04:56:07.000+00:00
           dislikeCount: 1
           likeCount: 10
@@ -3383,6 +3409,7 @@ components:
           title: 게시글 제목
           category: 공지
           commentCount: 5
+          status: PENDING
       properties:
         content:
           items:
@@ -3401,6 +3428,7 @@ components:
         title: 게시글 제목
         category: 공지
         commentCount: 5
+        status: PENDING
       properties:
         postId:
           example: 101
@@ -3431,7 +3459,18 @@ components:
           example: 5
           format: int64
           type: integer
+        status:
+          $ref: '#/components/schemas/PostStatusEnumDto'
       type: object
+    PostStatusEnumDto:
+      description: "게시글 상태 (대기, 검토 중, 진행 중, 완료, 거부)"
+      enum:
+      - PENDING
+      - REVIEWING
+      - IN_PROGRESS
+      - COMPLETED
+      - REJECTED
+      type: string
     CreatePostResponse:
       example:
         postId: 101
@@ -3443,8 +3482,8 @@ components:
       type: object
     PostDetailResponse:
       example:
-        createdAt: 2000-01-23T04:56:07.000+00:00
         author:
+          role: USER
           profileImgUrl: https://example.com/profile.jpg
           nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
@@ -3453,12 +3492,14 @@ components:
         isUpdated: true
         likeCount: 10
         postId: 101
-        viewCount: 123
         title: 상세 게시글 제목
-        category: 공지
         content: 상세 게시글 내용입니다.
-        updatedAt: 2000-01-23T04:56:07.000+00:00
         commentCount: 5
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        viewCount: 123
+        category: 공지
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+        status: PENDING
       properties:
         postId:
           example: 101
@@ -3497,6 +3538,8 @@ components:
         isUpdated:
           example: true
           type: boolean
+        status:
+          $ref: '#/components/schemas/PostStatusEnumDto'
         author:
           $ref: '#/components/schemas/UserResponse'
       type: object
@@ -3519,6 +3562,7 @@ components:
         content:
         - createdAt: 2000-01-23T04:56:07.000+00:00
           author:
+            role: USER
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
@@ -3533,6 +3577,7 @@ components:
           updatedAt: 2000-01-23T04:56:07.000+00:00
         - createdAt: 2000-01-23T04:56:07.000+00:00
           author:
+            role: USER
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
@@ -3555,6 +3600,7 @@ components:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
         author:
+          role: USER
           profileImgUrl: https://example.com/profile.jpg
           nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
@@ -3796,6 +3842,15 @@ components:
       required:
       - isLike
       type: object
+    UpdatePostStatusRequest:
+      example:
+        status: PENDING
+      properties:
+        status:
+          $ref: '#/components/schemas/PostStatusEnumDto'
+      required:
+      - status
+      type: object
     CreateCommentRequest:
       example:
         parentCommentId: 123
@@ -3858,6 +3913,7 @@ components:
       type: object
     UserResponse:
       example:
+        role: USER
         profileImgUrl: https://example.com/profile.jpg
         nickname: john_doe
         userId: 550e8400-e29b-41d4-a716-446655440000
@@ -3872,6 +3928,12 @@ components:
           type: string
         username:
           example: Jaasdfas@fasdf.com
+          type: string
+        role:
+          enum:
+          - USER
+          - ADMIN
+          example: USER
           type: string
         profileImgUrl:
           example: https://example.com/profile.jpg
