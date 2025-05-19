@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any
@@ -5,7 +6,6 @@ from typing import Optional, Dict, Any
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram
 from app.infrastructure.mongodb.repository.mongo_repository_impl import MongoRepositoryImpl
-import logging
 
 
 class DiagramRepositoryImpl(DiagramRepository):
@@ -73,10 +73,10 @@ class DiagramRepositoryImpl(DiagramRepository):
     async def save(self, diagram: Diagram) -> Diagram:
         """
         다이어그램을 저장합니다. 기존 다이어그램이 있으면 업데이트하고, 없으면 새로 생성합니다.
-
+        
         Args:
             diagram: 저장할 다이어그램 객체
-
+        
         Returns:
             Diagram: 저장된 다이어그램 객체
         """
@@ -94,25 +94,18 @@ class DiagramRepositoryImpl(DiagramRepository):
             if "_id" in update_dict:
                 del update_dict["_id"]
 
+            self.logger.info(f"다이어그램 업데이트 중: diagramId={diagram.diagramId}, 필터={filter_dict}")
             await self.repository.update_one(filter_dict, {"$set": update_dict})
+            self.logger.info(f"다이어그램이 성공적으로 업데이트되었습니다: diagramId={diagram.diagramId}")
             return diagram
-        else:
-            # 새로운 다이어그램 생성
-            if not diagram.diagramId:
-                diagram.diagramId = str(uuid.uuid4())
 
-            # 메타데이터 ID가 없으면 생성
-            if not diagram.metadata.metadataId:
-                diagram.metadata.metadataId = str(uuid.uuid4())
-
-            # 최종 수정 일시 업데이트
-            diagram.metadata.lastModified = datetime.utcnow()
-
-            await self.repository.insert_one(diagram)
-            return diagram
+        self.logger.info(f"새 다이어그램 삽입 중: diagramId={diagram.diagramId}")
+        await self.repository.insert_one(diagram)
+        self.logger.info(f"다이어그램이 성공적으로 삽입되었습니다: diagramId={diagram.diagramId}")
+        return diagram
 
     async def update_component_position(self, project_id: str, api_id: str, component_id: str, x: float, y: float) -> \
-    Optional[Diagram]:
+            Optional[Diagram]:
         """
         특정 컴포넌트의 위치를 업데이트합니다.
 
@@ -215,10 +208,15 @@ class DiagramRepositoryImpl(DiagramRepository):
                 }
             }
         }
-        
+
         # 버전 번호를 기준으로 내림차순 정렬하여 최신 버전을 먼저 찾음
         diagram: Diagram = await self.repository.find_one(filter_dict)
+
+        # 만약 diagram이 None이라면 예외 발생
+        if diagram is None:
+            raise ValueError(f"다이어그램을 찾을 수 없습니다: projectId={project_id}, apiId={api_id}, methodId={method_id}")
+
         self.logger.info(f"다이어그램 발견: {diagram.diagramId}")
-        
+
         # 쿼리 실행 및 결과 반환
         return diagram

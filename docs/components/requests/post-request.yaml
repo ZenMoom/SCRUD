@@ -23,6 +23,14 @@ PostVoteRequest:
       schema:
         $ref: '../schemas/post-schema.yaml#/PostVoteRequest'
 
+UpdatePostStatusRequest:
+  description: 게시글 상태를 변경합니다.
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/post-schema.yaml#/UpdatePostStatusRequest'
+
 ######## end of requestBody #######
 
 ####### params #######

@@ -21,7 +21,7 @@ class SSEService:
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self):
         """
         SSEService 초기화
 
@@ -32,7 +32,7 @@ class SSEService:
         if getattr(self, '_initialized', False):
             return
 
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
         self._initialized = True
         self.logger.info("SSEService 시작")
 
@@ -76,6 +76,12 @@ class SSEService:
         if stream_id in SSEService._sse_clients:
             self.logger.info(f"SSE 스트림 제거: stream_id={stream_id}")
             del SSEService._sse_clients[stream_id]
+
+    async def send_version_event(self, version_id: str, response_queue: asyncio.Queue) -> None:
+        """버전 생성 이벤트를 전송하는 함수"""
+        event = f"data: {json.dumps({'token': {'newVersionId': version_id}})}\n\n"
+        response_queue.put_nowait(event)
+        self.logger.info(f"생성 이벤트 발송: {event}")
 
     async def send_progress(self, response_queue: asyncio.Queue, message: str) -> None:
         """

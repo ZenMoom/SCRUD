@@ -1,5 +1,6 @@
 package com.barcoder.scrud.user.application.dto.out;
 
+import com.barcoder.scrud.user.domain.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,5 +20,6 @@ public class UserOut {
     private String username;
     private String nickname;
     private String profileImgUrl;
+    private UserRole role;
     private boolean isGithubConnected;
 }

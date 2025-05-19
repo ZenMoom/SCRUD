@@ -2,10 +2,13 @@ package com.barcoder.scrud.post.domain.entity;
 
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
 import com.barcoder.scrud.global.config.generator.SnowflakeId;
+import com.barcoder.scrud.post.domain.enums.PostStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -63,6 +66,11 @@ public class Post extends BaseTimeEntity {
 
     @Column(nullable = false)
     @Builder.Default
+    @Enumerated(EnumType.STRING)
+    private PostStatus status = PostStatus.PENDING;
+
+    @Column(nullable = false)
+    @Builder.Default
     private Boolean isUpdated = false;
 
     @JsonIgnore
@@ -76,6 +84,11 @@ public class Post extends BaseTimeEntity {
     // 조회수 증가
     public void addPostViewCount() {
         this.viewCount++;
+    }
+
+    // 댓글 수 증가
+    public void addCommentCount() {
+        this.commentCount++;
     }
 
     // 제목 변경
@@ -111,5 +124,10 @@ public class Post extends BaseTimeEntity {
         } else {
             this.dislikeCount++;
         }
+    }
+
+    // 상태 변경
+    public void changeStatus(PostStatus status) {
+        this.status = status;
     }
 }
