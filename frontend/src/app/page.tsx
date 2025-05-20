@@ -191,12 +191,12 @@ function HomeContent() {
   const { login, isAuthenticated, user } = useAuthStore()
 
   // 프로젝트 데이터 상태
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
   // 삭제 확인 모달 상태
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   // 구글 OAuth 콜백 처리
   useEffect(() => {
@@ -257,32 +257,27 @@ function HomeContent() {
 
   // 프로젝트 삭제 처리
   const handleDeleteProject = (id: string) => {
-    setDeleteTargetId(id);
-    setDeleteModalOpen(true);
-  };
+    setDeleteTargetId(id)
+    setDeleteModalOpen(true)
+  }
 
   const confirmDeleteProject = async () => {
-    if (!deleteTargetId) return;
+    if (!deleteTargetId) return
     try {
-      await deleteProject(deleteTargetId);
-      setProjects(projects.filter((p) => p.id !== deleteTargetId));
+      await deleteProject(deleteTargetId)
+      setProjects(projects.filter((p) => p.id !== deleteTargetId))
     } catch (err: Error | unknown) {
-      console.error("프로젝트 삭제 오류:", err);
+      console.error("프로젝트 삭제 오류:", err)
       // 삭제 실패 시 별도 알림 없이 콘솔만
     } finally {
-      setDeleteModalOpen(false);
-      setDeleteTargetId(null);
+      setDeleteModalOpen(false)
+      setDeleteTargetId(null)
     }
-  };
+  }
 
   const cancelDeleteProject = () => {
-    setDeleteModalOpen(false);
-    setDeleteTargetId(null);
-  };
-
-  // 인증되지 않은 경우 아무것도 렌더링하지 않음 (로그인 페이지로 리다이렉트될 때까지)
-  if (!isAuthenticated) {
-    return null;
+    setDeleteModalOpen(false)
+    setDeleteTargetId(null)
   }
 
   // 로그인 페이지로 이동하는 함수
@@ -354,29 +349,29 @@ function HomeContent() {
         </div>
       )}
       {/* 삭제 확인 모달 */}
-        {deleteModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div className="absolute inset-0 bg-black opacity-40 z-0" />
-            <div className="bg-white p-8 rounded-lg shadow-lg z-10 w-[350px]">
-              <h2 className="text-lg font-semibold mb-4">프로젝트 삭제</h2>
-              <p className="mb-6 text-gray-700">정말로 이 프로젝트를 삭제하시겠습니까?</p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={cancelDeleteProject}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={confirmDeleteProject}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                  삭제
-                </button>
-              </div>
+      {deleteModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black opacity-40 z-0" />
+          <div className="bg-white p-8 rounded-lg shadow-lg z-10 w-[350px]">
+            <h2 className="text-lg font-semibold mb-4">프로젝트 삭제</h2>
+            <p className="mb-6 text-gray-700">정말로 이 프로젝트를 삭제하시겠습니까?</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={cancelDeleteProject}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmDeleteProject}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              >
+                삭제
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   )
 }
