@@ -3569,6 +3569,7 @@ components:
       example:
         content:
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          isDeleted: false
           author:
             role: USER
             profileImgUrl: https://example.com/profile.jpg
@@ -3578,12 +3579,14 @@ components:
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
+          isUpdated: true
           likeCount: 3
-          isEdited: true
           postId: 5
+          userVote: LIKE
           content: 댓글 내용입니다.
           updatedAt: 2000-01-23T04:56:07.000+00:00
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          isDeleted: false
           author:
             role: USER
             profileImgUrl: https://example.com/profile.jpg
@@ -3593,9 +3596,10 @@ components:
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
+          isUpdated: true
           likeCount: 3
-          isEdited: true
           postId: 5
+          userVote: LIKE
           content: 댓글 내용입니다.
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -3607,6 +3611,7 @@ components:
     CommentResponse:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
+        isDeleted: false
         author:
           role: USER
           profileImgUrl: https://example.com/profile.jpg
@@ -3616,9 +3621,10 @@ components:
         dislikeCount: 1
         commentId: 101
         parentCommentId: 12
+        isUpdated: true
         likeCount: 3
-        isEdited: true
         postId: 5
+        userVote: LIKE
         content: 댓글 내용입니다.
         updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -3645,8 +3651,18 @@ components:
           example: 1
           format: int64
           type: integer
-        isEdited:
+        userVote:
+          enum:
+          - LIKE
+          - DISLIKE
+          - NONE
+          example: LIKE
+          type: string
+        isUpdated:
           example: true
+          type: boolean
+        isDeleted:
+          example: false
           type: boolean
         createdAt:
           format: date-time
