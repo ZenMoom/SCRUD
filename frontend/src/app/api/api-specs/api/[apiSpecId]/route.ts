@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ a
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: authToken,
+              Authorization: `Bearer ${authToken}`,
             }
           : undefined,
       },
