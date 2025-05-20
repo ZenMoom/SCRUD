@@ -107,7 +107,7 @@ class DiagramService:
             components: List[ComponentChainPayload],
             dtos: List[DtoModelChainPayload],
             connections: List[ConnectionChainPayload],
-            summary: str,
+            summary: Optional[str] = "최초 생성",
     ) -> Diagram:
         """프롬프트 결과로부터 다이어그램 생성
 
