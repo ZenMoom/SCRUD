@@ -9,3 +9,7 @@ dayjs.locale('ko'); // 한국어 locale
 dayjs.tz.setDefault('Asia/Seoul'); // 서울 시간대 기본 설정
 
 export default dayjs;
+
+export const formatToKST = (utcString: string) => {
+  return dayjs.utc(utcString).add(9, 'hour').format('YYYY-MM-DD HH:mm:ss');
+};
