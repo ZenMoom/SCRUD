@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ api
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `${authToken}`,
             }
           : undefined,
       },
@@ -68,7 +68,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `${authToken}`,
             }
           : undefined,
       },
