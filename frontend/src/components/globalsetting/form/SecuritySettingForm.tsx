@@ -50,6 +50,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
     const [isFileMode, setIsFileMode] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
+    const [fileError, setFileError] = useState<string>("")
 
     const { tempData, setTempData } = useProjectTempStore();
 
@@ -145,18 +146,33 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
       }
     };
 
+    // 텍스트 파일인지 확인하는 함수
+    const isTextFile = (filename: string): boolean => {
+      const textExtensions = [
+        '.txt', '.md', '.json', '.yml', '.yaml', '.xml', '.html', '.css', '.js', 
+        '.ts', '.jsx', '.tsx', '.java', '.py', '.c', '.cpp', '.h', '.cs', '.php',
+        '.rb', '.go', '.rs', '.sh', '.bat', '.ps1', '.sql', '.properties', '.conf',
+        '.ini', '.env', '.gitignore', '.gradle', '.pom', '.lock', 'Dockerfile'
+      ];
+      return textExtensions.some(ext => filename.endsWith(ext));
+    };
+
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
       setDragActive(false);
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0];
+        if (!isTextFile(file.name)) {
+          setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
+          return;
+        }
+        setFileError("");
         const content = await file.text();
         const fileWithContent = {
           name: file.name,
           content: content,
         };
-
         const updatedFiles = [fileWithContent];
         setSelectedFiles(updatedFiles);
         onChange(updatedFiles);
@@ -301,12 +317,16 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
               onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                 if (e.target.files && e.target.files[0]) {
                   const file = e.target.files[0];
+                  if (!isTextFile(file.name)) {
+                    setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
+                    return;
+                  }
+                  setFileError("");
                   const content = await file.text();
                   const fileWithContent = {
                     name: file.name,
                     content: content,
                   };
-
                   const updatedFiles = [fileWithContent];
                   setSelectedFiles(updatedFiles);
                   onChange(updatedFiles);
@@ -319,6 +339,10 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                 }
               }}
             />
+
+            {fileError && (
+              <div className="mt-2 text-xs text-red-500">{fileError}</div>
+            )}
 
             {/* 선택된 파일 표시 */}
             {selectedFiles.length > 0 && (

@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
           } else if (architectureValue.type && architectureValue.type.startsWith('ARCHITECTURE_DEFAULT_')) {
 
-        
+            
             globalFiles.push({
               fileName: `${architectureValue.type}`,
               fileType: architectureValue.type,

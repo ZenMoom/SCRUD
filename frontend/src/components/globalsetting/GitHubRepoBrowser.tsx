@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGitHubTokenStore } from '@/store/githubTokenStore';
 import { Folder, File as FileIcon, Github, ChevronLeft, Check } from 'lucide-react';
 import { getGitHubAuthUrl } from '@/auth/github';
-import { useProjectTempStore } from '@/store/projectTempStore';
 
 // 레포지토리 타입 정의
 interface Repository {
@@ -46,7 +45,6 @@ interface SelectedItem {
 
 const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, onSelect, isArchitecture = false, formType }) => {
   const { githubToken } = useGitHubTokenStore();
-  const { setTempData } = useProjectTempStore();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
   const [contents, setContents] = useState<ContentItem[]>([]);

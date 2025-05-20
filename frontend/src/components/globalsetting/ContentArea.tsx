@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback } from "react"
+import {useCallback } from "react"
 import FormItem from "./Form"
-import InfoModal from "./InfoModal"
 import RequirementSpecForm from "./form/RequirementSpecForm"
 import ERDForm from "./form/ERDForm"
 import DependencyFileForm from "./form/DependencyFileForm"
@@ -69,7 +68,6 @@ interface ContentAreaProps {
 }
 
 export default function ContentArea({ settings, onSettingChange, refs, setActiveItem }: ContentAreaProps) {
-  const [modalOpen, setModalOpen] = useState<string | null>(null)
 
   // 의존성 선택 핸들러
   const handleDependencySelect = (file: DependencyFile) => {
@@ -81,32 +79,10 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
     onSettingChange("dependencyFile", [file]);
   };
 
-  const openModal = (key: string) => {
-    setModalOpen(key)
-  }
-
-  const closeModal = () => {
-    setModalOpen(null)
-  }
 
   // 필수 항목 구분
   const requiredFields = ['title', 'description', 'serverUrl', 'requirementSpec', 'erd'];
   const isRequired = (field: string) => requiredFields.includes(field);
-
-  // 각 설정 항목에 대한 설명
-  const descriptions: Record<string, string> = {
-    title: "프로젝트의 이름을 입력하세요.",
-    description: "프로젝트에 대한 간략한 설명을 입력하세요.",
-    serverUrl: "서버의 URL을 입력하세요.",
-    requirementSpec: "요구사항 명세서 파일을 업로드하세요",
-    erd: "ERD(Entity Relationship Diagram) 파일을 업로드하세요.",
-    dependencyFile: "의존성 파일을 업로드하거나 Spring 의존성 목록에서 선택하세요.",
-    utilityClass: "유틸리티 클래스 정보를 업로드하거나 GitHub에서 가져오세요.",
-    errorCode: "에러 코드 정의 파일을 업로드하거나 GitHub에서 가져오세요.",
-    securitySetting: "보안 설정에 관한 정보를 선택하거나 GitHub에서 가져오세요.",
-    codeConvention: "코드 컨벤션 파일을 업로드하거나 GitHub에서 가져오세요.",
-    architectureStructure: "아키텍처 구조를 선택하거나 GitHub에서 가져오세요.",
-  }
 
   // 각 설정 항목의 입력 타입
   const inputTypes: Record<string, 'text' | 'textarea'> = {
@@ -271,7 +247,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
         </div>
       </div>
 
-      {modalOpen && <InfoModal title={modalOpen} description={descriptions[modalOpen]} onClose={closeModal} />}
     </div>
   )
 }

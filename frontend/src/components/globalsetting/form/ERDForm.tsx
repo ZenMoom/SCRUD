@@ -26,6 +26,7 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
+    const [fileError, setFileError] = useState<string>("");
 
     const { tempData, setTempData } = useProjectTempStore();
 
@@ -86,18 +87,33 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
       }
     };
 
+    // 텍스트 파일인지 확인하는 함수
+    const isTextFile = (filename: string): boolean => {
+      const textExtensions = [
+        '.txt', '.md', '.json', '.yml', '.yaml', '.xml', '.html', '.css', '.js', 
+        '.ts', '.jsx', '.tsx', '.java', '.py', '.c', '.cpp', '.h', '.cs', '.php',
+        '.rb', '.go', '.rs', '.sh', '.bat', '.ps1', '.sql', '.properties', '.conf',
+        '.ini', '.env', '.gitignore', '.gradle', '.pom', '.lock', 'Dockerfile'
+      ];
+      return textExtensions.some(ext => filename.endsWith(ext));
+    };
+
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
       setDragActive(false);
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0];
+        if (!isTextFile(file.name)) {
+          setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
+          return;
+        }
+        setFileError("");
         const content = await file.text();
         const fileWithContent = {
           name: file.name,
           content: content,
         };
-
         let newFiles: FileWithContent[];
         if (Array.isArray(value)) {
           newFiles = [...value, fileWithContent];
@@ -218,6 +234,12 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
             onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
               if (e.target.files && e.target.files.length > 0) {
                 const filesArray = Array.from(e.target.files);
+                const invalid = filesArray.find(file => !isTextFile(file.name));
+                if (invalid) {
+                  setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
+                  return;
+                }
+                setFileError("");
                 const filePromises = filesArray.map(async (file) => {
                   const content = await file.text();
                   return {
@@ -225,7 +247,6 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
                     content,
                   };
                 });
-
                 const filesWithContent = await Promise.all(filePromises);
                 let newFiles: FileWithContent[];
                 if (Array.isArray(value)) {
@@ -239,6 +260,10 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
             }}
             multiple
           />
+
+          {fileError && (
+            <div className="mt-2 text-xs text-red-500">{fileError}</div>
+          )}
 
           {/* 선택된 파일 표시 */}
           {Array.isArray(value) && value.length > 0 && (
