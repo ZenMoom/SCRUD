@@ -37,6 +37,7 @@ spring:
       hibernate:
         jdbc:
           time_zone: Asia/Seoul
+          batch_size: 50
         format_sql: ${SPRING_JPA_SHOW_SQL}
         dialect: org.hibernate.dialect.MySQL8Dialect
     hibernate:
