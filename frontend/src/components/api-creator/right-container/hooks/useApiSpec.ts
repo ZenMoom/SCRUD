@@ -85,8 +85,7 @@ export const useApiSpec = ({
           // 유효한 JSON인지 확인
           JSON.parse(rawBody)
           requestBodyJson = rawBody
-        } catch (err) {
-          console.error("JSON 형식이 올바르지 않습니다.", err)
+        } catch {
           alert("요청 본문의 JSON 형식이 올바르지 않습니다. 확인 후 다시 시도해주세요.")
           setIsLoading(false)
           return
@@ -108,8 +107,7 @@ export const useApiSpec = ({
           // 유효한 JSON인지 확인
           JSON.parse(pathParamsJson)
           pathParametersJson = pathParamsJson
-        } catch (err) {
-          console.error("경로 파라미터 JSON 형식이 올바르지 않습니다.", err)
+        } catch {
           alert("경로 파라미터의 JSON 형식이 올바르지 않습니다. 확인 후 다시 시도해주세요.")
           setIsLoading(false)
           return
@@ -123,8 +121,7 @@ export const useApiSpec = ({
           // 유효한 JSON인지 확인
           JSON.parse(queryParamsJson)
           queryParametersJson = queryParamsJson
-        } catch (err) {
-          console.error("쿼리 파라미터 JSON 형식이 올바르지 않습니다.", err)
+        } catch {
           alert("쿼리 파라미터의 JSON 형식이 올바르지 않습니다. 확인 후 다시 시도해주세요.")
           setIsLoading(false)
           return
@@ -138,8 +135,7 @@ export const useApiSpec = ({
           // 유효한 JSON인지 확인
           JSON.parse(responseJson)
           responseJsonValue = responseJson
-        } catch (err) {
-          console.error("응답 JSON 형식이 올바르지 않습니다.", err)
+        } catch {
           alert("응답 예시의 JSON 형식이 올바르지 않습니다. 확인 후 다시 시도해주세요.")
           setIsLoading(false)
           return
@@ -263,16 +259,8 @@ export const useApiSpec = ({
       await fetchApiSpecsByProject(scrudProjectId)
       onApiSpecChanged()
     } catch (error) {
-      console.error("API 생성/수정 오류:", error)
-
       // Axios 에러에서 더 자세한 정보 추출
       if (axios.isAxiosError(error) && error.response) {
-        console.error("상세 오류 정보:", {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data,
-        })
-
         setApiResponse({
           status: error.response.status,
           error: error.response.data?.error || "API 생성/수정 중 오류가 발생했습니다.",
@@ -305,13 +293,8 @@ export const useApiSpec = ({
 
     setIsLoading(true)
     try {
-      // 헤더에 Bearer 토큰 추가
-      const headers = {
-        Authorization: token ? `Bearer ${token}` : "",
-      }
-
       // API 스펙 삭제 요청 (Next.js API 라우트로 요청)
-      const response = await axios.delete(`/api/api-specs/${apiSpecVersionId}`, { headers })
+      const response = await axios.delete(`/api/api-specs/${apiSpecVersionId}`)
 
       setApiResponse({
         status: response.status,
@@ -335,7 +318,6 @@ export const useApiSpec = ({
       // 성공 메시지
       showSuccessNotification(`API가 성공적으로 삭제되었습니다.`)
     } catch (error) {
-      console.error("API 삭제 오류:", error)
       const err = error as Error | AxiosError
 
       if (axios.isAxiosError(err) && err.response) {

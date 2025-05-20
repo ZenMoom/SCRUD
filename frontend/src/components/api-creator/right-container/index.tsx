@@ -84,8 +84,8 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         setApiSpecsList(specsList)
 
         return specsList
-      } catch (error) {
-        console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
+      } catch {
+        alert("API 스펙 목록을 가져오는 중 오류가 발생했습니다.")
         return []
       } finally {
         setIsLoading(false)
@@ -132,18 +132,8 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
       })
       setApiStatus(status)
       return response.data
-    } catch (error) {
-      console.error("API 상태 변경 실패:", error)
-
-      if (axios.isAxiosError(error)) {
-        console.error("상태 코드:", error.response?.status)
-        console.error("응답 데이터:", error.response?.data)
-        console.error("요청 URL:", error.config?.url)
-        console.error("요청 메서드:", error.config?.method)
-        console.error("요청 데이터:", error.config?.data)
-      }
-
-      throw error
+    } catch {
+      alert("API 상태를 변경하는 중 오류가 발생했습니다.")
     }
   }
 
@@ -174,22 +164,15 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
 
         // 성공 메시지
         showSuccessNotification("다이어그램이 성공적으로 생성되었습니다.")
-      } catch (statusError) {
-        console.error("API 상태 변경 실패:", statusError)
+      } catch {
+        alert("API 상태 변경 중 오류가 발생했습니다.")
         showWarningNotification("다이어그램은 생성되었지만 API 상태 변경에 실패했습니다.")
       }
 
       // 목록 새로고침
       onApiSpecChanged()
-    } catch (error) {
-      console.error("다이어그램 생성 오류:", error)
-
-      // Axios 에러에서 더 자세한 정보 추출
-      if (axios.isAxiosError(error) && error.response) {
-        showErrorNotification(`다이어그램 생성 실패: ${error.response.data?.error || "알 수 없는 오류"}`)
-      } else {
-        showErrorNotification(`다이어그램 생성 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}`)
-      }
+    } catch {
+      alert("다이어그램 생성 중 오류가 발생했습니다.")
     } finally {
       setIsCreatingDiagram(false)
     }
@@ -282,7 +265,7 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   // 프로젝트 ID가 변경될 때 API 스펙 목록 가져오기
   useEffect(() => {
     if (scrudProjectId > 0) {
-      fetchApiSpecsByProject(scrudProjectId).catch((err) => console.error(`프로젝트 ${scrudProjectId}의 API 스펙 목록 조회 오류:`, err))
+      fetchApiSpecsByProject(scrudProjectId).catch(() => alert("API 스펙 목록을 가져오는 중 오류가 발생했습니다."))
     }
   }, [scrudProjectId, fetchApiSpecsByProject])
 
@@ -358,8 +341,8 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
     try {
       const parsed = JSON.parse(jsonStr)
       setter(JSON.stringify(parsed, null, 2))
-    } catch (err) {
-      console.error("JSON 형식이 올바르지 않습니다.", err)
+    } catch {
+      alert("유효하지 않은 JSON 형식입니다.")
     }
   }
 
