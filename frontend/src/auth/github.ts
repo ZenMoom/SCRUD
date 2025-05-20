@@ -3,6 +3,7 @@
  */
 import axios from "axios"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
+import useAuthStore from '@/app/store/useAuthStore';
 
 // 백엔드 API 기본 URL
 
@@ -16,7 +17,8 @@ const REDIRECT_URL = process.env.NEXT_PUBLIC_REDIRECT_URI
  */
 
 export function getGitHubAuthUrl(redirectUri: string = `${REDIRECT_URL}/globalsetting`): string {
-  return `${GITHUB_AUTH_URL}/oauth2/authorize/github?redirect_uri=${encodeURIComponent(redirectUri)}`
+  const user = useAuthStore.getState().user;
+  return `${GITHUB_AUTH_URL}/oauth2/authorize/github?login_id=${encodeURIComponent(user?.loginId??'')}&redirect_uri=${encodeURIComponent(redirectUri)}`
 }
 
 /**

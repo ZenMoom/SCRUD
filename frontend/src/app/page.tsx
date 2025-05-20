@@ -212,6 +212,7 @@ function HomeContent() {
         username: loginId,
         profileImgUrl: profileImg || undefined,
         role: role || "USER",
+        loginId: loginId
       })
 
       // 페이지 새로고침 없이 URL에서 쿼리 파라미터 제거
