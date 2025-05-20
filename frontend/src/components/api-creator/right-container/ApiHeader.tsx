@@ -48,7 +48,6 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
     window.alert = (message) => {
       // 다이어그램 완료 관련 메시지인 경우 무시 (필요에 따라 메시지 내용 확인)
       if (message && typeof message === "string" && (message.includes("완료") || message.includes("성공") || message.includes("도식화") || message.includes("diagram"))) {
-        console.log("기본 alert 차단됨:", message)
         return
       }
 

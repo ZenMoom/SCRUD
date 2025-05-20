@@ -33,8 +33,6 @@ interface RightContainerProps {
 }
 
 export default function RightContainer({ selectedApi, selectedMethod, scrudProjectId, onApiSpecChanged }: RightContainerProps) {
-  console.log("RightContainer 렌더링 - 받은 scrudProjectId:", scrudProjectId)
-
   // useAuthStore를 컴포넌트 최상위 레벨에서 호출
   const { token } = useAuthStore()
 
@@ -72,7 +70,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   // API 스펙 목록 조회 함수
   const fetchApiSpecsByProject = useCallback(
     async (projectId: number): Promise<ApiSpecVersionResponse[]> => {
-      console.log("fetchApiSpecsByProject 호출됨 - projectId:", projectId)
       setIsLoading(true)
       try {
         // 백엔드에서 API 스펙 목록 조회 - 토큰을 콜백 밖에서 가져온 것 사용
@@ -84,7 +81,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
 
         // 응답 처리
         const specsList = response.data.content || []
-        console.log(`프로젝트 ${projectId}의 API 스펙 목록:`, specsList)
         setApiSpecsList(specsList)
 
         return specsList
@@ -130,14 +126,10 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
   // API 상태 변경 함수
   const updateApiStatus = async (projectId: string | number, apiId: string | number, status: ApiProcessStateEnumDto) => {
     try {
-      console.log(`API 상태 변경 시도: projectId=${projectId}, apiId=${apiId}, status=${status}`)
-
       // 새로운 코드 (api-specs/api 엔드포인트 사용)
       const response = await axios.patch(`/api/api-specs/api/${apiId}`, {
         apiSpecStatus: status,
       })
-
-      console.log("API 상태 변경 성공:", response.data)
       setApiStatus(status)
       return response.data
     } catch (error) {
@@ -167,21 +159,7 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
     setDiagramStep("다이어그램 생성 준비 중...")
 
     try {
-      // 다이어그램 생성 API 호출
-      console.log(`다이어그램 생성 시도: projectId=${scrudProjectId}, apiId=${apiSpecVersionId}`)
-
-      const response = await axios.post<DiagramResponse>(
-        `/api/canvas/${scrudProjectId}/${apiSpecVersionId}`,
-        {}, // 요청 본문 (필요한 경우)
-        {
-          headers: {
-            Authorization: token, // 인증 토큰 헤더에 추가
-          },
-        }
-      )
-      // 응답 처리
-      const diagramData = response.data
-      console.log("다이어그램 생성 성공:", diagramData)
+      await axios.post<DiagramResponse>(`/api/canvas/${scrudProjectId}/${apiSpecVersionId}`)
 
       // 다이어그램 생성 완료 표시
       setDiagramProgress(100)
@@ -189,7 +167,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
 
       try {
         // API 상태 변경 (AI_GENERATED -> AI_VISUALIZED)
-        // 상태 변경 전에 잠시 대기 (서버 처리 시간 고려)
         await new Promise((resolve) => setTimeout(resolve, 500))
 
         // 수정된 API 상태 변경 함수 호출
@@ -204,11 +181,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
 
       // 목록 새로고침
       onApiSpecChanged()
-
-      // 자동 페이지 이동 제거 - 사용자가 직접 버튼을 클릭하도록 함
-      // setTimeout(() => {
-      //   router.push(`/canvas/${scrudProjectId}/${apiSpecVersionId}`)
-      // }, 1000)
     } catch (error) {
       console.error("다이어그램 생성 오류:", error)
 
@@ -309,7 +281,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
 
   // 프로젝트 ID가 변경될 때 API 스펙 목록 가져오기
   useEffect(() => {
-    console.log("RightContainer - 프로젝트 ID 변경 useEffect 실행:", scrudProjectId)
     if (scrudProjectId > 0) {
       fetchApiSpecsByProject(scrudProjectId).catch((err) => console.error(`프로젝트 ${scrudProjectId}의 API 스펙 목록 조회 오류:`, err))
     }
@@ -367,15 +338,12 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         } else {
           setResponseJson("")
         }
-
-        console.log("기존 API 선택:", foundSpec.apiSpecVersionId, foundSpec.endpoint, "상태:", status)
       } else {
         // 새 API 생성 모드
         setApiSpecVersionId(null)
         setEndpoint(selectedApi)
         setMethod(selectedMethod)
         setApiStatus("AI_GENERATED" as ApiProcessStateEnumDto) // 기본 상태 설정
-        console.log("새 API 생성 모드")
       }
     }
   }, [selectedApi, selectedMethod, apiSpecsList])
@@ -441,7 +409,6 @@ export default function RightContainer({ selectedApi, selectedMethod, scrudProje
         apiStatus={apiStatus}
         handleSaveApi={handleSaveApi}
         handleDeleteApi={handleDeleteApi}
-        // handleTestApi={handleTestApi}
         handleCreateDiagram={handleCreateDiagram}
         handleCancelDiagramCreation={handleCancelDiagramCreation}
       />
