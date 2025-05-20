@@ -12,6 +12,7 @@ import com.barcoder.scrud.apispec.application.facade.ApiGetFacade;
 import com.barcoder.scrud.apispec.application.facade.ApiUpdateFacade;
 import com.barcoder.scrud.apispec.application.service.ApiSpecService;
 import com.barcoder.scrud.apispec.application.service.ApiSpecVersionService;
+import com.barcoder.scrud.global.common.util.SecurityUtil;
 import com.barcoder.scrud.model.ApiSpecListResponse;
 import com.barcoder.scrud.model.ApiSpecVersionCreateRequest;
 import com.barcoder.scrud.model.ApiSpecVersionCreatedResponse;
@@ -25,6 +26,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -37,6 +40,7 @@ public class ApiSpecController implements ApiSpecApi {
     private final ApiGetFacade apiGetFacade;
     private final ModelMapper modelMapper;
     private final ApiSpecService apiSpecService;
+    private final SecurityUtil securityUtil;
 
     /**
      * POST /api/v1/api-specs : API 스펙 생성
@@ -48,9 +52,20 @@ public class ApiSpecController implements ApiSpecApi {
     @Override
     public ResponseEntity<ApiSpecVersionCreatedResponse> createApiSpec(ApiSpecVersionCreateRequest apiSpecVersionCreateRequest) {
 
-        CreateApiSpecVersionIn inDto = modelMapper.map(apiSpecVersionCreateRequest, CreateApiSpecVersionIn.class);
+        // useId 조회
+        UUID userId = securityUtil.getCurrentUserId();
+
+        // inDto 생성
+        CreateApiSpecVersionIn inDto = modelMapper.map(apiSpecVersionCreateRequest, CreateApiSpecVersionIn.class).toBuilder()
+                .userId(userId)
+                .build();
+
+        // API 스펙 생성
         ApiSpecVersionOut outDto = apiCreateFacade.createApiSpecVersion(inDto);
+
+        // response 생성
         ApiSpecVersionCreatedResponse response = modelMapper.map(outDto, ApiSpecVersionCreatedResponse.class);
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(response);
     }
@@ -65,7 +80,11 @@ public class ApiSpecController implements ApiSpecApi {
     @Override
     public ResponseEntity<ApiSpecVersionResponse> getApiSpecById(Long apiSpecVersionId) {
 
-        ApiSpecVersionOut apiSpecVersionById = apiSpecVersionService.getApiSpecVersionById(apiSpecVersionId);
+        // useId 조회
+        UUID userId = securityUtil.getCurrentUserId();
+
+        // 조회
+        ApiSpecVersionOut apiSpecVersionById = apiSpecVersionService.getApiSpecVersionById(apiSpecVersionId, userId);
 
         ApiSpecVersionResponse apiSpecWithFields = modelMapper.map(apiSpecVersionById, ApiSpecVersionResponse.class);
 
@@ -82,12 +101,20 @@ public class ApiSpecController implements ApiSpecApi {
      */
     @Override
     public ResponseEntity<ApiSpecVersionResponse> updateApiSpec(Long apiSpecVersionId, ApiSpecVersionUpdateRequest apiSpecVersionUpdateRequest) {
+
+        // useId 조회
+        UUID userId = securityUtil.getCurrentUserId();
+
+        // inDto 생성
         UpdateApiSpecVersionIn inDto = modelMapper.map(apiSpecVersionUpdateRequest, UpdateApiSpecVersionIn.class).toBuilder()
                 .apiSpecVersionId(apiSpecVersionId)
+                .userId(userId)
                 .build();
 
+        // API 스펙 수정
         ApiSpecVersionOut outDto = apiUpdateFacade.updateApiSpecVersion(inDto);
 
+        // response 생성
         ApiSpecVersionResponse response = modelMapper.map(outDto, ApiSpecVersionResponse.class);
 
         return ResponseEntity.ok(response);
@@ -102,7 +129,13 @@ public class ApiSpecController implements ApiSpecApi {
      */
     @Override
     public ResponseEntity<Void> deleteApiSpec(Long apiSpecVersionId) {
-        apiDeleteFacade.deleteApiSpecVersion(apiSpecVersionId);
+
+        // useId 조회
+        UUID userId = securityUtil.getCurrentUserId();
+
+        // 삭제
+        apiDeleteFacade.deleteApiSpecVersion(apiSpecVersionId, userId);
+
         return ResponseEntity.ok().build();
     }
 
@@ -116,8 +149,13 @@ public class ApiSpecController implements ApiSpecApi {
     @Override
     public ResponseEntity<ApiSpecListResponse> getApiSpecsByScrudProjectId(Long scrudProjectId) {
 
-        ApiSpecVersionListOut outList = apiGetFacade.getApiSpecVersionListByScrudProjectId(scrudProjectId);
+        // useId 조회
+        UUID userId = securityUtil.getCurrentUserId();
 
+        // 조회
+        ApiSpecVersionListOut outList = apiGetFacade.getApiSpecVersionListByScrudProjectId(scrudProjectId, userId);
+
+        // response 생성
         ApiSpecListResponse response = modelMapper.map(outList, ApiSpecListResponse.class);
         return ResponseEntity.ok(response);
     }
@@ -133,10 +171,16 @@ public class ApiSpecController implements ApiSpecApi {
     @Override
     public ResponseEntity<Void> updateApiSpecStatus(Long apiSpecId, ApiSpecVersionStatusRequest apiSpecVersionStatusRequest) {
 
+        // useId 조회
+        UUID userId = securityUtil.getCurrentUserId();
+
+        // inDto 생성
         UpdateApiSpecStatusIn inDto = modelMapper.map(apiSpecVersionStatusRequest, UpdateApiSpecStatusIn.class).toBuilder()
                 .apiSpecVersionId(apiSpecId)
+                .userId(userId)
                 .build();
 
+        // API 스펙 상태 수정
         apiSpecService.updateApiSpecStatus(inDto);
         return ResponseEntity.ok().build();
     }
