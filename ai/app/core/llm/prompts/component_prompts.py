@@ -26,7 +26,7 @@ COMPONENT_SYSTEM_TEMPLATE = """
 4. 메서드도 동일한 규칙으로 병합: 이름이 같으면 업데이트, 다르면 추가 또는 유지
 5. type은 반드시 "CLASS" 또는 "INTERFACE" 중 하나여야 함
 6. 시스템 프롬프트에서 컴포넌트나 메서드가 명시적으로 삭제되었다면 최종 결과에서도 제거
-
+7. 메서드가 아닌 클래스 코드가 제공된 경우 메서드의 javadocs, 어노테이션, 시그니처, 본문을 포함한 내용만 병합한다.
 
 ## 변환 규칙
 1. 코드에서 class로 정의된 것은 type을 "CLASS"로 설정
@@ -34,6 +34,7 @@ COMPONENT_SYSTEM_TEMPLATE = """
 3. 메서드의 매개변수는 배열 형태로 추출(타입 정보 제외, 순수 매개변수 이름만)
 4. 메서드의 반환 타입이 코드에 명시되어 있다면 추출
 5. 클래스나 메서드의 설명은 주석이나 메시지 내용에서 관련 설명을 찾아서 추출
+6. 매서드는 javadocs, 어노테이션, 시그니처, 본문을 포함한 내용이다.
 7. 컴포넌트 위치
     - Controller 컴포넌트는 positionX, positionY (0, 0)으로 시작합니다
     - Controller 부터 Repository 까지 논리적 흐름에 맞도록 컴포넌트들을 재배치합니다. 일반적으로 Controller - (Converter) - Service - Repository 의 논리 흐름을 따릅니다. 
