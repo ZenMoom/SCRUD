@@ -32,7 +32,7 @@ export async function PUT(request: NextRequest) {
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: `Bearer ${authToken.replace(/^Bearer\s/, '')}`,
+              Authorization: `${authToken}`,
             }
           : undefined,
       },
