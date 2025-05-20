@@ -99,10 +99,19 @@ def convert_chat_payload(
         Returns:
             코드 데이터
         """
-        logger.info(f"코드 데이터 조회: {user_chat_data.targetMethods}")
-
         from app.infrastructure.mongodb.repository.model.diagram_model import Method
         target_method_details: List[Method] = []
+
+        logger.info(f"코드 데이터 조회: {user_chat_data.targetMethods}")
+
+        # targetMethods 리스트가 빈 배열이라면 모든 Method를 넣는다
+        if not user_chat_data.targetMethods:
+            for component in latest_diagram.components:
+                for method in component.methods:
+                    target_method_details.append(method)
+            return [method.model_dump() for method in target_method_details]
+
+
         latest_diagram_components = latest_diagram.components
 
         for component in latest_diagram_components:
