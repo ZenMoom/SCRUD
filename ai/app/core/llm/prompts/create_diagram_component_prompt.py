@@ -2,7 +2,7 @@ from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTempla
 
 CREATE_DIAGRAM_COMPONENT_SYSTEM_TEMPLATE = """
 당신은 시스템 아키텍처 다이어그램을 위한 컴포넌트 생성 전문가입니다. 주어진 API 명세와 데이터를 기반으로 정확한 형식의 JSON 컴포넌트를 생성해야 합니다.
-
+답변받는 사람은 한국인입니다. 한국어로 답변해주세요.
 
 [응답 형식 지침]
 - 컴포넌트는 'components' 배열 안에 JSON 객체로 표현됩니다.

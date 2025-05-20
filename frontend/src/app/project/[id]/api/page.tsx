@@ -5,17 +5,29 @@ import ApiHeader from "@/components/header/apiheader"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import axios from "axios"
+import useAuthStore from "@/app/store/useAuthStore"
 
 interface ProjectInfo {
   id: number
   title: string
   description?: string
+  serverUrl?: string
+}
+
+interface GlobalFile {
+  globalFileId: number
+  fileName: string
+  fileType: string
+  fileUrl?: string
+  fileContent: string
 }
 
 export default function ProjectApiPage() {
   const params = useParams()
   const router = useRouter()
+  const { token } = useAuthStore()
   const [projectInfo, setProjectInfo] = useState<ProjectInfo | null>(null)
+  const [globalFiles, setGlobalFiles] = useState<GlobalFile[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,22 +45,37 @@ export default function ProjectApiPage() {
 
       try {
         setIsLoading(true)
-
-        // API가 없는 경우 임시 데이터 설정 (실제 구현 시 이 부분을 API 호출로 대체)
-        setProjectInfo({
-          id: projectId,
-          title: `프로젝트 ${projectId}`,
+        const response = await fetch(`/api/projects/${projectId}`, {
+          headers: {
+            Authorization: token || "",
+          },
         })
 
-        // API 스펙이 존재하는지 확인 (404 에러를 방지하기 위함)
-        // 선택적으로 추가할 수 있는 코드
-        try {
-          await axios.get(`/api/api-specs/by-project/${projectId}`)
-        } catch (error) {
-          console.error("이 프로젝트의 API 스펙이 아직 없습니다. 새로 생성됩니다.", error)
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`)
         }
-      } catch (err) {
-        console.error("프로젝트 데이터 로드 오류:", err)
+
+        const data = await response.json()
+
+        setProjectInfo({
+          id: projectId,
+          title: data.project.title,
+          description: data.project.description,
+          serverUrl: data.project.serverUrl,
+        })
+        setGlobalFiles(data.content || [])
+
+        // API 스펙이 존재하는지 확인 (404 에러를 방지하기 위함)
+        try {
+          await axios.get(`/api/api-specs/by-project/${projectId}`, {
+            headers: {
+              Authorization: token || "",
+            },
+          })
+        } catch {
+          // Axios 오류 처리는 유지 (404 오류는 정상적인 플로우의 일부임)
+        }
+      } catch {
         setError("프로젝트 정보를 불러오는 중 오류가 발생했습니다")
       } finally {
         setIsLoading(false)
@@ -56,7 +83,7 @@ export default function ProjectApiPage() {
     }
 
     fetchProjectData()
-  }, [projectId])
+  }, [projectId, token])
 
   // 로딩 중 표시
   if (isLoading) {
@@ -82,9 +109,9 @@ export default function ProjectApiPage() {
 
   return (
     <>
-      <ApiHeader projectId={projectId} project={projectInfo} />
+      <ApiHeader project={projectInfo} />
       <main className="p-0">
-        <ApiCreator projectId={projectId} />
+        <ApiCreator projectId={projectId} globalFiles={globalFiles} />
       </main>
     </>
   )

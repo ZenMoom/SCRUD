@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -49,12 +50,18 @@ public class ApiSpecVersionService {
 	 * @return API 스펙버전 응답 DTO
 	 */
 	@Transactional(readOnly = true)
-	public ApiSpecVersionOut getApiSpecVersionById(Long apiSpecVersionId) {
+	public ApiSpecVersionOut getApiSpecVersionById(Long apiSpecVersionId, UUID userId) {
+
 		// 1. API 스펙 버전 ID로 DB 조회
 		ApiSpecVersion apiSpecVersion = apiSpecVersionJpaRepository.findById(apiSpecVersionId)
 				.orElseThrow(() -> new ExceptionHandler(ApiSpecErrorStatus.API_SPEC_VERSION_NOT_FOUND));
 
-		// 2. Entity -> DTO 변환
+		// 2. API 스펙 버전 소유자와 요청자 비교
+		if (!apiSpecVersion.getUserId().equals(userId)) {
+			throw new ExceptionHandler(ApiSpecErrorStatus.API_SPEC_VERSION_NOT_BELONG_TO_USER);
+		}
+
+		// 3. Entity -> DTO 변환
 		return modelMapper.map(apiSpecVersion, ApiSpecVersionOut.class);
 	}
 
@@ -62,16 +69,22 @@ public class ApiSpecVersionService {
 	 * API 스펙 버전 수정
 	 */
 	public ApiSpecVersionOut updateApiSpecVersion(UpdateApiSpecVersionIn inDto) {
+
 		// 1. entity 조회
 		ApiSpecVersion apiSpecVersion = apiSpecVersionJpaRepository.findById(inDto.getApiSpecVersionId())
 				.orElseThrow(() -> new ExceptionHandler(ApiSpecErrorStatus.API_SPEC_VERSION_NOT_FOUND));
 
-		// 2. api 생성을 위한 dto 변환, 버전 업
+		// 2. 본인 소유 여부 확인
+		if (!apiSpecVersion.getUserId().equals(inDto.getUserId())) {
+			throw new ExceptionHandler(ApiSpecErrorStatus.API_SPEC_VERSION_NOT_BELONG_TO_USER);
+		}
+
+		// 3. api 생성을 위한 dto 변환, 버전 업
 		CreateApiSpecVersionIn createIn = modelMapper.map(inDto, CreateApiSpecVersionIn.class).toBuilder()
 				.version(apiSpecVersion.getVersion() + 1)
 				.build();
 
-		// 3. 새로운 entity 생성
+		// 4. 새로운 entity 생성
 		return createApiSpecVersion(createIn);
 	}
 
@@ -79,7 +92,7 @@ public class ApiSpecVersionService {
 	 * API 스펙 버전 벌크 생성
 	 * @param inDtoList
 	 */
-	public List<ApiSpecVersionOut> bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
+	public List<ApiSpecVersionOut> bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList, UUID userId) {
 		// 1. DTO -> Entity 변환
 		List<ApiSpecVersion> apiSpecVersionList = apiSpecVersionAssembler.toApiSpecVersionEntityList(scrudProjectId, inDtoList);
 
@@ -88,7 +101,9 @@ public class ApiSpecVersionService {
 
 		// 3. Entity -> DTO 변환
 		return apiSpecVersions.stream()
-				.map(apiSpecVersion -> modelMapper.map(apiSpecVersion, ApiSpecVersionOut.class))
+				.map(apiSpecVersion -> modelMapper.map(apiSpecVersion, ApiSpecVersionOut.class).toBuilder()
+						.userId(userId)
+						.build())
 				.toList();
 	}
 }

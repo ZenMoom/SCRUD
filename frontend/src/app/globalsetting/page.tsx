@@ -5,8 +5,11 @@ import ContentArea from "@/components/globalsetting/ContentArea"
 import Floatingbutton from "@/components/globalsetting/FloatingButton"
 import Sidebar from "@/components/globalsetting/Sidebar"
 import { useGitHubTokenStore } from "@/store/githubTokenStore"
+import { useProjectTempStore } from "@/store/projectTempStore"
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useRef, useState } from "react"
+import { Suspense, useEffect, useRef, useState, useCallback } from "react"
+import LoadingOverlay from "@/components/globalsetting/LoadingOverlay"
+import GlobalHeader from "@/components/header/globalheader"
 
 // 파일 객체 타입 정의
 interface FileWithContent {
@@ -32,12 +35,14 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: { name: string; content: string }[];  // 항상 배열로 관리
+  dependencySelections: string[]; // 선택지용
+  dependencyFiles: { name: string; content: string }[]; // 파일 첨부용
+  dependencyFile: { name: string; content: string }[]; // <- 추가: 항상 최종 합쳐진 값
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
-  securitySetting: SelectionValue;
+  securitySetting: SelectionValue | FileWithContent[];
   codeConvention: FileWithContent[];
-  architectureStructure: SelectionValue;
+  architectureStructure: SelectionValue | FileWithContent[];
 }
 
 // 토큰 처리 컴포넌트
@@ -50,9 +55,6 @@ function TokenHandler() {
     const tokenFromStorage = localStorage.getItem('github-token-direct');
     const { githubToken } = useGitHubTokenStore.getState();
     
-    console.log('===== GitHub 토큰 확인 (전역 설정 페이지) =====');
-    console.log('Zustand 토큰:', githubToken ? '존재함' : '없음');
-    console.log('로컬스토리지 토큰:', tokenFromStorage ? '존재함' : '없음');
     
     if (!githubToken && tokenFromStorage) {
       useGitHubTokenStore.getState().setGithubToken(tokenFromStorage);
@@ -72,8 +74,8 @@ function TokenHandler() {
 // 메인 컴포넌트
 export default function GlobalSettingPage() {
   const router = useRouter()
-  // AuthStore에서 토큰과 인증 상태 가져오기
   const { token, isAuthenticated } = useAuthStore()
+  const { clearTempData } = useProjectTempStore()
   
   // 각 설정 항목의 상태를 관리 - 파일 관련 필드는 배열로 초기화
   const [settings, setSettings] = useState<ProjectSettings>({
@@ -82,12 +84,14 @@ export default function GlobalSettingPage() {
     serverUrl: "",
     requirementSpec: [] as FileWithContent[],
     erd: [] as FileWithContent[],
-    dependencyFile: [] as { name: string; content: string }[],
+    dependencySelections: [],
+    dependencyFiles: [],
+    dependencyFile: [],
     utilityClass: [] as FileWithContent[],
     errorCode: [] as FileWithContent[],
-    securitySetting: { type: "SECURITY_DEFAULT_JWT", label: "SECURITY_DEFAULT_JWT" },
+    securitySetting: { type: 'SECURITY_DEFAULT_JWT', label: 'JWT' },
     codeConvention: [] as FileWithContent[],
-    architectureStructure: { type: "ARCHITECTURE_DEFAULT_LAYERED_A", label: "ARCHITECTURE_DEFAULT_LAYERED_A" },
+    architectureStructure: { type: "ARCHITECTURE_DEFAULT_LAYERED_A", label: "레이어드 아키텍처 A" },
   })
 
   // 각 설정 항목의 완료 상태를 관리
@@ -100,9 +104,9 @@ export default function GlobalSettingPage() {
     dependencyFile: false,
     utilityClass: false,
     errorCode: false,
-    securitySetting: true, // 기본값이 설정되어 있으므로 true로 설정
+    securitySetting: false,
     codeConvention: false,
-    architectureStructure: true, // 기본값이 설정되어 있으므로 true로 설정
+    architectureStructure: true,
   })
 
   // 현재 선택된 설정 항목
@@ -127,6 +131,14 @@ export default function GlobalSettingPage() {
     codeConvention: useRef<HTMLDivElement>(null),
     architectureStructure: useRef<HTMLDivElement>(null),
   }
+
+  // architectureStructure 최신값을 위한 ref 선언
+  const architectureStructureRef = useRef(settings.architectureStructure);
+
+  // settings.architectureStructure가 바뀔 때마다 ref 갱신
+  useEffect(() => {
+    architectureStructureRef.current = settings.architectureStructure;
+  }, [settings.architectureStructure]);
 
   // 스크롤 이벤트를 감지하여 현재 보이는 항목을 활성화
   useEffect(() => {
@@ -160,30 +172,24 @@ export default function GlobalSettingPage() {
     refs[item as SettingKey]?.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
+  // 타입 가드 함수들 추가
+  function isSelectionValue(value: unknown): value is SelectionValue {
+    return typeof value === 'object' && value !== null && 'type' in value && 'label' in value;
+  }
+
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[]) => {
+  const handleSettingChange = (
+    key: string,
+    value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[] | string[]
+  ) => {
     setSettings((prev) => {
       const newSettings = { ...prev };
-      
       switch(key) {
-        case 'dependencyFile':
-          if (typeof value === 'object') {
-            if (Array.isArray(value)) {
-              // 배열이 들어오면 기존 배열과 병합
-              newSettings.dependencyFile = [...prev.dependencyFile, ...value];
-            } else {
-              // dependency.txt 파일이 있으면 업데이트, 없으면 추가
-              const dependencyTxtIndex = prev.dependencyFile.findIndex(
-                file => file.name === 'dependency.txt'
-              );
-              if (dependencyTxtIndex >= 0) {
-                newSettings.dependencyFile = [...prev.dependencyFile];
-                newSettings.dependencyFile[dependencyTxtIndex] = value as { name: string; content: string };
-              } else {
-                newSettings.dependencyFile = [...prev.dependencyFile, value as { name: string; content: string }];
-              }
-            }
-          }
+        case 'dependencySelections':
+          newSettings.dependencySelections = value as string[];
+          break;
+        case 'dependencyFiles':
+          newSettings.dependencyFiles = value as { name: string; content: string }[];
           break;
         case 'title':
         case 'description':
@@ -193,9 +199,17 @@ export default function GlobalSettingPage() {
           }
           break;
         case 'securitySetting':
+          if (Array.isArray(value)) {
+            newSettings.securitySetting = value as FileWithContent[];
+          } else if (isSelectionValue(value)) {
+            newSettings.securitySetting = value;
+          }
+          break;
         case 'architectureStructure':
-          if (typeof value === 'object' && 'type' in value) {
-            newSettings[key] = value as SelectionValue;
+          if (isSelectionValue(value)) {
+            newSettings.architectureStructure = value;
+          } else if (Array.isArray(value)) {
+            newSettings.architectureStructure = value as FileWithContent[];
           }
           break;
         case 'requirementSpec':
@@ -208,55 +222,57 @@ export default function GlobalSettingPage() {
           }
           break;
       }
-      
+      // 항상 dependencyFile을 최신화
+      const depFiles = newSettings.dependencyFiles || [];
+      let depSelections: { name: string; content: string }[] = [];
+      if (newSettings.dependencySelections && newSettings.dependencySelections.length > 0) {
+        depSelections = [{
+          name: 'dependency.txt',
+          content: newSettings.dependencySelections.join('\n'),
+        }];
+      }
+      newSettings.dependencyFile = [...depFiles, ...depSelections];
       return newSettings;
     });
 
     // 완료 상태 업데이트
     setCompleted((prev) => {
+      const newCompleted = { ...prev };
       let isCompleted = false;
 
       switch(key) {
-        case 'dependencyFile':
-          if (typeof value === 'object') {
-            if (Array.isArray(value)) {
-              isCompleted = value.length > 0;
-            } else {
-              isCompleted = true;  // 단일 파일이 추가되면 항상 완료로 처리
-            }
-          }
-          break;
         case 'title':
         case 'description':
         case 'serverUrl':
-          if (typeof value === 'string') {
-            isCompleted = value.trim() !== "";
-          }
+          isCompleted = typeof value === 'string' && value.trim().length > 0;
           break;
         case 'securitySetting':
+          if (Array.isArray(value)) {
+            isCompleted = value.length > 0;
+          } else if (isSelectionValue(value)) {
+            isCompleted = value.type.startsWith('SECURITY_DEFAULT_');
+          }
+          break;
         case 'architectureStructure':
-          if (typeof value === 'object' && 'type' in value) {
-            const type = (value as SelectionValue).type;
-            isCompleted = type.startsWith('SECURITY_DEFAULT_') || type.startsWith('ARCHITECTURE_DEFAULT_') || type.startsWith('SECURITY_') || type.startsWith('ARCHITECTURE_');
+          if (isSelectionValue(value)) {
+            isCompleted = value.type.startsWith('ARCHITECTURE_DEFAULT_');
           }
           break;
         case 'requirementSpec':
         case 'erd':
         case 'utilityClass':
-        case 'codeConvention':
         case 'errorCode':
+        case 'codeConvention':
           if (Array.isArray(value)) {
             isCompleted = value.length > 0;
           }
           break;
       }
 
-      return {
-        ...prev,
-        [key]: isCompleted
-      };
+      newCompleted[key as SettingKey] = isCompleted;
+      return newCompleted;
     });
-  }
+  };
 
   // 필수 항목이 모두 완료되었는지 확인
   const isRequiredCompleted = () => {
@@ -265,7 +281,6 @@ export default function GlobalSettingPage() {
   
   // 프로젝트 생성 버튼 클릭 핸들러
   const createProject = async () => {
-    // 인증 토큰 확인
     if (!token || !isAuthenticated) {
       setError("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
       setTimeout(() => {
@@ -274,42 +289,38 @@ export default function GlobalSettingPage() {
       return;
     }
     
-    console.log('클라이언트에서 사용하는 토큰:', token);
-    
     setIsLoading(true);
     setError(null);
     
     try {
-      // 의존성 파일 로깅 추가
-      console.log('=== 의존성 파일 전송 데이터 ===');
-      console.log('의존성 파일 타입:', typeof settings.dependencyFile);
-      console.log('의존성 파일 값:', settings.dependencyFile);
-      
-      // Next.js API 라우트 호출
-      console.log('API 라우트 호출 시작');
+      // dependencyFile은 항상 최신 상태로 settings에 있음
+      const payloadObj: Record<string, unknown> = {
+        ...settings,
+        architectureStructure: architectureStructureRef.current,
+      };
+      // 중복 방지: 서버로 보낼 때 불필요한 배열 제거
+      delete payloadObj.dependencyFiles;
+      delete payloadObj.dependencySelections;
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(payloadObj)
       });
-      
-      console.log('함수 호출 함', `Bearer ${token}`);
-      console.log('응답 상태:', response.status);
       
       // 응답 본문 로깅 (스트림은 한 번만 읽을 수 있으므로 복제)
       const responseClone = response.clone();
       const responseText = await responseClone.text();
-      console.log('응답 본문:', responseText);
       
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || '프로젝트 생성 실패');
       }
       
-      // 성공 시 메인 페이지로 이동
+      // 성공 시 임시 저장 데이터 초기화 후 메인 페이지로 이동
+      clearTempData();
       router.push(`/project/${responseText}/api`);
     } catch (err) {
       console.error('프로젝트 생성 오류:', err);
@@ -319,21 +330,41 @@ export default function GlobalSettingPage() {
     }
   };
 
+  // 페이지를 벗어날 때 임시 저장 데이터 초기화
+  useEffect(() => {
+    return () => {
+      // GitHub 인증 관련 페이지로 이동하는 경우는 제외
+      const isGithubAuth = window.location.href.includes('github');
+      if (!isGithubAuth) {
+        clearTempData();
+      }
+    };
+  }, [clearTempData]);
+
+  // setActiveItem 콜백 메모이제이션
+  const handleSetActiveItem = useCallback((item: string) => {
+    const key = item as SettingKey;
+    setActiveItem(key);
+    // 스크롤 실행
+    refs[key]?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [refs]);
+
   return (
-    <main className="p-4">
+    <main className="h-[100vh] bg-blue-50">
       {/* 토큰 처리 컴포넌트를 Suspense로 감싸서 사용 */}
       <Suspense fallback={null}>
         <TokenHandler />
       </Suspense>
       
-      <div className="flex flex-col h-[90vh] w-full bg-[#fafafa]">
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar completed={completed} activeItem={activeItem} onItemClick={handleItemClick} />
+      <GlobalHeader />
+      <div className="flex flex-col h-[90vh] w-full bg-blue-50">
+        <div className="flex flex-1 overflow-hidden p-2">
+          <Sidebar activeItem={activeItem} onItemClick={handleItemClick} />
           <ContentArea 
             settings={settings} 
             onSettingChange={handleSettingChange} 
             refs={refs}
-            setActiveItem={(item: string) => setActiveItem(item as SettingKey)}
+            setActiveItem={handleSetActiveItem}
           />
         </div>
         {error && (
@@ -343,6 +374,7 @@ export default function GlobalSettingPage() {
         )}
         <Floatingbutton isActive={isRequiredCompleted() && !isLoading} onClick={createProject} isLoading={isLoading} />
       </div>
+      <LoadingOverlay isVisible={isLoading} />
     </main>
   )
 }

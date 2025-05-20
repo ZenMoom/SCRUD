@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -31,10 +32,10 @@ public class ApiCreateFacade implements ApiSpecUseCase {
 	}
 
 	@Override
-	public void bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
+	public void bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList, UUID userId) {
 
 		// 1. API 스펙 버전 생성
-		List<ApiSpecVersionOut> apiSpecVersionOuts = apiSpecVersionService.bulkCreateApiSpecVersion(scrudProjectId, inDtoList);
+		List<ApiSpecVersionOut> apiSpecVersionOuts = apiSpecVersionService.bulkCreateApiSpecVersion(scrudProjectId, inDtoList, userId);
 
 		// 2. 최신 API 스펙 버전 생성
 		apiSpecService.bulkCreateLatestEndpointVersion(scrudProjectId, apiSpecVersionOuts);

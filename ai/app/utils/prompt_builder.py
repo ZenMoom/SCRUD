@@ -156,14 +156,14 @@ API 스펙 버전 ID: {str(api_spec.apiSpecVersionId or "정보 없음")}
                     except ValueError:
                         file_type_description = f"알 수 없는 파일 유형: {file.fileType}"
 
-                prompt += f"""#### 파일 {idx + 1}
-            파일명: {file.fileName or "정보 없음"}
-            파일 유형: {file.fileType or "정보 없음"} ({file_type_description})
-            파일 URL: {file.fileUrl or ""}
+                prompt += f"""####
+파일 {idx + 1}
+파일명: {file.fileName or "정보 없음"}
+파일 유형: {file.fileType or "정보 없음"} ({file_type_description})
+파일 URL: {file.fileUrl or ""}
 
-            파일 내용:
-            {file.fileContent or "내용 없음"}
-
+파일 내용:
+{file.fileContent or "내용 없음"}
             """
 
         return prompt

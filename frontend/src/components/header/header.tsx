@@ -25,14 +25,12 @@ export default function Header() {
   // 현재 경로 확인 및 헤더 표시 여부 결정
   useEffect(() => {
     // 현재 경로가 canvas/{projectId}/{apiId} 패턴인지 확인
-    const isCanvasRoute = pathname && /^\/canvas\/[^/]+\/[^/]+/.test(pathname)
-    const isProjectApiRoute = pathname && /^\/project\/[^/]+\/api/.test(pathname)
-    // 로그인 경로인지 확인
-    const isLoginRoute = pathname === "/login"
-
-    // canvas 경로, project/api 경로, 또는 로그인 경로에서는 헤더를 표시하지 않음
-    setShowHeader(!isCanvasRoute && !isProjectApiRoute && !isLoginRoute)
-  }, [pathname])
+    const isCanvasRoute = pathname && /^\/canvas\/[^/]+\/[^/]+/.test(pathname);
+    const isProjectApiRoute = pathname && /^\/project\/[^/]+\/api/.test(pathname);
+    const isGlobalSettingRoute = pathname && /^\/globalsetting/.test(pathname);
+    // canvas, project/api, globalsetting 경로에서는 헤더를 표시하지 않음
+    setShowHeader(!isCanvasRoute && !isProjectApiRoute && !isGlobalSettingRoute);
+  }, [pathname]);
 
   // 로그인 버튼 클릭 핸들러
   const handleLoginClick = useCallback(() => {

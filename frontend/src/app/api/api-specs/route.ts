@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: authToken,
+              Authorization: `Bearer ${authToken.replace(/^Bearer\s/, "")}`,
             }
           : undefined,
       },

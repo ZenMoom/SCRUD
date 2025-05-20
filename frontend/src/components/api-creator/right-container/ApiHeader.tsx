@@ -28,7 +28,6 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
   apiStatus = "AI_GENERATED",
   handleSaveApi,
   handleDeleteApi,
-  // handleTestApi,
   handleCreateDiagram,
   handleCancelDiagramCreation,
 }) => {
@@ -48,7 +47,6 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
     window.alert = (message) => {
       // 다이어그램 완료 관련 메시지인 경우 무시 (필요에 따라 메시지 내용 확인)
       if (message && typeof message === "string" && (message.includes("완료") || message.includes("성공") || message.includes("도식화") || message.includes("diagram"))) {
-        console.log("기본 alert 차단됨:", message)
         return
       }
 
@@ -211,22 +209,38 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
         </div>
 
         <div className="flex space-x-2">
-          {/* 도식화 진행 버튼 추가 */}
+          {/* 도식화 진행 버튼 */}
           {showDiagramButton && handleCreateDiagram && (
             <button
               onClick={handleCreateDiagram}
               disabled={isLoading || isCreatingDiagram}
-              className={`${googleButtonClass} ${isLoading || isCreatingDiagram ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`${googleButtonClass} ${
+                isLoading || isCreatingDiagram
+                  ? "opacity-50 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 border-blue-300 text-blue-700 hover:from-blue-100 hover:via-blue-200 hover:to-blue-100 hover:border-blue-400 hover:shadow-md"
+              } relative overflow-hidden transition-all duration-300`}
               title="도식화 진행"
             >
               {isCreatingDiagram ? (
-                <span className="h-5 w-5 rounded-full border-2 border-gray-400 border-t-transparent animate-spin"></span>
+                <span className="h-5 w-5 rounded-full border-2 border-blue-400 border-t-transparent animate-spin"></span>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                </svg>
+                <>
+                  {/* 향상된 그라데이션 효과 */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-200 to-transparent opacity-40 animate-shimmer"></span>
+                  {/* 추가 하이라이트 효과 */}
+                  <span className="absolute inset-0 bg-gradient-to-t from-transparent via-blue-100 to-transparent opacity-30 animate-pulse"></span>
+
+                  {/* 버튼 중앙에 큰 반짝이는 효과 */}
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="h-10 w-10 rounded-full bg-blue-300 opacity-40 animate-ping"></span>
+                  </span>
+
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`${iconClass} text-blue-600 relative z-10`} viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                  </svg>
+                </>
               )}
-              <span className={textClass}>도식화 진행</span>
+              <span className={`${textClass} font-semibold relative z-10`}>도식화 진행</span>
             </button>
           )}
 

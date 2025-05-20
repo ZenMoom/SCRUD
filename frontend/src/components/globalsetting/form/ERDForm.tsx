@@ -1,8 +1,9 @@
 "use client";
 
-import { File, Github, HelpCircle, Upload } from "lucide-react";
-import { forwardRef, useRef, useState } from "react";
+import { File, Github, Upload } from "lucide-react";
+import { forwardRef, useRef, useState, useEffect } from "react";
 import GitHubRepoBrowser from "../GitHubRepoBrowser";
+import { useProjectTempStore } from "@/store/projectTempStore";
 
 // 파일 객체 타입 정의
 interface FileWithContent {
@@ -14,18 +15,50 @@ interface ERDFormProps {
   title: string;
   value: FileWithContent | FileWithContent[];
   onChange: (value: FileWithContent | FileWithContent[]) => void;
-  onInfoClick: () => void;
   onFocus?: () => void;
   isRequired?: boolean;
 }
 
 const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
-  ({ title, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
+  ({ title, value, onChange, onFocus, isRequired }, ref) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [dragActive, setDragActive] = useState(false);
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
+    const [fileError, setFileError] = useState<string>("");
+
+    const { tempData, setTempData } = useProjectTempStore();
+
+    // 외부 클릭 감지를 위한 이벤트 리스너
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownOpen &&
+            dropdownRef.current &&
+            buttonRef.current &&
+            !dropdownRef.current.contains(event.target as Node) &&
+            !buttonRef.current.contains(event.target as Node)) {
+          setDropdownOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [dropdownOpen]);
+
+    // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const isFromGithubAuth = params.get('from') === 'github-auth';
+      const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
+
+      
+      if (isFromGithubAuth && isAuthPending && tempData.erd.length > 0) {
+        onChange(tempData.erd as FileWithContent[]);
+      }
+    }, []);
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string; content: string }>) => {
@@ -35,7 +68,9 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
           content: file.content,
           isGitHub: true,
         }));
-        onChange(githubFiles);
+        const updatedFiles = Array.isArray(value) ? [...value, ...githubFiles] : githubFiles;
+        onChange(updatedFiles);
+        setTempData({ erd: updatedFiles });
       }
       setIsGitHubModalOpen(false);
     };
@@ -50,25 +85,41 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
       }
     };
 
+    // 텍스트 파일인지 확인하는 함수
+    const isTextFile = (filename: string): boolean => {
+      const textExtensions = [
+        '.txt', '.md', '.json', '.yml', '.yaml', '.xml', '.html', '.css', '.js', 
+        '.ts', '.jsx', '.tsx', '.java', '.py', '.c', '.cpp', '.h', '.cs', '.php',
+        '.rb', '.go', '.rs', '.sh', '.bat', '.ps1', '.sql', '.properties', '.conf',
+        '.ini', '.env', '.gitignore', '.gradle', '.pom', '.lock', 'Dockerfile'
+      ];
+      return textExtensions.some(ext => filename.endsWith(ext));
+    };
+
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
       setDragActive(false);
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0];
+        if (!isTextFile(file.name)) {
+          setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
+          return;
+        }
+        setFileError("");
         const content = await file.text();
         const fileWithContent = {
           name: file.name,
           content: content,
         };
-
-        // 드롭한 파일을 현재 값 배열에 추가
+        let newFiles: FileWithContent[];
         if (Array.isArray(value)) {
-          onChange([...value, fileWithContent]);
+          newFiles = [...value, fileWithContent];
         } else {
-          // 배열이 아닌 경우 새 배열 생성
-          onChange([fileWithContent]);
+          newFiles = [fileWithContent];
         }
+        onChange(newFiles);
+        setTempData({ erd: newFiles });
       }
     };
 
@@ -88,20 +139,17 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
         ref={ref}
         className="p-10 mb-10 bg-white rounded-lg"
       >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <h2 className="m-0 text-xl font-semibold">
-              {title} {isRequired && <span className="text-red-500">*</span>}
-            </h2>
-            <button
-              type="button"
-              className="hover:text-gray-600 flex items-center justify-center p-0 ml-2 text-gray-400 transition-colors duration-200 bg-transparent border-none cursor-pointer"
-              onClick={onInfoClick}
-              aria-label={`${title} 정보`}
-            >
-              <HelpCircle size={20} />
-            </button>
+        <div className="flex flex-col mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <h2 className="m-0 text-xl font-semibold">
+                {title} {isRequired && <span className="text-red-500">*</span>}
+              </h2>
+            </div>
           </div>
+          <p className="mt-2 text-sm text-gray-600">
+            ERD(Entity-Relationship Diagram)는 데이터베이스의 구조와 관계를 시각적으로 표현한 다이어그램으로, SCRUD가 맞춤 정보를 제공하는 데 필수적입니다.
+          </p>
         </div>
 
         <div className="w-full">
@@ -115,8 +163,8 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
             onDragOver={handleDrag}
             onDrop={handleDrop}
             onClick={() => {
-              setDropdownOpen(!dropdownOpen);
               if (onFocus) onFocus();
+              setDropdownOpen(!dropdownOpen);
             }}
             ref={buttonRef}
           >
@@ -125,9 +173,15 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
               className="mb-2 text-gray-400"
             />
             <p className="text-sm text-center text-gray-500">
-              ERD 파일을 드래그해서 추가하거나 <br />
+              ERD 파일을 드래그해서 추가하거나<br />
               <span className="text-blue-500">업로드하세요</span>
             </p>
+            <div className="mt-2 text-xs text-gray-400">
+              지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등
+            </div>
+            <div className="mt-1 text-xs text-gray-400">
+              Tip: 노션의 내보내기 기능을 이용하면 텍스트 파일로 ERD를 저장할 수 있습니다.
+            </div>
           </div>
 
           {/* 드롭다운 메뉴 */}
@@ -178,6 +232,12 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
             onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
               if (e.target.files && e.target.files.length > 0) {
                 const filesArray = Array.from(e.target.files);
+                const invalid = filesArray.find(file => !isTextFile(file.name));
+                if (invalid) {
+                  setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
+                  return;
+                }
+                setFileError("");
                 const filePromises = filesArray.map(async (file) => {
                   const content = await file.text();
                   return {
@@ -185,18 +245,23 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
                     content,
                   };
                 });
-
                 const filesWithContent = await Promise.all(filePromises);
-
+                let newFiles: FileWithContent[];
                 if (Array.isArray(value)) {
-                  onChange([...value, ...filesWithContent]);
+                  newFiles = [...value, ...filesWithContent];
                 } else {
-                  onChange(filesWithContent);
+                  newFiles = filesWithContent;
                 }
+                onChange(newFiles);
+                setTempData({ erd: newFiles });
               }
             }}
             multiple
           />
+
+          {fileError && (
+            <div className="mt-2 text-xs text-red-500">{fileError}</div>
+          )}
 
           {/* 선택된 파일 표시 */}
           {Array.isArray(value) && value.length > 0 && (
@@ -220,6 +285,7 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
                         const newFiles = [...value];
                         newFiles.splice(index, 1);
                         onChange(newFiles);
+                        setTempData({ erd: newFiles });
                       }}
                       className="hover:text-red-700 ml-2 text-red-500"
                     >
