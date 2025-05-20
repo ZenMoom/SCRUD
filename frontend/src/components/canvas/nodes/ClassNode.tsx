@@ -5,12 +5,13 @@ import { Code, Check } from "lucide-react"
 interface ClassNodeData {
   label: string
   backgroundColor?: string
+  description: string
   isTargeted?: boolean
   name?: string
 }
 
 export const ClassNode = memo(({ data, selected }: NodeProps<ClassNodeData>) => {
-  const { label, backgroundColor, isTargeted = false } = data
+  const { label, description, backgroundColor, isTargeted = false } = data
 
   // 테두리 스타일 결정 (우선순위: 타겟 > 선택 > 기본)
   const borderStyle = isTargeted ? "rounded-md border-blue-500 border-dashed animate-pulse shadow-blue-100" : selected ? "border-blue-500 shadow-blue-100" : "border-gray-200"
@@ -41,6 +42,11 @@ export const ClassNode = memo(({ data, selected }: NodeProps<ClassNodeData>) => 
         <div className="bg-white/20 p-1.5 rounded-md">{isTargeted ? <Check size={18} className="text-white" /> : <Code size={18} className="text-white" />}</div>
         <div className="font-bold text-base tracking-wide">{label}</div>
       </div>
+      {description && (
+        <div className="px-4 py-2 text-xs text-gray-700 bg-gray-50 border-b border-gray-200">
+          <p className="line-clamp-2 italic">{description}</p>
+        </div>
+      )}
 
       {/* 메서드 컨테이너 영역 - 자식 노드가 렌더링될 공간 */}
       <div className="flex-1 j relative">{/* 자식 노드(메서드)는 ReactFlow에 의해 여기에 자동으로 렌더링됩니다 */}</div>

@@ -92,19 +92,22 @@ export const MethodNode = memo(({ id, data, selected }: NodeProps<MethodNodeData
       style={{
         transition: "height 0.3s ease-in-out, opacity 0.2s ease-in-out, border 0.2s ease-in-out",
         opacity: isTargeted ? 1 : 0.85, // 타겟 노드는 더 밝게
+        zIndex: 5, // 클래스보다는 높지만 엣지보다는 낮은 z-index
       }}
     >
       {/* 시그니처 부분 */}
       <div className={`font-mono text-sm p-2 ${isTargeted ? "bg-red-50" : "bg-gray-100"} rounded-t-md flex items-start justify-between`}>
-        <div className="flex-1 break-words">
+        <div className="flex-1 truncate overflow-hidden">
           {isTargeted && (
-            <span className="inline-flex items-center justify-center bg-red-500 text-white rounded-full w-5 h-5 mr-2">
+            <span className="inline-flex items-center justify-center bg-red-500 text-white rounded-full w-5 h-5 mr-2 flex-shrink-0">
               <Check className="w-3 h-3" />
             </span>
           )}
-          {signature}
+          <span className="overflow-hidden text-ellipsis" title={signature}>
+            {signature}
+          </span>
         </div>
-        <div className="ml-2 text-gray-500 hover:text-gray-700 group relative">
+        <div className="ml-2 text-gray-500 hover:text-gray-700 group relative flex-shrink-0">
           <Info className="w-4 h-4" />
           <div className="absolute right-0 top-full mt-1 w-64 p-2 bg-white shadow-lg rounded-md border border-gray-200 text-xs text-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity z-10">
             {description}
