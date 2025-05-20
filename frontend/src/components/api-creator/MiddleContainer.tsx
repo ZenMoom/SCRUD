@@ -118,8 +118,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         }
 
         // 백엔드 API 호출하여 실제 데이터 삭제
-        const response = await axios.delete(`/api/api-specs/${endpoint.apiSpecVersionId}`, { headers })
-        console.log("API 스펙이 성공적으로 삭제되었습니다:", response.data)
+        await axios.delete(`/api/api-specs/${endpoint.apiSpecVersionId}`, { headers })
         alert(`성공적으로 삭제되었습니다.`)
 
         // 성공적으로 삭제된 후 UI 상태 업데이트
@@ -385,9 +384,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         "Content-Type": "application/json",
       }
 
-      const response = await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status }, { headers })
-
-      console.log("API 상태가 성공적으로 업데이트되었습니다:", response.data)
+      await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status }, { headers })
     } catch (error) {
       console.error("API 상태 업데이트 중 오류 발생:", error)
 

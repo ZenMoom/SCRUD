@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ api
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: authToken,
+              Authorization: `Bearer ${authToken}`,
             }
           : undefined,
       },
@@ -68,7 +68,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: authToken,
+              Authorization: `Bearer ${authToken}`,
             }
           : undefined,
       },
@@ -147,7 +147,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: authToken,
+              Authorization: `Bearer ${authToken}`,
             }
           : undefined,
       },

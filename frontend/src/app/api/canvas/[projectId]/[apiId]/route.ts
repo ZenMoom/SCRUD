@@ -37,11 +37,6 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    console.log("API 설정:", {
-      basePath: apiUrl,
-      hasAuthToken: !!authToken,
-    })
-
     // CanvasApi 인스턴스 생성
     const canvasApi = new CanvasApi(config)
 

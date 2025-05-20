@@ -33,7 +33,6 @@ export async function PUT(request: NextRequest) {
 
     // 요청 바디에서 상태 데이터 가져오기
     const requestData = await request.json()
-    console.log("요청 데이터:", requestData)
 
     // ApiProcessStateRequest 타입에 맞게 요청 데이터 생성
     const apiProcessStateRequest: ApiProcessStateRequest = {
