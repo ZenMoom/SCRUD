@@ -1,4 +1,5 @@
 import { categoryConfig } from '@/types/feedback';
+import dayjs from '@/util/dayjs';
 import { PostSummaryResponse } from '@generated/model';
 import { MessageSquare, ThumbsUp } from 'lucide-react';
 import Link from 'next/link';
@@ -44,7 +45,7 @@ export default function FeedbackListItem({ feedback }: { feedback: PostSummaryRe
 
               {/* 작성 날짜 및 조회수 */}
               <div className='flex items-center gap-2 text-sm text-gray-500'>
-                <span>{feedback.createdAt}</span>
+                <span>{dayjs(feedback.createdAt).tz().format('YYYY년 MM월 DD일 HH:mm')}</span>
                 <span>•</span>
                 <span>조회 {feedback.viewCount}</span>
               </div>

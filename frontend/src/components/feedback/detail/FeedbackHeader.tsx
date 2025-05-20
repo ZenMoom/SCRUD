@@ -1,7 +1,7 @@
 'use client';
 
 import { useFeedbackStore } from '@/store/useFeedbackStore';
-import dayjs from 'dayjs';
+import dayjs from '@/util/dayjs';
 import { MessageSquare, ThumbsDown, ThumbsUp } from 'lucide-react';
 import Image from 'next/image';
 
@@ -16,7 +16,6 @@ const categoryConfig: Record<string, { label: string; color: string }> = {
 export const FeedbackHeader = () => {
   const { post } = useFeedbackStore();
   if (!post) return null;
-  const createdAt = dayjs(post.createdAt).format('YYYY.MM.DD HH:mm');
 
   return (
     <div className='w-full'>
@@ -55,7 +54,7 @@ export const FeedbackHeader = () => {
           <div>
             <div className='font-medium text-gray-900'>{post.author.nickname}</div>
             <div className='flex items-center gap-1 text-xs text-gray-500'>
-              <span>{createdAt}</span>
+              <span>{dayjs(post.createdAt).tz().format('YYYY.MM.DD HH:mm')}</span>
               {post.isUpdated && <span className='text-gray-400'>(수정됨)</span>}
             </div>
           </div>
