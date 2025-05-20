@@ -10,6 +10,7 @@ import axios from "axios"
 import useAuthStore from "@/app/store/useAuthStore"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism"
+import { Copy, Maximize2 } from "lucide-react"
 
 // 채팅 컨테이너 속성 타입 정의
 interface ChatContainerProps {
@@ -78,6 +79,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   const [currentMessageCompleted, setCurrentMessageCompleted] = useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [shouldShowTempMessage, setShouldShowTempMessage] = useState<boolean>(true)
+  const [expandedCode, setExpandedCode] = useState<{ code: string; language: string } | null>(null)
 
   // 최신 버전을 추적하기 위한 참조 변수 추가 (useState 선언 아래에 추가)
   const latestVersionIdRef = useRef<string | null>(null)
@@ -848,7 +850,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         const code = match[2]
 
         parts.push(
-          <div key={`code-${match.index}`} className="my-4 rounded-md overflow-hidden border border-gray-300">
+          <div key={`code-${match.index}`} className="my-4 rounded-md overflow-hidden border border-gray-300 relative group">
             <div className="flex items-center justify-between bg-gray-800 px-4 py-2 text-gray-200">
               <span className="text-xs font-medium">{language.toUpperCase()}</span>
               <div className="flex space-x-2">
@@ -857,33 +859,45 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
             </div>
-            <SyntaxHighlighter
-              language={language}
-              style={vscDarkPlus}
-              customStyle={{
-                margin: 0,
-                padding: "12px",
-                fontSize: "14px",
-                borderRadius: "0 0 6px 6px",
-                maxHeight: "400px",
-              }}
-              codeTagProps={{ style: { fontFamily: "monospace" } }}
-              showLineNumbers={true}
-              lineNumberStyle={{
-                minWidth: "2em",
-                color: "#606366",
-                textAlign: "right",
-                fontSize: "12px",
-                borderRight: "1px solid #404040",
-                paddingRight: "0.5em",
-                marginRight: "5px",
-              }}
-              wrapLines={true}
-              wrapLongLines={false}
-              useInlineStyles={true}
-            >
-              {code}
-            </SyntaxHighlighter>
+            <div className="relative">
+              <SyntaxHighlighter
+                language={language}
+                style={vscDarkPlus}
+                customStyle={{
+                  margin: 0,
+                  padding: "12px",
+                  fontSize: "14px",
+                  borderRadius: "0 0 6px 6px",
+                  maxHeight: "400px",
+                }}
+                codeTagProps={{ style: { fontFamily: "monospace" } }}
+                showLineNumbers={true}
+                lineNumberStyle={{
+                  minWidth: "2em",
+                  color: "#606366",
+                  textAlign: "right",
+                  fontSize: "12px",
+                  borderRight: "1px solid #404040",
+                  paddingRight: "0.5em",
+                  marginRight: "5px",
+                }}
+                wrapLines={true}
+                wrapLongLines={false}
+                useInlineStyles={true}
+              >
+                {code}
+              </SyntaxHighlighter>
+
+              {/* Hover actions */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                <button onClick={() => navigator.clipboard.writeText(code)} className="p-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors" title="Copy code">
+                  <Copy size={16} />
+                </button>
+                <button onClick={() => setExpandedCode({ code, language })} className="p-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors" title="Expand code">
+                  <Maximize2 size={16} />
+                </button>
+              </div>
+            </div>
           </div>
         )
 
@@ -897,7 +911,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
 
       return parts.length > 0 ? parts : parseMarkdown(message, "text-full")
     },
-    [parseMarkdown]
+    [parseMarkdown, setExpandedCode]
   )
 
   // 로딩 상태 표시
@@ -951,7 +965,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
                     )}
                     <p className="whitespace-pre-wrap">{msg.message}</p>
                   </div>
-                  <span className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                  {/* <span className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</span> */}
                 </div>
               )
             } else if (msg.type === "system") {
@@ -961,7 +975,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
                   <div className="bg-white rounded-lg py-3 px-4 w-full overflow-x-auto">
                     <div className="prose max-w-none overflow-hidden break-words">{parseMessage(msg.message)}</div>
                   </div>
-                  <span className="text-xs text-gray-500 mt-1 self-start">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                  {/* <span className="text-xs text-gray-500 mt-1 self-start">{new Date(msg.timestamp).toLocaleTimeString()}</span> */}
                 </div>
               )
             } else if (msg.type === "version" && msg.versionInfo) {
@@ -1115,12 +1129,9 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         <div className="flex flex-col gap-2">
           {/* 선택된 요청 태그 표시 */}
           <div className="flex items-center gap-1">
-            <div className="text-xs text-gray-700">선택된 요청:</div>
-            <div className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-800 rounded-md text-xs">
+            <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md text-xs">
               <span>{selectedTag}</span>
-              <button onClick={handleTagClear} className="ml-1 p-0.5 rounded-full text-gray-500 hover:bg-gray-200 transition-colors" aria-label="요청 태그 해제">
-                <X size={10} />
-              </button>
+              <button onClick={handleTagClear} className=" rounded-full text-blue-500 hover:bg-gray-200 transition-colors" aria-label="요청 태그 해제"></button>
             </div>
           </div>
 
@@ -1175,6 +1186,53 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           </div>
         )}
       </div>
+      {/* Expanded Code Modal */}
+      {expandedCode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setExpandedCode(null)}>
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between bg-gray-800 px-4 py-3 text-gray-200 rounded-t-lg">
+              <span className="font-medium">{expandedCode.language.toUpperCase()}</span>
+              <div className="flex items-center gap-3">
+                <button onClick={() => navigator.clipboard.writeText(expandedCode.code)} className="p-1.5 hover:bg-gray-700 text-white rounded-md transition-colors" title="Copy code">
+                  <Copy size={16} />
+                </button>
+                <button onClick={() => setExpandedCode(null)} className="p-1.5 hover:bg-gray-700 text-white rounded-md transition-colors" title="Close">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="overflow-auto flex-1">
+              <SyntaxHighlighter
+                language={expandedCode.language}
+                style={vscDarkPlus}
+                customStyle={{
+                  margin: 0,
+                  padding: "16px",
+                  fontSize: "16px",
+                  borderRadius: "0 0 6px 6px",
+                  height: "100%",
+                }}
+                codeTagProps={{ style: { fontFamily: "monospace" } }}
+                showLineNumbers={true}
+                lineNumberStyle={{
+                  minWidth: "3em",
+                  color: "#606366",
+                  textAlign: "right",
+                  fontSize: "14px",
+                  borderRight: "1px solid #404040",
+                  paddingRight: "0.5em",
+                  marginRight: "10px",
+                }}
+                wrapLines={true}
+                wrapLongLines={false}
+                useInlineStyles={true}
+              >
+                {expandedCode.code}
+              </SyntaxHighlighter>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

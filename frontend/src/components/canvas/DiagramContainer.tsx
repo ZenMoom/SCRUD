@@ -898,14 +898,14 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
             <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-md shadow-sm hover:bg-gray-50 transition-colors">
               <div className="flex flex-col items-start">
                 <span className="text-md font-bold">V {currentVersion}</span>
-                {currentVersionInfo && <span className="text-xs text-gray-500">{currentVersionInfo.description}</span>}
+                {currentVersionInfo && <span className="text-xs text-gray-500 w-24 inline-block overflow-hidden text-ellipsis whitespace-nowrap">{currentVersionInfo.description}</span>}
               </div>
               <ChevronDown size={16} className={`text-gray-600 transition-transform ${showVersions ? "rotate-180" : ""}`} />
             </button>
 
-            {/* 버전 드롭다운 - 버전 1부터 최신 버전까지 순서대로 표시 */}
+            {/* 버전 드롭다운 - 수직 스크롤만 허용 */}
             {showVersions && availableVersions.length > 0 && (
-              <div className="absolute right-0 mt-1 w-44 bg-white rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+              <div className="absolute right-0 mt-1 w-44 bg-white rounded-md shadow-lg z-50 max-h-60 overflow-y-auto overflow-x-hidden">
                 <div className="py-1">
                   {availableVersions.map((version) => (
                     <div
@@ -914,12 +914,14 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
                       onClick={() => handleVersionSelect(version.versionId)}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <span className={`text-sm ${version.versionId === currentVersion ? "font-medium text-blue-700" : "text-gray-700"}`}>버전 {version.versionId}</span>
-                          <span className="text-xs text-gray-500 truncate max-w-[180px]">{version.description}</span>
+                        <div className="w-32 pr-1">
+                          <span className={`text-sm block ${version.versionId === currentVersion ? "font-medium text-blue-700" : "text-gray-700"}`}>버전 {version.versionId}</span>
+                          <span className="text-xs text-gray-500 block w-full overflow-hidden text-ellipsis whitespace-nowrap" title={version.description}>
+                            {version.description}
+                          </span>
                         </div>
                         {version.versionId === currentVersion && (
-                          <span className="text-blue-500">
+                          <span className="text-blue-500 flex-shrink-0">
                             <Clock size={16} />
                           </span>
                         )}
