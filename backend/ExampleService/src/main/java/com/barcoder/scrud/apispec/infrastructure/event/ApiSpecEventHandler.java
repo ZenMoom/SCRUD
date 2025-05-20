@@ -79,7 +79,7 @@ public class ApiSpecEventHandler {
 
         apiPromptUseCase.savePrompt(response.getPrompt(), promptResult.toString());
 
-        apiSpecUseCase.bulkCreateApiSpecVersion(scrudProject.getScrudProjectId(), response.getResult());
+        apiSpecUseCase.bulkCreateApiSpecVersion(scrudProject.getScrudProjectId(), response.getResult(), scrudProject.getUserId());
 
     }
 }

@@ -92,7 +92,7 @@ public class ApiSpecVersionService {
 	 * API 스펙 버전 벌크 생성
 	 * @param inDtoList
 	 */
-	public List<ApiSpecVersionOut> bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
+	public List<ApiSpecVersionOut> bulkCreateApiSpecVersion(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList, UUID userId) {
 		// 1. DTO -> Entity 변환
 		List<ApiSpecVersion> apiSpecVersionList = apiSpecVersionAssembler.toApiSpecVersionEntityList(scrudProjectId, inDtoList);
 
@@ -101,7 +101,9 @@ public class ApiSpecVersionService {
 
 		// 3. Entity -> DTO 변환
 		return apiSpecVersions.stream()
-				.map(apiSpecVersion -> modelMapper.map(apiSpecVersion, ApiSpecVersionOut.class))
+				.map(apiSpecVersion -> modelMapper.map(apiSpecVersion, ApiSpecVersionOut.class).toBuilder()
+						.userId(userId)
+						.build())
 				.toList();
 	}
 }

@@ -50,7 +50,7 @@ class ApiCreateFacadeTest {
         // when
         ScrudProject scrudProject = ScrudProject.builder().build();
         scrudProjectRepository.save(scrudProject);
-        apiCreateFacade.bulkCreateApiSpecVersion(scrudProject.getScrudProjectId(), inDtoList);
+        apiCreateFacade.bulkCreateApiSpecVersion(scrudProject.getScrudProjectId(), inDtoList, scrudProject.getUserId());
 
         // then
         List<ApiSpecVersion> all = apiSpecVersionJpaRepository.findAll();
