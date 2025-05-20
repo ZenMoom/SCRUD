@@ -403,7 +403,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         { apiSpecStatus: status },
         {
           headers: {
-            Authorization: token,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }

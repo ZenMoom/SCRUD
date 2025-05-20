@@ -25,15 +25,13 @@ export async function POST(req: NextRequest) {
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
     // const apiUrl = "http://host.docker.internal:8000"
 
-    console.log('post token', authToken);
-
     // API 설정 구성 - 인증 토큰이 있는 경우 헤더에 추가
     const config = new Configuration({
       basePath: apiUrl,
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `${authToken}`,
             }
           : undefined,
       },
@@ -103,7 +101,7 @@ export async function GET(req: NextRequest) {
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: `Bearer ${authToken.replace(/^Bearer\s/, '')}`,
+              Authorization: `${authToken}`,
             }
           : undefined,
       },
