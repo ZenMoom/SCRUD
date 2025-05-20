@@ -138,7 +138,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
           repoName: repoName || undefined
         }))
         setGithubFiles(convertedFiles)
-        setRepoName(repoName)
+        setRepoName(repoName ?? null)
         setShowLayeredOptions(false)
         onChange(convertedFiles)
         setTempData({

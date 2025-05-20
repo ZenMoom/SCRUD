@@ -70,8 +70,13 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
           onChange(tempData.securitySetting.selection);
         } else if (tempData.securitySetting.type === 'file' && tempData.securitySetting.files) {
           setIsFileMode(true);
-          setSelectedFiles(tempData.securitySetting.files);
-          onChange(tempData.securitySetting.files);
+          const files = tempData.securitySetting.files.map(file => ({
+            name: file.name || '',
+            content: typeof file.content === 'string' ? file.content : JSON.stringify(file.content),
+            isGitHub: file.isGitHub,
+          }));
+          setSelectedFiles(files);
+          onChange(files);
         }
       }
     }, []);
