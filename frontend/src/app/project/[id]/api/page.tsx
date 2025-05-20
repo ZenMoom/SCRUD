@@ -5,17 +5,29 @@ import ApiHeader from "@/components/header/apiheader"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import axios from "axios"
+import useAuthStore from "@/app/store/useAuthStore"
 
 interface ProjectInfo {
   id: number
   title: string
   description?: string
+  serverUrl?: string
+}
+
+interface GlobalFile {
+  globalFileId: number
+  fileName: string
+  fileType: string
+  fileUrl?: string
+  fileContent: string
 }
 
 export default function ProjectApiPage() {
   const params = useParams()
   const router = useRouter()
+  const { token } = useAuthStore()
   const [projectInfo, setProjectInfo] = useState<ProjectInfo | null>(null)
+  const [globalFiles, setGlobalFiles] = useState<GlobalFile[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,15 +45,34 @@ export default function ProjectApiPage() {
 
       try {
         setIsLoading(true)
-
-        // API가 없는 경우 임시 데이터 설정 (실제 구현 시 이 부분을 API 호출로 대체)
-        setProjectInfo({
-          id: projectId,
-          title: `프로젝트 ${projectId}`,
+        const response = await fetch(`/api/projects/${projectId}`, {
+          headers: {
+            Authorization: token || "",
+          },
         })
 
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`)
+        }
+
+        const data = await response.json()
+        console.log("받아온 전체 데이터:", data)
+        console.log("프로젝트 정보:", {
+          title: data.project.title,
+          description: data.project.description,
+          serverUrl: data.project.serverUrl
+        })
+        console.log("글로벌 파일:", data.content)
+        
+        setProjectInfo({
+          id: projectId,
+          title: data.project.title,
+          description: data.project.description,
+          serverUrl: data.project.serverUrl
+        })
+        setGlobalFiles(data.content || [])
+
         // API 스펙이 존재하는지 확인 (404 에러를 방지하기 위함)
-        // 선택적으로 추가할 수 있는 코드
         try {
           await axios.get(`/api/api-specs/by-project/${projectId}`)
         } catch (error) {
@@ -56,7 +87,7 @@ export default function ProjectApiPage() {
     }
 
     fetchProjectData()
-  }, [projectId])
+  }, [projectId, token])
 
   // 로딩 중 표시
   if (isLoading) {
@@ -82,9 +113,9 @@ export default function ProjectApiPage() {
 
   return (
     <>
-      <ApiHeader projectId={projectId} project={projectInfo} />
+      <ApiHeader project={projectInfo} />
       <main className="p-0">
-        <ApiCreator projectId={projectId} />
+        <ApiCreator projectId={projectId} globalFiles={globalFiles} />
       </main>
     </>
   )

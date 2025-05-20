@@ -78,11 +78,9 @@ export default function ProjectCard({ project, index = 0, onDelete }: ProjectCar
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                if (window.confirm("이 프로젝트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
-                  onDelete(project.id)
-                }
+                onDelete(project.id)
               }}
-              className="text-red-500"
+              className="text-black hover:text-gray-700 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path

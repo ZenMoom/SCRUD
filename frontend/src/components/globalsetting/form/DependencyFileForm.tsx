@@ -1,12 +1,19 @@
 "use client"
 
-import { forwardRef, useState, useRef } from "react"
-import { Upload, Github, File } from "lucide-react"
+import { forwardRef, useState, useRef, useEffect } from "react"
+import { Upload, Github, File} from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
+import { useProjectTempStore } from "@/store/projectTempStore"
+
+interface FileData {
+  name: string;
+  content: string;
+  isGitHub?: boolean;
+}
 
 interface DependencyFileFormProps {
   title: string;
-  onFileSelect: (file: { name: string; content: string }) => void;
+  onFileSelect: (file: FileData) => void;
   onFocus?: () => void;
 }
 
@@ -15,22 +22,61 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
-    const [selectedFiles, setSelectedFiles] = useState<Array<{ name: string; content: string }>>([])
+    const [selectedFiles, setSelectedFiles] = useState<FileData[]>([])
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
+    const [fileError, setFileError] = useState<string>("")
+
+    const { tempData, setTempData } = useProjectTempStore();
+
+    // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const isFromGithubAuth = params.get('from') === 'github-auth';
+      const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
+
+      if (isFromGithubAuth && isAuthPending && tempData.dependencyFile.length > 0) {
+
+        // 한 번에 상태 업데이트
+        setSelectedFiles(tempData.dependencyFile as FileData[]);
+        // 각 파일에 대해 한 번만 onFileSelect 호출
+        tempData.dependencyFile.forEach(file => onFileSelect(file as FileData));
+      }
+    }, []);
+
+    // 외부 클릭 감지를 위한 이벤트 리스너
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownOpen &&
+            dropdownRef.current &&
+            buttonRef.current &&
+            !dropdownRef.current.contains(event.target as Node) &&
+            !buttonRef.current.contains(event.target as Node)) {
+          setDropdownOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [dropdownOpen]);
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string, content: string }>) => {
       if (files.length > 0) {
         // 각 파일을 개별적으로 처리
-        files.forEach(file => {
-          const newFile = {
-            name: file.path,
-            content: file.content
-          };
-          setSelectedFiles(prev => [...prev, newFile]);
-          onFileSelect(newFile);
+        const newFiles = files.map(file => ({
+          name: file.path,
+          content: file.content,
+          isGitHub: true
+        }));
+        
+        setSelectedFiles(prev => [...prev, ...newFiles]);
+        newFiles.forEach(file => {
+          onFileSelect(file);
         });
+        setTempData({ dependencyFile: newFiles });
       }
       setIsGitHubModalOpen(false);
     };
@@ -45,19 +91,37 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
       }
     }
 
+    // 텍스트 파일인지 확인하는 함수
+    const isTextFile = (filename: string): boolean => {
+      const textExtensions = [
+        '.txt', '.md', '.json', '.yml', '.yaml', '.xml', '.html', '.css', '.js', 
+        '.ts', '.jsx', '.tsx', '.java', '.py', '.c', '.cpp', '.h', '.cs', '.php',
+        '.rb', '.go', '.rs', '.sh', '.bat', '.ps1', '.sql', '.properties', '.conf',
+        '.ini', '.env', '.gitignore', '.gradle', '.pom', '.lock', 'Dockerfile'
+      ];
+      return textExtensions.some(ext => filename.endsWith(ext));
+    };
+
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
       setDragActive(false);
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0];
+        if (!isTextFile(file.name)) {
+          setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
+          return;
+        }
+        setFileError("");
         const content = await file.text();
         const newFile = {
           name: file.name,
           content: content
         };
-        setSelectedFiles(prev => [...prev, newFile]);
+        const newFiles = [...selectedFiles, newFile];
+        setSelectedFiles(newFiles);
         onFileSelect(newFile);
+        setTempData({ dependencyFile: newFiles });
       }
     };
 
@@ -68,11 +132,24 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
 
     const handleGithubUpload = () => {
       setDropdownOpen(false);
-      setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
+      setIsGitHubModalOpen(true);
     }
 
     return (
-      <div ref={ref}>
+      <div ref={ref} >
+        <div className="flex flex-col mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <h2 className="m-0 text-xl font-semibold">
+                {title}
+              </h2>
+            </div>
+          </div>
+          <p className="mt-2 text-sm text-gray-600">
+            프로젝트에서 사용할 외부 라이브러리와 프레임워크의 의존성 정보를 관리하는 파일입니다.
+          </p>
+        </div>
+
         <div className="w-full">
           {/* 드래그 앤 드롭 영역 */}
           <div
@@ -84,18 +161,20 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
             onDragOver={handleDrag}
             onDrop={handleDrop}
             onClick={() => {
-              setDropdownOpen(!dropdownOpen)
-              if (onFocus) onFocus()
+              if (onFocus) onFocus();
+              setDropdownOpen(!dropdownOpen);
             }}
             ref={buttonRef}
           >
             <Upload size={24} className="text-gray-400 mb-2" />
             <p className="text-gray-500 text-center text-sm">
-              의존성 파일을 드래그해서 추가하거나 <br /> 
-              <span className="text-blue-500">
-                업로드하세요
-              </span>
+              의존성 파일을 드래그해서 추가하거나<br />
+              <span className="text-blue-500">업로드하세요</span>
             </p>
+            <div className="mt-2 text-xs text-gray-400">
+              지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등
+            </div>
+
           </div>
           
           {/* 드롭다운 메뉴 */}
@@ -107,6 +186,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                   className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 first:rounded-t-lg" 
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (onFocus) onFocus();
                     handleGithubUpload();
                   }}
                 >
@@ -118,6 +198,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                   className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 last:rounded-b-lg" 
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (onFocus) onFocus();
                     handleFileUpload();
                   }}
                 >
@@ -135,16 +216,27 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
             onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
               if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
+                if (!isTextFile(file.name)) {
+                  setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
+                  return;
+                }
+                setFileError("");
                 const content = await file.text();
                 const newFile = {
                   name: file.name,
                   content: content
                 };
-                setSelectedFiles(prev => [...prev, newFile]);
+                const newFiles = [...selectedFiles, newFile];
+                setSelectedFiles(newFiles);
                 onFileSelect(newFile);
+                setTempData({ dependencyFile: newFiles });
               }
             }}
           />
+          
+          {fileError && (
+            <div className="mt-2 text-xs text-red-500">{fileError}</div>
+          )}
           
           {/* 선택된 파일 표시 */}
           {selectedFiles.length > 0 && (
@@ -159,7 +251,10 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                     </div>
                     <button
                       onClick={() => {
-                        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+                        const newFiles = selectedFiles.filter((_, i) => i !== index);
+                        setSelectedFiles(newFiles);
+                        // 파일 삭제 시 빈 content로 전달하지 않고 삭제된 상태만 반영
+                        setTempData({ dependencyFile: newFiles });
                       }}
                       className="text-red-500 hover:text-red-700 ml-2"
                     >

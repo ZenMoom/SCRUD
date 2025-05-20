@@ -56,7 +56,7 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         );
 
         scrudProjectRepository.save(project);
-        eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
+         eventPublisher.publishEvent(new ApiSpecGenerateEvent(project));
 
         return project.getScrudProjectId();
     }
@@ -64,7 +64,7 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
     // 2. 프로젝트 전체 목록 반환
     @Override
     public AllScrudProjectOut getAllProjects(Pageable pageable, UUID userId) {
-
+        log.info("getAllProjects");
         getUser(userId);
 
         List<ScrudProject> content = scrudProjectRepository.findScrudProjectsByUserIdAndIsDeletedIsFalseOrderByUpdatedAtDesc(pageable, userId);

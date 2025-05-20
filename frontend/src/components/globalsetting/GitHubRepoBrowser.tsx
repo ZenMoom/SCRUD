@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGitHubTokenStore } from '@/store/githubTokenStore';
 import { Folder, File as FileIcon, Github, ChevronLeft, Check } from 'lucide-react';
 import { getGitHubAuthUrl } from '@/auth/github';
@@ -55,6 +55,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
   const [error, setError] = useState<string>('');
   // 아키텍처 모드에서 전체 레포지토리 로딩 상태
   const [isLoadingFullRepo, setIsLoadingFullRepo] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // GitHub 인증 확인 및 처리
   useEffect(() => {
@@ -63,6 +64,22 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
     }
   }, [isOpen]);
 
+  // 외부 클릭 감지를 위한 이벤트 리스너
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isOpen && 
+          modalRef.current && 
+          !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
   // GitHub 인증 확인하는 함수
   const checkGitHubAuth = async () => {
     const storedToken = localStorage.getItem('github-token-direct');
@@ -70,10 +87,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
 
     try {
       if (storedToken) {
-        // 토큰이 있는 경우, 유효성 검사를 위해 GitHub API 호출
-        console.log('GitHub 토큰 유효성 확인 중...');
         
-        // 간단한 API 호출로 토큰 유효성 확인 - 사용자 레포지토리 목록 요청
         const response = await fetch('/api/github/user/repos', {
           headers: {
             'Authorization': `Bearer ${storedToken}`
@@ -87,15 +101,21 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           // 토큰 삭제
           localStorage.removeItem('github-token-direct');
           
-          // 인증 요청
-          const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
+          // 현재 상태를 임시저장
+          localStorage.setItem('github-auth-pending', 'true');
+          
+          // 인증 요청 (상태 파라미터 추가)
+          const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting?from=github-auth`);
           window.location.href = oauthUrl;
           return;
         }
       } else {
-        // 토큰이 없는 경우 바로 인증 요청
-        console.log('GitHub 토큰 없음, 인증 요청');
-        const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
+        
+        // 현재 상태를 임시저장
+        localStorage.setItem('github-auth-pending', 'true');
+        
+        // 인증 요청 (상태 파라미터 추가)
+        const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting?from=github-auth`);
         window.location.href = oauthUrl;
         return;
       }
@@ -103,8 +123,12 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
       console.error('GitHub 토큰 검증 중 오류 발생:', error);
       // 오류 발생시 토큰 삭제 후 재인증
       localStorage.removeItem('github-token-direct');
-      // 인증 요청
-      const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting`);
+      
+      // 현재 상태를 임시저장
+      localStorage.setItem('github-auth-pending', 'true');
+      
+      // 인증 요청 (상태 파라미터 추가)
+      const oauthUrl = getGitHubAuthUrl(`${REDIRECT_URL}/globalsetting?from=github-auth`);
       window.location.href = oauthUrl;
       return;
     }
@@ -353,10 +377,8 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
         repoInfo: repo,
         content: treeData
       };
-      console.log('저장할 selectedItems 데이터:', newSelectedItem);
       
       setSelectedItems([newSelectedItem]);
-      console.log('=== fetchFullRepositoryStructure 완료 ===');
     } catch (error) {
       console.error('레포지토리 전체 구조 가져오기 실패:', error);
       setError('레포지토리 전체 구조를 가져오는데 실패했습니다.');
@@ -446,7 +468,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
           }
           
           if (selectedItems[0].content) {
-            console.log('전달할 레포지토리 데이터:', selectedItems[0].content);
+
             const processedData = [{
               path: selectedItems[0].path,
               content: selectedItems[0].content,
@@ -454,7 +476,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
               fileName: selectedItems[0].path.split('/').pop() || '',
               isGitHub: true
             }];
-            console.log('onSelect에 전달할 최종 데이터:', processedData);
+          
             onSelect(processedData);
             onClose();
             return;
@@ -466,13 +488,6 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
         
         // 일반 파일 모드
         const processedFiles = selectedItems.map((item) => {
-          console.log('GitHub 파일 추가 시점 - 파일 정보:', {
-            path: item.path,
-            fileName: item.path.split('/').pop() || '',
-            content: item.content,
-            fileType: determineFileType(formType)
-          });
-          
           return {
             path: item.path,
             fileName: item.path.split('/').pop() || '',
@@ -494,8 +509,11 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({ isOpen, onClose, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white rounded-md p-10 w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div 
+        ref={modalRef}
+        className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col p-10"
+      >
         <div className="flex justify-between items-center mb-4 ">
           <h2 className="text-lg font-semibold flex items-center ">
             <span className="mr-2"><Github size={20} /></span> 
