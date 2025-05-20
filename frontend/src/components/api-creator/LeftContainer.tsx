@@ -66,7 +66,7 @@ export default function LeftContainer({ activeItem, onItemClick, globalFiles }: 
 
   // 아이템에 파일이 있는지 확인 (prefix 매칭)
   const hasFiles = (fileType: string): boolean => {
-    return globalFiles.some(file => file.fileType.startsWith(fileType));
+    return globalFiles.some((file) => file.fileType.startsWith(fileType))
   }
 
   // 아이템 클릭 처리 - 아코디언 토글 및 onItemClick 호출
@@ -79,7 +79,7 @@ export default function LeftContainer({ activeItem, onItemClick, globalFiles }: 
   const renderProjectItem = (item: ProjectItem) => {
     const { id, label } = item
     const isExpanded = expandedItems[id]
-    const value = globalFiles.find(file => file.fileType === id.toUpperCase())?.fileContent || ''
+    const value = globalFiles.find((file) => file.fileType === id.toUpperCase())?.fileContent || ""
 
     return (
       <div key={id} className="mb-2">
@@ -94,9 +94,7 @@ export default function LeftContainer({ activeItem, onItemClick, globalFiles }: 
         </div>
         {isExpanded && (
           <div className="p-2 bg-white">
-            <div className="pl-8 py-2 text-sm text-gray-700">
-              {value || '정보가 없습니다'}
-            </div>
+            <div className="pl-8 py-2 text-sm text-gray-700">{value || "정보가 없습니다"}</div>
           </div>
         )}
       </div>
@@ -127,15 +125,15 @@ export default function LeftContainer({ activeItem, onItemClick, globalFiles }: 
             ) : hasFilesForType ? (
               <ul className="space-y-1">
                 {globalFiles
-                  .filter(file => file.fileType.startsWith(fileType))
+                  .filter((file) => file.fileType.startsWith(fileType))
                   .map((file) => (
                     <li key={file.globalFileId} className="pl-8 py-2 text-sm hover:bg-gray-50 rounded flex justify-between items-center">
-                      <span 
+                      <span
                         className="cursor-pointer hover:text-blue-500"
                         onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedFile(file);
-                          setIsModalOpen(true);
+                          e.stopPropagation()
+                          setSelectedFile(file)
+                          setIsModalOpen(true)
                         }}
                       >
                         {file.fileName}
@@ -154,17 +152,13 @@ export default function LeftContainer({ activeItem, onItemClick, globalFiles }: 
 
   return (
     <div className="w-full h-full bg-white p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <h2 className="text-lg font-bold text-gray-800 mb-4">프로젝트 설정</h2>
-      <div className="space-y-2">
-        {ITEMS.map((item) => (
-          item.isProject ? renderProjectItem(item as ProjectItem) : renderFileItem(item as FileItem)
-        ))}
-      </div>
+      <h2 className="text-lg font-bold text-gray-800 mb-4 pl-5">프로젝트 설정</h2>
+      <div className="space-y-2">{ITEMS.map((item) => (item.isProject ? renderProjectItem(item as ProjectItem) : renderFileItem(item as FileItem)))}</div>
       <FileContentModal
         isOpen={isModalOpen}
         onClose={() => {
-          setIsModalOpen(false);
-          setSelectedFile(null);
+          setIsModalOpen(false)
+          setSelectedFile(null)
         }}
         fileName={selectedFile?.fileName || ""}
         content={selectedFile?.fileContent || ""}
