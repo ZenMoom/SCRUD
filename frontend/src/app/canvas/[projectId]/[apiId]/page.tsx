@@ -325,8 +325,15 @@ export default function CanvasPage() {
       setShowConfirmModal(false);
 
       // API 호출
-      const response = await axios.put(`/api/canvas-api/${projectId}/${apiId}`, {
-        status: 'USER_COMPLETED',
+      const response = await fetch(`/api/canvas-api/${projectId}/${apiId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token || '',
+        },
+        body: JSON.stringify({
+          status: 'USER_COMPLETED',
+        }),
       });
 
       // 완료 메시지 표시
@@ -339,7 +346,7 @@ export default function CanvasPage() {
         }
       }, 2000);
 
-      console.log('API 완료 응답:', response.data);
+      console.log('API 완료 응답:', response);
     } catch (err) {
       console.error('API 완료 처리 오류:', err);
 
@@ -349,7 +356,7 @@ export default function CanvasPage() {
         alert('API 완료 처리 중 오류가 발생했습니다.');
       }
     }
-  }, [projectId, apiId]);
+  }, [projectId, apiId, token]);
 
   // 모달 닫기 핸들러 수정
   const handleCloseModal = useCallback(() => {
