@@ -40,8 +40,6 @@ export default function ProjectApiPage() {
           title: `프로젝트 ${projectId}`,
         })
 
-        // API 스펙이 존재하는지 확인 (404 에러를 방지하기 위함)
-        // 선택적으로 추가할 수 있는 코드
         try {
           await axios.get(`/api/api-specs/by-project/${projectId}`)
         } catch (error) {
