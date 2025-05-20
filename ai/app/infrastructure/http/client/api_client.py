@@ -100,5 +100,8 @@ class ApiClient:
         return GlobalFileList.model_validate(response.json())
 
     async def get_api_spec(self, api_spec_id: str, token: str) -> ApiSpec:
-        response = await self.client.get(f"/api/v1/api-specs/{api_spec_id}")
+        headers = {
+            "Authorization": f"{token}"
+        }
+        response = await self.client.get(f"/api/v1/api-specs/{api_spec_id}", headers=headers)
         return ApiSpec.model_validate(response.json())
