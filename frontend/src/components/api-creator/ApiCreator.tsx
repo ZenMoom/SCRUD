@@ -24,11 +24,21 @@ interface ApiGroup {
   endpoints: ApiEndpoint[]
 }
 
-interface ApiCreatorProps {
-  projectId?: number // URL에서 받은 프로젝트 ID
+// GlobalFile 인터페이스 추가
+interface GlobalFile {
+  globalFileId: number
+  fileName: string
+  fileType: string
+  fileUrl?: string
+  fileContent: string
 }
 
-export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
+interface ApiCreatorProps {
+  projectId?: number // URL에서 받은 프로젝트 ID
+  globalFiles: GlobalFile[] // 전역 파일 데이터
+}
+
+export default function ApiCreator({ projectId = 1, globalFiles }: ApiCreatorProps) {
   // useAuthStore에서 토큰 가져오기
   const { token } = useAuthStore()
 
@@ -242,7 +252,7 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
           {/* 좌측 패널 - 자연스러운 트랜지션 효과 복원 */}
           <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-[44px]"} h-full transition-all duration-300 ease-in-out bg-white rounded-lg`}>
             <div className={`${isLeftPanelOpen ? "w-[300px] opacity-100" : "w-0 opacity-0"} h-full rounded-lg bg-white shadow-md overflow-y-auto transition-all duration-300 ease-in-out`}>
-              <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} />
+              <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} globalFiles={globalFiles}/>
             </div>
           </div>
 

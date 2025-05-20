@@ -36,7 +36,6 @@ export async function GET(
       authorization = `Bearer ${authorization}`;
     }
 
-    console.log('백엔드로 전송할 토큰:', authorization);
 
     // API 클라이언트 설정 - baseOptions 사용하여 명시적으로 헤더 설정
     const config = new Configuration({
@@ -124,7 +123,6 @@ export async function DELETE(
       authorization = `Bearer ${authorization}`;
     }
     
-    console.log('백엔드로 전송할 토큰:', authorization);
     
     // API 클라이언트 설정 - baseOptions 사용하여 명시적으로 헤더 설정
     const config = new Configuration({

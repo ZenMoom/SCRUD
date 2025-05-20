@@ -1,23 +1,16 @@
 "use client"
 
 import { forwardRef, useState, useRef, useEffect } from "react"
-import { HelpCircle, Upload, Github, File } from "lucide-react"
+import { Github} from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
+import { useProjectTempStore } from "@/store/projectTempStore"
+import { ArchitectureOption } from "@/store/types/project"
 
 interface FileWithContent {
   name: string;
   content: string;
-}
-
-interface SelectionValue {
-  type: string;
-  label: string;
-}
-
-interface ArchitectureOption {
-  type: string;
-  label: string;
-  imageUrl: string;
+  isGitHub?: boolean;
+  repoName?: string;
 }
 
 const architectureOptions = [
@@ -33,172 +26,195 @@ const layeredOptions = [
 ];
 
 // 기본값 설정
-const DEFAULT_ARCHITECTURE_OPTION = architectureOptions[0];
+const DEFAULT_ARCHITECTURE_OPTION = layeredOptions[0];
 
 interface ArchitectureStructureFormProps {
-  title: string
-  value: SelectionValue | FileWithContent[] | ArchitectureOption
-  onChange: (value: SelectionValue | FileWithContent[] | ArchitectureOption) => void
-  onInfoClick: () => void
-  onFocus?: () => void
-  isRequired?: boolean
+  title: string;
+  value: ArchitectureOption | FileWithContent[];
+  onChange: (value: ArchitectureOption | FileWithContent[]) => void;
+  onFocus?: () => void;
+  isRequired?: boolean;
 }
 
 const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructureFormProps>(
-  ({ title, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
-    const [inputType, setInputType] = useState<'select' | 'file'>('select')
+  ({ title, value, onChange, isRequired }, ref) => {
+    void value;
     const [showLayeredOptions, setShowLayeredOptions] = useState(false)
     const [dropdownOpen, setDropdownOpen] = useState(false)
-    const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
-    const [selectedOption, setSelectedOption] = useState<ArchitectureOption>(
-      // value가 있으면 value를 사용하고, 없으면 기본값 사용
-      (value as ArchitectureOption)?.type ? (value as ArchitectureOption) : DEFAULT_ARCHITECTURE_OPTION
-    );
+    const [selectedOption, setSelectedOption] = useState<ArchitectureOption>(DEFAULT_ARCHITECTURE_OPTION)
+    const [githubFiles, setGithubFiles] = useState<FileWithContent[] | null>(null)
+    const [repoName, setRepoName] = useState<string | null>(null)
+    const { tempData, setTempData } = useProjectTempStore()
 
-    // 컴포넌트가 마운트될 때 기본값 설정
+    // 외부 클릭 감지를 위한 이벤트 리스너
     useEffect(() => {
-      if (!value || !(value as ArchitectureOption)?.type) {
-        onChange(DEFAULT_ARCHITECTURE_OPTION);
-      }
-    }, []);
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownOpen &&
+            dropdownRef.current &&
+            buttonRef.current &&
+            !dropdownRef.current.contains(event.target as Node) &&
+            !buttonRef.current.contains(event.target as Node)) {
+          setDropdownOpen(false);
+        }
+      };
 
-    // value가 변경될 때 selectedOption 업데이트
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [dropdownOpen]);
+
+    // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
     useEffect(() => {
-      if ((value as ArchitectureOption)?.type) {
-        setSelectedOption(value as ArchitectureOption);
-      }
-    }, [value]);
+      const params = new URLSearchParams(window.location.search)
+      const isFromGithubAuth = params.get('from') === 'github-auth'
+      const isAuthPending = localStorage.getItem('github-auth-pending') === 'true'
 
-     const handleOptionChange = (option: ArchitectureOption) => {
+      if (isFromGithubAuth && isAuthPending && tempData.architectureStructure) {
+        if (tempData.architectureStructure.type === 'selection' && tempData.architectureStructure.selection) {
+          setSelectedOption(tempData.architectureStructure.selection)
+          onChange(tempData.architectureStructure.selection)
+        } else if (tempData.architectureStructure.type === 'file' && tempData.architectureStructure.files) {
+          const files = tempData.architectureStructure.files.map(file => ({
+            name: file.name || '',
+            content: typeof file.content === 'string' ? file.content : JSON.stringify(file.content)
+          }))
+          setGithubFiles(files)
+          onChange(files)
+        }
+      }
+    }, [])
+
+    const handleOptionChange = (option: ArchitectureOption) => {
       if (option.type === 'ARCHITECTURE_DEFAULT_LAYERED') {
-        setShowLayeredOptions(true);
-        setSelectedOption(option);
+        setShowLayeredOptions(true)
+        setSelectedOption(option)
       } else {
-        setShowLayeredOptions(false);
-        setSelectedOption(option);
-        onChange(option);
+        setShowLayeredOptions(false)
+        setSelectedOption(option)
+        setGithubFiles(null)
+        setRepoName(null)
+        onChange(option)
+        setTempData({
+          architectureStructure: {
+            type: 'selection',
+            selection: option
+          }
+        })
       }
-    };
+    }
 
     const handleLayeredOptionChange = (option: ArchitectureOption) => {
-      setSelectedOption(option);
-      onChange(option);
-    };
+      setSelectedOption(option)
+      setGithubFiles(null)
+      setRepoName(null)
+      onChange(option)
+      setTempData({
+        architectureStructure: {
+          type: 'selection',
+          selection: option
+        }
+      })
+    }
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Record<string, unknown>[]) => {
       if (files.length > 0) {
-        console.log('=== ArchitectureStructureForm handleGitHubFileSelect ===');
-        console.log('변환 전 GitHub 데이터:', files);
-        
+        // repoName 추출 (repoInfo.name > path에서 마지막 / 뒤 값)
+        let repoName = undefined;
+        if (files[0].repoInfo && typeof (files[0].repoInfo as { name?: string }).name === 'string') {
+          repoName = (files[0].repoInfo as { name: string }).name;
+        } else if (files[0].path && typeof files[0].path === 'string') {
+          const match = files[0].path.match(/([^/]+)$/);
+          if (match) repoName = match[1];
+        }
         const convertedFiles = files.map(file => ({
           name: file.path as string || 'unnamed_file',
-          content: JSON.stringify(file.content),  // 객체를 문자열로 변환
-          isGitHub: true
-        }));
-        
-        console.log('변환 후 데이터:', convertedFiles);
-        onChange(convertedFiles);
+          content: JSON.stringify(file.content),
+          isGitHub: true,
+          repoName: repoName || undefined
+        }))
+        setGithubFiles(convertedFiles)
+        setRepoName(repoName ?? null)
+        setShowLayeredOptions(false)
+        onChange(convertedFiles)
+        setTempData({
+          architectureStructure: {
+            type: 'file',
+            files: convertedFiles
+          }
+        })
       }
-      setIsGitHubModalOpen(false);
-    };
-
-    const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
-      if (e.type === "dragenter" || e.type === "dragover") {
-        setDragActive(true)
-      } else if (e.type === "dragleave") {
-        setDragActive(false)
-      }
+      setIsGitHubModalOpen(false)
     }
 
-    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setDragActive(false)
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        const file = e.dataTransfer.files[0];
-        const content = await file.text();
-        const fileWithContent = {
-          name: file.name,
-          content: content
-        };
-
-        console.log('드래그 앤 드롭으로 추가된 파일:');
-        console.log('파일명:', fileWithContent.name);
-        console.log('파일 내용:', fileWithContent.content);
-        
-        // 드롭한 파일을 현재 값 배열에 추가
-        if (Array.isArray(value)) {
-          onChange([...value, fileWithContent]);
-        } else {
-          // 배열이 아닌 경우 새 배열 생성
-          onChange([fileWithContent]);
+    // 선택지로 전환 (깃허브 모드 → 선택지 모드)
+    const handleBackToSelect = () => {
+      setGithubFiles(null)
+      setRepoName(null)
+      setShowLayeredOptions(false)
+      setSelectedOption(DEFAULT_ARCHITECTURE_OPTION)
+      onChange(DEFAULT_ARCHITECTURE_OPTION)
+      setTempData({
+        architectureStructure: {
+          type: 'selection',
+          selection: DEFAULT_ARCHITECTURE_OPTION
         }
-      }
+      })
     }
 
-    const handleFileUpload = () => {
-      setDropdownOpen(false)
-      // 파일 선택 다이얼로그 트리거
-      document.getElementById(`file-upload-${title}`)?.click()
-    }
-
+    // handleGithubUpload 함수 복원
     const handleGithubUpload = () => {
       setDropdownOpen(false);
-      setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
-    }
-
-    // 입력 타입 변경 핸들러
-    const handleInputTypeChange = () => {
-      const newInputType = inputType === 'select' ? 'file' : 'select';
-      setInputType(newInputType);
-      
-      // 입력 타입이 변경될 때 이전 선택값 초기화
-      if (newInputType === 'file') {
-        // 파일 모드로 변경 시 빈 배열로 초기화
-        onChange([] as FileWithContent[]);
-      } else {
-        // 선택 모드로 변경 시 기본값으로 초기화
-        onChange({ type: "ARCHITECTURE_DEFAULT_LAYERED_A", label: "ARCHITECTURE_DEFAULT_LAYERED_A" });
-      }
+      setIsGitHubModalOpen(true);
     };
 
     return (
       <div ref={ref} className="mb-10 p-10 bg-white rounded-lg">
-        <div className="flex items-center mb-4 justify-between">
-          <div className="flex items-center">
-            <h2 className="text-xl font-semibold m-0">{title} {isRequired && <span className="text-red-500">*</span>}</h2>
-            <button
-              type="button"
-              className="bg-transparent border-none text-gray-400 cursor-pointer ml-2 p-0 flex items-center justify-center transition-colors duration-200 hover:text-gray-600"
-              onClick={onInfoClick}
-              aria-label={`${title} 정보`}
-            >
-              <HelpCircle size={20} />
-            </button>
-          </div>
-          <button
-            type="button"
-            className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
-            onClick={handleInputTypeChange}
-          >
-            {inputType === 'select' ? (
-              <>
-                <Upload size={14} className="mr-1" />
-                파일 추가하기
-              </>
+        <div className="flex flex-col mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <h2 className="text-xl font-semibold m-0">{title} {isRequired && <span className="text-red-500">*</span>}</h2>
+            </div>
+            {/* 깃허브/선택지 전환 버튼 */}
+            {githubFiles ? (
+              <button
+                type="button"
+                className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
+                onClick={handleBackToSelect}
+              >
+                선택지에서 선택하기
+              </button>
             ) : (
-              <>선택지에서 선택하기</>
+              <button
+                type="button"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-blue-600 hover:bg-blue-200 transition-colors"
+                onClick={handleGithubUpload}
+              >
+                <Github size={16} className="text-blue-500" />
+                GitHub에서 가져오기
+              </button>
             )}
-          </button>
+          </div>
+          <p className="mt-2 text-sm text-gray-600">
+            프로젝트의 전반적인 구조와 계층을 정의하는 파일입니다. 각 컴포넌트 간의 관계와 책임을 명확히 합니다.
+          </p>
         </div>
 
-        {inputType === 'select' ? (
+        {/* 깃허브에서 파일을 추가했을 경우 레포지토리 명 표시 */}
+        {githubFiles && repoName && (
+          <div className="mb-6">
+            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+              선택된 레포지토리: {repoName}
+            </span>
+          </div>
+        )}
+
+        {/* 선택지 카드들: 깃허브 모드가 아닐 때만 노출 */}
+        {!githubFiles && (
           <div className="space-y-6">
             {/* 기본 아키텍처 옵션들 */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -254,137 +270,16 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
               </div>
             )}
           </div>
-        ) : (
-          <div className="w-full">
-            {/* 드래그 앤 드롭 영역 */}
-            <div
-              className={`p-4 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer ${
-                dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
-              }`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              onClick={() => {
-                setDropdownOpen(!dropdownOpen)
-                if (onFocus) onFocus()
-              }}
-              ref={buttonRef}
-            >
-              <Upload size={24} className="text-gray-400 mb-2" />
-              <p className="text-gray-500 text-center text-sm">
-                아키텍처 구조 파일을 드래그해서 추가하거나 <br /> 
-                <span className="text-blue-500">
-                  업로드하세요
-                </span>
-              </p>
-            </div>
-            
-            {/* 드롭다운 메뉴 */}
-            {dropdownOpen && (
-              <div ref={dropdownRef} className="relative">
-                <div className="absolute top-2 left-0 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                  <button 
-                    type="button" 
-                    className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 first:rounded-t-lg" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleGithubUpload();
-                      setDropdownOpen(false);
-                    }}
-                  >
-                    <Github size={16} className="text-gray-500" />
-                    <span>GitHub에서 가져오기</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-gray-100 transition-colors duration-150 last:rounded-b-lg" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFileUpload();
-                      setDropdownOpen(false);
-                    }}
-                  >
-                    <Upload size={16} className="text-gray-500" />
-                    <span>파일 업로드</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <input
-              id={`file-upload-${title}`}
-              type="file"
-              className="hidden"
-              onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-                if (e.target.files && e.target.files[0]) {
-                  const file = e.target.files[0];
-                  const content = await file.text();
-                  const fileWithContent = {
-                    name: file.name,
-                    content: content
-                  };
-
-                  console.log('파일 업로드로 추가된 파일:');
-                  console.log('파일명:', fileWithContent.name);
-                  console.log('파일 내용:', fileWithContent.content);
-                  
-                  // 현재 value가 배열인 경우 새 파일을 추가
-                  if (Array.isArray(value)) {
-                    onChange([...value, fileWithContent]);
-                  } else {
-                    // 배열이 아닌 경우 단일 항목 배열로 설정
-                    onChange([fileWithContent]);
-                  }
-                }
-              }}
-            />
-            
-            {/* 선택된 파일 표시 */}
-            {Array.isArray(value) && value.length > 0 && (
-              <div className="mt-4">
-                <p className="text-sm font-medium mb-2">선택된 파일: {value.length}개</p>
-                <div className="flex flex-col space-y-2">
-                  {value.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
-                      <div className="flex items-center gap-2">
-                        <File size={16} className="text-gray-500" />
-                        <span className="truncate">{file.name}</span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const newFiles = [...value];
-                          newFiles.splice(index, 1);
-                          onChange(newFiles);
-                        }}
-                        className="text-red-500 hover:text-red-700 ml-2"
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 단일 값인 경우와 호환성 유지 */}
-            {!Array.isArray(value) && value && (
-              <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
-                <File size={16} className="text-gray-500" />
-                <span>{value.label}</span>
-              </div>
-            )}
-            
-            {/* GitHub 레포지토리 브라우저 모달 */}
-            <GitHubRepoBrowser 
-              isOpen={isGitHubModalOpen} 
-              onClose={() => setIsGitHubModalOpen(false)} 
-              onSelect={handleGitHubFileSelect}
-              formType="architectureStructure"
-              isArchitecture={true}
-            />
-          </div>
         )}
+
+        {/* 깃허브 모달 */}
+        <GitHubRepoBrowser 
+          isOpen={isGitHubModalOpen} 
+          onClose={() => setIsGitHubModalOpen(false)} 
+          onSelect={handleGitHubFileSelect}
+          formType="architectureStructure"
+          isArchitecture={true}
+        />
       </div>
     )
   }

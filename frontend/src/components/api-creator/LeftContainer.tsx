@@ -1,9 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { CheckCircle, Pencil } from "lucide-react"
-import useAuthStore from "@/app/store/useAuthStore"
-import { useParams } from "next/navigation"
+import { useState } from "react"
+import FileContentModal from "./FileContentModal"
 
 // 전역 파일 정의
 interface GlobalFile {
@@ -14,16 +12,12 @@ interface GlobalFile {
   fileContent: string
 }
 
-// 파일 타입별로 그룹화된 파일
-interface GlobalFilesByType {
-  [key: string]: GlobalFile[]
-}
-
 // 왼쪽 컨테이너 Props
 interface LeftContainerProps {
   completed: Record<string, boolean>
   activeItem: string
   onItemClick: (item: string) => void
+  globalFiles: GlobalFile[]
 }
 
 // 프로젝트 항목 타입
@@ -56,83 +50,11 @@ const ITEMS: SidebarItem[] = [
   { id: "architectureStructure", label: "아키텍처 구조", fileType: "ARCHITECTURE_DEFAULT", isProject: false },
 ]
 
-export default function LeftContainer({ activeItem, onItemClick }: LeftContainerProps) {
-  const [files, setFiles] = useState<GlobalFilesByType>({})
+export default function LeftContainer({ activeItem, onItemClick, globalFiles }: LeftContainerProps) {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
-  const [loading, setLoading] = useState(false)
-  const { token } = useAuthStore()
-  const params = useParams()
-  const projectId = params.id ? parseInt(params.id as string, 10) : 0
-
-  // 파일 항목 목록 - 컴포넌트 내에서 계산
-  const fileItems = ITEMS.filter((item): item is FileItem => !item.isProject)
-
-  // 파일 타입별 그룹화 함수
-  const groupFilesByType = useCallback(
-    (files: GlobalFile[]): GlobalFilesByType => {
-      const result: GlobalFilesByType = {}
-
-      // 초기화 - 모든 파일 타입에 대한 빈 배열 생성
-      fileItems.forEach((item) => {
-        result[item.fileType] = []
-      })
-
-      // 파일 분류
-      files.forEach((file) => {
-        const fileType = file.fileType
-          .split("_")
-          .slice(0, file.fileType.startsWith("ARCHITECTURE") ? 2 : 1)
-          .join("_")
-        if (result[fileType]) {
-          result[fileType].push(file)
-        } else if (fileType.startsWith("ARCHITECTURE")) {
-          result["ARCHITECTURE_DEFAULT"].push(file)
-        } else if (fileType.startsWith("SECURITY")) {
-          result["SECURITY"].push(file)
-        } else if (fileType.startsWith("CONVENTION")) {
-          result["CONVENTION"].push(file)
-        } else {
-          console.warn(`Unknown file type: ${fileType}`, file)
-        }
-      })
-
-      return result
-    },
-    [fileItems]
-  )
-
-  // 전역 파일 데이터 로드 함수
-  const fetchGlobalFiles = useCallback(async () => {
-    if (!projectId) return
-
-    setLoading(true)
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        headers: {
-          Authorization: token || "",
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Error fetching global files: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      // 백엔드 응답 구조에 따라 조정 필요
-      const globalFiles = data.content || data.globalFiles || []
-      setFiles(groupFilesByType(globalFiles))
-    } catch {
-      alert("파일을 가져오는 중 오류가 발생했습니다.")
-    } finally {
-      setLoading(false)
-    }
-  }, [projectId, token, groupFilesByType])
-
-  // 최초 로드 시에만 데이터 가져오기
-  useEffect(() => {
-    fetchGlobalFiles()
-  }, []) // 의존성 배열을 비워서 최초 마운트 시에만 실행
+  const [loading] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<GlobalFile | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // 아이템 펼치기/접기
   const toggleItem = (id: string) => {
@@ -142,15 +64,43 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     }))
   }
 
-  // 아이템에 파일이 있는지 확인
+  // 아이템에 파일이 있는지 확인 (prefix 매칭)
   const hasFiles = (fileType: string): boolean => {
-    return files[fileType] && files[fileType].length > 0
+    return globalFiles.some(file => file.fileType.startsWith(fileType));
   }
 
   // 아이템 클릭 처리 - 아코디언 토글 및 onItemClick 호출
   const handleItemClick = (id: string) => {
     toggleItem(id)
     onItemClick(id)
+  }
+
+  // 프로젝트 항목 렌더링 함수
+  const renderProjectItem = (item: ProjectItem) => {
+    const { id, label } = item
+    const isExpanded = expandedItems[id]
+    const value = globalFiles.find(file => file.fileType === id.toUpperCase())?.fileContent || ''
+
+    return (
+      <div key={id} className="mb-2">
+        <div
+          className={`flex items-center justify-between p-3 cursor-pointer transition-colors duration-200 hover:bg-gray-100 rounded-lg
+          ${activeItem === id ? "bg-gray-100 font-medium" : ""}`}
+          onClick={() => handleItemClick(id)}
+        >
+          <div className="flex items-center">
+            <span className="text-base font-medium">{label}</span>
+          </div>
+        </div>
+        {isExpanded && (
+          <div className="p-2 bg-white">
+            <div className="pl-8 py-2 text-sm text-gray-700">
+              {value || '정보가 없습니다'}
+            </div>
+          </div>
+        )}
+      </div>
+    )
   }
 
   // 파일 항목 렌더링 함수
@@ -176,11 +126,22 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
               <div className="pl-8 py-2 text-sm text-gray-500">로딩 중...</div>
             ) : hasFilesForType ? (
               <ul className="space-y-1">
-                {files[fileType].map((file) => (
-                  <li key={file.globalFileId} className="pl-8 py-2 text-sm hover:bg-gray-50 rounded flex justify-between items-center">
-                    <span>{file.fileName}</span>
-                  </li>
-                ))}
+                {globalFiles
+                  .filter(file => file.fileType.startsWith(fileType))
+                  .map((file) => (
+                    <li key={file.globalFileId} className="pl-8 py-2 text-sm hover:bg-gray-50 rounded flex justify-between items-center">
+                      <span 
+                        className="cursor-pointer hover:text-blue-500"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFile(file);
+                          setIsModalOpen(true);
+                        }}
+                      >
+                        {file.fileName}
+                      </span>
+                    </li>
+                  ))}
               </ul>
             ) : (
               <div className="pl-8 py-2 text-sm text-gray-500">파일이 없습니다</div>
@@ -191,40 +152,23 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
     )
   }
 
-  // 프로젝트 항목 렌더링 함수
-  const renderProjectItem = (item: ProjectItem) => {
-    const { id, label } = item
-
-    return (
-      <div key={id} className="mb-2">
-        <div
-          className={`flex items-center justify-between p-3 cursor-pointer transition-colors duration-200 hover:bg-gray-100 rounded-lg
-          ${activeItem === id ? "bg-gray-100 font-medium" : ""}`}
-          onClick={() => handleItemClick(id)}
-        >
-          <div className="flex items-center">
-            <CheckCircle className="text-green-500 mr-2.5" size={20} />
-            <span className="text-base font-medium">{label}</span>
-          </div>
-          <div className="flex items-center">
-            <button
-              className="p-1 rounded-full hover:bg-gray-200"
-              onClick={(e) => {
-                e.stopPropagation()
-              }}
-            >
-              <Pencil size={18} className="text-blue-500" />
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="w-full h-full bg-white p-4 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <h2 className="text-lg font-bold text-gray-800 mb-4 ml-10">프로젝트 설정</h2>
-      <div className="space-y-2">{ITEMS.map((item) => (item.isProject ? renderProjectItem(item) : renderFileItem(item as FileItem)))}</div>
+    <div className="w-full h-full bg-white p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <h2 className="text-lg font-bold text-gray-800 mb-4">프로젝트 설정</h2>
+      <div className="space-y-2">
+        {ITEMS.map((item) => (
+          item.isProject ? renderProjectItem(item as ProjectItem) : renderFileItem(item as FileItem)
+        ))}
+      </div>
+      <FileContentModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedFile(null);
+        }}
+        fileName={selectedFile?.fileName || ""}
+        content={selectedFile?.fileContent || ""}
+      />
     </div>
   )
 }
