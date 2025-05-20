@@ -9,6 +9,7 @@ from app.core.diagram.component.component_service import ComponentService
 from app.core.diagram.connection.connection_service import ConnectionService
 from app.core.diagram.diagram_service import DiagramService
 from app.core.llm.base_llm import LLMFactory, ModelType
+from app.core.llm.chains.chat_summary_chain import ChatSummaryChain
 from app.core.llm.chains.component_chain import ComponentChain
 from app.core.llm.chains.connection_chain import ConnectionChain
 from app.core.llm.chains.create_diagram_component_chain import CreateDiagramComponentChain
@@ -60,6 +61,14 @@ def get_chat_service(
     return ChatService(
         diagram_repository=diagram_repository,
         chat_repository=chat_repository,
+        chat_summary_chain=ChatSummaryChain(
+            LLMFactory.create_llm(
+                model=ModelType.OPENAI_GPT4,
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE,
+                temperature=0,
+            )
+        )
     )
 
 def get_prompt_service() -> PromptService:

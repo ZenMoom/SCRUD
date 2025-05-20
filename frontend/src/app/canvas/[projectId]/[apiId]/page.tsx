@@ -99,7 +99,7 @@ export default function CanvasPage() {
       // axios를 사용하여 채팅 API 호출
       const response = await axios.get<ChatHistoryResponse>(`/api/chat/${projectId}/${apiId}`, {
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -200,7 +200,7 @@ export default function CanvasPage() {
         // axios를 사용하여 API 호출 - 버전 ID를 쿼리 파라미터로 전달
         const response = await axios.get<DiagramResponse>(`/api/canvas/${projectId}/${apiId}?version=${versionId}`, {
           headers: {
-            Authorization: token,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -325,8 +325,15 @@ export default function CanvasPage() {
       setShowConfirmModal(false);
 
       // API 호출
-      const response = await axios.put(`/api/canvas-api/${projectId}/${apiId}`, {
-        status: 'USER_COMPLETED',
+      const response = await fetch(`/api/canvas-api/${projectId}/${apiId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` || '',
+        },
+        body: JSON.stringify({
+          status: 'USER_COMPLETED',
+        }),
       });
 
       // 완료 메시지 표시
@@ -339,7 +346,7 @@ export default function CanvasPage() {
         }
       }, 2000);
 
-      console.log('API 완료 응답:', response.data);
+      console.log('API 완료 응답:', response);
     } catch (err) {
       console.error('API 완료 처리 오류:', err);
 
@@ -349,7 +356,7 @@ export default function CanvasPage() {
         alert('API 완료 처리 중 오류가 발생했습니다.');
       }
     }
-  }, [projectId, apiId]);
+  }, [projectId, apiId, token]);
 
   // 모달 닫기 핸들러 수정
   const handleCloseModal = useCallback(() => {

@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an AI service built with FastAPI that processes OpenAPI specifications to generate class diagrams. It uses large language models (LLM) to analyze API specifications and create visual representations of the system architecture. The service communicates with other system components via Kafka for message passing and MongoDB for data persistence.
+This is an AI service built with FastAPI that processes OpenAPI specifications to generate class diagrams. It uses large language models (LLM) to analyze API specifications and create visual representations of the system architecture. The service communicates with other system components via HTTP requests and MongoDB for data persistence.
 
 ## Architecture
 
 - **FastAPI Application**: Provides HTTP endpoints for chat-based interaction and diagram generation
 - **LLM Integration**: Uses LangChain to connect to different LLM providers (OpenAI, Anthropic, Ollama)
-- **Message Queue**: Kafka for asynchronous communication with other services
 - **Database**: MongoDB for storing diagram data and chat history
 - **Streaming**: Server-Sent Events (SSE) for streaming LLM responses to clients
+- **RAG Implementation**: Retrieval-Augmented Generation for more accurate diagram generation based on context
 
 ## Core Components
 
@@ -22,8 +22,8 @@ This is an AI service built with FastAPI that processes OpenAPI specifications t
    - `SSEService`: Singleton for managing streaming connections to clients
 
 2. **Infrastructure**: External service integrations
-   - `KafkaConsumer/Producer`: Asynchronous message queue integration with handler registration
    - `MongoRepository`: Database access layer with generic repository pattern
+   - `ApiClient`: HTTP client for external API communication
 
 3. **API Layer**: FastAPI routes for HTTP endpoints
    - `api_routes.py`: API spec generation endpoints
@@ -34,6 +34,10 @@ This is an AI service built with FastAPI that processes OpenAPI specifications t
    - `ModelGenerator`: Factory for creating LLM instances (OpenAI, Anthropic, Ollama)
    - `ApiModelGenerator`: Specialized generator for API specification analysis
    - `StreamingHandler`: Callbacks for streaming LLM responses
+   - `DiagramCreateGenerator`: Specialized generator for creating diagrams with LLM
+
+5. **RAG Implementation**: 
+   - `CreateDiagramComponentRAG`: Uses vector storage and embeddings to enhance diagram generation with relevant context
 
 ## Development Commands
 
@@ -66,7 +70,7 @@ docker run -p 8000:8000 ai-service:prod
 pytest
 
 # Run specific test file
-pytest tests/unit/test_chat_service.py
+pytest tests/unit/test_convert_diagram.py
 
 # Run tests with specific marker (e.g., real tests that call actual APIs)
 pytest -m real
@@ -89,10 +93,9 @@ The application uses environment variables for configuration. The main configura
 Key environment variables:
 - `AI_ENV_MODE`: Environment mode
 - `OPENAI_API_KEY`: OpenAI API key
+- `OPENAI_API_BASE`: Base URL for OpenAI API
 - `ANTHROPIC_API_KEY`: Anthropic API key
 - `OLLAMA_API_URL`: URL for Ollama API
-- `KAFKA_BOOTSTRAP_SERVERS`: Kafka server addresses
-- `KAFKA_TOPIC_*`: Topic names for various Kafka message types
 - `MONGO_URI`: MongoDB connection URI
 - `MONGO_DB_NAME`: MongoDB database name
 
@@ -118,15 +121,22 @@ The project uses pytest for unit and integration testing:
    - `SSEService` singleton manages client connections
    - `StreamingHandler` processes streaming tokens
 
-4. **Kafka Message Handling**: Asynchronous request/response handling
-   - Handler registration in `main.py`
-   - Message correlation using keys
-   - Strong typing with DTOs
-
-5. **Factory Pattern**: For LLM provider creation
+4. **Factory Pattern**: For LLM provider creation
    - `ModelGenerator` creates appropriate LLM instance based on configuration
    - Supports OpenAI, Anthropic, and Ollama
 
-6. **Async/Await**: Used consistently throughout the codebase
-   - Non-blocking I/O for database and message broker operations
+5. **Async/Await**: Used consistently throughout the codebase
+   - Non-blocking I/O for database and external service operations
    - Async context managers for resource lifecycle management
+
+6. **RAG Pattern**: For enhancing LLM responses with relevant context
+   - Embeddings and vector stores to retrieve similar content
+   - Context-enhanced prompts for more accurate diagram generation
+
+7. **Pydantic Models**: For type validation and data transformation
+   - Strongly typed data models with validation
+   - Input/output DTOs with conversion methods
+
+## Recent Developments
+
+The repository is actively implementing Retrieval-Augmented Generation (RAG) capabilities to improve diagram generation accuracy by providing relevant context from previous diagrams and specifications. The implementation is in `create_diagram_component_rag.py` which enhances the diagram creation process.
