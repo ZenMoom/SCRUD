@@ -122,8 +122,8 @@ export default function LeftContainer({ activeItem, onItemClick }: LeftContainer
       // 백엔드 응답 구조에 따라 조정 필요
       const globalFiles = data.content || data.globalFiles || []
       setFiles(groupFilesByType(globalFiles))
-    } catch (err) {
-      console.error("Failed to fetch global files:", err)
+    } catch {
+      alert("파일을 가져오는 중 오류가 발생했습니다.")
     } finally {
       setLoading(false)
     }

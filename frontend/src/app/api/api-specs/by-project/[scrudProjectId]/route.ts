@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ scr
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${authToken.replace(/^Bearer\s/, "")}`,
             }
           : undefined,
       },

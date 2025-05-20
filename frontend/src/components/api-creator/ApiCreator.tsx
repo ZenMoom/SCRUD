@@ -179,8 +179,8 @@ export default function ApiCreator({ projectId = 1 }: ApiCreatorProps) {
           })
         }
         setApiGroups(newGroups)
-      } catch (error) {
-        console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
+      } catch {
+        alert("API 스펙을 가져오는 중 오류가 발생했습니다.")
       } finally {
         setIsLoading(false)
       }
