@@ -66,9 +66,19 @@ CommentResponse:
       type: integer
       format: int64
       example: 1
-    isEdited:
+    userVote:
+      type: string
+      enum:
+        - LIKE
+        - DISLIKE
+        - NONE
+      example: LIKE
+    isUpdated:
       type: boolean
       example: true
+    isDeleted:
+      type: boolean
+      example: false
     createdAt:
       type: string
       format: date-time

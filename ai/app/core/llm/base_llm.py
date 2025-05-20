@@ -11,6 +11,9 @@ class ModelType(str, Enum):
     OPENAI_GPT3 = "gpt-3.5-turbo"
     OPENAI_GPT4 = "gpt-4o-mini"
     OPENAI_GPT4_TURBO = "gpt-4o"
+    OPENAI_GPT4_1 = "gpt-4.1"
+    ANTHROPIC_SONET = "claude-3-5-sonnet-20240620"
+    OLLAMA_GEMMA = "gemma3:4b"
 
 
 class LLMFactory:
@@ -37,11 +40,27 @@ class LLMFactory:
             LLM 인터페이스 구현체
         """
 
-        if model in [ModelType.OPENAI_GPT3, ModelType.OPENAI_GPT4, ModelType.OPENAI_GPT4_TURBO]:
+        if model in [ModelType.OPENAI_GPT3, ModelType.OPENAI_GPT4, ModelType.OPENAI_GPT4_TURBO, ModelType.OPENAI_GPT4_1]:
             from langchain_openai import ChatOpenAI
             return ChatOpenAI(
                 model=model,
                 api_key=api_key,
+                base_url=base_url,
+                temperature=temperature,
+                **kwargs
+            )
+        elif model in [ModelType.ANTHROPIC_SONET]:
+            from langchain_anthropic import ChatAnthropic
+            return ChatAnthropic(
+                model=model,
+                api_key=api_key,
+                temperature=temperature,
+                **kwargs
+            )
+        elif model in [ModelType.OLLAMA_GEMMA]:
+            from langchain_ollama import ChatOllama
+            return ChatOllama(
+                model=model,
                 base_url=base_url,
                 temperature=temperature,
                 **kwargs

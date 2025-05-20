@@ -51,12 +51,14 @@ export async function POST(req: NextRequest) {
     // 경로가 /api/chat/{projectId}/{apiId} 형식이라고 가정
     const projectId = pathParts[3] // /api/chat/[projectId]
     const apiId = pathParts[4] // /api/chat/[projectId]/[apiId]
-
+    console.log(`[채팅 API] POST 요청 수신: /api/chat/${projectId}/${apiId}`)
+    console.log(`[채팅 API] 인증 토큰 존재: ${!!authToken}`)
     // 요청 바디 파싱
     const requestBody = await req.json()
-
+    console.log(`[채팅 API] 요청 바디:`, requestBody)
     // API 기본 URL 설정 - 하드코딩된 URL 사용
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
+    console.log(`[채팅 API] 백엔드 API URL: ${apiUrl}`)
     // const apiUrl = "http://host.docker.internal:8000"
 
     console.log("API 요청 정보:", {
@@ -80,13 +82,16 @@ export async function POST(req: NextRequest) {
 
     // ChatApi 인스턴스 생성
     const chatApi = new ChatApi(config)
-
+    console.log("[채팅 API] ChatApi 인스턴스 생성 완료")
     // promptChat API 호출
+    console.log("[채팅 API] promptChat API 호출 시작")
     const response = await chatApi.promptChat({
       projectId,
       apiId,
       userChatRequest: requestBody,
     })
+    console.log("[채팅 API] 백엔드 응답 상태:", response.status)
+    console.log("[채팅 API] 백엔드 응답 데이터:", response.data)
 
     console.log("채팅 API 응답:", response.data)
 

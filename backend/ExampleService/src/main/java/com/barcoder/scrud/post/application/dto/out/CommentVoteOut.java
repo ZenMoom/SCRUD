@@ -1,4 +1,4 @@
-package com.barcoder.scrud.post.application.dto.in;
+package com.barcoder.scrud.post.application.dto.out;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,16 +6,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.util.UUID;
-
 @Getter
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class PostVoteIn {
+public class CommentVoteOut {
 
-    private Long postId;
-    private UUID userId;
-    private Boolean isLike;
+	private long likeCount;
+	private long dislikeCount;
 }

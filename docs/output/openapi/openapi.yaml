@@ -3225,12 +3225,14 @@ components:
           isFirstPage: true
           totalElements: 5
         content:
-        - serverUrl: serverUrl
+        - isDeleted: true
+          serverUrl: serverUrl
           scrudProjectId: 0
           description: description
           title: title
           updatedAt: 2000-01-23T04:56:07.000+00:00
-        - serverUrl: serverUrl
+        - isDeleted: true
+          serverUrl: serverUrl
           scrudProjectId: 0
           description: description
           title: title
@@ -3250,6 +3252,7 @@ components:
     ScrudProjectDto:
       description: 프로젝트 기본 정보
       example:
+        isDeleted: true
         serverUrl: serverUrl
         scrudProjectId: 0
         description: description
@@ -3273,6 +3276,9 @@ components:
           description: 프로젝트 수정 날짜
           format: date-time
           type: string
+        isDeleted:
+          description: 프로젝트 삭제 여부
+          type: boolean
       type: object
     CreateProjectRequest:
       description: 프로젝트 생성에 필요한 기본 정보 & 전역 설정
@@ -3287,6 +3293,7 @@ components:
           fileType: REQUIREMENTS
           fileContent: fileContent
         scrudProjectDto:
+          isDeleted: true
           serverUrl: serverUrl
           scrudProjectId: 0
           description: description
@@ -3342,6 +3349,7 @@ components:
       description: 전체 전역설정 파일 목록
       example:
         project:
+          isDeleted: true
           serverUrl: serverUrl
           scrudProjectId: 0
           description: description

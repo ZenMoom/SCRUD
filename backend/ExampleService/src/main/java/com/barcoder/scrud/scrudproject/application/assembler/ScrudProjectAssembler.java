@@ -36,6 +36,7 @@ public class ScrudProjectAssembler {
                 .title(inDto.getScrudProjectDto().getTitle())
                 .description(inDto.getScrudProjectDto().getDescription())
                 .serverUrl(inDto.getScrudProjectDto().getServerUrl())
+                .isDeleted(false)
                 .build();
     }
 
@@ -49,7 +50,6 @@ public class ScrudProjectAssembler {
             .build();
     }
 
-    // 원본을 따로 보여줘야 한다면 전처리 된 파일은 프롬프팅 할 때만 활용하고, 사용자에게 보여줄 파일을 따로 저장해둬야 함. 상의해보기
     public GlobalFile toGlobalFile(GlobalFileIn globalFile) {
         String fileContent = globalFile.getFileContent();
 

@@ -66,7 +66,7 @@ def get_prompt_service() -> PromptService:
     return PromptService(
         user_chat_chain=UserChatChain(
             LLMFactory.create_llm(
-                model=ModelType.OPENAI_GPT4,
+                model=ModelType.OPENAI_GPT4_1,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
                 temperature=0.5,
@@ -76,7 +76,7 @@ def get_prompt_service() -> PromptService:
         ),
         create_diagram_chain=CreateDiagramComponentChain(
             LLMFactory.create_llm(
-                model=ModelType.OPENAI_GPT4,
+                model=ModelType.OPENAI_GPT4_1,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_API_BASE,
                 temperature=0,
