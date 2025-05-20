@@ -8,6 +8,7 @@ interface User {
   username: string;
   profileImgUrl?: string;
   role: PostStatusEnumDto;
+  loginId: string;
 }
 
 interface AuthState {
