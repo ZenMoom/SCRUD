@@ -83,7 +83,7 @@ export default function RightContainer({
           `/api/api-specs/by-project/${projectId}`,
           {
             headers: {
-              Authorization: token ? `Bearer ${token}` : '',
+              Authorization: token ? `Bearer ${token.replace('Bearer ', '')}` : '',
             },
           }
         );
@@ -140,9 +140,17 @@ export default function RightContainer({
   ) => {
     try {
       // 새로운 코드 (api-specs/api 엔드포인트 사용)
-      const response = await axios.patch(`/api/api-specs/api/${apiId}`, {
-        apiSpecStatus: status,
-      });
+      const response = await axios.patch(
+        `/api/api-specs/api/${apiId}`,
+        {
+          apiSpecStatus: status,
+        },
+        {
+          headers: {
+            Authorization: token || '',
+          },
+        }
+      );
       setApiStatus(status);
       return response.data;
     } catch {
@@ -162,6 +170,7 @@ export default function RightContainer({
     setDiagramStep('다이어그램 생성 준비 중...');
 
     try {
+      console.log(token);
       await fetch(`/api/canvas/${scrudProjectId}/${apiSpecVersionId}`, {
         method: 'POST',
         headers: {

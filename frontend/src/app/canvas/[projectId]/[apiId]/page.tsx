@@ -6,7 +6,7 @@
  */
 
 import type { TargetNode } from '@/components/canvas/DiagramContainer';
-import type { ChatHistoryResponse, DiagramResponse } from '@generated/model';
+import type { ApiSummaryDto, ChatHistoryResponse, DiagramResponse } from '@generated/model';
 import axios from 'axios';
 import { ArrowLeft, Check, X } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -261,27 +261,33 @@ export default function CanvasPage() {
       setApiListError(null);
 
       // API 호출
-      const response = await axios.get(`/api/canvas-api/${projectId}`);
+      const response = await fetch(`api/canvas-api/${projectId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token || '',
+        },
+      });
 
       // 응답 데이터 구조 확인 및 로깅
-      console.log('API 응답 데이터:', response.data);
+      console.log('API 응답 데이터:', response);
 
       // 응답 데이터에서 API 목록 추출 (data.content 또는 data 자체가 배열일 수 있음)
       let apiList: ApiListItem[] = [];
 
-      if (response.data) {
-        if (Array.isArray(response.data)) {
+      if (response) {
+        if (Array.isArray(response)) {
           // 응답이 직접 배열인 경우
-          apiList = response.data;
-        } else if (response.data.content && Array.isArray(response.data.content)) {
+          apiList = response;
+        } else if ((response.content as ApiSummaryDto) && Array.isArray(response.content)) {
           // 응답이 { content: [...] } 형태인 경우
-          apiList = response.data.content;
-        } else if (response.data.items && Array.isArray(response.data.items)) {
+          apiList = response.content;
+        } else if (response.items && Array.isArray(response.items)) {
           // 응답이 { items: [...] } 형태인 경우
-          apiList = response.data.items;
+          apiList = response.items;
         } else {
           // 다른 응답 형태에 대한 처리
-          console.warn('예상치 못한 API 응답 형식:', response.data);
+          console.warn('예상치 못한 API 응답 형식:', response);
         }
       }
 
@@ -325,8 +331,15 @@ export default function CanvasPage() {
       setShowConfirmModal(false);
 
       // API 호출
-      const response = await axios.put(`/api/canvas-api/${projectId}/${apiId}`, {
-        status: 'USER_COMPLETED',
+      const response = await fetch(`/api/canvas-api/${projectId}/${apiId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token || '',
+        },
+        body: JSON.stringify({
+          status: 'USER_COMPLETED',
+        }),
       });
 
       // 완료 메시지 표시
@@ -339,7 +352,7 @@ export default function CanvasPage() {
         }
       }, 2000);
 
-      console.log('API 완료 응답:', response.data);
+      console.log('API 완료 응답:', response);
     } catch (err) {
       console.error('API 완료 처리 오류:', err);
 
@@ -349,7 +362,7 @@ export default function CanvasPage() {
         alert('API 완료 처리 중 오류가 발생했습니다.');
       }
     }
-  }, [projectId, apiId]);
+  }, [projectId, apiId, token]);
 
   // 모달 닫기 핸들러 수정
   const handleCloseModal = useCallback(() => {
