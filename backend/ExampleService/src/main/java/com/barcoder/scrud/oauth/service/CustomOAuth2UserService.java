@@ -11,6 +11,7 @@ import com.barcoder.scrud.oauth.provider.GoogleOAuth2UserInfo;
 import com.barcoder.scrud.user.application.assembler.UserAssembler;
 import com.barcoder.scrud.user.domain.entity.User;
 import com.barcoder.scrud.user.infrastructure.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -21,6 +22,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +48,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final UserAssembler userAssembler;
     private final GithubAccountRepository githubAccountRepository;
+
+    private static final String LOGIN_ID_KEY = "OAUTH2_LOGIN_ID";
 
     @Override
     // 1. OAuth에서 넘어온 데이터 받기
@@ -107,9 +112,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private GithubAccount processGitHubAccount(GithubOAuth2UserInfo userInfo, OAuth2UserRequest request) {
         String accessToken = request.getAccessToken().getTokenValue();
 
-        UUID userId = securityUtil.getCurrentUserId();
+        // 1. 세션에서 loginId 가져오기
+        ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attr == null) {
+            throw new IllegalStateException("Request attributes not found. Cannot access session.");
+        }
+        HttpSession session = attr.getRequest().getSession(false); // false로 하면 세션 없으면 null 반환
+        if (session == null) {
+            throw new IllegalStateException("Session not found.");
+        }
 
-        User user = userRepository.findByUserId(userId).orElseThrow(() -> new ExceptionHandler(ErrorStatus.USER_NOT_FOUND));
+        String loginId = (String) session.getAttribute(LOGIN_ID_KEY);
+        if (loginId == null) {
+            throw new IllegalStateException("loginId not found in session.");
+        }
+
+        User user = userRepository.findByUsername(loginId).orElseThrow(() -> new ExceptionHandler(ErrorStatus.USER_NOT_FOUND));
 
         // GitHub 계정 조회 또는 생성 로직
         GithubAccount githubAccount = githubAccountRepository.findByGithubUserId(userInfo.getId())
