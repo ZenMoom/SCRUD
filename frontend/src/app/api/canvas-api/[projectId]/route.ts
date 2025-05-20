@@ -1,4 +1,3 @@
-import { ApiSummaryPageResponse } from '@generated/model';
 import { type NextRequest, NextResponse } from 'next/server';
 
 // GET 요청 핸들러 - API 목록 조회
@@ -30,13 +29,11 @@ export async function GET(request: NextRequest) {
       // 여러 값을 추가하려면 같은 키로 여러 번 append
       queryParams.append('include', 'AI_VISUALIZED');
       // AI_VISUALIZED는 제외 (필요에 따라 추가 가능)
-      // 요청 헤더에서 인증 토큰 추출
-      const authToken = request.headers.get('Authorization');
+
       const fetchResponse = await fetch(`${apiUrl}/api/v1/projects/${projectId}/apis?${queryParams.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          ...(authToken ? { Authorization: `Bearer ${authToken.replace(/^Bearer\s/, '')}` } : {}),
         },
       });
 
@@ -44,15 +41,13 @@ export async function GET(request: NextRequest) {
         throw new Error(`API 요청 실패: ${fetchResponse.status} ${fetchResponse.statusText}`);
       }
 
-      const data = (await fetchResponse.json()) as ApiSummaryPageResponse;
+      const data = await fetchResponse.json();
       return NextResponse.json(data);
     } catch (fetchError) {
       console.error('API 호출 오류:', fetchError);
 
       // 대체 방법: 직접 URL 문자열 구성
       try {
-        // 요청 헤더에서 인증 토큰 추출
-        const authToken = request.headers.get('Authorization');
         // 대체 방법으로 URL에 직접 쿼리 파라미터 추가
         const alternativeResponse = await fetch(
           `${apiUrl}/api/v1/projects/${projectId}/apis?include=AI_GENERATED&include=USER_COMPLETED`,
@@ -60,7 +55,6 @@ export async function GET(request: NextRequest) {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-              ...(authToken ? { Authorization: `Bearer ${authToken.replace(/^Bearer\s/, '')}` } : {}),
             },
           }
         );
@@ -69,7 +63,7 @@ export async function GET(request: NextRequest) {
           throw new Error(`대체 API 요청 실패: ${alternativeResponse.status} ${alternativeResponse.statusText}`);
         }
 
-        const alternativeData = (await alternativeResponse.json()) as ApiSummaryPageResponse;
+        const alternativeData = await alternativeResponse.json();
         return NextResponse.json(alternativeData);
       } catch (alternativeError) {
         console.error('대체 API 호출 오류:', alternativeError);

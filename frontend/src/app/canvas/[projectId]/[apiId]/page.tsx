@@ -6,7 +6,7 @@
  */
 
 import type { TargetNode } from '@/components/canvas/DiagramContainer';
-import type { ApiSummaryDto, ChatHistoryResponse, DiagramResponse } from '@generated/model';
+import type { ChatHistoryResponse, DiagramResponse } from '@generated/model';
 import axios from 'axios';
 import { ArrowLeft, Check, X } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -261,33 +261,27 @@ export default function CanvasPage() {
       setApiListError(null);
 
       // API 호출
-      const response = await fetch(`api/canvas-api/${projectId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token || '',
-        },
-      });
+      const response = await axios.get(`/api/canvas-api/${projectId}`);
 
       // 응답 데이터 구조 확인 및 로깅
-      console.log('API 응답 데이터:', response);
+      console.log('API 응답 데이터:', response.data);
 
       // 응답 데이터에서 API 목록 추출 (data.content 또는 data 자체가 배열일 수 있음)
       let apiList: ApiListItem[] = [];
 
-      if (response) {
-        if (Array.isArray(response)) {
+      if (response.data) {
+        if (Array.isArray(response.data)) {
           // 응답이 직접 배열인 경우
-          apiList = response;
-        } else if ((response.content as ApiSummaryDto) && Array.isArray(response.content)) {
+          apiList = response.data;
+        } else if (response.data.content && Array.isArray(response.data.content)) {
           // 응답이 { content: [...] } 형태인 경우
-          apiList = response.content;
-        } else if (response.items && Array.isArray(response.items)) {
+          apiList = response.data.content;
+        } else if (response.data.items && Array.isArray(response.data.items)) {
           // 응답이 { items: [...] } 형태인 경우
-          apiList = response.items;
+          apiList = response.data.items;
         } else {
           // 다른 응답 형태에 대한 처리
-          console.warn('예상치 못한 API 응답 형식:', response);
+          console.warn('예상치 못한 API 응답 형식:', response.data);
         }
       }
 
