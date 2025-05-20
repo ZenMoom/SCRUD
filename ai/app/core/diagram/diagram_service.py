@@ -53,8 +53,9 @@ class DiagramService:
             components: List[Component],
             connections: List[Connection],
             dtos: List[DtoModel],
-            project_id: Optional[str] = None,
-            api_id: Optional[str] = None
+            project_id: Optional[str] = "",
+            api_id: Optional[str] = "",
+            summary: Optional[str] = "구현",
 
     ) -> Diagram:
         """다이어그램 생성
@@ -80,7 +81,7 @@ class DiagramService:
             metadataId=str(uuid.uuid4()),
             version=latest_diagram_version + 1, # 최신 버전 다이어그램 보다 1 높게 설정
             name="name",
-            description="description",
+            description=summary,
             lastModified=datetime.now(),
         )
 
@@ -106,6 +107,7 @@ class DiagramService:
             components: List[ComponentChainPayload],
             dtos: List[DtoModelChainPayload],
             connections: List[ConnectionChainPayload],
+            summary: str,
     ) -> Diagram:
         """프롬프트 결과로부터 다이어그램 생성
 
@@ -116,6 +118,7 @@ class DiagramService:
             components
             dtos
             connections
+            summary
         Returns:
             생성된 다이어그램
         """
@@ -126,6 +129,7 @@ class DiagramService:
         logger.info(f"converted connections: {connection_converted}")
         dto_converted = self.convert_to_dto_from_payload(dtos)
         logger.info(f"converted dtos: {dto_converted}")
+
         return await self.create_diagram(
             diagram_id=diagram_id,
             project_id=project_id,
@@ -133,6 +137,7 @@ class DiagramService:
             components=component_converted,
             connections=connection_converted,
             dtos=dto_converted,
+            summary=summary
         )
 
     async def validate_exist_diagram(

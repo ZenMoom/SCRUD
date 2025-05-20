@@ -178,6 +178,11 @@ class ChatServiceFacade:
             connections = await self._connection_service.create_connection_with_prompt(components)
             self.logger.info(f"[디버깅] ChatServiceFacade - 커넥션 생성 완료: {len(connections)}개")
 
+            brief_summary, two_phrase_summary = await self.chat_service.create_short_summary(
+                system_chat=system_chat_payload
+            )
+            self.logger.info(f"[디버깅] ChatServiceFacade - 다이어그램 요약 완료: 버전 요약 {brief_summary}, 메타 데이터 요약 {two_phrase_summary}")
+
             self.logger.info("[디버깅] ChatServiceFacade - 다이어그램 저장 시작")
             diagram: Diagram = await self.diagram_service.create_diagram_from_prompt_result(
                 project_id=project_id,
@@ -185,15 +190,11 @@ class ChatServiceFacade:
                 diagram_id=diagram_id,
                 components=components,
                 dtos=dtos,
-                connections=connections
+                connections=connections,
+                summary=two_phrase_summary
             )
             self.logger.info(f"[디버깅] ChatServiceFacade - 다이어그램 저장 완료: 버전 {diagram.metadata.version}")
-            brief_summary, two_phrase_summary = await self.chat_service.create_short_summary(
-                system_chat=system_chat_payload
-            )
-            self.logger.info(f"[디버깅] ChatServiceFacade - 다이어그램 요약 완료: 버전 요약 {brief_summary}, 메타 데이터 요약 {two_phrase_summary}")
 
-            diagram.metadata.description = two_phrase_summary
             version_id = str(diagram.metadata.version)
             version_info: VersionInfo = VersionInfo(
                 newVersionId=version_id,

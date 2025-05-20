@@ -14,7 +14,7 @@ class ChatSummaryChainPayload(BaseModel):
     two_phrase_summary : str = Field("다이어그램 생성됨", description="한국어 기준 두 단어 요약")
     brief_summary : str = Field("컨트롤러 주석 추가 버전", description="한국어 기준 15음절로 요약")
 
-class   ChatSummaryChain:
+class ChatSummaryChain:
     """채팅 내용을 짧게 요약하는 체인"""
 
     def __init__(self, llm: BaseChatModel):
@@ -34,13 +34,17 @@ class   ChatSummaryChain:
 
         LLM 응답 채팅
         {message}
+        
+        응답 지침
+        {output_instructions}
         """
         
         self.prompt = PromptTemplate.from_template(summary_template)
+        self.parser = PydanticOutputParser(pydantic_object=ChatSummaryChainPayload)
         self.chain = (
             self.prompt
             | self.llm
-            | PydanticOutputParser(pydantic_object=ChatSummaryChainPayload)
+            | self.parser
         )
 
     async def predict(self, system_chat: SystemChatChainPayload) -> Tuple[str, str]:
@@ -57,10 +61,11 @@ class   ChatSummaryChain:
         # 입력 데이터 구성
         format_instructions = {
             "message": system_chat.message,
+            "output_instructions": self.parser.get_format_instructions(),
         }
 
         logger.info(f"[디버깅] ChatSummaryChain - 프롬프트 구성 완료\nf{self.prompt.format(**format_instructions)}")
         result: ChatSummaryChainPayload = await self.chain.ainvoke(format_instructions)
         logger.info(f"[디버깅] ChatSummaryChain - LLM 요청 완료 - 요약 결과: {result}")
 
-        return result.breif_summary, result.two_phrase_summary
+        return result.brief_summary, result.two_phrase_summary
