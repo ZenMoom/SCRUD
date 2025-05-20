@@ -1,14 +1,13 @@
-import asyncio
 import logging
 import uuid
 from datetime import datetime
-from typing import Optional, Dict
+from typing import Optional, Tuple
 
 from fastapi import HTTPException
 
 from app.api.dto.diagram_dto import UserChatRequest, ChatResponse, ChatResponseList
+from app.core.llm.chains.chat_summary_chain import ChatSummaryChain
 from app.core.models.user_chat_model import SystemChatChainPayload
-from app.infrastructure.http.client.api_client import ApiSpec, GlobalFileList
 from app.infrastructure.mongodb.repository.chat_repository import ChatRepository
 from app.infrastructure.mongodb.repository.diagram_repository import DiagramRepository
 from app.infrastructure.mongodb.repository.model.diagram_model import Diagram, SystemChat, Chat, VersionInfo, UserChat
@@ -23,59 +22,23 @@ class ChatService:
             self,
             diagram_repository: Optional[DiagramRepository] = None,
             chat_repository: Optional[ChatRepository] = None,
+            chat_summary_chain: ChatSummaryChain = None,
     ):
         """
         ChatService 초기화
 
         Args:
-            model_name (str, optional): 사용할 LLM 모델 이름
             diagram_repository (DiagramRepository, optional): 다이어그램 저장소
             chat_repository (ChatRepository, optional): 채팅 저장소
-            logger (logging.Logger, optional): 로깅 객체
         """
         self.diagram_repository = diagram_repository
         self.chat_repository = chat_repository
+        self.chat_summary_chain = chat_summary_chain
+
         self.llm = None
         self.parser = None
         self.agent_executor = None
         self.logger = logging.getLogger(__name__)
-
-    async def process_chat_and_diagram(
-            self,
-            project_id: str,
-            api_id: str,
-            user_chat_data: UserChatRequest,
-            api_spec: ApiSpec,
-            global_files: GlobalFileList,
-            response_queue: asyncio.Queue
-    ) -> None:
-        """
-        채팅을 처리하고 필요한 경우 다이어그램을 생성하는 함수
-
-        Args:
-            project_id: 프로젝트 ID
-            api_id: API ID
-            user_chat_data: 사용자 채팅 데이터
-            response_queue: 응답 데이터를 전송할 큐
-            api_spec
-            global_files
-        Returns:
-            Dict: 응답 정보 (도식화 생성 여부, 도식화 ID 등)
-        """
-        self.logger.info("=" * 80)
-        self.logger.info("채팅 및 다이어그램 처리 시작")
-        self.logger.info("-" * 80)
-
-        # 각 파라미터 로깅
-        self.logger.info(f"▶ 프로젝트 ID: {project_id}")
-        self.logger.info(f"▶ API ID: {api_id}")
-        self.logger.info(f"▶ 사용자 채팅 데이터:")
-        self.logger.info(f"   └ \n{user_chat_data.model_dump_json(indent=2)}")
-        self.logger.info(f"▶ API 스펙 정보: {api_spec.model_dump_json(indent=2)}")
-        self.logger.info(f"▶ 글로벌 파일 개수: {len(global_files.content) if hasattr(global_files, 'content') else 0}개")
-        self.logger.info(f"▶ 글로벌 파일: {global_files.model_dump_json(indent=2)}")
-        self.logger.info("-" * 80)
-        pass
 
     async def get_target_diagram(
             self,
@@ -170,6 +133,14 @@ class ChatService:
             raise
 
     ######################################################################################################
+
+    async def create_short_summary(
+            self,
+            system_chat: SystemChatChainPayload,
+    ) -> Tuple[str, str]:
+        return await self.chat_summary_chain.predict(
+            system_chat=system_chat
+        )
 
     """채팅 생성 관련 핵심 로직을 메서드로 분리"""
 

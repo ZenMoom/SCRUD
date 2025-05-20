@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class DiagramService:
     def __init__(
             self,
-            diagram_repository: DiagramRepository
+            diagram_repository: DiagramRepository,
     ):
         self.diagram_repository = diagram_repository
 

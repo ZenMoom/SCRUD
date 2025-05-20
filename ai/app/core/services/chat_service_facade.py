@@ -37,7 +37,6 @@ class ChatServiceFacade:
 
         Args:
             sse_service (SSEService, optional): SSE 서비스
-            logger (logging.Logger, optional): 로깅 객체
         """
         self.sse_service = sse_service
         self.chat_service = chat_service
@@ -74,7 +73,7 @@ class ChatServiceFacade:
             global_files: GlobalFileList,
             api_spec: ApiSpec,
             queue: asyncio.Queue
-    ) -> Chat:
+    ) -> str:
         """
         채팅 생성 및 응답
         user_chat 의 각종 태그를 확인해서 다이어그램을 생성할 지 안할지를 결정해야함
@@ -118,7 +117,6 @@ class ChatServiceFacade:
         self.logger.info("-" * 80)
 
         target_diagram = None
-        target_diagram_payload: DiagramChainPayload = None
         # 스트리밍 핸들러 설정
         self.prompt_service.set_streaming_handler(queue)
         self.logger.info("[디버깅] ChatServiceFacade - 스트리밍 핸들러 설정 완료")
@@ -190,11 +188,16 @@ class ChatServiceFacade:
                 connections=connections
             )
             self.logger.info(f"[디버깅] ChatServiceFacade - 다이어그램 저장 완료: 버전 {diagram.metadata.version}")
+            brief_summary, two_phrase_summary = await self.chat_service.create_short_summary(
+                system_chat=system_chat_payload
+            )
+            self.logger.info(f"[디버깅] ChatServiceFacade - 다이어그램 요약 완료: 버전 요약 {brief_summary}, 메타 데이터 요약 {two_phrase_summary}")
 
+            diagram.metadata.description = two_phrase_summary
             version_id = str(diagram.metadata.version)
             version_info: VersionInfo = VersionInfo(
                 newVersionId=version_id,
-                description="다이어그램을 새로 생성했기 때문에 버전 업"
+                description=brief_summary
             )
             self.logger.info(f"[디버깅] ChatServiceFacade - 버전 정보 생성: 새 버전 ID={version_info.newVersionId}")
         else:
