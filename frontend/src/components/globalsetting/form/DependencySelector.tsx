@@ -1,8 +1,7 @@
-"use client"
+'use client';
 
-import { useEffect } from 'react'
-import React from 'react'
-import { useProjectTempStore } from "@/store/projectTempStore"
+import { useProjectTempStore } from '@/store/projectTempStore';
+import { useEffect } from 'react';
 
 interface DependencySelectorProps {
   selectedDependencies: string[];
@@ -20,10 +19,14 @@ export const springDependencies = [
   { id: 'thymeleaf', name: 'Thymeleaf', description: 'Server-side Java template engine' },
   { id: 'validation', name: 'Validation', description: 'Bean Validation with Hibernate validator' },
   { id: 'devtools', name: 'Spring Boot DevTools', description: 'Development-time tools for increased productivity' },
-  { id: 'actuator', name: 'Spring Boot Actuator', description: 'Monitoring and management for production-ready features' },
+  {
+    id: 'actuator',
+    name: 'Spring Boot Actuator',
+    description: 'Monitoring and management for production-ready features',
+  },
   { id: 'data-redis', name: 'Spring Data Redis', description: 'Advanced keyvalue store with optional durability' },
   { id: 'data-mongodb', name: 'Spring Data MongoDB', description: 'Document-based database with JSON-like documents' },
-]
+];
 
 export default function DependencySelector({ selectedDependencies, onChange }: DependencySelectorProps) {
   const { tempData, setTempData } = useProjectTempStore();
@@ -35,17 +38,17 @@ export default function DependencySelector({ selectedDependencies, onChange }: D
     const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
 
     if (isFromGithubAuth && isAuthPending && tempData.dependencySelections?.length > 0) {
-
-      
       // 파일 객체로 변환하여 전달
-      const fileContent = tempData.dependencySelections.map(depId => {
-        const dep = springDependencies.find(d => d.id === depId);
-        return dep ? `${dep.name} (${dep.id})` : depId;
-      }).join('\n');
-      
+      const fileContent = tempData.dependencySelections
+        .map((depId) => {
+          const dep = springDependencies.find((d) => d.id === depId);
+          return dep ? `${dep.name} (${dep.id})` : depId;
+        })
+        .join('\n');
+
       onChange({
-        name: "dependency.txt",
-        content: fileContent
+        name: 'dependency.txt',
+        content: fileContent,
       });
     }
   }, []);
@@ -53,47 +56,45 @@ export default function DependencySelector({ selectedDependencies, onChange }: D
   // 의존성 선택/해제 처리
   const toggleDependency = (depId: string) => {
     const newDeps = selectedDependencies.includes(depId)
-      ? selectedDependencies.filter(id => id !== depId)
+      ? selectedDependencies.filter((id) => id !== depId)
       : [...selectedDependencies, depId];
-    
+
     // 파일 객체로 변환하여 전달
-    const fileContent = newDeps.map(depId => {
-      const dep = springDependencies.find(d => d.id === depId);
-      return dep ? `${dep.name} (${dep.id})` : depId;
-    }).join('\n');
-    
+    const fileContent = newDeps
+      .map((depId) => {
+        const dep = springDependencies.find((d) => d.id === depId);
+        return dep ? `${dep.name} (${dep.id})` : depId;
+      })
+      .join('\n');
+
     onChange({
-      name: "dependency.txt",
-      content: fileContent
+      name: 'dependency.txt',
+      content: fileContent,
     });
 
     // 임시저장소에 선택된 의존성 목록 저장
     setTempData({ dependencySelections: newDeps });
-  }
+  };
 
   return (
-    <div className="w-full">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+    <div className='w-full'>
+      <div className='md:grid-cols-3 grid grid-cols-2 gap-3'>
         {springDependencies.map((dep) => (
           <button
             key={dep.id}
             onClick={() => toggleDependency(dep.id)}
             className={`flex flex-col items-start w-full p-3 rounded-lg border transition-colors duration-200 hover:bg-gray-50 ${
-              selectedDependencies.includes(dep.id)
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200'
+              selectedDependencies.includes(dep.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
             }`}
           >
-            <div className="font-medium text-sm text-left w-full">
+            <div className='w-full text-sm font-medium text-left'>
               {dep.name}
-              {selectedDependencies.includes(dep.id) && (
-                <span className="ml-2 text-blue-500">✓</span>
-              )}
+              {selectedDependencies.includes(dep.id) && <span className='ml-2 text-blue-500'>✓</span>}
             </div>
-            <div className="text-xs text-gray-500 mt-1 text-left w-full">{dep.description}</div>
+            <div className='w-full mt-1 text-xs text-left text-gray-500'>{dep.description}</div>
           </button>
         ))}
       </div>
     </div>
-  )
-} 
+  );
+}

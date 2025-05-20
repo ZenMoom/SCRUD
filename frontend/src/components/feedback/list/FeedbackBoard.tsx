@@ -292,7 +292,7 @@ export default function FeedbackBoard({ postsData }: { postsData: GetPostListRes
                     >
                       로그인
                     </Link>
-                    하시면 피드백에 투표하는 기능을 사용할 수 있습니다. 피드백 작성은 로그인 없이도 가능합니다.
+                    하시면 피드백에 투표하는 기능을 사용할 수 있습니다.
                   </p>
                 </div>
               </div>

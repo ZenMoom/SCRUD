@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import { forwardRef, useState, useRef, useEffect } from "react"
-import { Upload, Github, File } from "lucide-react"
-import GitHubRepoBrowser from "../GitHubRepoBrowser"
-import { useProjectTempStore } from "@/store/projectTempStore"
-import SecuritySelector from "./SecuritySelector"
+import { useProjectTempStore } from '@/store/projectTempStore';
+import { File, Github, Upload } from 'lucide-react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
+import GitHubRepoBrowser from '../GitHubRepoBrowser';
+import SecuritySelector from './SecuritySelector';
 
 interface FileWithContent {
   name: string;
@@ -18,34 +18,36 @@ interface SelectionValue {
 }
 
 interface SecuritySettingFormProps {
-  title: string
-  value: FileWithContent[] | SelectionValue
-  onChange: (value: FileWithContent | FileWithContent[] | { type: string; label: string }) => void
-  onFocus?: () => void
-  isRequired?: boolean
+  title: string;
+  value: FileWithContent[] | SelectionValue;
+  onChange: (value: FileWithContent | FileWithContent[] | { type: string; label: string }) => void;
+  onFocus?: () => void;
+  isRequired?: boolean;
 }
 
 const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>(
   ({ title, value, onChange, onFocus, isRequired }, ref) => {
     void value;
-    const [dropdownOpen, setDropdownOpen] = useState(false)
-    const [dragActive, setDragActive] = useState(false)
-    const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
-    const [selectedFiles, setSelectedFiles] = useState<FileWithContent[]>([])
-    const [isFileMode, setIsFileMode] = useState(false)
-    const dropdownRef = useRef<HTMLDivElement>(null)
-    const buttonRef = useRef<HTMLDivElement>(null)
-    const [fileError, setFileError] = useState<string>("")
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [dragActive, setDragActive] = useState(false);
+    const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
+    const [selectedFiles, setSelectedFiles] = useState<FileWithContent[]>([]);
+    const [isFileMode, setIsFileMode] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLDivElement>(null);
+    const [fileError, setFileError] = useState<string>('');
     const { tempData, setTempData } = useProjectTempStore();
 
     // 외부 클릭 감지를 위한 이벤트 리스너
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (dropdownOpen &&
-            dropdownRef.current &&
-            buttonRef.current &&
-            !dropdownRef.current.contains(event.target as Node) &&
-            !buttonRef.current.contains(event.target as Node)) {
+        if (
+          dropdownOpen &&
+          dropdownRef.current &&
+          buttonRef.current &&
+          !dropdownRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
           setDropdownOpen(false);
         }
       };
@@ -63,14 +65,12 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
       const isAuthPending = localStorage.getItem('github-auth-pending') === 'true';
 
       if (isFromGithubAuth && isAuthPending && tempData.securitySetting) {
-
-        
         if (tempData.securitySetting.type === 'selection' && tempData.securitySetting.selection) {
           setIsFileMode(false);
           onChange(tempData.securitySetting.selection);
         } else if (tempData.securitySetting.type === 'file' && tempData.securitySetting.files) {
           setIsFileMode(true);
-          const files = tempData.securitySetting.files.map(file => ({
+          const files = tempData.securitySetting.files.map((file) => ({
             name: file.name || '',
             content: typeof file.content === 'string' ? file.content : JSON.stringify(file.content),
             isGitHub: file.isGitHub,
@@ -89,8 +89,8 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
         setTempData({
           securitySetting: {
             type: 'selection',
-            selection: { type: 'SECURITY_DEFAULT_JWT', label: 'JWT' }
-          }
+            selection: { type: 'SECURITY_DEFAULT_JWT', label: 'JWT' },
+          },
         });
         onChange({ type: 'SECURITY_DEFAULT_JWT', label: 'JWT' });
       } else {
@@ -98,8 +98,8 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
         setTempData({
           securitySetting: {
             type: 'file',
-            files: []
-          }
+            files: [],
+          },
         });
         onChange([]);
       }
@@ -118,8 +118,8 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
         setTempData({
           securitySetting: {
             type: 'file',
-            files: updatedFiles
-          }
+            files: updatedFiles,
+          },
         });
       }
       setIsGitHubModalOpen(false);
@@ -128,9 +128,9 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
     const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      if (e.type === "dragenter" || e.type === "dragover") {
+      if (e.type === 'dragenter' || e.type === 'dragover') {
         setDragActive(true);
-      } else if (e.type === "dragleave") {
+      } else if (e.type === 'dragleave') {
         setDragActive(false);
       }
     };
@@ -138,12 +138,43 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
     // 텍스트 파일인지 확인하는 함수
     const isTextFile = (filename: string): boolean => {
       const textExtensions = [
-        '.txt', '.md', '.json', '.yml', '.yaml', '.xml', '.html', '.css', '.js', 
-        '.ts', '.jsx', '.tsx', '.java', '.py', '.c', '.cpp', '.h', '.cs', '.php',
-        '.rb', '.go', '.rs', '.sh', '.bat', '.ps1', '.sql', '.properties', '.conf',
-        '.ini', '.env', '.gitignore', '.gradle', '.pom', '.lock', 'Dockerfile'
+        '.txt',
+        '.md',
+        '.json',
+        '.yml',
+        '.yaml',
+        '.xml',
+        '.html',
+        '.css',
+        '.js',
+        '.ts',
+        '.jsx',
+        '.tsx',
+        '.java',
+        '.py',
+        '.c',
+        '.cpp',
+        '.h',
+        '.cs',
+        '.php',
+        '.rb',
+        '.go',
+        '.rs',
+        '.sh',
+        '.bat',
+        '.ps1',
+        '.sql',
+        '.properties',
+        '.conf',
+        '.ini',
+        '.env',
+        '.gitignore',
+        '.gradle',
+        '.pom',
+        '.lock',
+        'Dockerfile',
       ];
-      return textExtensions.some(ext => filename.endsWith(ext));
+      return textExtensions.some((ext) => filename.endsWith(ext));
     };
 
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -156,7 +187,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
           setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
           return;
         }
-        setFileError("");
+        setFileError('');
         const content = await file.text();
         const fileWithContent = {
           name: file.name,
@@ -168,8 +199,8 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
         setTempData({
           securitySetting: {
             type: 'file',
-            files: updatedFiles
-          }
+            files: updatedFiles,
+          },
         });
       }
     };
@@ -180,8 +211,8 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
       setTempData({
         securitySetting: {
           type: 'selection',
-          selection: selection
-        }
+          selection: selection,
+        },
       });
     };
 
@@ -196,42 +227,48 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
     };
 
     return (
-      <div ref={ref} className="p-10 mb-10 bg-white rounded-lg">
-        <div className="flex flex-col mb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <h2 className="m-0 text-xl font-semibold">
-                {title} {isRequired && <span className="text-red-500">*</span>}
+      <div
+        ref={ref}
+        className='p-10 mb-10 bg-white rounded-lg'
+      >
+        <div className='flex flex-col mb-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center'>
+              <h2 className='m-0 text-xl font-semibold'>
+                {title} {isRequired && <span className='text-red-500'>*</span>}
               </h2>
             </div>
             <button
-              type="button"
-              className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
+              type='button'
+              className='hover:text-blue-700 flex items-center text-sm text-blue-500'
               onClick={toggleMode}
             >
               {isFileMode ? (
                 <>선택지에서 선택하기</>
               ) : (
                 <>
-                  <Upload size={14} className="mr-1" />
+                  <Upload
+                    size={14}
+                    className='mr-1'
+                  />
                   파일 추가하기
                 </>
               )}
             </button>
           </div>
-          <p className="mt-2 text-sm text-gray-600">
-           인증/인가 처리, CORS 정책, 비밀번호 암호화, JWT 등 보안과 관련된 설정 파일입니다.
+          <p className='mt-2 text-sm text-gray-600'>
+            인증/인가 처리, CORS 정책, 비밀번호 암호화, JWT 등 보안과 관련된 설정 파일입니다.
           </p>
         </div>
 
         {!isFileMode ? (
           <SecuritySelector onSelect={handleSecuritySelect} />
         ) : (
-          <div className="w-full">
+          <div className='w-full'>
             {/* 드래그 앤 드롭 영역 */}
             <div
               className={`p-4 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer ${
-                dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+                dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -245,27 +282,25 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
             >
               <Upload
                 size={24}
-                className="mb-2 text-gray-400"
+                className='mb-2 text-gray-400'
               />
-              <p className="text-sm text-center text-gray-500">
+              <p className='text-sm text-center text-gray-500'>
                 보안 설정 파일을 드래그해서 추가하거나 <br />
-                <span className="text-blue-500">업로드하세요</span>
+                <span className='text-blue-500'>업로드하세요</span>
               </p>
-              <div className="mt-2 text-xs text-gray-400">
-                지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등
-              </div>
+              <div className='mt-2 text-xs text-gray-400'>지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등</div>
             </div>
 
             {/* 드롭다운 메뉴 */}
             {dropdownOpen && (
               <div
                 ref={dropdownRef}
-                className="relative"
+                className='relative'
               >
-                <div className="top-2 absolute left-0 z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className='top-2 absolute left-0 z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg'>
                   <button
-                    type="button"
-                    className="hover:bg-gray-100 first:rounded-t-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150"
+                    type='button'
+                    className='hover:bg-gray-100 first:rounded-t-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150'
                     onClick={() => {
                       if (onFocus) onFocus();
                       handleGithubUpload();
@@ -274,13 +309,13 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                   >
                     <Github
                       size={16}
-                      className="text-gray-500"
+                      className='text-gray-500'
                     />
                     <span>GitHub에서 가져오기</span>
                   </button>
                   <button
-                    type="button"
-                    className="hover:bg-gray-100 last:rounded-b-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150"
+                    type='button'
+                    className='hover:bg-gray-100 last:rounded-b-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150'
                     onClick={() => {
                       if (onFocus) onFocus();
                       handleFileUpload();
@@ -289,7 +324,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                   >
                     <Upload
                       size={16}
-                      className="text-gray-500"
+                      className='text-gray-500'
                     />
                     <span>파일 업로드</span>
                   </button>
@@ -299,8 +334,8 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
 
             <input
               id={`file-upload-${title}`}
-              type="file"
-              className="hidden"
+              type='file'
+              className='hidden'
               onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                 if (e.target.files && e.target.files[0]) {
                   const file = e.target.files[0];
@@ -308,7 +343,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                     setFileError('텍스트 형식의 파일만 추가할 수 있습니다.');
                     return;
                   }
-                  setFileError("");
+                  setFileError('');
                   const content = await file.text();
                   const fileWithContent = {
                     name: file.name,
@@ -320,33 +355,31 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                   setTempData({
                     securitySetting: {
                       type: 'file',
-                      files: updatedFiles
-                    }
+                      files: updatedFiles,
+                    },
                   });
                 }
               }}
             />
 
-            {fileError && (
-              <div className="mt-2 text-xs text-red-500">{fileError}</div>
-            )}
+            {fileError && <div className='mt-2 text-xs text-red-500'>{fileError}</div>}
 
             {/* 선택된 파일 표시 */}
             {selectedFiles.length > 0 && (
-              <div className="mt-4">
-                <p className="mb-2 text-sm font-medium">선택된 파일: {selectedFiles.length}개</p>
-                <div className="flex flex-col space-y-2">
+              <div className='mt-4'>
+                <p className='mb-2 text-sm font-medium'>선택된 파일: {selectedFiles.length}개</p>
+                <div className='flex flex-col space-y-2'>
                   {selectedFiles.map((file, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg"
+                      className='flex items-center justify-between px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg'
                     >
-                      <div className="flex items-center gap-2">
+                      <div className='flex items-center gap-2'>
                         <File
                           size={16}
-                          className="text-gray-500"
+                          className='text-gray-500'
                         />
-                        <span className="truncate">{file.name}</span>
+                        <span className='truncate'>{file.name}</span>
                       </div>
                       <button
                         onClick={() => {
@@ -356,11 +389,11 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                           setTempData({
                             securitySetting: {
                               type: 'file',
-                              files: updatedFiles
-                            }
+                              files: updatedFiles,
+                            },
                           });
                         }}
-                        className="hover:text-red-700 ml-2 text-red-500"
+                        className='hover:text-red-700 ml-2 text-red-500'
                       >
                         &times;
                       </button>
@@ -377,13 +410,13 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
           isOpen={isGitHubModalOpen}
           onClose={() => setIsGitHubModalOpen(false)}
           onSelect={handleGitHubFileSelect}
-          formType="securitySetting"
+          formType='securitySetting'
         />
       </div>
-    )
+    );
   }
-)
+);
 
-SecuritySettingForm.displayName = "SecuritySettingForm"
+SecuritySettingForm.displayName = 'SecuritySettingForm';
 
-export default SecuritySettingForm 
+export default SecuritySettingForm;
