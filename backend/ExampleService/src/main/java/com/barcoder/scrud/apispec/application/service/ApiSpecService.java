@@ -15,6 +15,7 @@ import com.barcoder.scrud.apispec.domain.query.out.SearchApiStatusQueryOut;
 import com.barcoder.scrud.apispec.infrastructure.jpa.ApiSpecJpaRepository;
 import com.barcoder.scrud.apispec.infrastructure.jpa.ApiSpecVersionJpaRepository;
 import com.barcoder.scrud.apispec.infrastructure.querydsl.ApiSpecQueryDsl;
+import com.barcoder.scrud.global.common.error.ErrorStatus;
 import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.scrudproject.domain.entity.ScrudProject;
 import com.barcoder.scrud.scrudproject.repository.ScrudProjectRepository;
@@ -141,7 +142,8 @@ public class ApiSpecService {
     public List<ApiSpecVersionOut> getLatestApiSpecVersionListByScrudProjectId(Long scrudProjectId, UUID userId) {
 
         // 1. scrud project id 사용
-        ScrudProject scrudProject = scrudProjectRepository.getReferenceById(scrudProjectId);
+        ScrudProject scrudProject = scrudProjectRepository.findById(scrudProjectId)
+                .orElseThrow(() -> new ExceptionHandler(ErrorStatus.SCRUDPROJECT_NOT_FOUND));
 
         // 2. 본인 소유 여부 확인
         if (!scrudProject.getUserId().equals(userId)) {
