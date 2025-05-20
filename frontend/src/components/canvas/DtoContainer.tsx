@@ -19,6 +19,15 @@ function isDtoModelDto(dto: unknown): dto is DtoModelDto {
   return typeof d.dtoId === "string" && typeof d.name === "string"
 }
 
+// 세미콜론 기준으로 줄바꿈 처리하는 함수
+function formatDtoBody(body: string): string {
+  if (!body) return body
+
+  // 세미콜론과 여는 중괄호 뒤에 줄바꿈이 없는 경우에만 줄바꿈 추가
+  // 이미 줄바꿈이 있는 경우는 유지
+  return body.replace(/;(?!\n)/g, ";\n").replace(/{(?!\n)/g, "{\n")
+}
+
 export default function DtoContainer({ diagramData, loading }: DtoContainerProps) {
   const [expandedDto, setExpandedDto] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -134,7 +143,7 @@ export default function DtoContainer({ diagramData, loading }: DtoContainerProps
                             margin: 0,
                           }}
                         >
-                          {dto.body}
+                          {formatDtoBody(dto.body)}
                         </SyntaxHighlighter>
                       </div>
                     )}

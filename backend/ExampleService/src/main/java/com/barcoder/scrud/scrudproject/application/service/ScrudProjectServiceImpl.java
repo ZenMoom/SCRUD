@@ -67,7 +67,7 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
         log.info("getAllProjects");
         getUser(userId);
 
-        List<ScrudProject> content = scrudProjectRepository.findScrudProjectsByUserIdOrderByUpdatedAtDesc(pageable, userId);
+        List<ScrudProject> content = scrudProjectRepository.findScrudProjectsByUserIdAndIsDeletedIsFalseOrderByUpdatedAtDesc(pageable, userId);
 
         List<ScrudProjectOut> projects = content.stream()
                 .map(scrudProject ->
@@ -159,10 +159,10 @@ public class ScrudProjectServiceImpl implements ScrudProjectService {
     public void deleteProject(Long projectId, UUID userId) {
         getUser(userId);
 
-        scrudProjectRepository.findById(projectId)
+        ScrudProject project = scrudProjectRepository.findById(projectId)
                 .orElseThrow(() -> new ExceptionHandler(ErrorStatus.SCRUDPROJECT_NOT_FOUND));
 
-        scrudProjectRepository.deleteById(projectId);
+        project.setIsDeleted(true);
     }
 
     // 사용자 검증 & 가져오기

@@ -1255,7 +1255,7 @@ paths:
       summary: 게시글 상세 조회
       tags:
       - Post
-    patch:
+    put:
       operationId: updatePost
       parameters:
       - in: path
@@ -1294,6 +1294,24 @@ paths:
       summary: 게시글 추천/비추천
       tags:
       - Post
+  /api/v1/posts/{postId}/status:
+    patch:
+      operationId: updatePostStatus
+      parameters:
+      - in: path
+        name: postId
+        required: true
+        schema:
+          format: int64
+          type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/UpdatePostStatusRequest'
+      responses:
+        "200":
+          description: 성공적으로 처리되었습니다
+      summary: 게시글 상태 변경
+      tags:
+      - Post
   /api/v1/posts/{postId}/comments:
     get:
       operationId: getCommentList
@@ -1327,7 +1345,11 @@ paths:
         $ref: '#/components/requestBodies/CreateCommentRequest'
       responses:
         "201":
-          description: 성공적으로 생성되었습니다
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+          description: 댓글 작성 성공
       summary: 댓글 작성
       tags:
       - Comment
@@ -1669,6 +1691,13 @@ components:
           schema:
             $ref: '#/components/schemas/PostVoteRequest'
       description: 게시글 추천/비추천 요청입니다.
+      required: true
+    UpdatePostStatusRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdatePostStatusRequest'
+      description: 게시글 상태를 변경합니다.
       required: true
     CreateCommentRequest:
       content:
@@ -2055,8 +2084,12 @@ components:
           schema:
             $ref: '#/components/schemas/GetCommentListResponse'
       description: 댓글 목록 조회 성공
-    SuccessCreated:
-      description: 성공적으로 생성되었습니다
+    CreateCommentResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommentResponse'
+      description: 댓글 작성 성공
     VoteCommentResponse:
       content:
         application/json:
@@ -3192,12 +3225,14 @@ components:
           isFirstPage: true
           totalElements: 5
         content:
-        - serverUrl: serverUrl
+        - isDeleted: true
+          serverUrl: serverUrl
           scrudProjectId: 0
           description: description
           title: title
           updatedAt: 2000-01-23T04:56:07.000+00:00
-        - serverUrl: serverUrl
+        - isDeleted: true
+          serverUrl: serverUrl
           scrudProjectId: 0
           description: description
           title: title
@@ -3217,6 +3252,7 @@ components:
     ScrudProjectDto:
       description: 프로젝트 기본 정보
       example:
+        isDeleted: true
         serverUrl: serverUrl
         scrudProjectId: 0
         description: description
@@ -3240,6 +3276,9 @@ components:
           description: 프로젝트 수정 날짜
           format: date-time
           type: string
+        isDeleted:
+          description: 프로젝트 삭제 여부
+          type: boolean
       type: object
     CreateProjectRequest:
       description: 프로젝트 생성에 필요한 기본 정보 & 전역 설정
@@ -3254,6 +3293,7 @@ components:
           fileType: REQUIREMENTS
           fileContent: fileContent
         scrudProjectDto:
+          isDeleted: true
           serverUrl: serverUrl
           scrudProjectId: 0
           description: description
@@ -3309,6 +3349,7 @@ components:
       description: 전체 전역설정 파일 목록
       example:
         project:
+          isDeleted: true
           serverUrl: serverUrl
           scrudProjectId: 0
           description: description
@@ -3367,6 +3408,7 @@ components:
           title: 게시글 제목
           category: 공지
           commentCount: 5
+          status: PENDING
         - createdAt: 2000-01-23T04:56:07.000+00:00
           dislikeCount: 1
           likeCount: 10
@@ -3375,6 +3417,7 @@ components:
           title: 게시글 제목
           category: 공지
           commentCount: 5
+          status: PENDING
       properties:
         content:
           items:
@@ -3393,6 +3436,7 @@ components:
         title: 게시글 제목
         category: 공지
         commentCount: 5
+        status: PENDING
       properties:
         postId:
           example: 101
@@ -3423,7 +3467,18 @@ components:
           example: 5
           format: int64
           type: integer
+        status:
+          $ref: '#/components/schemas/PostStatusEnumDto'
       type: object
+    PostStatusEnumDto:
+      description: "게시글 상태 (대기, 검토 중, 진행 중, 완료, 거부)"
+      enum:
+      - PENDING
+      - REVIEWING
+      - IN_PROGRESS
+      - COMPLETED
+      - REJECTED
+      type: string
     CreatePostResponse:
       example:
         postId: 101
@@ -3435,20 +3490,24 @@ components:
       type: object
     PostDetailResponse:
       example:
-        createdAt: 2000-01-23T04:56:07.000+00:00
         author:
+          role: USER
           profileImgUrl: https://example.com/profile.jpg
           nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
+          username: Jaasdfas@fasdf.com
         dislikeCount: 1
+        isUpdated: true
         likeCount: 10
         postId: 101
-        viewCount: 123
         title: 상세 게시글 제목
-        category: 공지
         content: 상세 게시글 내용입니다.
-        updatedAt: 2000-01-23T04:56:07.000+00:00
         commentCount: 5
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        viewCount: 123
+        category: 공지
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+        status: PENDING
       properties:
         postId:
           example: 101
@@ -3484,6 +3543,11 @@ components:
         commentCount:
           example: 5
           type: integer
+        isUpdated:
+          example: true
+          type: boolean
+        status:
+          $ref: '#/components/schemas/PostStatusEnumDto'
         author:
           $ref: '#/components/schemas/UserResponse'
       type: object
@@ -3505,29 +3569,37 @@ components:
       example:
         content:
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          isDeleted: false
           author:
+            role: USER
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
+            username: Jaasdfas@fasdf.com
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
+          isUpdated: true
           likeCount: 3
-          isEdited: true
           postId: 5
+          userVote: LIKE
           content: 댓글 내용입니다.
           updatedAt: 2000-01-23T04:56:07.000+00:00
         - createdAt: 2000-01-23T04:56:07.000+00:00
+          isDeleted: false
           author:
+            role: USER
             profileImgUrl: https://example.com/profile.jpg
             nickname: john_doe
             userId: 550e8400-e29b-41d4-a716-446655440000
+            username: Jaasdfas@fasdf.com
           dislikeCount: 1
           commentId: 101
           parentCommentId: 12
+          isUpdated: true
           likeCount: 3
-          isEdited: true
           postId: 5
+          userVote: LIKE
           content: 댓글 내용입니다.
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -3539,16 +3611,20 @@ components:
     CommentResponse:
       example:
         createdAt: 2000-01-23T04:56:07.000+00:00
+        isDeleted: false
         author:
+          role: USER
           profileImgUrl: https://example.com/profile.jpg
           nickname: john_doe
           userId: 550e8400-e29b-41d4-a716-446655440000
+          username: Jaasdfas@fasdf.com
         dislikeCount: 1
         commentId: 101
         parentCommentId: 12
+        isUpdated: true
         likeCount: 3
-        isEdited: true
         postId: 5
+        userVote: LIKE
         content: 댓글 내용입니다.
         updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -3566,7 +3642,6 @@ components:
         parentCommentId:
           example: 12
           format: int64
-          nullable: true
           type: integer
         likeCount:
           example: 3
@@ -3576,8 +3651,18 @@ components:
           example: 1
           format: int64
           type: integer
-        isEdited:
+        userVote:
+          enum:
+          - LIKE
+          - DISLIKE
+          - NONE
+          example: LIKE
+          type: string
+        isUpdated:
           example: true
+          type: boolean
+        isDeleted:
+          example: false
           type: boolean
         createdAt:
           format: date-time
@@ -3781,6 +3866,15 @@ components:
       required:
       - isLike
       type: object
+    UpdatePostStatusRequest:
+      example:
+        status: PENDING
+      properties:
+        status:
+          $ref: '#/components/schemas/PostStatusEnumDto'
+      required:
+      - status
+      type: object
     CreateCommentRequest:
       example:
         parentCommentId: 123
@@ -3792,7 +3886,6 @@ components:
         parentCommentId:
           example: 123
           format: int64
-          nullable: true
           type: integer
       required:
       - content
@@ -3844,9 +3937,11 @@ components:
       type: object
     UserResponse:
       example:
+        role: USER
         profileImgUrl: https://example.com/profile.jpg
         nickname: john_doe
         userId: 550e8400-e29b-41d4-a716-446655440000
+        username: Jaasdfas@fasdf.com
       properties:
         userId:
           example: 550e8400-e29b-41d4-a716-446655440000
@@ -3854,6 +3949,15 @@ components:
           type: string
         nickname:
           example: john_doe
+          type: string
+        username:
+          example: Jaasdfas@fasdf.com
+          type: string
+        role:
+          enum:
+          - USER
+          - ADMIN
+          example: USER
           type: string
         profileImgUrl:
           example: https://example.com/profile.jpg

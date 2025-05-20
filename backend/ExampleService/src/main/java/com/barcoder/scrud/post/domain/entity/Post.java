@@ -2,9 +2,13 @@ package com.barcoder.scrud.post.domain.entity;
 
 import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
 import com.barcoder.scrud.global.config.generator.SnowflakeId;
+import com.barcoder.scrud.post.domain.enums.PostStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -60,12 +64,21 @@ public class Post extends BaseTimeEntity {
     @Builder.Default
     private Long commentCount = 0L;
 
+    @Column(nullable = false)
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    private PostStatus status = PostStatus.PENDING;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isUpdated = false;
+
     @JsonIgnore
-    @OneToMany(mappedBy = "post")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "post")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostVote> postVotes = new ArrayList<>();
 
     // 조회수 증가
@@ -73,14 +86,21 @@ public class Post extends BaseTimeEntity {
         this.viewCount++;
     }
 
+    // 댓글 수 증가
+    public void addCommentCount() {
+        this.commentCount++;
+    }
+
     // 제목 변경
     public void updateTitle(String title) {
         this.title = title;
+        this.isUpdated = true;
     }
 
     // 내용 변경
     public void updateContent(String content) {
         this.content = content;
+        this.isUpdated = true;
     }
 
     // 이미 추천했는지 확인
@@ -104,5 +124,10 @@ public class Post extends BaseTimeEntity {
         } else {
             this.dislikeCount++;
         }
+    }
+
+    // 상태 변경
+    public void changeStatus(PostStatus status) {
+        this.status = status;
     }
 }

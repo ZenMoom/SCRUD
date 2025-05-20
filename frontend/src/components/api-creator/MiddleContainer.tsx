@@ -29,10 +29,7 @@ interface MiddleContainerProps {
   scrudProjectId: number
 }
 
-export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading, scrudProjectId }: MiddleContainerProps) {
-  console.log("MiddleContainer 렌더링 - scrudProjectId:", scrudProjectId)
-
-  // useAuthStore에서 토큰 가져오기
+export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, isLoading }: MiddleContainerProps) {
   const { token } = useAuthStore()
 
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null)
@@ -56,7 +53,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
   // API 그룹 추가 함수 - 랜덤 이모지 추가
   const addApiGroup = () => {
-    console.log("그룹 추가 - 현재 프로젝트:", scrudProjectId)
     const newGroupId = `group-${Date.now()}`
     setApiGroups([
       ...apiGroups,
@@ -73,7 +69,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
   // API 엔드포인트 추가 함수
   const addApiEndpoint = (groupId: string) => {
-    console.log("엔드포인트 추가 - 현재 프로젝트:", scrudProjectId)
     const group = apiGroups.find((g) => g.id === groupId)
     if (!group) return
 
@@ -123,8 +118,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         }
 
         // 백엔드 API 호출하여 실제 데이터 삭제
-        const response = await axios.delete(`/api/api-specs/${endpoint.apiSpecVersionId}`, { headers })
-        console.log("API 스펙이 성공적으로 삭제되었습니다:", response.data)
+        await axios.delete(`/api/api-specs/${endpoint.apiSpecVersionId}`, { headers })
         alert(`성공적으로 삭제되었습니다.`)
 
         // 성공적으로 삭제된 후 UI 상태 업데이트
@@ -145,10 +139,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         if (selectedEndpointId === endpointId) {
           setSelectedEndpointId(null)
         }
-
-        console.log("엔드포인트 삭제 완료:", endpointId, "프로젝트:", scrudProjectId)
-      } catch (error) {
-        console.error("API 스펙 삭제 중 오류 발생:", error)
+      } catch {
         alert("API 스펙 삭제 중 오류가 발생했습니다.")
       }
     }
@@ -175,10 +166,9 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
               // 백엔드 API 호출하여 실제 데이터 삭제
               await axios.delete(`/api/api-specs/${endpoint.apiSpecVersionId}`, { headers })
-              console.log(`엔드포인트 삭제 완료: ${endpoint.path}`)
               return true
-            } catch (error) {
-              console.error(`엔드포인트 ${endpoint.path} 삭제 중 오류 발생:`, error)
+            } catch {
+              alert(`API 엔드포인트 ${endpoint.path} 삭제 중 오류가 발생했습니다.`)
               return false
             }
           })
@@ -208,17 +198,13 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         if (hasSelectedEndpoint) {
           setSelectedEndpointId(null)
         }
-
-        console.log("그룹 삭제 완료:", groupId, "프로젝트:", scrudProjectId)
-      } catch (error) {
-        console.error("그룹 삭제 중 오류 발생:", error)
-        alert("그룹 삭제 중 오류가 발생했습니다.")
+      } catch {
+        alert("API 그룹 삭제 중 오류가 발생했습니다.")
       }
     }
   }
   // API 엔드포인트 선택 함수
   const handleApiSelect = (groupId: string, endpoint: ApiEndpoint) => {
-    // setSelectedGroupId(null) // 그룹 강조 제거
     setSelectedEndpointId(endpoint.id)
     onApiSelect(endpoint.path, endpoint.method)
   }
@@ -260,7 +246,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     setEditingEmoji(null)
   }
 
-  // API 엔드포인트 편집 시작 - "..." 버튼 클릭 시 호출
+  // API 엔드포인트 편집
   const startEditingEndpoint = (groupId: string, endpointId: string, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation() // 이벤트 전파 방지
@@ -286,8 +272,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   // API 그룹 이름 저장
   const saveGroupName = () => {
     if (!editingGroupId || !newGroupName.trim()) return
-
-    console.log("그룹명 저장 - 프로젝트:", scrudProjectId)
 
     setApiGroups(
       apiGroups.map((group) => {
@@ -315,8 +299,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   // API 엔드포인트 저장
   const saveEndpoint = (groupId: string) => {
     if (!editingEndpointId || !newEndpointPath.trim()) return
-
-    console.log("엔드포인트 저장 - 프로젝트:", scrudProjectId)
 
     setApiGroups(
       apiGroups.map((group) => {
@@ -393,21 +375,11 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
     // API 스펙 상태 업데이트 요청
     try {
-      console.log(`API 스펙 ID ${endpoint.apiSpecVersionId}의 상태를 '${status}'로 업데이트 요청`)
+      await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status })
+    } catch {
+      alert("API 상태 업데이트 중 오류 발생:")
 
-      // 헤더에 Bearer 토큰 추가
-      const headers = {
-        Authorization: token ? `Bearer ${token}` : "",
-        "Content-Type": "application/json",
-      }
-
-      const response = await axios.patch(`/api/api-specs/api/${endpoint.apiSpecVersionId}`, { apiSpecStatus: status }, { headers })
-
-      console.log("API 상태가 성공적으로 업데이트되었습니다:", response.data)
-    } catch (error) {
-      console.error("API 상태 업데이트 중 오류 발생:", error)
-
-      // 요청 실패 시 UI 롤백 (원래 상태로 복원)
+      // 요청 실패 시 UI 롤백
       setApiGroups(
         apiGroups.map((group) => {
           if (group.id === groupId) {
@@ -470,35 +442,51 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
   const getStatusStyle = (status: ApiProcessStateEnumDto) => {
     switch (status) {
       case "AI_GENERATED":
-        return "bg-gray-200 text-gray-700" // AI 생성됨 - 회색
+        return "bg-gray-200 text-gray-700"
       case "AI_VISUALIZED":
-        return "bg-blue-100 text-blue-700" // AI 시각화됨 - 옅은 파란색
+        return "bg-blue-100 text-blue-700"
       case "USER_COMPLETED":
-        return "bg-green-100 text-green-700" // 사용자 완료 - 초록색
+        return "bg-green-100 text-green-700"
       default:
-        return "bg-gray-200 text-gray-700" // 기본값
+        return "bg-gray-200 text-gray-700"
     }
   }
 
   return (
-    <div className="bg-white h-full w-full">
-      <div className="py-4 px-4">
-        <h2 className="text-lg font-bold text-gray-800">API 관리</h2>
+    <div className="bg-white h-full w-full flex flex-col">
+      {/* 고정 헤더 영역 */}
+      <div className="flex-shrink-0">
+        <div className="py-3 px-4">
+          <h2 className="text-lg font-bold text-gray-800">API 관리</h2>
+        </div>
+        <div className="flex justify-center mt-1 px-2 pb-2">
+          <button
+            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow text-sm font-medium"
+            onClick={addApiGroup}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            <span>API 그룹 추가</span>
+          </button>
+        </div>
       </div>
-      <div className="overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ height: "calc(100vh - 105px)" }}>
+
+      {/* 스크롤 영역 */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             <span className="ml-2 text-gray-600">API 목록을 불러오는 중...</span>
           </div>
         ) : (
-          <div className="px-2 py-2 divide-y divide-gray-200">
+          <div className="px-2 py-1 divide-y divide-gray-200">
             {apiGroups.map((group) => (
               <div key={group.id} className="py-2 overflow-hidden px-2 relative">
                 <div className="flex justify-between items-center">
                   {editingGroupId === group.id ? (
                     <div className="flex items-center gap-2 w-full">
-                      {/* 이모지 버튼 (편집 모드에서도 표시) */}
+                      {/* 이모지 버튼 */}
                       <div className="flex-shrink-0 relative z-10">
                         {editingEmoji === group.id ? (
                           <EmojiPicker selectedEmoji={group.emoji || "📂"} onEmojiSelect={(emoji) => updateGroupEmoji(group.id, emoji)} />
@@ -551,7 +539,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                       </h3>
                       <div className="flex items-center">
                         <button
-                          className="p-1 rounded-full  hover:bg-gray-200 transition-colors flex-shrink-0"
+                          className="p-1 rounded-full hover:bg-gray-200 transition-colors flex-shrink-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             addApiEndpoint(group.id)
@@ -612,7 +600,7 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                           </button>
                         </div>
                       ) : (
-                        // 일반 모드 UI - HTTP 메서드 표시 추가 및 향상된 UI
+                        // 일반 모드 UI
                         <div
                           className={`flex justify-between items-center rounded-sm gap-1 ${
                             selectedEndpointId === endpoint.id ? "bg-gray-100" : "hover:bg-gray-50"
@@ -620,20 +608,16 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                           onClick={() => handleApiSelect(group.id, endpoint)}
                           onDoubleClick={(e) => startEditingEndpoint(group.id, endpoint.id, e)}
                         >
-                          {/* 상태 드롭다운 - 상태 변경 제한 적용 */}
+                          {/* 상태 드롭다운 */}
                           <div className="relative inline-block text-left w-18 flex-shrink-0">
                             <select
                               value={endpoint.status}
                               onChange={(e) => updateEndpointStatus(group.id, endpoint.id, e.target.value as ApiProcessStateEnumDto)}
                               className={`appearance-none text-xs px-2 py-0.5 rounded w-full cursor-pointer focus:outline-none ${getStatusStyle(endpoint.status)} pr-6`}
                               onClick={(e) => e.stopPropagation()}
-                              disabled={endpoint.status === "AI_GENERATED"} // 생성됨 상태일 때 드롭박스 자체를 비활성화
+                              disabled={endpoint.status === "AI_GENERATED"}
                             >
-                              <option
-                                value="AI_GENERATED"
-                                className="bg-white text-gray-700"
-                                disabled={endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED"} // 작업중 또는 완료 상태에서 생성됨으로 돌아갈 수 없음
-                              >
+                              <option value="AI_GENERATED" className="bg-white text-gray-700" disabled={endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED"}>
                                 생성됨
                               </option>
                               <option value="AI_VISUALIZED" className="bg-white text-blue-700">
@@ -650,21 +634,21 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
                             </div>
                           </div>
 
-                          {/* HTTP 메서드 태그 추가 - GET, POST, PUT, DELETE 등 */}
-                          <div className="mr-2 flex-shrink-0">
+                          {/* HTTP 메서드 태그 추가 */}
+                          <div className="flex-shrink-0 w-16 text-center">
                             <span
-                              className={`px-2 py-0.5 text-xs rounded font-medium ${
+                              className={`px-2 py-0.5 text-xs rounded font-medium inline-block ${
                                 endpoint.method === "GET"
-                                  ? " text-green-800"
+                                  ? "text-green-800"
                                   : endpoint.method === "POST"
-                                  ? " text-blue-800"
+                                  ? "text-blue-800"
                                   : endpoint.method === "PUT"
-                                  ? " text-yellow-800"
+                                  ? "text-yellow-800"
                                   : endpoint.method === "PATCH"
-                                  ? " text-purple-800" // PATCH 메서드 추가
+                                  ? "text-purple-800"
                                   : endpoint.method === "DELETE"
-                                  ? " text-red-800"
-                                  : " text-gray-800"
+                                  ? "text-red-800"
+                                  : "text-gray-800"
                               }`}
                             >
                               {endpoint.method}
@@ -673,12 +657,10 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
                           {/* 경로 표시 */}
                           <span className="text-sm text-gray-800 hover:text-blue-500 transition-colors truncate flex-1" title={endpoint.path}>
-                            {endpoint.path.startsWith(group.name)
-                              ? endpoint.path.substring(group.name.length) || "/" // 그룹 이름 다음 부분만 표시
-                              : endpoint.path}{" "}
+                            {endpoint.path.startsWith(group.name) ? endpoint.path.substring(group.name.length) || "/" : endpoint.path}
                           </span>
 
-                          {/* 점 세개 버튼 - 클릭하면 편집 모드로 전환 */}
+                          {/* 점 세개 버튼 */}
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <button
                               className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-sm hover:bg-gray-100 flex-shrink-0"
@@ -699,24 +681,12 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
             ))}
 
             {apiGroups.length === 0 && !isLoading && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-4 text-gray-500">
                 <p>API 그룹이 없습니다. 새 API 그룹을 추가하세요.</p>
               </div>
             )}
           </div>
         )}
-
-        <div className="flex justify-center mt-1 px-2 pb-10">
-          <button
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow text-sm font-medium"
-            onClick={addApiGroup}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            <span>API 그룹 추가</span>
-          </button>
-        </div>
       </div>
     </div>
   )

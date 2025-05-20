@@ -28,4 +28,11 @@ public class PostEventHandler {
     public void PostVoteEvent(PostVoteEvent event) {
         postEventService.addPostVoteCount(event);
     }
+
+    @EventListener
+    @Transactional
+    @Async
+    public void CommentVoteEvent(CommentVoteEvent event) {
+        postEventService.addCommentVoteCount(event);
+    }
 }

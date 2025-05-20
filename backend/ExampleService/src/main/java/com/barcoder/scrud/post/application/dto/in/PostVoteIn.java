@@ -15,7 +15,7 @@ import java.util.UUID;
 @ToString
 public class PostVoteIn {
 
-    private long postId;
+    private Long postId;
     private UUID userId;
     private Boolean isLike;
 }

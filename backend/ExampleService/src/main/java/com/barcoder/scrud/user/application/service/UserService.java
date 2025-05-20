@@ -1,7 +1,7 @@
 package com.barcoder.scrud.user.application.service;
 
 import com.barcoder.scrud.global.common.error.ErrorStatus;
-import com.barcoder.scrud.global.common.exception.BaseException;
+import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.user.application.dto.out.UserOut;
 import com.barcoder.scrud.user.application.usecase.UserUseCase;
 import com.barcoder.scrud.user.domain.entity.User;
@@ -18,16 +18,16 @@ import java.util.UUID;
 @Transactional
 public class UserService implements UserUseCase {
 
-    private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
+	private final UserRepository userRepository;
+	private final ModelMapper modelMapper;
 
-    @Override
-    public UserOut getUserById(UUID userId) {
+	@Override
+	public UserOut getUserById(UUID userId) {
 
-        // user 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BaseException(ErrorStatus.USER_NOT_FOUND));
+		// user 조회
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new ExceptionHandler(ErrorStatus.USER_NOT_FOUND));
 
-        return modelMapper.map(user, UserOut.class);
-    }
+		return modelMapper.map(user, UserOut.class);
+	}
 }

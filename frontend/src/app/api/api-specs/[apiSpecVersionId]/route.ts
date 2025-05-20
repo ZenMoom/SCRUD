@@ -6,6 +6,9 @@ import { ApiSpecVersionUpdateRequest } from "@generated/model"
 // API 스펙 상세 조회
 export async function GET(request: NextRequest, context: { params: Promise<{ apiSpecVersionId: string }> }) {
   try {
+    // 요청 헤더에서 인증 토큰 추출
+    const authToken = request.headers.get("Authorization")
+
     // Promise로 처리
     const params = await context.params
     const apiSpecVersionId = Number(params.apiSpecVersionId)
@@ -17,6 +20,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ api
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
+      baseOptions: {
+        headers: authToken
+          ? {
+              Authorization: `Bearer ${authToken.replace(/^Bearer\s/, "")}`,
+            }
+          : undefined,
+      },
     })
     const apiSpecApi = new ApiSpecApi(config)
 
@@ -39,6 +49,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ api
 // API 스펙 수정
 export async function PUT(request: NextRequest, context: { params: Promise<{ apiSpecVersionId: string }> }) {
   try {
+    // 요청 헤더에서 인증 토큰 추출
+    const authToken = request.headers.get("Authorization")
+
     // params를 Promise로 처리
     const params = await context.params
     const apiSpecVersionId = Number(params.apiSpecVersionId)
@@ -49,12 +62,16 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
 
     const body = await request.json()
 
-    // 디버깅을 위한 로그 추가
-    console.log("클라이언트에서 받은 요청 데이터:", body)
-
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
+      baseOptions: {
+        headers: authToken
+          ? {
+              Authorization: `Bearer ${authToken.replace(/^Bearer\s/, "")}`,
+            }
+          : undefined,
+      },
     })
     const apiSpecApi = new ApiSpecApi(config)
 
@@ -90,12 +107,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
       apiSpecVersionUpdateRequest,
     }
 
-    // 백엔드로 보내는 최종 데이터 로깅
-    console.log("백엔드로 보내는 최종 요청 데이터:", {
-      apiSpecVersionId,
-      apiSpecVersionUpdateRequest,
-    })
-
     const response = await apiSpecApi.updateApiSpec(requestParameters)
     return NextResponse.json(response.data)
   } catch (error: unknown) {
@@ -119,6 +130,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
 // API 스펙 삭제
 export async function DELETE(request: NextRequest, context: { params: Promise<{ apiSpecVersionId: string }> }) {
   try {
+    // 요청 헤더에서 인증 토큰 추출
+    const authToken = request.headers.get("Authorization")
+
     // params를 Promise로 처리
     const params = await context.params
     const apiSpecVersionId = Number(params.apiSpecVersionId)
@@ -130,6 +144,13 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
+      baseOptions: {
+        headers: authToken
+          ? {
+              Authorization: `Bearer ${authToken.replace(/^Bearer\s/, "")}`,
+            }
+          : undefined,
+      },
     })
     const apiSpecApi = new ApiSpecApi(config)
 

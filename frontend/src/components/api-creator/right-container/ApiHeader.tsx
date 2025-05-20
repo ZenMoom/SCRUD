@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import type React from "react"
+import { Check, X } from "lucide-react"
 
 interface ApiHeaderProps {
   scrudProjectId: number
@@ -13,7 +14,6 @@ interface ApiHeaderProps {
   apiStatus?: string
   handleSaveApi: () => Promise<void>
   handleDeleteApi: () => Promise<void>
-  // handleTestApi: () => Promise<void>
   handleCreateDiagram?: () => Promise<void>
   handleCancelDiagramCreation?: () => void
 }
@@ -35,16 +35,52 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
   // 다이어그램 생성 시작 시간 추적
   const [creationStartTime, setCreationStartTime] = useState<number | null>(null)
   const [elapsedTime, setElapsedTime] = useState<number>(0)
+  const [displayProgress, setDisplayProgress] = useState<number>(0)
+  const [showCompletionAlert, setShowCompletionAlert] = useState<boolean>(false)
+  const previousIsCreatingRef = useRef<boolean>(false)
+
+  // 기본 alert 방지를 위한 window.alert 오버라이드
+  useEffect(() => {
+    // 원래의 alert 함수 저장
+    const originalAlert = window.alert
+
+    // alert 함수 오버라이드
+    window.alert = (message) => {
+      // 다이어그램 완료 관련 메시지인 경우 무시 (필요에 따라 메시지 내용 확인)
+      if (message && typeof message === "string" && (message.includes("완료") || message.includes("성공") || message.includes("도식화") || message.includes("diagram"))) {
+        return
+      }
+
+      // 그 외의 경우 원래 alert 실행
+      originalAlert.call(window, message)
+    }
+
+    // 컴포넌트 언마운트 시 원래 함수로 복원
+    return () => {
+      window.alert = originalAlert
+    }
+  }, [])
 
   // 다이어그램 생성 시작/종료 시 타이머 설정
   useEffect(() => {
     if (isCreatingDiagram && !creationStartTime) {
       setCreationStartTime(Date.now())
-    } else if (!isCreatingDiagram) {
+      setDisplayProgress(0)
+    } else if (!isCreatingDiagram && previousIsCreatingRef.current) {
+      // 다이어그램 생성이 완료되었을 때
+      if (diagramCreationProgress === 100) {
+        setShowCompletionAlert(true)
+        // 5초 후에 알림 자동으로 닫기
+        setTimeout(() => {
+          setShowCompletionAlert(false)
+        }, 10000)
+      }
       setCreationStartTime(null)
       setElapsedTime(0)
     }
-  }, [isCreatingDiagram, creationStartTime])
+
+    previousIsCreatingRef.current = isCreatingDiagram
+  }, [isCreatingDiagram, creationStartTime, diagramCreationProgress])
 
   // 경과 시간 업데이트
   useEffect(() => {
@@ -60,6 +96,25 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
       if (timer) clearInterval(timer)
     }
   }, [isCreatingDiagram, creationStartTime])
+
+  // 실제 진행률에 따라 표시 진행률을 부드럽게 업데이트 (2.5배 빠르게 조정)
+  useEffect(() => {
+    if (isCreatingDiagram) {
+      // 실제 진행률과 표시 진행률의 차이
+      const diff = diagramCreationProgress - displayProgress
+
+      if (diff > 0) {
+        // 진행률 증가 속도를 2.5배 빠르게 조정
+        const incrementSize = diff < 5 ? 1.25 : diff < 10 ? 0.75 : 0.5
+
+        const timer = setTimeout(() => {
+          setDisplayProgress((prev) => Math.min(prev + incrementSize, diagramCreationProgress))
+        }, 100)
+
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [isCreatingDiagram, diagramCreationProgress, displayProgress])
 
   // 경과 시간을 mm:ss 형식으로 포맷팅
   const formatElapsedTime = (seconds: number): string => {
@@ -79,6 +134,11 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
     window.location.href = `/canvas/${scrudProjectId}/${apiSpecVersionId}`
   }
 
+  // 알림 닫기 핸들러
+  const handleCloseAlert = () => {
+    setShowCompletionAlert(false)
+  }
+
   // Google 스타일 버튼 기본 클래스 - 반응형으로 설정
   const googleButtonClass =
     "bg-white border border-gray-300 rounded-md text-gray-700 font-medium text-sm hover:shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center px-2 py-2 sm:px-4 sm:py-2"
@@ -90,7 +150,44 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
   const textClass = "hidden sm:inline whitespace-nowrap"
 
   return (
-    <div className="p-3 border-b bg-white">
+    <div className="p-3 border-b bg-white relative">
+      {/* 완료 알림 */}
+      {showCompletionAlert && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
+            <div className="bg-blue-50 p-4 flex items-start">
+              <div className="flex-shrink-0">
+                <Check className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-lg font-medium text-blue-800">도식화 완료</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>API 도식화가 성공적으로 완료되었습니다.</p>
+                  <p className="mt-1">아래 버튼을 클릭하여 도식화 결과를 확인하세요.</p>
+                </div>
+              </div>
+              <button onClick={handleCloseAlert} className="flex-shrink-0 ml-4 bg-blue-50 rounded-md inline-flex text-blue-500 hover:text-blue-700 focus:outline-none">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-4 py-3 bg-gray-50 text-right">
+              <button
+                onClick={handleViewDiagram}
+                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                도식화 보기
+              </button>
+              <button
+                onClick={handleCloseAlert}
+                className="ml-3 inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold mr-4 hidden sm:block">API 편집기</h2>
@@ -113,22 +210,38 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
         </div>
 
         <div className="flex space-x-2">
-          {/* 도식화 진행 버튼 추가 */}
+          {/* 도식화 진행 버튼 */}
           {showDiagramButton && handleCreateDiagram && (
             <button
               onClick={handleCreateDiagram}
               disabled={isLoading || isCreatingDiagram}
-              className={`${googleButtonClass} ${isLoading || isCreatingDiagram ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`${googleButtonClass} ${
+                isLoading || isCreatingDiagram
+                  ? "opacity-50 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 border-blue-300 text-blue-700 hover:from-blue-100 hover:via-blue-200 hover:to-blue-100 hover:border-blue-400 hover:shadow-md"
+              } relative overflow-hidden transition-all duration-300`}
               title="도식화 진행"
             >
               {isCreatingDiagram ? (
-                <span className="h-5 w-5 rounded-full border-2 border-gray-400 border-t-transparent animate-spin"></span>
+                <span className="h-5 w-5 rounded-full border-2 border-blue-400 border-t-transparent animate-spin"></span>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                </svg>
+                <>
+                  {/* 향상된 그라데이션 효과 */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-200 to-transparent opacity-40 animate-shimmer"></span>
+                  {/* 추가 하이라이트 효과 */}
+                  <span className="absolute inset-0 bg-gradient-to-t from-transparent via-blue-100 to-transparent opacity-30 animate-pulse"></span>
+
+                  {/* 버튼 중앙에 큰 반짝이는 효과 */}
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="h-10 w-10 rounded-full bg-blue-300 opacity-40 animate-ping"></span>
+                  </span>
+
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`${iconClass} text-blue-600 relative z-10`} viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                  </svg>
+                </>
               )}
-              <span className={textClass}>도식화 진행</span>
+              <span className={`${textClass} font-semibold relative z-10`}>도식화 진행</span>
             </button>
           )}
 
@@ -169,18 +282,6 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
               <span className={textClass}>삭제하기</span>
             </button>
           )}
-
-          {/* <button
-            onClick={handleTestApi}
-            disabled={isLoading || isCreatingDiagram}
-            className={`${googleButtonClass} ${isLoading || isCreatingDiagram ? "opacity-50 cursor-not-allowed" : ""}`}
-            title="테스트하기"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-            </svg>
-            <span className={textClass}>테스트하기</span>
-          </button> */}
         </div>
       </div>
 
@@ -212,12 +313,12 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
           {/* 진행 단계 표시 */}
           {diagramCreationStep && <div className="text-sm text-blue-700 mb-2">{diagramCreationStep}</div>}
 
-          {/* 진행률 표시 */}
+          {/* 진행률 표시 - 부드러운 애니메이션 적용 */}
           <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-            <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-in-out" style={{ width: `${diagramCreationProgress}%` }}></div>
+            <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${displayProgress}%` }}></div>
           </div>
 
-          <div className="text-xs text-right text-blue-600">{diagramCreationProgress}% 완료</div>
+          <div className="text-xs text-right text-blue-600">{Math.round(displayProgress)}% 완료</div>
         </div>
       )}
     </div>

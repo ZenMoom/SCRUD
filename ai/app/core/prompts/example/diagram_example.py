@@ -9,7 +9,7 @@ def prepare_diagram_examples() -> List[Dict[str, str]]:
         list: 예시 데이터 목록
     """
     return [{
-            "openapi_spec": """
+        "openapi_spec": """
             openapi: 3.0.0
             info:
             title: 게시판 API
@@ -29,7 +29,7 @@ def prepare_diagram_examples() -> List[Dict[str, str]]:
                   '200':
                     description: 성공
                     """,
-            "diagram": """
+        "diagram": """
     {{
         "diagramId": "b2a1d7d5-551b-4d8f-ab78-bcd9bcde7950",
         "metadata": {{
@@ -124,7 +124,7 @@ def prepare_diagram_examples() -> List[Dict[str, str]]:
         ]
     }}
 """
-        }]
+    }]
 
 
 def prepare_diagram_examples_prefix() -> str:
@@ -143,6 +143,7 @@ def prepare_diagram_examples_prefix() -> str:
 
 
 """
+
 
 def prepare_diagram_examples_suffix() -> str:
     return """이제 아래 OpenAPI 명세를 분석하여 도식화 데이터를 생성해주세요.

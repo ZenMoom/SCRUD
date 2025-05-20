@@ -1,14 +1,24 @@
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
+from app.config.config import settings
+from typing import List, Optional
+
+import httpx
+from pydantic import BaseModel, ConfigDict
+
 from app.config.config import settings
 
+
 class GlobalFile(BaseModel):
-    globalFileId: int
+
+    globalFileId: Optional[int] = None
     fileName: Optional[str] = None
     fileType: Optional[str] = None
     fileUrl: Optional[str] = None
     fileContent: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GlobalFileList(BaseModel):
@@ -19,8 +29,13 @@ class GlobalFileList(BaseModel):
         serverUrl: Optional[str] = None
         updatedAt: Optional[str] = None
 
-    project: Optional[ScrudProject] = []
+        model_config = ConfigDict(from_attributes=True)
+
+    project: Optional[ScrudProject] = None
     content: Optional[List[GlobalFile]] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ApiSpec(BaseModel):
     summary: Optional[str] = None
@@ -34,6 +49,9 @@ class ApiSpec(BaseModel):
     httpMethod: Optional[str] = None
     apiSpecVersionId: Optional[int] = None
     version: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ApiClient:
     """

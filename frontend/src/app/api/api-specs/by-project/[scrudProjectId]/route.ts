@@ -4,7 +4,9 @@ import { Configuration } from "@generated/configuration"
 
 export async function GET(request: NextRequest, context: { params: Promise<{ scrudProjectId: string }> }) {
   try {
-    // params를 Promise로 처리
+    // 요청 헤더에서 인증 토큰 추출
+    const authToken = request.headers.get("Authorization")
+
     const params = await context.params
     const scrudProjectId = Number(params.scrudProjectId)
 
@@ -15,6 +17,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ scr
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL
     const config = new Configuration({
       basePath: apiUrl,
+      baseOptions: {
+        headers: authToken
+          ? {
+              Authorization: `Bearer ${authToken.replace(/^Bearer\s/, "")}`,
+            }
+          : undefined,
+      },
     })
     const apiSpecApi = new ApiSpecApi(config)
 

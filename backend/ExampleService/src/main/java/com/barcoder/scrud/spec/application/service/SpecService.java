@@ -1,6 +1,6 @@
 package com.barcoder.scrud.spec.application.service;
 
-import com.barcoder.scrud.global.common.exception.BaseException;
+import com.barcoder.scrud.global.common.exception.ExceptionHandler;
 import com.barcoder.scrud.spec.application.dto.out.ParameterRuleOut;
 import com.barcoder.scrud.spec.application.dto.out.RequestRuleOut;
 import com.barcoder.scrud.spec.application.dto.out.ResponseRuleOut;
@@ -42,7 +42,7 @@ public class SpecService {
 
 		// 2. 최신 서비스 스펙 버전이 존재하지 않는 경우
 		if (latestServiceSpecVersionWithRules == null) {
-			throw new BaseException(SpecErrorStatus.VERSION_NOT_FOUND);
+			throw new ExceptionHandler(SpecErrorStatus.VERSION_NOT_FOUND);
 		}
 
 		// 3. 최신 서비스 스펙 버전의 규칙을 DTO로 변환

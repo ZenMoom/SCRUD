@@ -3,20 +3,21 @@
 ###############################################
 
 @baseUrl = http://localhost:8080
-@projectId = project-123
-@apiId = api-456
+@projectId = 8365054341161216
+@apiId = 8365059189252353
 
 ### 프롬프트 채팅 요청 테스트
 POST {{baseUrl}}/api/v1/projects/{{projectId}}/apis/{{apiId}}/chats
 Content-Type: application/json
+Authorization: Bearer Admin
 
 {
   "tag": "REFACTORING",
   "promptType": "BODY",
-  "message": "선택한 메서드를 리팩토링 해주세요.  `map` 함수 내에서 `sample`이라는 변수를 사용하여 가독성을 높여주세요",
+  "message": "선택한 메서드를 리팩토링",
   "targetMethods": [
     {
-      "methodId": "fd93c6bd-b2b6-4d06-86a4-ce027da3bb85"
+      "methodId": "5f90cff8-b203-4fb5-84f1-f6519903aa0c"
     }
   ]
 }
@@ -33,3 +34,14 @@ GET {{baseUrl}}/api/v1/sse/stream/{{streamId}}
 
 ###
 GET {{baseUrl}}/api/v1/projects/{{projectId}}/apis/{{apiId}}/chats
+
+
+###
+GET {{baseUrl}}/api/v1/projects/8337430551994624/apis/8337435490787584/versions/2
+
+###
+GET http://localhost:8080/api/v1/projects/1
+Authorization: Bearer Admin
+
+###
+GET {{baseUrl}}/api/v1/api-specs/2001

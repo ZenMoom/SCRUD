@@ -4,8 +4,8 @@ SET SQL_SAFE_UPDATES=0;
 BEGIN;
 
 -- Admin 테스트 데이터
-INSERT INTO users (user_id, username, nickname, created_at, updated_at, is_github_connected) VALUES (uuid(), 'admin', '관리자 계정', now(), now(), false);
-INSERT INTO scrud_project (user_id, scrud_project_id, title, description, server_url, created_at, updated_at) VALUES (UUID_TO_BIN((select user_id from users where username = 'admin')), 1, "프로젝트 제목", "프로젝트 설명", "http://localhost:8080", now(), now());
+INSERT INTO users (user_id, username, nickname, created_at, updated_at, is_github_connected, role) VALUES (uuid(), 'admin', '관리자 계정', now(), now(), false, 'ADMIN');
+INSERT INTO scrud_project (user_id, scrud_project_id, title, description, server_url, created_at, updated_at, is_deleted) VALUES (UUID_TO_BIN((select user_id from users where username = 'admin')), 1, "프로젝트 제목", "프로젝트 설명", "http://localhost:8080", now(), now(), false);
 INSERT INTO global_files (
     scrud_project_id,
     global_file_id,

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useCallback, useEffect, useState, useRef } from "react"
-import ReactFlow, { Background, Controls, type Edge, type Node as ReactFlowNode, useNodesState, useEdgesState, MiniMap, Panel, NodeToolbar, Position } from "reactflow"
+import ReactFlow, { Controls, type Edge, type Node as ReactFlowNode, useNodesState, useEdgesState, MiniMap, Panel, NodeToolbar, Position } from "reactflow"
 import { Map, MapPinOffIcon as MapOff, Target, X, ChevronDown, Clock, Code, Copy, Check } from "lucide-react"
 import "reactflow/dist/style.css"
 import type { DiagramResponse, DiagramDto, ComponentDto, ConnectionDto } from "@generated/model"
@@ -782,8 +782,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         style={{ width: "100%", height: "100%" }}
         selectionOnDrag
       >
-        <Background />
-        <Controls position="top-left" style={{ top: "400px" }} />
+        <Controls position="top-left" style={{ top: "500px" }} />
 
         {/* 조건부로 MiniMap 렌더링 */}
         {showMiniMap && <MiniMap nodeStrokeWidth={3} zoomable pannable />}
@@ -795,7 +794,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
               <div className="flex items-center gap-2">
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono text-gray-700">{endpoint}</code>
+                    <code className="text-md bg-blue-50 px-2 py-1 rounded font-mono text-gray-700">{endpoint}</code>
                   </div>
                 </div>
               </div>
@@ -896,7 +895,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         {/* 버전 정보 패널 (오른쪽 상단) */}
         <Panel position="top-right" className="mr-4 mt-16">
           <div className="relative" ref={versionsRef}>
-            <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-sm hover:bg-gray-50 transition-colors">
+            <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-md shadow-sm hover:bg-gray-50 transition-colors">
               <div className="flex flex-col items-start">
                 <span className="text-md font-bold">V {currentVersion}</span>
                 {currentVersionInfo && <span className="text-xs text-gray-500">{currentVersionInfo.description}</span>}

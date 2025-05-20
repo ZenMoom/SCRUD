@@ -1,5 +1,5 @@
 // store/useFeedbackStore.ts
-import { CommentResponse, PostDetailResponse } from '@generated/model';
+import { CommentResponse, PostDetailResponse, PostStatusEnumDto } from '@generated/model';
 import { create } from 'zustand';
 
 interface FeedbackState {
@@ -10,6 +10,8 @@ interface FeedbackState {
   resetFeedback: () => void;
   comments: CommentResponse[] | [];
   setComments: (comments: CommentResponse[]) => void;
+  updatePostStatusInStore: (status: PostStatusEnumDto) => void;
+  updateCommentVoteCounts: (commentId: number, like: number, dislike: number) => void;
 }
 
 export const useFeedbackStore = create<FeedbackState>((set) => ({
@@ -45,4 +47,22 @@ export const useFeedbackStore = create<FeedbackState>((set) => ({
 
   comments: [],
   setComments: (comments) => set({ comments }),
+
+  updatePostStatusInStore: (status) =>
+    set((state) => ({
+      post: state.post ? { ...state.post, status } : null,
+    })),
+
+  updateCommentVoteCounts: (commentId, like, dislike) =>
+    set((state) => ({
+      comments: state.comments.map((comment) =>
+        comment.commentId === commentId
+          ? {
+              ...comment,
+              likeCount: like,
+              dislikeCount: dislike,
+            }
+          : comment
+      ),
+    })),
 }));

@@ -7,6 +7,7 @@ import {
   PostSortEnumDto,
   type PostVoteRequest,
   SearchTypeEnumDto,
+  UpdatePostRequest,
   type VoteResponse,
 } from '@generated/model';
 
@@ -28,14 +29,10 @@ export async function fetchPosts(
     size: size.toString(),
     sort: sort,
     order: order,
+    categoryId: category || '',
     keyword: keyword || '',
     type: searchType || SearchTypeEnumDto.TITLE,
   });
-
-  // 카테고리가 있으면 추가
-  if (category && category !== 'all') {
-    params.append('category', category);
-  }
 
   try {
     // baseUrl
@@ -93,25 +90,24 @@ export async function fetchPostDetail(postId: string): Promise<PostDetailRespons
  * 게시글에 투표하는 함수
  */
 export async function votePost(postId: number, voteRequest: PostVoteRequest): Promise<VoteResponse> {
-  try {
-    const response = await fetch(`/api/feedback/${postId}/vote`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 쿠키 포함
-      body: JSON.stringify(voteRequest),
-    });
+  // baseUrl
+  const baseUrl = getApiBaseUrl();
 
-    if (!response.ok) {
-      throw new Error(`Error voting post: ${response.status}`);
-    }
+  const response = await fetch(`${baseUrl}/feedback/${postId}/vote`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // 쿠키 포함
+    body: JSON.stringify(voteRequest),
+  });
 
-    return await response.json();
-  } catch (error) {
-    console.error(`Failed to vote for post ID ${postId}:`, error);
-    throw error;
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || '댓글 투표 중 오류가 발생했습니다.');
   }
+
+  return await response.json();
 }
 
 /**
@@ -119,7 +115,10 @@ export async function votePost(postId: number, voteRequest: PostVoteRequest): Pr
  */
 export async function createPost(postData: CreatePostRequest): Promise<PostDetailResponse> {
   try {
-    const response = await fetch(`/api/feedback`, {
+    // baseUrl
+    const baseUrl = getApiBaseUrl();
+
+    const response = await fetch(`${baseUrl}/feedback`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -144,7 +143,9 @@ export async function createPost(postData: CreatePostRequest): Promise<PostDetai
  */
 export async function deletePost(postId: number): Promise<void> {
   try {
-    const response = await fetch(`/api/feedback/${postId}`, {
+    // baseUrl
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/feedback/${postId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -157,6 +158,58 @@ export async function deletePost(postId: number): Promise<void> {
     }
   } catch (error) {
     console.error(`Failed to delete post ID ${postId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * 게시글을 수정하는 함수
+ */
+export async function updatePost(postId: number, postData: UpdatePostRequest): Promise<PostDetailResponse> {
+  try {
+    // baseUrl
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/feedback/${postId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(postData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error updating post: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Failed to update post ID ${postId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * 게시글 상태를 업데이트하는 함수
+ */
+export async function updatePostStatus(postId: number, status: string): Promise<void> {
+  try {
+    // baseUrl
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/feedback/${postId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error updating post status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error(`Failed to update post ID ${postId} status:`, error);
     throw error;
   }
 }

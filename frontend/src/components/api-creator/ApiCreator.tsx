@@ -7,9 +7,8 @@ import LeftContainer from "./LeftContainer"
 import MiddleContainer from "./MiddleContainer"
 import RightContainer from "./right-container"
 import { ApiProcessStateEnumDto, ApiSpecVersionResponse } from "@generated/model"
-import useAuthStore from "@/app/store/useAuthStore" // useAuthStore import 추가
+import useAuthStore from "@/app/store/useAuthStore"
 
-// API 엔드포인트 인터페이스 (MiddleContainer에서 사용하는 형식)
 interface ApiEndpoint {
   id: string
   path: string
@@ -48,7 +47,7 @@ export default function ApiCreator({ projectId = 1, globalFiles }: ApiCreatorPro
   const [scrudProjectId, setScrudProjectId] = useState<number>(projectId) // 기본값으로
   const [apiGroups, setApiGroups] = useState<ApiGroup[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState<boolean>(true)
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState<boolean>(false) // 여기를 false로 변경
   const [activeItem, setActiveItem] = useState<string>("title")
   const [completed, setCompleted] = useState<Record<string, boolean>>({
     title: false,
@@ -66,10 +65,7 @@ export default function ApiCreator({ projectId = 1, globalFiles }: ApiCreatorPro
 
   // URL에서 프로젝트 ID가 변경될 때 상태 업데이트
   useEffect(() => {
-    console.log("ApiCreator - projectId from props:", projectId)
-    console.log("ApiCreator - current scrudProjectId:", scrudProjectId)
     if (projectId && projectId !== scrudProjectId) {
-      console.log("프로젝트 ID 변경:", projectId)
       setScrudProjectId(projectId)
       // 프로젝트 변경 시 선택된 API 초기화
       setSelectedApi(null)
@@ -80,7 +76,6 @@ export default function ApiCreator({ projectId = 1, globalFiles }: ApiCreatorPro
   // API 스펙 목록 조회 및 변환 (그룹화 로직)
   const fetchApiSpecs = useCallback(
     async (projectId: number) => {
-      console.log("fetchApiSpecs 호출됨 - projectId:", projectId)
       setIsLoading(true)
       try {
         // 백엔드에서 API 스펙 목록 조회 - Bearer 토큰 추가
@@ -92,8 +87,6 @@ export default function ApiCreator({ projectId = 1, globalFiles }: ApiCreatorPro
 
         // 응답 데이터를 ApiGroup 형식으로 변환
         const apiSpecsList = response.data.content || []
-
-        console.log(`프로젝트 ${projectId}의 API 스펙 목록 가져옴:`, apiSpecsList)
 
         // 경로별로 API 그룹화
         const groupMap = new Map<string, ApiEndpoint[]>()
@@ -195,11 +188,9 @@ export default function ApiCreator({ projectId = 1, globalFiles }: ApiCreatorPro
             endpoints: [],
           })
         }
-
-        console.log(`프로젝트 ${projectId}의 그룹화된 API 목록:`, newGroups)
         setApiGroups(newGroups)
-      } catch (error) {
-        console.error(`프로젝트 ${projectId}의 API 스펙 목록 조회 오류:`, error)
+      } catch {
+        alert("API 스펙을 가져오는 중 오류가 발생했습니다.")
       } finally {
         setIsLoading(false)
       }
@@ -209,7 +200,6 @@ export default function ApiCreator({ projectId = 1, globalFiles }: ApiCreatorPro
 
   // 처음 로드 시 API 스펙 목록 조회 및 프로젝트 ID가 변경될 때마다 다시 조회
   useEffect(() => {
-    console.log("API 스펙 목록 조회 useEffect 실행 - scrudProjectId:", scrudProjectId)
     fetchApiSpecs(scrudProjectId)
   }, [scrudProjectId, fetchApiSpecs])
 
@@ -240,43 +230,39 @@ export default function ApiCreator({ projectId = 1, globalFiles }: ApiCreatorPro
 
   // API 스펙이 변경되었을 때 목록 새로고침
   const handleApiSpecChanged = useCallback(() => {
-    console.log("API 스펙 변경 감지: 목록 새로고침 - scrudProjectId:", scrudProjectId)
     fetchApiSpecs(scrudProjectId)
   }, [scrudProjectId, fetchApiSpecs])
 
   return (
     <div className="bg-blue-50 p-2 relative">
-      {/* 기존 좌측 패널 토글 버튼 - 위치 및 스타일만 수정 */}
-      <div className={`absolute top-1/2 transform -translate-y-1/2 ${isLeftPanelOpen ? "left-[300px]" : "left-0"} transition-all duration-300 z-20`}>
-        <button
-          className="bg-white w-6 h-24 flex items-center justify-center rounded-r-md shadow-md hover:bg-gray-50 transition-colors focus:outline-none"
-          onClick={toggleLeftPanel}
-          aria-label={isLeftPanelOpen ? "패널 닫기" : "패널 열기"}
-        >
-          {isLeftPanelOpen ? <ChevronLeft className="w-4 h-4 text-gray-600" /> : <ChevronRight className="w-4 h-4 text-gray-600" />}
-        </button>
-      </div>
-
       <div className="max-w-full mx-auto">
         {/* 3단 레이아웃 - 캔버스 페이지와 동일한 스타일 적용 */}
-        <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-4.8rem)] overflow-hidden">
-          {/* 좌측 패널 - 스타일만 수정 */}
-          <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-0 opacity-0"} h-full rounded-lg bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto `}>
-            <LeftContainer
-              completed={completed}
-              activeItem={activeItem}
-              onItemClick={handleSidebarItemClick}
-              globalFiles={globalFiles}
-            />
+        <div className="flex flex-col md:flex-row gap-3 h-[calc(100vh-4.8rem)] overflow-hidden">
+          {/* 좌측 패널 토글 버튼*/}
+          <div className="absolute top-5 left-3 z-20">
+            <button
+              className="bg-white w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-50 transition-colors focus:outline-none border"
+              onClick={toggleLeftPanel}
+              aria-label={isLeftPanelOpen ? "패널 닫기" : "패널 열기"}
+            >
+              {isLeftPanelOpen ? <ChevronLeft className="w-5 h-5 text-gray-600" /> : <ChevronRight className="w-5 h-5 text-gray-600" />}
+            </button>
           </div>
 
-          {/* 중앙 패널 - 스타일만 수정 */}
-          <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[350px]"} rounded-lg h-full bg-white shadow-sm border-r transition-all duration-300 overflow-hidden`}>
+          {/* 좌측 패널 - 자연스러운 트랜지션 효과 복원 */}
+          <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-[44px]"} h-full transition-all duration-300 ease-in-out bg-white rounded-lg`}>
+            <div className={`${isLeftPanelOpen ? "w-[300px] opacity-100" : "w-0 opacity-0"} h-full rounded-lg bg-white shadow-md overflow-y-auto transition-all duration-300 ease-in-out`}>
+              <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} globalFiles={globalFiles}/>
+            </div>
+          </div>
+
+          {/* 중앙 패널 - 좌측 패널이 닫히면 이 패널이 더 커지도록 수정 */}
+          <div className={`${isLeftPanelOpen ? "w-[320px]" : "w-[570px]"} rounded-lg h-full bg-white shadow-sm border-r transition-all duration-300 overflow-hidden`}>
             <MiddleContainer onApiSelect={handleApiSelect} apiGroups={apiGroups} setApiGroups={setApiGroups} isLoading={isLoading} scrudProjectId={scrudProjectId} />
           </div>
 
-          {/* 우측 패널 - 스타일만 수정 */}
-          <div className="flex-1 h-full rounded-lg bg-white shadow-sm overflow-hidden">
+          {/* 우측 패널 - 고정 너비로 수정 */}
+          <div className="w-[calc(100%-580px)] h-full rounded-lg bg-white shadow-sm overflow-hidden">
             <RightContainer
               selectedApi={selectedApi}
               selectedMethod={selectedMethod}

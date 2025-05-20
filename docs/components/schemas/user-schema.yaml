@@ -8,6 +8,13 @@ UserResponse:
     nickname:
       type: string
       example: "john_doe"
+    username:
+      type: string
+      example: "Jaasdfas@fasdf.com"
+    role:
+      type: string
+      enum: [ USER, ADMIN ]
+      example: "USER"
     profileImgUrl:
       type: string
       format: uri

@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # 열거형(Enum) 정의
@@ -57,11 +57,13 @@ class ApiSummary(BaseModel):
     endpoint: str
     status: ApiProcessStateEnum
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class Method(BaseModel):
@@ -72,11 +74,13 @@ class Method(BaseModel):
     body: Optional[str] = None
     description: Optional[str] = None
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class Component(BaseModel):
@@ -87,41 +91,47 @@ class Component(BaseModel):
     description: Optional[str] = None
     positionX: float
     positionY: float
-    methods: List[Method]
+    methods: Optional[List[Method]]
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class Connection(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")
-    connectionId: str
-    sourceMethodId: str
-    targetMethodId: str
-    type: MethodConnectionTypeEnum
+    connectionId: Optional[str] = None
+    sourceMethodId: Optional[str] = None
+    targetMethodId: Optional[str] = None
+    type: Optional[MethodConnectionTypeEnum] = None
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class DtoModel(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")
-    dtoId: str
-    name: str
+    dtoId: Optional[str] = None
+    name: Optional[str] = None
     description: Optional[str] = None
     body: Optional[str] = None
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class Metadata(BaseModel):
@@ -132,11 +142,13 @@ class Metadata(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class VersionInfo(BaseModel):
@@ -144,11 +156,13 @@ class VersionInfo(BaseModel):
     newVersionId: str
     description: Optional[str] = None
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class UserChat(BaseModel):
@@ -158,11 +172,13 @@ class UserChat(BaseModel):
     message: str
     targetMethods: List[Dict[str, str]]  # methodId를 포함하는 사전 목록
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class SystemChat(BaseModel):
@@ -173,11 +189,13 @@ class SystemChat(BaseModel):
     versionInfo: Optional[VersionInfo] = None
     diagramId: Optional[str] = None
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class Chat(BaseModel):
@@ -189,11 +207,13 @@ class Chat(BaseModel):
     systemChat: Optional[SystemChat] = None
     createdAt: datetime
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class Diagram(BaseModel):
@@ -201,16 +221,18 @@ class Diagram(BaseModel):
     projectId: Optional[str] = None
     apiId: Optional[str] = None
     diagramId: str
-    components: List[Component]
-    connections: List[Connection]
-    dto: List[DtoModel]
+    components: Optional[List[Component]] = []
+    connections: Optional[List[Connection]] = []
+    dto: Optional[List[DtoModel]] = []
     metadata: Metadata
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
     def validate_diagram_ids(self) -> bool:
         """다이어그램 내 ID 중복을 검사하는 메서드"""

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Clock, Send, RefreshCw, X, AlertCircle, Info } from "lucide-react"
+import { Clock, Send, RefreshCw, X, Info } from "lucide-react"
 import type { ChatHistoryResponse } from "@generated/model"
 import type { TargetNode } from "./DiagramContainer"
 import axios from "axios"
@@ -25,7 +25,7 @@ interface ChatContainerProps {
 
 // SSE 응답 타입 정의
 interface SSEResponse {
-  token?: string
+  token?: string | { newVersionId?: string }
   chunk?: string
   message?: string
   status?: string
@@ -78,6 +78,13 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [shouldShowTempMessage, setShouldShowTempMessage] = useState<boolean>(true)
 
+  // 최신 버전을 추적하기 위한 참조 변수 추가 (useState 선언 아래에 추가)
+  const latestVersionIdRef = useRef<string | null>(null)
+  console.log(versionInfo)
+  // 환경 감지 및 디버깅 설정
+  const [isProd, setIsProd] = useState<boolean>(false)
+  const [debugMode, setDebugMode] = useState<boolean>(true)
+
   // 참조 변수
   const eventSourceRef = useRef<EventSource | null>(null)
   const retryCountRef = useRef<number>(0)
@@ -86,6 +93,31 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   const activeSSEIdRef = useRef<string | null>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const { token } = useAuthStore()
+
+  // 환경 감지 로직
+  useEffect(() => {
+    // 배포 환경 감지 (URL 기반)
+    const isProduction = !window.location.hostname.includes("localhost") && !window.location.hostname.includes("127.0.0.1")
+    setIsProd(isProduction)
+
+    console.log(`🌍 실행 환경: ${isProduction ? "배포" : "로컬"}`)
+
+    // 디버깅 모드 설정 (URL 파라미터로 제어 가능)
+    const urlParams = new URLSearchParams(window.location.search)
+    const debugParam = urlParams.get("debug")
+    const shouldDebug = debugParam === "true" || !isProduction
+
+    setDebugMode(shouldDebug)
+    console.log(`🔍 디버깅 모드: ${shouldDebug ? "활성화" : "비활성화"}`)
+
+    // 브라우저 정보 로깅
+    console.log("🌐 브라우저 정보:", {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      vendor: navigator.vendor,
+    })
+  }, [])
 
   // SSE 연결 해제 함수
   const disconnectSSE = useCallback(() => {
@@ -107,79 +139,249 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     }
   }, [])
 
-  // SSE 메시지 핸들러
   const handleSSEMessage = useCallback(
     (event: MessageEvent) => {
       try {
+        // 원본 이벤트 데이터 로깅 (항상 기록)
+        console.log("🔍 SSE 원본 데이터:", event.data)
+
         if (currentMessageCompleted && !activeSSEIdRef.current) {
+          console.log("⚠️ 메시지가 이미 완료되었거나 활성 SSE ID가 없습니다.")
           return
         }
 
         let parsedData: SSEResponse | null = null
+        let parsingMethod = ""
 
+        // 다양한 형식의 파싱 시도
         try {
-          parsedData = JSON.parse(event.data)
-        } catch {
+          // 1. 'event:message\ndata:{"token": {"newVersionId": "2"}}' 형식 처리
+          if (event.data.includes("event:message") && event.data.includes("data:")) {
+            const dataMatch = event.data.match(/data:(.*)/)
+            if (dataMatch && dataMatch[1]) {
+              parsedData = JSON.parse(dataMatch[1].trim())
+              parsingMethod = "event:message 형식"
+            }
+          }
+          // 2. 일반 JSON 파싱 시도
+          else {
+            parsedData = JSON.parse(event.data)
+            parsingMethod = "일반 JSON"
+          }
+        } catch (parseError) {
+          console.log("⚠️ 첫 번째 파싱 시도 실패:", parseError)
+
+          // 3. data: 접두사 처리
           if (event.data.startsWith("data:")) {
             try {
               const jsonStr = event.data.substring(5).trim()
+              console.log("🔍 data: 접두사 제거 후:", jsonStr)
               parsedData = JSON.parse(jsonStr)
-            } catch {
+              parsingMethod = "data: 접두사"
+            } catch (dataError) {
+              console.log("⚠️ data: 접두사 파싱 실패:", dataError)
               parsedData = { text: event.data }
+              parsingMethod = "텍스트 폴백"
             }
           } else {
+            // 4. 마지막 수단: 원본 텍스트 사용
             parsedData = { text: event.data }
+            parsingMethod = "텍스트 폴백"
           }
         }
 
+        // 파싱 결과 로깅
+        console.log(`✅ 파싱 성공 (${parsingMethod}):`, parsedData)
+
         if (parsedData && parsedData.error) {
+          console.error("❌ SSE 에러 응답:", parsedData.error)
           setSSEError(parsedData.error)
           return
         }
 
-        if (parsedData && parsedData.token) {
-          setAccumulatedText((prev) => prev + parsedData!.token!)
+        // token이 객체인 경우 newVersionId 확인
+        if (parsedData && parsedData.token && typeof parsedData.token === "object") {
+          const tokenObj = parsedData.token as { newVersionId?: string }
+          if (tokenObj.newVersionId) {
+            console.log("🔄 새 버전 ID 감지:", tokenObj.newVersionId)
+
+            // 현재 버전이 더 높은 경우에만 업데이트
+            const newVersionNum = Number.parseInt(tokenObj.newVersionId, 10)
+            const currentVersionNum = latestVersionIdRef.current ? Number.parseInt(latestVersionIdRef.current, 10) : 0
+
+            console.log("🔄 버전 비교:", { 새버전: newVersionNum, 현재버전: currentVersionNum })
+
+            if (newVersionNum > currentVersionNum) {
+              console.log(`✅ 버전 업데이트: ${currentVersionNum} -> ${newVersionNum}`)
+
+              // 최신 버전 ID 업데이트
+              latestVersionIdRef.current = tokenObj.newVersionId
+
+              // 새 버전 정보 저장
+              const newVersionInfo = {
+                newVersionId: tokenObj.newVersionId,
+                description: "새 버전",
+              }
+              setVersionInfo(newVersionInfo)
+
+              // 즉시 URL 업데이트 및 다이어그램 요청
+              if (onNewVersionInfo) {
+                console.log("📤 새 버전 정보 전달:", newVersionInfo)
+                onNewVersionInfo(newVersionInfo)
+              }
+
+              // URL 직접 업데이트 (필요한 경우)
+              if (projectId && apiId) {
+                const newUrl = `/canvas/${projectId}/${apiId}?version=${tokenObj.newVersionId}`
+                console.log("🔄 URL 업데이트:", newUrl)
+
+                // 현재 URL과 다른 경우에만 업데이트
+                if (window.location.pathname.includes(`/canvas/${projectId}/${apiId}`) && !window.location.search.includes(`version=${tokenObj.newVersionId}`)) {
+                  window.history.pushState({}, "", newUrl)
+                }
+              }
+            } else {
+              console.log(`⚠️ 무시된 버전 업데이트: 현재 ${currentVersionNum}, 수신 ${newVersionNum}`)
+            }
+
+            // 텍스트 표시를 위해 객체를 문자열로 변환
+            try {
+              const tokenStr = JSON.stringify(parsedData.token)
+              console.log("📝 토큰 문자열 변환:", tokenStr)
+              setAccumulatedText((prev) => {
+                const newText = prev + tokenStr
+                console.log("📝 누적 텍스트 업데이트:", newText)
+                return newText
+              })
+            } catch (e) {
+              console.error("❌ 토큰 객체 변환 오류:", e)
+            }
+          }
+        }
+        // token이 문자열인 경우 기존 처리 유지
+        else if (parsedData && parsedData.token && typeof parsedData.token === "string") {
+          console.log("📝 문자열 토큰 수신:", parsedData.token)
+          setAccumulatedText((prev) => {
+            const newText = (prev + parsedData!.token) as string
+            console.log("📝 누적 텍스트 업데이트:", newText)
+            return newText
+          })
         }
 
+        // 디버깅 메시지에서 토큰 추출
         if (parsedData && parsedData.text) {
+          console.log("📝 텍스트 필드 확인:", parsedData.text)
           const tokenMatch = String(parsedData.text).match(/\[디버깅\] 새 토큰 수신: (.*)/)
           if (tokenMatch && tokenMatch[1]) {
             const token = tokenMatch[1].trim()
-            setAccumulatedText((prev) => prev + token)
+            console.log("🔍 디버깅 토큰 추출:", token)
+            setAccumulatedText((prev) => {
+              const newText = prev + token
+              console.log("📝 누적 텍스트 업데이트:", newText)
+              return newText
+            })
           }
         }
 
+        // chunk 필드 확인
         if (parsedData && parsedData.chunk) {
+          console.log("📝 청크 필드 확인:", parsedData.chunk)
           const tokenMatch = String(parsedData.chunk).match(/\[디버깅\] 새 토큰 수신: (.*)/)
           if (tokenMatch && tokenMatch[1]) {
             const token = tokenMatch[1].trim()
-            setAccumulatedText((prev) => prev + token)
+            console.log("🔍 디버깅 청크 추출:", token)
+            setAccumulatedText((prev) => {
+              const newText = prev + token
+              console.log("📝 누적 텍스트 업데이트:", newText)
+              return newText
+            })
           }
         }
 
+        // versionInfo 필드 확인
         if (parsedData && parsedData.versionInfo) {
-          console.log("SSE에서 새 버전 정보 감지:", parsedData.versionInfo)
-          setVersionInfo(parsedData.versionInfo)
+          console.log("🔄 SSE에서 새 버전 정보 감지:", parsedData.versionInfo)
 
-          // 새 버전 정보를 부모 컴포넌트에 즉시 전달
-          if (onNewVersionInfo) {
-            console.log("부모 컴포넌트에 새 버전 정보 전달:", parsedData.versionInfo)
-            onNewVersionInfo(parsedData.versionInfo)
+          // 현재 버전이 더 높은 경우에만 업데이트
+          const newVersionNum = Number.parseInt(parsedData.versionInfo.newVersionId, 10)
+          const currentVersionNum = latestVersionIdRef.current ? Number.parseInt(latestVersionIdRef.current, 10) : 0
+
+          console.log("🔄 버전 비교:", { 새버전: newVersionNum, 현재버전: currentVersionNum })
+
+          if (newVersionNum > currentVersionNum) {
+            console.log(`✅ 버전 업데이트: ${currentVersionNum} -> ${newVersionNum}`)
+
+            // 최신 버전 ID 업데이트
+            latestVersionIdRef.current = parsedData.versionInfo.newVersionId
+
+            // 버전 정보 저장
+            setVersionInfo(parsedData.versionInfo)
+
+            // 새 버전 정보 즉시 전달 및 URL 업데이트
+            if (onNewVersionInfo) {
+              console.log("📤 부모 컴포넌트에 새 버전 정보 전달:", parsedData.versionInfo)
+              onNewVersionInfo(parsedData.versionInfo)
+            }
+
+            // URL 직접 업데이트 (필요한 경우)
+            if (projectId && apiId && parsedData.versionInfo.newVersionId) {
+              const newUrl = `/canvas/${projectId}/${apiId}?version=${parsedData.versionInfo.newVersionId}`
+              console.log("🔄 URL 업데이트:", newUrl)
+
+              // 현재 URL과 다른 경우에만 업데이트
+              if (window.location.pathname.includes(`/canvas/${projectId}/${apiId}`) && !window.location.search.includes(`version=${parsedData.versionInfo.newVersionId}`)) {
+                window.history.pushState({}, "", newUrl)
+              }
+            }
+          } else {
+            console.log(`⚠️ 무시된 버전 업데이트: 현재 ${currentVersionNum}, 수신 ${newVersionNum}`)
           }
         }
 
-        if (
+        // 완료 메시지 확인
+        const isCompleted =
           (parsedData && parsedData.status === "COMPLETED") ||
           (parsedData && parsedData.message && (parsedData.message.includes("완료") || parsedData.message.includes("SSE 연결이 종료") || parsedData.message.includes("종료"))) ||
           (parsedData && parsedData.token && typeof parsedData.token === "string" && parsedData.token.includes("완료")) ||
           (parsedData && parsedData.done === true)
-        ) {
+
+        if (isCompleted) {
+          console.log("✅ SSE 완료 메시지 감지:", {
+            status: parsedData?.status,
+            message: parsedData?.message,
+            done: parsedData?.done,
+          })
+
           setCurrentMessageCompleted(true)
           disconnectSSE()
 
+          // 저장된 최신 버전 정보가 있으면 SSE 완료 후 다시 한번 확인
+          if (latestVersionIdRef.current && onNewVersionInfo) {
+            const finalVersionInfo = {
+              newVersionId: latestVersionIdRef.current,
+              description: "최종 버전",
+            }
+
+            console.log("📤 SSE 완료 후 최종 버전 정보 확인:", finalVersionInfo)
+            onNewVersionInfo(finalVersionInfo)
+
+            // URL 직접 업데이트 (필요한 경우)
+            if (projectId && apiId) {
+              const newUrl = `/canvas/${projectId}/${apiId}?version=${latestVersionIdRef.current}`
+              console.log("🔄 SSE 완료 후 최종 URL 업데이트:", newUrl)
+
+              // 현재 URL과 다른 경우에만 업데이트
+              if (window.location.pathname.includes(`/canvas/${projectId}/${apiId}`) && !window.location.search.includes(`version=${latestVersionIdRef.current}`)) {
+                window.history.pushState({}, "", newUrl)
+              }
+            }
+          }
+
           setTimeout(() => {
+            console.log("🔄 채팅 내역 새로고침 시작")
             onRefresh().then(() => {
               // 채팅 내역 새로고침 후 임시 메시지 상태 초기화
+              console.log("✅ 채팅 내역 새로고침 완료, 상태 초기화")
               setShouldShowTempMessage(false)
               setAccumulatedText("")
               setLastSentMessage("")
@@ -188,21 +390,11 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           }, 500)
         }
       } catch (err) {
-        console.error("SSE 메시지 처리 오류:", err)
+        console.error("❌ SSE 메시지 처리 오류:", err)
       }
     },
-    [currentMessageCompleted, disconnectSSE, onRefresh, onNewVersionInfo]
+    [currentMessageCompleted, disconnectSSE, onRefresh, onNewVersionInfo, projectId, apiId]
   )
-
-  // 시스템 응답에서 버전 정보 감지 시 부모 컴포넌트에 알림
-  useEffect(() => {
-    if (chatData && chatData.content && chatData.content.length > 0 && onVersionSelect && versionInfo) {
-      const newVersionId = versionInfo.newVersionId
-      if (newVersionId) {
-        onVersionSelect(newVersionId)
-      }
-    }
-  }, [chatData, onVersionSelect, versionInfo])
 
   // 채팅 데이터가 변경될 때 임시 메시지 초기화
   useEffect(() => {
@@ -274,20 +466,26 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     [currentMessageCompleted, handleReconnect]
   )
 
-  // SSE 연결 함수
   const connectToSSE = useCallback(
     (sseId: string) => {
+      console.log("🔌 SSE 연결 시도:", sseId)
+
       if (sseId !== activeSSEIdRef.current) {
+        console.log("🔄 새로운 SSE ID 감지, 메시지 완료 상태 초기화")
         setCurrentMessageCompleted(false)
       } else if (currentMessageCompleted) {
+        console.log("⚠️ 메시지가 이미 완료됨, 연결 중단")
         return
       }
 
       if (isConnecting && eventSourceRef.current) {
+        console.log("⚠️ 이미 연결 중, 중복 연결 방지")
         return
       }
 
+      console.log("🔌 기존 SSE 연결 해제")
       disconnectSSE()
+
       activeSSEIdRef.current = sseId
       setIsConnecting(true)
       setCurrentSSEId(sseId)
@@ -295,20 +493,29 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       setShouldShowTempMessage(true)
 
       try {
+        console.log("🔌 새 EventSource 생성:", `/api/sse/connect/${sseId}`)
         const eventSource = new EventSource(`/api/sse/connect/${sseId}`)
         eventSourceRef.current = eventSource
 
         eventSource.onopen = () => {
+          console.log("✅ SSE 연결 성공")
           setSSEConnected(true)
           setSSEError(null)
           setIsConnecting(false)
           retryCountRef.current = 0
         }
 
-        eventSource.onmessage = handleSSEMessage
-        eventSource.onerror = handleSSEError
+        eventSource.onmessage = (event) => {
+          console.log("📥 SSE 메시지 수신")
+          handleSSEMessage(event)
+        }
+
+        eventSource.onerror = (err) => {
+          console.error("❌ SSE 연결 오류:", err)
+          handleSSEError(err)
+        }
       } catch (err) {
-        console.error("SSE 연결 설정 오류:", err)
+        console.error("❌ SSE 연결 설정 오류:", err)
         setSSEError("서버 이벤트 스트림 연결을 설정하는 중 오류가 발생했습니다.")
         setSSEConnected(false)
         setIsConnecting(false)
@@ -418,14 +625,24 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     setSelectedTag("EXPLAIN") // 기본값으로 설정
   }, [])
 
-  // 메시지 전송 핸들러
   const handleSendMessage = useCallback(async () => {
-    if (!newMessage.trim() || sending || sseConnected || isConnecting || isSubmitting) return
+    if (!newMessage.trim() || sending || sseConnected || isConnecting || isSubmitting) {
+      console.log("⚠️ 메시지 전송 불가:", {
+        메시지비어있음: !newMessage.trim(),
+        전송중: sending,
+        SSE연결됨: sseConnected,
+        연결중: isConnecting,
+        제출중: isSubmitting,
+      })
+      return
+    }
 
+    console.log("🚀 메시지 전송 시작")
     setIsSubmitting(true)
 
     try {
       if (eventSourceRef.current) {
+        console.log("🔌 기존 SSE 연결 해제")
         disconnectSSE()
         await new Promise((resolve) => setTimeout(resolve, 100))
       }
@@ -433,7 +650,8 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       retryCountRef.current = 0
       setCurrentMessageCompleted(false)
       setAccumulatedText("")
-      setVersionInfo(null)
+      setVersionInfo(null) // 새 메시지 전송 시 버전 정보 초기화
+      latestVersionIdRef.current = null // 최신 버전 ID 참조 초기화
       setSSEError(null)
       setSending(true)
       setSendError(null)
@@ -441,8 +659,11 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
 
       const sentMessage = newMessage
       setLastSentMessage(sentMessage)
+      console.log("📝 전송할 메시지:", sentMessage)
 
       const targetMethods = targetNodes.length > 0 ? targetNodes.filter((target) => target.type === "method").map((target) => ({ methodId: target.id.replace("method-", "") })) : []
+
+      console.log("🎯 대상 메서드:", targetMethods)
 
       const chatMessageData = {
         tag: selectedTag,
@@ -451,24 +672,32 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         targetMethods,
       }
 
+      console.log("📤 API 요청 데이터:", chatMessageData)
       setNewMessage("")
 
+      console.log(`📤 POST 요청: /api/chat/${projectId}/${apiId}`)
       const response = await axios.post<SSEIdResponse>(`/api/chat/${projectId}/${apiId}`, chatMessageData, {
         headers: {
           Authorization: token,
         },
       })
 
+      console.log("📥 API 응답:", response.data)
+
       if (response.data && response.data.streamId) {
+        console.log("✅ SSE ID 수신:", response.data.streamId)
         connectToSSE(response.data.streamId)
       } else {
+        console.error("❌ SSE ID 없음")
         setSendError("SSE ID를 받지 못했습니다.")
       }
     } catch (err) {
-      console.error("채팅 메시지 전송 오류:", err)
+      console.error("❌ 채팅 메시지 전송 오류:", err)
 
       if (axios.isAxiosError(err)) {
-        setSendError(err.response?.data?.error || err.message)
+        const errorMessage = err.response?.data?.error || err.message
+        console.error("❌ Axios 오류:", errorMessage)
+        setSendError(errorMessage)
       } else {
         setSendError("메시지 전송 중 오류가 발생했습니다.")
       }
@@ -476,6 +705,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       setSending(false)
       setTimeout(() => {
         setIsSubmitting(false)
+        console.log("✅ 메시지 전송 프로세스 완료")
       }, 500)
     }
   }, [newMessage, sending, sseConnected, isConnecting, isSubmitting, disconnectSSE, targetNodes, selectedTag, token, projectId, apiId, connectToSSE])
@@ -548,7 +778,8 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
       .replace(/^##\s+(.*?)(?:\n|$)/gm, '<h2 class="text-xl font-bold my-2">$1</h2>')
       // H3 제목 처리 (### 제목)
       .replace(/^###\s+(.*?)(?:\n|$)/gm, '<h3 class="text-lg font-bold my-2">$1</h3>')
-
+      // H4 제목 처리 (#### 제목)
+      .replace(/^####\s+(.*?)(?:\n|$)/gm, '<h4 class="text-lg font-bold my-2">$1</h4>')
     // 볼드 처리 (**텍스트** 또는 __텍스트__)
     parsedText = parsedText.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>")
 
@@ -597,8 +828,43 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
     )
   }
 
+  // 디버깅 UI 렌더링
+  const renderDebugInfo = () => {
+    if (!debugMode) return null
+
+    return (
+      <div className="px-4 py-2 bg-yellow-50 text-yellow-800 border-b text-xs">
+        <details>
+          <summary className="font-semibold cursor-pointer">디버깅 정보 (클릭하여 {isProd ? "배포" : "로컬"} 환경)</summary>
+          <div className="mt-2 space-y-1">
+            <div>SSE 상태: {sseConnected ? "연결됨" : isConnecting ? "연결 중" : "연결 안됨"}</div>
+            <div>SSE ID: {currentSSEId || "없음"}</div>
+            <div>최신 버전 ID: {latestVersionIdRef.current || "없음"}</div>
+            <div>메시지 완료: {currentMessageCompleted ? "예" : "아니오"}</div>
+            <div>
+              재시도 횟수: {retryCountRef.current}/{maxRetries}
+            </div>
+            <div>
+              <button
+                onClick={() => {
+                  console.clear()
+                  console.log("🧹 콘솔 로그 초기화됨")
+                }}
+                className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+              >
+                콘솔 로그 지우기
+              </button>
+            </div>
+          </div>
+        </details>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full flex flex-col bg-white rounded-lg shadow overflow-hidden">
+      {renderDebugInfo()}
+
       {/* 메시지 전송 오류 */}
       {(sendError || sseError) && (
         <div className="px-4 py-2 bg-red-50 text-red-600 border-b">
@@ -614,7 +880,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
             if (msg.type === "user") {
               return (
                 <div key={msg.id} className="flex flex-col items-end mb-4">
-                  <div className="bg-green-50 text-blue-900 rounded-lg py-2 px-4 max-w-[80%]">
+                  <div className="bg-blue-50 text-blue-900 rounded-lg py-2 px-4 max-w-[80%]">
                     {/* 요청 태그 표시 */}
                     {msg.tag && (
                       <div className="mb-1">
@@ -667,10 +933,10 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
           <div className="mb-4">
             {/* 사용자 메시지 (가장 최근에 보낸 메시지) */}
             <div className="flex justify-end mb-4">
-              <div className="max-w-[80%] p-3 rounded-lg bg-blue-500 text-white rounded-tr-none">
+              <div className="max-w-[80%] p-3 rounded-lg bg-blue-50 text-blue-900 rounded-tr-none">
                 {/* 요청 태그 표시 */}
                 <div className="mb-1">
-                  <span className="inline-block px-2 py-0.5 bg-blue-400 text-white rounded-full text-xs">{selectedTag}</span>
+                  <span className="inline-block px-2 py-0.5 bg-blue-200 text-blue-800 rounded-full text-xs">{selectedTag}</span>
                 </div>
                 <div>{lastSentMessage}</div>
               </div>
@@ -684,18 +950,41 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
                   {(sseConnected || isConnecting) && <span className="inline-block ml-1 w-2 h-4 bg-gray-500 animate-pulse"></span>}
                 </div>
                 {(sseConnected || isConnecting) && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
-                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                    <span>{isConnecting ? "연결 중..." : "처리 중..."}</span>
+                  <div className="mt-2 flex items-center gap-0.5 text-xs">
+                    {"SCRUD".split("").map((letter, index) => (
+                      <span
+                        key={`scrud-${index}`}
+                        className="font-semibold transition-opacity duration-700 ease-in-out"
+                        style={{
+                          animation: `pulse 1.5s infinite ${index * 0.3}s`,
+                          color: "#3b82f6",
+                        }}
+                      >
+                        {letter}
+                      </span>
+                    ))}
+                    <style jsx>{`
+                      @keyframes pulse {
+                        0%,
+                        100% {
+                          opacity: 0.3;
+                        }
+                        50% {
+                          opacity: 1;
+                        }
+                      }
+                    `}</style>
                   </div>
                 )}
               </div>
             </div>
+          </div>
+        )}
 
-            {/* 타임스탬프 */}
-            <div className="text-center mt-1 mb-4">
-              <span className="text-xs text-gray-400">{new Date().toLocaleString()}</span>
-            </div>
+        {/* 타임스탬프 */}
+        {shouldShowTempMessage && (sseConnected || isConnecting || accumulatedText) && (
+          <div className="text-center mt-1 mb-4">
+            <span className="text-xs text-gray-400">{new Date().toLocaleString()}</span>
           </div>
         )}
       </div>
@@ -797,9 +1086,30 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
         </div>
 
         {(sseConnected || isConnecting) && (
-          <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
-            <AlertCircle size={12} />
-            <span>AI가 응답을 생성하는 중입니다. 잠시만 기다려주세요.</span>
+          <div className="mt-2 flex items-center gap-1">
+            {"SCRUD".split("").map((letter, index) => (
+              <span
+                key={`scrud-${index}`}
+                className="font-semibold transition-opacity duration-700 ease-in-out"
+                style={{
+                  animation: `pulse 1.5s infinite ${index * 0.3}s`,
+                  color: "#3b82f6",
+                }}
+              >
+                {letter}
+              </span>
+            ))}
+            <style jsx>{`
+              @keyframes pulse {
+                0%,
+                100% {
+                  opacity: 0.3;
+                }
+                50% {
+                  opacity: 1;
+                }
+              }
+            `}</style>
           </div>
         )}
       </div>

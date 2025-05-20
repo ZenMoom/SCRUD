@@ -42,6 +42,9 @@ ScrudProjectDto:
       type: string
       format: date-time
       description: "프로젝트 수정 날짜"
+    isDeleted:
+      type: boolean
+      description: "프로젝트 삭제 여부"
 
 ScrudProjectPageDto:
   x-spring-paginated: true

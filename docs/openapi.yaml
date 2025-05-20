@@ -574,7 +574,7 @@ paths:
         '200':
           $ref: './components/responses/post-response.yaml#/GetPostDetailResponse'
 
-    patch:
+    put:
       tags: [ Post ]
       summary: 게시글 수정
       operationId: updatePost
@@ -609,6 +609,19 @@ paths:
         '200':
           $ref: './components/responses/post-response.yaml#/VotePostResponse'
 
+  /api/v1/posts/{postId}/status:
+    patch:
+      tags: [ Post ]
+      summary: 게시글 상태 변경
+      operationId: updatePostStatus
+      parameters:
+        - $ref: './components/schemas/post-schema.yaml#/PostId'
+      requestBody:
+        $ref: './components/requests/post-request.yaml#/UpdatePostStatusRequest'
+      responses:
+        '200':
+          $ref: './components/responses/success-response.yaml#/SuccessNoContent'
+
   ##############################################
   # comment api
   ##############################################
@@ -623,7 +636,7 @@ paths:
         $ref: './components/requests/comment-request.yaml#/CreateCommentRequest'
       responses:
         '201':
-          $ref: './components/responses/success-response.yaml#/SuccessCreated'
+          $ref: './components/responses/comment-response.yaml#/CreateCommentResponse'
 
     get:
       tags: [ Comment ]

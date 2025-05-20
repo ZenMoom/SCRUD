@@ -4,14 +4,26 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Header
 from fastapi.responses import StreamingResponse
 
 from app.api.dto.diagram_dto import UserChatRequest
-from app.core.generator.model_generator import ModelGenerator
+from app.config.config import settings
+from app.core.diagram.component.component_service import ComponentService
+from app.core.diagram.connection.connection_service import ConnectionService
+from app.core.diagram.diagram_service import DiagramService
+from app.core.llm.base_llm import LLMFactory, ModelType
+from app.core.llm.chains.component_chain import ComponentChain
+from app.core.llm.chains.connection_chain import ConnectionChain
+from app.core.llm.chains.create_diagram_component_chain import CreateDiagramComponentChain
+from app.core.llm.chains.dto_chain import DtoModelChain
+from app.core.llm.chains.user_chat_chain import UserChatChain
+from app.core.llm.prompt_service import PromptService
 from app.core.services.chat_service import ChatService
+from app.core.services.chat_service_facade import ChatServiceFacade
 from app.core.services.sse_service import SSEService
-from app.infrastructure.http.client.api_client import ApiClient, ApiSpec, GlobalFileList
+from app.infrastructure.http.client.api_client import ApiClient, GlobalFileList, ApiSpec
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 logger = logging.getLogger(__name__)
 
 # API 라우터 생성
@@ -33,12 +45,8 @@ def get_chat_repository() -> ChatRepository:
     from app.infrastructure.mongodb.repository.chat_repository_impl import ChatRepositoryImpl
     return ChatRepositoryImpl()
 
-
 def get_sse_service() -> SSEService:
-    return SSEService(logger=logger)
-
-def get_model_generator() -> ModelGenerator:
-    return ModelGenerator()
+    return SSEService()
 
 def get_a_http_client():
     from app.infrastructure.http.client.api_client import ApiClient
@@ -48,18 +56,90 @@ def get_a_http_client():
 def get_chat_service(
         diagram_repository: DiagramRepository = Depends(get_diagram_repository),
         chat_repository: ChatRepository = Depends(get_chat_repository),
-        sse_service: SSEService = Depends(get_sse_service),
-        model_generator: ModelGenerator = Depends(get_model_generator),
 ) -> ChatService:
     return ChatService(
-        model_name="openai",
-        model_generator=model_generator,
         diagram_repository=diagram_repository,
         chat_repository=chat_repository,
-        sse_service=sse_service,
-        logger=logger,
     )
 
+def get_prompt_service() -> PromptService:
+    return PromptService(
+        user_chat_chain=UserChatChain(
+            LLMFactory.create_llm(
+                model=ModelType.OPENAI_GPT4_1,
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE,
+                temperature=0.5,
+                streaming=True,
+                callbacks=[]  # 초기에는 빈 콜백 리스트
+            )
+        ),
+        create_diagram_chain=CreateDiagramComponentChain(
+            LLMFactory.create_llm(
+                model=ModelType.OPENAI_GPT4_1,
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE,
+                temperature=0,
+            )
+        )
+    )
+
+def get_component_service() -> ComponentService:
+    return ComponentService(
+        component_chain=ComponentChain(
+            LLMFactory.create_llm(
+                model=ModelType.OPENAI_GPT4,
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE,
+                temperature=0,
+            )
+        ),
+        dto_chain=DtoModelChain(
+            LLMFactory.create_llm(
+                model=ModelType.OPENAI_GPT4,
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE,
+                temperature=0,
+            )
+        )
+    )
+
+def get_connection_service() -> ConnectionService:
+    from app.config.config import settings
+    return ConnectionService(
+        connection_chain=ConnectionChain(
+            LLMFactory.create_llm(
+                model=ModelType.OPENAI_GPT4,
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE,
+                temperature=0,
+            )
+        )
+    )
+
+def get_diagram_service(
+        diagram_repository: DiagramRepository = Depends(get_diagram_repository),
+) -> DiagramService:
+    return DiagramService(
+        diagram_repository=diagram_repository,
+    )
+
+def get_chat_service_facade(
+        sse_service: SSEService = Depends(get_sse_service),
+        chat_service: ChatService = Depends(get_chat_service),
+        prompt_service: PromptService = Depends(get_prompt_service),
+        diagram_service: DiagramService = Depends(get_diagram_service),
+        component_service: ComponentService = Depends(get_component_service),
+        connection_service: ConnectionService = Depends(get_connection_service),
+) -> ChatServiceFacade:
+    return ChatServiceFacade(
+        sse_service=sse_service,
+        chat_service=chat_service,
+        prompt_service=prompt_service,
+        diagram_service=diagram_service,
+        component_service=component_service,
+        connection_service=connection_service,
+    )
 
 #####################################################################################################
 ###############################         Controller        ###########################################
@@ -71,7 +151,7 @@ from app.api.dto.diagram_dto import ChatResponseList
 async def get_prompts(
         project_id: str,
         api_id: str,
-        chat_service: ChatService = Depends(get_chat_service),
+        chat_service_facade: ChatServiceFacade = Depends(get_chat_service_facade),
 ) -> ChatResponseList:
     """
     특정 프로젝트와 API의 모든 채팅 기록을 조회합니다.
@@ -79,7 +159,7 @@ async def get_prompts(
     Args:
         project_id: 프로젝트 ID
         api_id: API ID
-        chat_service: ChatService
+        chat_service_facade: ChatService
 
     Returns:
         ChatResponseList: 채팅 기록 목록
@@ -88,7 +168,7 @@ async def get_prompts(
 
     try:
         # 채팅 서비스를 통해 프롬프트 조회
-        chat_responses = await chat_service.get_prompts(project_id, api_id)
+        chat_responses = await chat_service_facade.get_prompts(project_id, api_id)
         logger.info(f"채팅 기록 조회 성공: {len(chat_responses.content)}개의 채팅")
 
         return chat_responses
@@ -104,7 +184,7 @@ async def prompt_chat(
         user_chat_data: UserChatRequest,
         background_tasks: BackgroundTasks,
         authorization: str = Header(None),
-        chat_service: ChatService = Depends(get_chat_service),
+        chat_service_facade: ChatServiceFacade = Depends(get_chat_service_facade),
         sse_service: SSEService = Depends(get_sse_service),
         api_client: ApiClient = Depends(get_a_http_client)
 ):
@@ -126,21 +206,20 @@ async def prompt_chat(
         api_id: API ID
         user_chat_data: 사용자 채팅 데이터
         background_tasks: BackgroundTasks
-        chat_service: ChatService
         sse_service: SSEService
-
+        api_client
+        chat_service_facade
+        authorization
     Returns:
         Dict[str, str]: SSE 연결을 위한 스트림 ID
     """
-    logger.info(f"Authorization 헤더: {authorization}")
-    logger.info(f"프롬프트 채팅 요청 시작: project_id={project_id}, api_id={api_id}")
-    logger.info(f"사용자 채팅 데이터: {user_chat_data}")
 
     try:
+        logger.info(f"Authorization 헤더: {authorization}")
+
+
         api_spec: ApiSpec = await api_client.get_api_spec(api_spec_id=api_id, token=authorization)
         global_files: GlobalFileList = await api_client.get_project(project_id=project_id, token=authorization)
-        logger.info(f"API Spec: {api_spec.model_dump_json(indent=2) if api_spec else '{empty}'}")
-        logger.info(f"Project Data: {global_files.model_dump_json(indent=2) if global_files else '{empty}'}")
 
         # SSE 스트리밍을 위한 응답 큐 생성
         stream_id, response_queue = sse_service.create_stream()
@@ -149,12 +228,12 @@ async def prompt_chat(
         # 채팅 및 다이어그램 처리를 백그라운드 태스크로 실행
         # Agent가 도식화 생성 여부를 판단하고, 필요한 경우 created 이벤트로 diagramId를 제공합니다
         background_tasks.add_task(
-            chat_service.process_chat_and_diagram,
+            chat_service_facade.create_chat,
             project_id,
             api_id,
             user_chat_data,
-            api_spec,
             global_files,
+            api_spec,
             response_queue
         )
 
@@ -185,20 +264,23 @@ async def connect_sse(
     logger.info(f"SSE 연결 요청: sse_id={sse_id}")
     response_queue = sse_service.get_stream(sse_id)
 
-    async def event_generator(response_queue):
+    import asyncio
+    async def event_generator(queue: asyncio.Queue):
         try:
             logger.info(f"SSE 이벤트 생성기 시작: sse_id={sse_id}")
 
             while True:
                 # 큐에서 데이터 대기
-                data = await response_queue.get()
+                data = await queue.get()
+                logger.info(f"{data}")
+
                 # 종료 신호 확인
                 if data is None:
                     logger.info(f"SSE 스트림 종료: sse_id={sse_id}")
                     break
 
                 # SSE 형식으로 데이터 전송
-                yield f"data: {data}\n\n"
+                yield f"{data}\n\n"
 
         except Exception as e:
             logger.error(f"SSE 스트리밍 중 오류 발생: {str(e)}", exc_info=True)
@@ -206,6 +288,7 @@ async def connect_sse(
             # 클라이언트 연결 종료 시 정리
             logger.info(f"SSE 연결 정리: sse_id={sse_id}")
 
+            await sse_service.close_stream(response_queue)
             sse_service.remove_stream(sse_id)
 
     logger.info(f"SSE 스트리밍 응답 시작: sse_id={sse_id}")
