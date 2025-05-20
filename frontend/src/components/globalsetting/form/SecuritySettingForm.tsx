@@ -5,7 +5,6 @@ import { Upload, Github, File } from "lucide-react"
 import GitHubRepoBrowser from "../GitHubRepoBrowser"
 import { useProjectTempStore } from "@/store/projectTempStore"
 import SecuritySelector from "./SecuritySelector"
-import { SecuritySettingData } from "@/store/types/project"
 
 interface FileWithContent {
   name: string;
@@ -13,28 +12,8 @@ interface FileWithContent {
   isGitHub?: boolean;
 }
 
-interface SelectionValue {
-  type: string;
-  label: string;
-}
-
-interface SecurityOption {
-  type: string;
-  label: string;
-}
-
-const securityOptions = [
-  { type: 'SECURITY_DEFAULT_JWT', label: 'JWT' },
-  { type: 'SECURITY_DEFAULT_SESSION', label: '세션' },
-  { type: 'SECURITY_DEFAULT_NONE', label: '없음' },
-];
-
-// 기본값 설정
-const DEFAULT_SECURITY_OPTION = securityOptions[0]; // JWT를 기본값으로 설정
-
 interface SecuritySettingFormProps {
   title: string
-  value: FileWithContent | FileWithContent[] | { type: string; label: string }
   onChange: (value: FileWithContent | FileWithContent[] | { type: string; label: string }) => void
   onInfoClick: () => void
   onFocus?: () => void
@@ -42,7 +21,7 @@ interface SecuritySettingFormProps {
 }
 
 const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>(
-  ({ title, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
+  ({ title, onChange, onFocus, isRequired }, ref) => {
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
@@ -51,7 +30,6 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
     const [fileError, setFileError] = useState<string>("")
-
     const { tempData, setTempData } = useProjectTempStore();
 
     // 외부 클릭 감지를 위한 이벤트 리스너
@@ -248,7 +226,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              onClick={(e) => {
+              onClick={() => {
                 if (onFocus) onFocus();
                 setDropdownOpen(!dropdownOpen);
               }}
@@ -277,8 +255,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                   <button
                     type="button"
                     className="hover:bg-gray-100 first:rounded-t-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       if (onFocus) onFocus();
                       handleGithubUpload();
                       setDropdownOpen(false);
@@ -293,8 +270,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                   <button
                     type="button"
                     className="hover:bg-gray-100 last:rounded-b-lg flex items-center w-full gap-2 px-4 py-3 text-left transition-colors duration-150"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       if (onFocus) onFocus();
                       handleFileUpload();
                       setDropdownOpen(false);

@@ -37,19 +37,15 @@ interface ArchitectureStructureFormProps {
 }
 
 const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructureFormProps>(
-  ({ title, onChange, onInfoClick, onFocus, isRequired }, ref) => {
-    const [inputType, setInputType] = useState<'select' | 'file'>('select')
+  ({ title, onChange, isRequired }, ref) => {
     const [showLayeredOptions, setShowLayeredOptions] = useState(false)
     const [dropdownOpen, setDropdownOpen] = useState(false)
-    const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
-    const [selectedFiles, setSelectedFiles] = useState<FileWithContent[]>([])
     const [selectedOption, setSelectedOption] = useState<ArchitectureOption>(DEFAULT_ARCHITECTURE_OPTION)
     const [githubFiles, setGithubFiles] = useState<FileWithContent[] | null>(null)
     const [repoName, setRepoName] = useState<string | null>(null)
-
     const { tempData, setTempData } = useProjectTempStore()
 
     // 외부 클릭 감지를 위한 이벤트 리스너
@@ -78,16 +74,14 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
 
       if (isFromGithubAuth && isAuthPending && tempData.architectureStructure) {
         if (tempData.architectureStructure.type === 'selection' && tempData.architectureStructure.selection) {
-          setInputType('select')
           setSelectedOption(tempData.architectureStructure.selection)
           onChange(tempData.architectureStructure.selection)
         } else if (tempData.architectureStructure.type === 'file' && tempData.architectureStructure.files) {
-          setInputType('file')
           const files = tempData.architectureStructure.files.map(file => ({
             name: file.name || '',
             content: typeof file.content === 'string' ? file.content : JSON.stringify(file.content)
           }))
-          setSelectedFiles(files)
+          setGithubFiles(files)
           onChange(files)
         }
       }
@@ -125,91 +119,6 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       })
     }
 
-    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setDragActive(false)
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        const file = e.dataTransfer.files[0]
-        const content = await file.text()
-        const fileWithContent = {
-          name: file.name,
-          content: content
-        }
-
-        const updatedFiles = [fileWithContent]
-        setSelectedFiles(updatedFiles)
-        onChange(updatedFiles)
-        setTempData({
-          architectureStructure: {
-            type: 'file',
-            files: updatedFiles.map(file => ({
-              name: file.name,
-              content: file.content
-            }))
-          }
-        })
-      }
-    }
-
-    const handleFileUploadClick = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setDropdownOpen(false);
-      document.getElementById(`file-upload-${title}`)?.click();
-    };
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        const content = await file.text();
-        const fileWithContent = {
-          name: file.name,
-          content: content
-        };
-        const updatedFiles = [fileWithContent];
-        setSelectedFiles(updatedFiles);
-        onChange(updatedFiles);
-        setTempData({
-          architectureStructure: {
-            type: 'file',
-            files: updatedFiles.map(file => ({
-              name: file.name,
-              content: file.content
-            }))
-          }
-        });
-      }
-    };
-
-    // 입력 타입 변경 핸들러
-    const handleInputTypeChange = () => {
-     
-      const newInputType = inputType === 'select' ? 'file' : 'select'
-      setInputType(newInputType)
-      
-      if (newInputType === 'file') {
-        // 파일 모드로 변경
-        setSelectedFiles([])
-        onChange([])
-        setTempData({
-          architectureStructure: {
-            type: 'file',
-            files: []
-          }
-        })
-      } else {
-        // 선택 모드로 변경
-        setSelectedOption(DEFAULT_ARCHITECTURE_OPTION)
-        onChange(DEFAULT_ARCHITECTURE_OPTION)
-        setTempData({
-          architectureStructure: {
-            type: 'selection',
-            selection: DEFAULT_ARCHITECTURE_OPTION
-          }
-        })
-      }
-    }
-
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Record<string, unknown>[]) => {
       if (files.length > 0) {
@@ -241,21 +150,6 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       setIsGitHubModalOpen(false)
     }
 
-    const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.type === "dragenter" || e.type === "dragover") {
-        setDragActive(true);
-      } else if (e.type === "dragleave") {
-        setDragActive(false);
-      }
-    };
-
-    const handleGithubUpload = () => {
-      setDropdownOpen(false);
-      setIsGitHubModalOpen(true);
-    };
-
     // 선택지로 전환 (깃허브 모드 → 선택지 모드)
     const handleBackToSelect = () => {
       setGithubFiles(null)
@@ -270,6 +164,12 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
         }
       })
     }
+
+    // handleGithubUpload 함수 복원
+    const handleGithubUpload = () => {
+      setDropdownOpen(false);
+      setIsGitHubModalOpen(true);
+    };
 
     return (
       <div ref={ref} className="mb-10 p-10 bg-white rounded-lg">

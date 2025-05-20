@@ -8,7 +8,7 @@ import useAuthStore from "@/app/store/useAuthStore"
 import { MessageCircle } from "lucide-react"
 
 
-export default function globalheader() {
+export default function GlobalHeader() {
   // 로고 이미지 경로
   const logoPath = "/faviconblack.png"
   // 상태 관리

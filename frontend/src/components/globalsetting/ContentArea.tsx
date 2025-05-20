@@ -43,6 +43,8 @@ interface ProjectSettings {
   securitySetting: SelectionValue | FileWithContent[];
   codeConvention: FileWithContent[];
   architectureStructure: SelectionValue | FileWithContent[];
+  dependencyFiles: DependencyFile[];
+  dependencySelections: string[];
 }
 
 // FileValue 타입 정의 수정 - 기존 파일 업로드 컴포넌트용
@@ -68,17 +70,6 @@ interface ContentAreaProps {
 }
 
 export default function ContentArea({ settings, onSettingChange, refs, setActiveItem }: ContentAreaProps) {
-
-  // 의존성 선택 핸들러
-  const handleDependencySelect = (file: DependencyFile) => {
-    onSettingChange("dependencyFile", file);
-  };
-
-  // 파일 선택 핸들러
-  const handleDependencyFile = (file: DependencyFile) => {
-    onSettingChange("dependencyFile", [file]);
-  };
-
 
   // 필수 항목 구분
   const requiredFields = ['title', 'description', 'serverUrl', 'requirementSpec', 'erd'];
@@ -117,7 +108,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             type={inputTypes.title}
             value={settings.title as string}
             onChange={(value) => handleSettingChange("title", value)}
-            onInfoClick={() => openModal("title")}
             onFocus={() => handleItemFocus("title")}
             isRequired={isRequired('title')}
           />
@@ -128,7 +118,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             type={inputTypes.description}
             value={settings.description as string}
             onChange={(value) => handleSettingChange("description", value)}
-            onInfoClick={() => openModal("description")}
             onFocus={() => handleItemFocus("description")}
             isRequired={isRequired('description')}
           />
@@ -139,7 +128,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             type={inputTypes.serverUrl}
             value={settings.serverUrl as string}
             onChange={(value) => handleSettingChange("serverUrl", value)}
-            onInfoClick={() => openModal("serverUrl")}
             onFocus={() => handleItemFocus("serverUrl")}
             isRequired={isRequired('serverUrl')}
           />
@@ -149,7 +137,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             title={`요구사항 명세서`}
             value={settings.requirementSpec}
             onChange={(value) => handleSettingChange("requirementSpec", value as FileValue)}
-            onInfoClick={() => openModal("requirementSpec")}
             onFocus={useCallback(() => handleItemFocus("requirementSpec"), [handleItemFocus])}
             isRequired={isRequired('requirementSpec')}
           />
@@ -159,7 +146,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             title={`ERD`}
             value={settings.erd}
             onChange={(value) => handleSettingChange("erd", value as FileValue)}
-            onInfoClick={() => openModal("erd")}
             onFocus={useCallback(() => handleItemFocus("erd"), [handleItemFocus])}
             isRequired={isRequired('erd')}
           />
@@ -203,7 +189,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             title="유틸 클래스"
             value={settings.utilityClass}
             onChange={(value) => handleSettingChange("utilityClass", value as FileValue)}
-            onInfoClick={() => openModal("utilityClass")}
             onFocus={useCallback(() => handleItemFocus("utilityClass"), [handleItemFocus])}
           />
 
@@ -212,7 +197,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             title="에러 코드"
             value={settings.errorCode}
             onChange={(value) => handleSettingChange("errorCode", value as FileValue)}
-            onInfoClick={() => openModal("errorCode")}
             onFocus={useCallback(() => handleItemFocus("errorCode"), [handleItemFocus])}
           />
 
@@ -221,7 +205,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             title="보안 설정"
             value={settings.securitySetting}
             onChange={(value) => handleSettingChange("securitySetting", value)}
-            onInfoClick={() => openModal("securitySetting")}
             onFocus={useCallback(() => handleItemFocus("securitySetting"), [handleItemFocus])}
           />
 
@@ -230,7 +213,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             title="코드 컨벤션"
             value={settings.codeConvention}
             onChange={(value) => handleSettingChange("codeConvention", value as FileValue)}
-            onInfoClick={() => openModal("codeConvention")}
             onFocus={useCallback(() => handleItemFocus("codeConvention"), [handleItemFocus])}
           />
 
@@ -241,7 +223,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
             onChange={(value) => {
               handleSettingChange("architectureStructure", value);
             }}
-            onInfoClick={() => openModal("architectureStructure")}
             onFocus={useCallback(() => handleItemFocus("architectureStructure"), [handleItemFocus])}
           />
         </div>

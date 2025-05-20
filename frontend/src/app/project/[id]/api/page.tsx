@@ -113,7 +113,7 @@ export default function ProjectApiPage() {
 
   return (
     <>
-      <ApiHeader projectId={projectId} project={projectInfo} />
+      <ApiHeader project={projectInfo} />
       <main className="p-0">
         <ApiCreator projectId={projectId} globalFiles={globalFiles} />
       </main>
