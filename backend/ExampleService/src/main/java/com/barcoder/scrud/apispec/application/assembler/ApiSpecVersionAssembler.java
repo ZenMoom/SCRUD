@@ -7,6 +7,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -37,10 +38,11 @@ public class ApiSpecVersionAssembler {
                 .build();
     }
 
-    public List<ApiSpecVersion> toApiSpecVersionEntityList(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList) {
+    public List<ApiSpecVersion> toApiSpecVersionEntityList(Long scrudProjectId, List<CreateApiSpecVersionIn> inDtoList, UUID userId) {
         return inDtoList.stream()
                 .map(createApiSpecVersionIn ->
                         toApiSpecVersionEntity(createApiSpecVersionIn.toBuilder()
+                                .userId(userId)
                                 .scrudProjectId(scrudProjectId)
                                 .build())
                 )

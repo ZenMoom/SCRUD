@@ -140,9 +140,17 @@ export default function RightContainer({
   ) => {
     try {
       // 새로운 코드 (api-specs/api 엔드포인트 사용)
-      const response = await axios.patch(`/api/api-specs/api/${apiId}`, {
-        apiSpecStatus: status,
-      });
+      const response = await axios.patch(
+        `/api/api-specs/api/${apiId}`,
+        {
+          apiSpecStatus: status,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}` || '',
+          },
+        }
+      );
       setApiStatus(status);
       return response.data;
     } catch {
@@ -165,7 +173,7 @@ export default function RightContainer({
       await fetch(`/api/canvas/${scrudProjectId}/${apiSpecVersionId}`, {
         method: 'POST',
         headers: {
-          Authorization: token || '',
+          Authorization: `Bearer ${token}` || '',
         },
       });
 

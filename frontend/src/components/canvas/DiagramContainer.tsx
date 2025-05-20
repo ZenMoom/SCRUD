@@ -84,11 +84,11 @@ const edgeTypes = {
 }
 
 // 메서드 노드의 기본 높이와 확장 시 추가 높이
-const METHOD_BASE_HEIGHT = 80 // 기본 높이
+const METHOD_BASE_HEIGHT = 120 // 기본 높이
 const METHOD_EXPANDED_EXTRA_HEIGHT = 200 // 확장 시 추가 높이
 const METHOD_VERTICAL_SPACING = 50 // 메서드 간 수직 간격 (증가)
 const CLASS_PADDING_TOP = 120 // 클래스 상단 패딩 (제목 영역) (증가)
-const CLASS_PADDING_BOTTOM = 80 // 클래스 하단 패딩 (증가)
+const CLASS_PADDING_BOTTOM = 100 // 클래스 하단 패딩 (증가)
 const CLASS_WIDTH = 450 // 클래스 노드 너비 (증가)
 
 // 선택 타입 정의
