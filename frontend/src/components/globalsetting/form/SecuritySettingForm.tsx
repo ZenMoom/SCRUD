@@ -112,13 +112,13 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
           content: file.content,
           isGitHub: true,
         }));
-        
-        setSelectedFiles(githubFiles);
-        onChange(githubFiles);
+        const updatedFiles = [...selectedFiles, ...githubFiles];
+        setSelectedFiles(updatedFiles);
+        onChange(updatedFiles);
         setTempData({
           securitySetting: {
             type: 'file',
-            files: githubFiles
+            files: updatedFiles
           }
         });
       }

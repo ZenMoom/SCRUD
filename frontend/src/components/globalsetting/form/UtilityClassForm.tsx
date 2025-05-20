@@ -68,8 +68,9 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
           content: file.content,
           isGitHub: true,
         }));
-        onChange(githubFiles);
-        setTempData({ utilityClass: githubFiles });
+        const updatedFiles = Array.isArray(value) ? [...value, ...githubFiles] : githubFiles;
+        onChange(updatedFiles);
+        setTempData({ utilityClass: updatedFiles });
       }
       setIsGitHubModalOpen(false);
     };
