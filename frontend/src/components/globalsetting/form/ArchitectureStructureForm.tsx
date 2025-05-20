@@ -137,14 +137,15 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
           isGitHub: true,
           repoName: repoName || undefined
         }))
-        setGithubFiles(convertedFiles)
+        const updatedFiles = githubFiles ? [...githubFiles, ...convertedFiles] : convertedFiles;
+        setGithubFiles(updatedFiles)
         setRepoName(repoName ?? null)
         setShowLayeredOptions(false)
-        onChange(convertedFiles)
+        onChange(updatedFiles)
         setTempData({
           architectureStructure: {
             type: 'file',
-            files: convertedFiles
+            files: updatedFiles
           }
         })
       }
