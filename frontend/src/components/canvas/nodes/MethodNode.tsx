@@ -88,7 +88,7 @@ export const MethodNode = memo(({ id, data, selected }: NodeProps<MethodNodeData
 
   return (
     <div
-      className={`p-2 rounded-md border ${isTargeted ? "border-red-500 border-dashed animate-pulse shadow-red-100" : selected ? "border-blue-500 shadow-md" : "border-gray-300"} bg-white w-[350px]`}
+      className={`p-2 rounded-md border ${isTargeted ? "border-red-500 border-dashed animate-pulse shadow-red-100" : selected ? "border-blue-500 shadow-md" : "border-gray-300"} bg-white w-[400px]`}
       style={{
         transition: "height 0.3s ease-in-out, opacity 0.2s ease-in-out, border 0.2s ease-in-out",
         opacity: isTargeted ? 1 : 0.85, // 타겟 노드는 더 밝게
