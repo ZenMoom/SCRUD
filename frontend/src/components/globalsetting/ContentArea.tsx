@@ -52,7 +52,7 @@ type FileValue = FileWithContent | FileWithContent[];
 
 interface ContentAreaProps {
   settings: ProjectSettings;
-  onSettingChange: (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string }) => void;
+  onSettingChange: (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[] | string[]) => void;
   refs: {
     title: React.RefObject<HTMLDivElement | null>
     description: React.RefObject<HTMLDivElement | null>
@@ -91,7 +91,7 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
   }, [setActiveItem]);
 
   // 설정 항목 값 변경 시 상태 업데이트
-  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[]) => {
+  const handleSettingChange = (key: string, value: string | FileWithContent | FileWithContent[] | SelectionValue | { name: string; content: string } | { name: string; content: string }[] | string[]) => {
 
     onSettingChange(key, value);
   }

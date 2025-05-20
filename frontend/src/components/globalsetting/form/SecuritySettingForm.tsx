@@ -12,16 +12,22 @@ interface FileWithContent {
   isGitHub?: boolean;
 }
 
+interface SelectionValue {
+  type: string;
+  label: string;
+}
+
 interface SecuritySettingFormProps {
   title: string
+  value: FileWithContent[] | SelectionValue
   onChange: (value: FileWithContent | FileWithContent[] | { type: string; label: string }) => void
-  onInfoClick: () => void
   onFocus?: () => void
   isRequired?: boolean
 }
 
 const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>(
-  ({ title, onChange, onFocus, isRequired }, ref) => {
+  ({ title, value, onChange, onFocus, isRequired }, ref) => {
+    void value;
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [dragActive, setDragActive] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)

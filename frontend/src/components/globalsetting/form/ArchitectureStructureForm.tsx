@@ -30,14 +30,15 @@ const DEFAULT_ARCHITECTURE_OPTION = layeredOptions[0];
 
 interface ArchitectureStructureFormProps {
   title: string;
+  value: ArchitectureOption | FileWithContent[];
   onChange: (value: ArchitectureOption | FileWithContent[]) => void;
-  onInfoClick: () => void;
   onFocus?: () => void;
   isRequired?: boolean;
 }
 
 const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructureFormProps>(
-  ({ title, onChange, isRequired }, ref) => {
+  ({ title, value, onChange, isRequired }, ref) => {
+    void value;
     const [showLayeredOptions, setShowLayeredOptions] = useState(false)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
@@ -124,8 +125,8 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
       if (files.length > 0) {
         // repoName 추출 (repoInfo.name > path에서 마지막 / 뒤 값)
         let repoName = undefined;
-        if (files[0].repoInfo && typeof files[0].repoInfo.name === 'string') {
-          repoName = files[0].repoInfo.name;
+        if (files[0].repoInfo && typeof (files[0].repoInfo as { name?: string }).name === 'string') {
+          repoName = (files[0].repoInfo as { name: string }).name;
         } else if (files[0].path && typeof files[0].path === 'string') {
           const match = files[0].path.match(/([^/]+)$/);
           if (match) repoName = match[1];

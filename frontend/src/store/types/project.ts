@@ -44,5 +44,5 @@ export interface ArchitectureSettingData {
 export interface ArchitectureOption {
   type: string;
   label: string;
-  imageUrl: string;
+  imageUrl?: string;
 } 

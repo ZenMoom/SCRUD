@@ -8,12 +8,11 @@ interface FormItemProps {
   type: 'text' | 'textarea'
   value: string
   onChange: (value: string) => void
-  onInfoClick?: () => void  // 선택적으로 변경
   onFocus?: () => void
   isRequired?: boolean
 }
 
-const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value, onChange, onInfoClick, onFocus, isRequired }, ref) => {
+const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value, onChange, onFocus, isRequired }, ref) => {
   const { tempData, setTempData } = useProjectTempStore()
   const [urlError, setUrlError] = useState<string>('')
 
@@ -122,15 +121,6 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(({ title, type, value
       <div className="flex items-center mb-4 justify-between">
         <div className="flex items-center">
           <h2 className="text-xl font-semibold m-0">{title} {isRequired && <span className="text-red-500">*</span>}</h2>
-          {onInfoClick && title !== '프로젝트명' && title !== '프로젝트 설명' && title !== 'Server URL' && (
-            <button
-              type="button"
-              className="bg-transparent border-none text-gray-400 cursor-pointer ml-2 p-0 flex items-center justify-center transition-colors duration-200 hover:text-gray-600"
-              onClick={onInfoClick}
-              aria-label={`${title} 정보`}
-            >
-            </button>
-          )}
         </div>
       </div>
       {renderInputComponent()}
