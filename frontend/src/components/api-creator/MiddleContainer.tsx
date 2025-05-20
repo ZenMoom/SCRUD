@@ -40,7 +40,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
 
   // 선택된 API 그룹 및 엔드포인트 추적을 위한 상태 추가
   const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(null)
-  // const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null) // 그룹 선택 상태 제거
 
   // 엔드포인트 편집 시 인풋 참조
   const editInputRef = useRef<HTMLInputElement>(null)
@@ -107,7 +106,6 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         const endpoint = group?.endpoints.find((e) => e.id === endpointId)
 
         if (!endpoint || !endpoint.apiSpecVersionId) {
-          console.warn("삭제할 apiSpecVersionId가 없습니다.")
           return
         }
 
@@ -334,19 +332,16 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
     const endpoint = group?.endpoints.find((e) => e.id === endpointId)
 
     if (!endpoint || !endpoint.apiSpecVersionId) {
-      console.warn("apiSpecVersionId가 없어 서버에 상태 업데이트를 할 수 없습니다.")
       return
     }
 
     // 상태 변경 제한 검증
     if (endpoint.status === "AI_GENERATED") {
-      console.warn("생성됨 상태에서는 상태를 변경할 수 없습니다.")
       return
     }
 
     // "작업중" 또는 "완료" 상태에서 "생성됨" 상태로 돌아갈 수 없음
     if ((endpoint.status === "AI_VISUALIZED" || endpoint.status === "USER_COMPLETED") && status === "AI_GENERATED") {
-      console.warn("작업중 또는 완료 상태에서 생성됨 상태로 돌아갈 수 없습니다.")
       return
     }
 
