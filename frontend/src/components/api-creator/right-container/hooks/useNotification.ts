@@ -16,7 +16,7 @@ export const useNotification = () => {
 
   // 정보 알림
   const showInfoNotification = (message: string) => {
-    console.info(`ℹ️ ${message}`)
+    alert(`ℹ️ ${message}`)
   }
 
   return {

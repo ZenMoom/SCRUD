@@ -252,7 +252,7 @@ export default function ApiCreator({ projectId = 1, globalFiles }: ApiCreatorPro
           {/* 좌측 패널 - 자연스러운 트랜지션 효과 복원 */}
           <div className={`${isLeftPanelOpen ? "w-[300px]" : "w-[44px]"} h-full transition-all duration-300 ease-in-out bg-white rounded-lg`}>
             <div className={`${isLeftPanelOpen ? "w-[300px] opacity-100" : "w-0 opacity-0"} h-full rounded-lg bg-white shadow-md overflow-y-auto transition-all duration-300 ease-in-out`}>
-              <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} globalFiles={globalFiles}/>
+              <LeftContainer completed={completed} activeItem={activeItem} onItemClick={handleSidebarItemClick} globalFiles={globalFiles} />
             </div>
           </div>
 

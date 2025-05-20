@@ -28,7 +28,6 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
   apiStatus = "AI_GENERATED",
   handleSaveApi,
   handleDeleteApi,
-  // handleTestApi,
   handleCreateDiagram,
   handleCancelDiagramCreation,
 }) => {

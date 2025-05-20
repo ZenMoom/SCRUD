@@ -67,12 +67,15 @@ export default function ProjectApiPage() {
 
         // API 스펙이 존재하는지 확인 (404 에러를 방지하기 위함)
         try {
-          await axios.get(`/api/api-specs/by-project/${projectId}`)
-        } catch (error) {
-          console.error("이 프로젝트의 API 스펙이 아직 없습니다. 새로 생성됩니다.", error)
+          await axios.get(`/api/api-specs/by-project/${projectId}`, {
+            headers: {
+              Authorization: token || "",
+            },
+          })
+        } catch {
+          // Axios 오류 처리는 유지 (404 오류는 정상적인 플로우의 일부임)
         }
-      } catch (err) {
-        console.error("프로젝트 데이터 로드 오류:", err)
+      } catch {
         setError("프로젝트 정보를 불러오는 중 오류가 발생했습니다")
       } finally {
         setIsLoading(false)
