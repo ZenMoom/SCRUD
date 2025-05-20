@@ -4,7 +4,7 @@ import useAuthStore from '@/app/store/useAuthStore';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 
-import type { ApiSpecVersionResponse, DiagramResponse } from '@generated/model';
+import type { ApiSpecVersionResponse } from '@generated/model';
 // 컴포넌트 임포트
 import ApiForm from './ApiForm';
 import ApiHeader from './ApiHeader';
@@ -162,9 +162,10 @@ export default function RightContainer({
     setDiagramStep('다이어그램 생성 준비 중...');
 
     try {
-      await axios.post<DiagramResponse>(`/api/canvas/${scrudProjectId}/${apiSpecVersionId}`, {
+      await fetch(`/api/canvas/${scrudProjectId}/${apiSpecVersionId}`, {
+        method: 'POST',
         headers: {
-          Authorization: token,
+          Authorization: token || '',
         },
       });
 
