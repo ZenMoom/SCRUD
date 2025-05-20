@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     baseOptions: {
       headers: authToken
         ? {
-            Authorization: `Bearer ${authToken}.replace(/^Bearer\s/, '')`,
+            Authorization: `${authToken}`,
           }
         : undefined,
     },
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       baseOptions: {
         headers: authToken
           ? {
-              Authorization: `Bearer ${authToken}.replace(/^Bearer\s/, '')`,
+              Authorization: `${authToken}`,
             }
           : undefined,
       },

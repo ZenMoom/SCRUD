@@ -99,7 +99,7 @@ export default function CanvasPage() {
       // axios를 사용하여 채팅 API 호출
       const response = await axios.get<ChatHistoryResponse>(`/api/chat/${projectId}/${apiId}`, {
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -200,7 +200,7 @@ export default function CanvasPage() {
         // axios를 사용하여 API 호출 - 버전 ID를 쿼리 파라미터로 전달
         const response = await axios.get<DiagramResponse>(`/api/canvas/${projectId}/${apiId}?version=${versionId}`, {
           headers: {
-            Authorization: token,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -329,7 +329,7 @@ export default function CanvasPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: token || '',
+          Authorization: `Bearer ${token}` || '',
         },
         body: JSON.stringify({
           status: 'USER_COMPLETED',

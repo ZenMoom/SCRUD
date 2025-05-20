@@ -83,7 +83,7 @@ export default function RightContainer({
           `/api/api-specs/by-project/${projectId}`,
           {
             headers: {
-              Authorization: token ? `Bearer ${token.replace('Bearer ', '')}` : '',
+              Authorization: token ? `Bearer ${token}` : '',
             },
           }
         );
@@ -147,7 +147,7 @@ export default function RightContainer({
         },
         {
           headers: {
-            Authorization: token || '',
+            Authorization: `Bearer ${token}` || '',
           },
         }
       );
@@ -170,11 +170,10 @@ export default function RightContainer({
     setDiagramStep('다이어그램 생성 준비 중...');
 
     try {
-      console.log(token);
       await fetch(`/api/canvas/${scrudProjectId}/${apiSpecVersionId}`, {
         method: 'POST',
         headers: {
-          Authorization: token || '',
+          Authorization: `Bearer ${token}` || '',
         },
       });
 
