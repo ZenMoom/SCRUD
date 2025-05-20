@@ -122,7 +122,7 @@ public class ApiSpecService {
 
         // 3. ApiSpecVersion entity 리스트
         List<ApiSpecVersion> apiSpecVersions = apiSpecVersionJpaRepository.findAllById(apiSpecVersionIds);
-
+        
         // 4. LatestEndpointVersion entity 리스트 생성
         List<ApiSpec> apiSpecList = apiSpecAssembler.toApiSpecEntityList(
                 scrudProject,
