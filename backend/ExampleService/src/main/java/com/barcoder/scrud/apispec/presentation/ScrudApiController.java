@@ -69,6 +69,7 @@ public class ScrudApiController implements ScrudApiApi {
 	 */
 	@Override
 	public ResponseEntity<ApiSummaryPageResponse> searchApiStatus(String projectId, List<ApiProcessStateEnumDto> include) {
+
 		// 1. include에 있는 상태를 ApiSpecStatus로 변환
 		List<ApiSpecStatus> apiSpecStatusList = include.stream()
 				.map(status -> modelMapper.map(status, ApiSpecStatus.class))
