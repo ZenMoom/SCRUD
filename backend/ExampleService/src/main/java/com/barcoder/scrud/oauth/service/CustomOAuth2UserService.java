@@ -4,6 +4,7 @@ import com.barcoder.scrud.github.domain.entity.GithubAccount;
 import com.barcoder.scrud.github.infrastructure.repository.GithubAccountRepository;
 import com.barcoder.scrud.global.common.error.ErrorStatus;
 import com.barcoder.scrud.global.common.exception.ExceptionHandler;
+import com.barcoder.scrud.global.common.util.SecurityUtil;
 import com.barcoder.scrud.oauth.UserPrincipal;
 import com.barcoder.scrud.oauth.provider.GithubOAuth2UserInfo;
 import com.barcoder.scrud.oauth.provider.GoogleOAuth2UserInfo;
@@ -40,6 +41,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     // github repository 가져오기
     // https://api.github.com/user/repos
 
+    private final SecurityUtil securityUtil;
     private final UserRepository userRepository;
     private final UserAssembler userAssembler;
     private final GithubAccountRepository githubAccountRepository;
@@ -105,11 +107,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private GithubAccount processGitHubAccount(GithubOAuth2UserInfo userInfo, OAuth2UserRequest request) {
         String accessToken = request.getAccessToken().getTokenValue();
 
-        // 실제 코드
-//        UUID userId = securityUtil.getCurrentUserId();
-
-        // 테스트용 코드
-        UUID userId = userRepository.findFirstByOrderByUserId().get().getUserId();
+        UUID userId = securityUtil.getCurrentUserId();
 
         User user = userRepository.findByUserId(userId).orElseThrow(() -> new ExceptionHandler(ErrorStatus.USER_NOT_FOUND));
 
