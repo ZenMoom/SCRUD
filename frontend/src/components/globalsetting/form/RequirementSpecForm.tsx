@@ -339,7 +339,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
             </div>
           )}
 
-          {/* 단일 값인 경우와 호환성 유지 */}
+          {/* 단��� 값인 경우와 호환성 유지 */}
           {!Array.isArray(value) && value && (
             <div className='flex items-center gap-2 px-4 py-2 mt-4 text-sm text-gray-700 bg-gray-100 rounded-lg'>
               <File
