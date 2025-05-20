@@ -68,8 +68,9 @@ const ErrorCodeForm = forwardRef<HTMLDivElement, ErrorCodeFormProps>(
           content: file.content,
           isGitHub: true,
         }));
-        onChange(githubFiles);
-        setTempData({ errorCode: githubFiles });
+        const updatedFiles = Array.isArray(value) ? [...value, ...githubFiles] : githubFiles;
+        onChange(updatedFiles);
+        setTempData({ errorCode: updatedFiles });
       }
       setIsGitHubModalOpen(false);
     };

@@ -68,8 +68,9 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
           content: file.content,
           isGitHub: true,
         }));
-        onChange(githubFiles);
-        setTempData({ requirementSpec: githubFiles });
+        const updatedFiles = Array.isArray(value) ? [...value, ...githubFiles] : githubFiles;
+        onChange(updatedFiles);
+        setTempData({ requirementSpec: updatedFiles });
       }
       setIsGitHubModalOpen(false);
     };

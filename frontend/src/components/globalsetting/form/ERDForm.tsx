@@ -62,17 +62,15 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(
 
     // GitHub에서 파일 선택 시 호출될 핸들러
     const handleGitHubFileSelect = (files: Array<{ path: string; content: string }>) => {
-
       if (files.length > 0) {
         const githubFiles = files.map((file) => ({
           name: file.path,
           content: file.content,
           isGitHub: true,
         }));
-       
-        onChange(githubFiles);
-        setTempData({ erd: githubFiles });
-        
+        const updatedFiles = Array.isArray(value) ? [...value, ...githubFiles] : githubFiles;
+        onChange(updatedFiles);
+        setTempData({ erd: updatedFiles });
       }
       setIsGitHubModalOpen(false);
     };

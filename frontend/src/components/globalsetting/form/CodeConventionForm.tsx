@@ -68,8 +68,9 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
           content: file.content,
           isGitHub: true,
         }));
-        onChange(githubFiles);
-        setTempData({ codeConvention: githubFiles });
+        const updatedFiles = Array.isArray(value) ? [...value, ...githubFiles] : githubFiles;
+        onChange(updatedFiles);
+        setTempData({ codeConvention: updatedFiles });
       }
       setIsGitHubModalOpen(false);
     };

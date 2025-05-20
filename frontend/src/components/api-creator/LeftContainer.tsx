@@ -47,7 +47,7 @@ const ITEMS: SidebarItem[] = [
   { id: "errorCode", label: "에러 코드", fileType: "ERROR_CODE", isProject: false },
   { id: "securitySetting", label: "보안 설정", fileType: "SECURITY", isProject: false },
   { id: "codeConvention", label: "코드 컨벤션", fileType: "CONVENTION", isProject: false },
-  { id: "architectureStructure", label: "아키텍처 구조", fileType: "ARCHITECTURE_DEFAULT", isProject: false },
+  { id: "architectureStructure", label: "아키텍처 구조", fileType: "ARCHITECTURE", isProject: false },
 ]
 
 export default function LeftContainer({ activeItem, onItemClick, globalFiles }: LeftContainerProps) {
