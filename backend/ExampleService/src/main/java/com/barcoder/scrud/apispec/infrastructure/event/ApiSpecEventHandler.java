@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -26,6 +27,15 @@ public class ApiSpecEventHandler {
     private final ApiSpecUseCase apiSpecUseCase;
     private final ApiPromptUseCase apiPromptUseCase;
     private final ApiSpecVersionWebclient apiSpecVersionWebclient;
+    private static final Set<String> extraInfoList = Set.of(
+            FileTypeEnumDto.CONVENTION.getValue(),
+            FileTypeEnumDto.CONVENTION_DEFAULT.getValue(),
+            FileTypeEnumDto.ERROR_CODE.getValue(),
+            FileTypeEnumDto.SECURITY.getValue(),
+            FileTypeEnumDto.SECURITY_DEFAULT_JWT.getValue(),
+            FileTypeEnumDto.SECURITY_DEFAULT_SESSION.getValue(),
+            FileTypeEnumDto.SECURITY_DEFAULT_NONE.getValue()
+    );
 
     @EventListener
     @Transactional
@@ -40,15 +50,7 @@ public class ApiSpecEventHandler {
         StringBuilder erd = new StringBuilder();
         StringBuilder requirements = new StringBuilder();
         StringBuilder extraInfo = new StringBuilder();
-        for (GlobalFile globalFile : globalFileList) {
-            if (globalFile.getFileType().equals(FileTypeEnumDto.ERD)) {
-                erd.append(globalFile.getFileContent());
-            } else if (globalFile.getFileType().equals(FileTypeEnumDto.REQUIREMENTS)) {
-                requirements.append(globalFile.getFileContent());
-            } else {
-                extraInfo.append(globalFile.getFileContent());
-            }
-        }
+        extracted(globalFileList, erd, requirements, extraInfo);
 
         // API Spec request 생성
         ApiSpecGenerateRequest request = ApiSpecGenerateRequest.builder()
@@ -82,4 +84,21 @@ public class ApiSpecEventHandler {
         apiSpecUseCase.bulkCreateApiSpecVersion(scrudProject.getScrudProjectId(), response.getResult(), scrudProject.getUserId());
 
     }
+
+    // 파일 타입에 따라 ERD, 요구사항, 기타 정보 분리
+    private void extracted(List<GlobalFile> globalFileList, StringBuilder erd, StringBuilder requirements, StringBuilder extraInfo) {
+        for (GlobalFile globalFile : globalFileList) {
+            if (globalFile.getFileType().equals(FileTypeEnumDto.ERD)) {
+                erd.append(globalFile.getFileContent());
+            } else if (globalFile.getFileType().equals(FileTypeEnumDto.REQUIREMENTS)) {
+                requirements.append(globalFile.getFileContent());
+            } else {
+                if (globalFile.getFileType().getValue() != null &&
+                        extraInfoList.contains(globalFile.getFileType().getValue())) {
+                    extraInfo.append(globalFile.getFileContent());
+                }
+            }
+        }
+    }
 }
+
