@@ -174,7 +174,7 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
     return (
       <div
         ref={ref}
-        className='md:p-10 p-6 mb-8 bg-white rounded-lg'
+        className='md:px-10 p-6 py-5 mb-8 bg-white rounded-lg'
       >
         <div className='flex flex-col mb-4'>
           <div className='flex items-center justify-between'>

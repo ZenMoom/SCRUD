@@ -3,6 +3,7 @@
 import { useProjectTempStore } from '@/store/projectTempStore';
 import { ArchitectureOption } from '@/store/types/project';
 import { Github } from 'lucide-react';
+import Image from 'next/image';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import GitHubRepoBrowser from '../GitHubRepoBrowser';
 
@@ -182,7 +183,7 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
     return (
       <div
         ref={ref}
-        className='p-10 mb-10 bg-white rounded-lg'
+        className='px-10 py-5 mb-10 bg-white rounded-lg'
       >
         <div className='flex flex-col mb-4'>
           <div className='flex items-center justify-between'>
@@ -270,9 +271,11 @@ const ArchitectureStructureForm = forwardRef<HTMLDivElement, ArchitectureStructu
                         <span className='text-sm font-medium text-gray-700'>{option.label}</span>
                       </div>
                       <div className='flex items-center justify-center flex-1'>
-                        <img
+                        <Image
                           src={option.imageUrl}
                           alt={option.label}
+                          width={400}
+                          height={200}
                           className='max-h-[200px] object-contain w-full h-auto rounded-lg shadow-sm'
                         />
                       </div>

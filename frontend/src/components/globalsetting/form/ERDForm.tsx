@@ -168,7 +168,7 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(({ title, value, onChan
   return (
     <div
       ref={ref}
-      className='p-10 mb-10 bg-white rounded-lg'
+      className='px-10 py-5 bg-white rounded-lg'
     >
       <div className='flex flex-col mb-4'>
         <div className='flex items-center justify-between'>
@@ -209,9 +209,11 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(({ title, value, onChan
             <br />
             <span className='text-blue-500'>업로드하세요</span>
           </p>
-          <div className='mt-2 text-xs text-gray-400'>지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등</div>
+          <div className='mt-2 text-xs text-gray-400'>
+            지원 파일 형식: 텍스트 기반 파일 (.txt, .md, .json, .xml, .html, .css, .js, .java, .py 등)
+          </div>
           <div className='mt-1 text-xs text-gray-400'>
-            Tip: 노션의 내보내기 기능을 이용하면 텍스트 파일로 ERD를 저장할 수 있습니다.
+            Tip: 노션의 내보내기 기능을 이용하면 텍스트 파일로 요구사항 명세서를 저장할 수 있습니다.
           </div>
         </div>
 

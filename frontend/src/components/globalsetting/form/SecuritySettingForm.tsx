@@ -229,7 +229,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
     return (
       <div
         ref={ref}
-        className='p-10 mb-10 bg-white rounded-lg'
+        className='px-10 py-5 mb-10 bg-white rounded-lg'
       >
         <div className='flex flex-col mb-4'>
           <div className='flex items-center justify-between'>

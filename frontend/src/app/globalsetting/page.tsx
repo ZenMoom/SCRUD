@@ -116,7 +116,7 @@ export default function GlobalSettingPage() {
     dependencyFile: false,
     utilityClass: false,
     errorCode: false,
-    securitySetting: false,
+    securitySetting: true,
     codeConvention: false,
     architectureStructure: true,
   });

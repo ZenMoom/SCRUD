@@ -21,13 +21,20 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(
     const { tempData, setTempData } = useProjectTempStore();
     const [urlError, setUrlError] = useState<string>('');
 
+    // serverUrl의 기본값 설정
+    const DEFAULT_SERVER_URL = 'http://localhost:8080';
+
     // GitHub 인증 후 리다이렉트인 경우에만 임시저장 데이터 불러오기
     useEffect(() => {
-      const params = new URLSearchParams(window.location.search);
-      const isFromGithubAuth = params.get('from') === 'github-auth';
+      const isFromGithubAuth = new URLSearchParams(window.location.search).get('from') === 'github-auth';
+
+      if (title === 'Server URL') {
+        if (!value && !isFromGithubAuth) {
+          handleChange(DEFAULT_SERVER_URL);
+        }
+      }
 
       if (isFromGithubAuth) {
-        // 각 필드에 해당하는 임시저장 데이터가 있으면 복원
         if (title === '프로젝트명' && tempData.title) {
           onChange(tempData.title);
         } else if (title === '프로젝트 설명' && tempData.description) {
@@ -98,9 +105,10 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(
               type='text'
               value={value as string}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               className={cn(urlError && 'border-red-300')}
               placeholder={getPlaceholder()}
-              onFocus={onFocus}
+              onFocus={handleInputFocus}
             />
           );
         case 'textarea':
@@ -118,10 +126,27 @@ const FormItem = forwardRef<HTMLDivElement, FormItemProps>(
       }
     };
 
+    // 플레이스홀더 텍스트 선택
+    const handleInputBlur = () => {
+      if (title === 'Server URL' && value.trim() === '') {
+        handleChange(DEFAULT_SERVER_URL);
+      }
+    };
+
+    const handleInputFocus = () => {
+      if (title === 'Server URL' && value === DEFAULT_SERVER_URL) {
+        handleChange('');
+      }
+
+      if (onFocus) {
+        onFocus(); // ✅ 상위 activeItem 변경도 여전히 호출
+      }
+    };
+
     return (
       <div
         ref={ref}
-        className='p-10 mb-10 bg-white rounded-lg'
+        className='px-10 py-5 bg-white rounded-lg'
       >
         <div className='flex items-center justify-between mb-4'>
           <div className='flex items-center'>
