@@ -21,6 +21,7 @@ import type { ApiProcessStateEnumDto } from '@generated/model';
 import type { ApiResponseData, BodyParam } from './types';
 
 // 훅 임포트
+import { formatToKST } from '@/util/dayjs';
 import { useApiSpec } from './hooks/useApiSpec';
 import { useNotification } from './hooks/useNotification';
 
@@ -93,7 +94,10 @@ export default function RightContainer({
         setApiSpecsList(specsList);
 
         return specsList;
-      } catch {
+      } catch (e) {
+        if (axios.isAxiosError(e)) {
+          console.error(formatToKST(new Date().toISOString()), 'API 스펙 목록 조회 오류:', e.response?.data);
+        }
         alert('API 스펙 목록을 가져오는 중 오류가 발생했습니다.');
         return [];
       } finally {
@@ -153,7 +157,10 @@ export default function RightContainer({
       );
       setApiStatus(status);
       return response.data;
-    } catch {
+    } catch (e) {
+      if (axios.isAxiosError(e)) {
+        console.error(formatToKST(new Date().toISOString()), 'API 상태 변경 오류:', e.response?.data);
+      }
       alert('API 상태를 변경하는 중 오류가 발생했습니다.');
     }
   };

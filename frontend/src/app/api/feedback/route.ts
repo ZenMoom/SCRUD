@@ -1,6 +1,8 @@
+import { formatToKST } from '@/util/dayjs';
 import { PostApiFactory } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { PostOrderEnumDto, PostSortEnumDto, SearchTypeEnumDto } from '@generated/model';
+import axios from 'axios';
 import { cookies } from 'next/headers';
 import { type NextRequest, NextResponse } from 'next/server';
 
@@ -30,12 +32,16 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(response.data);
-  } catch (error: unknown) {
-    console.error('[GET] /api/feedback/posts error:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'Error fetching feedback:', error.response?.data);
+    }
+
     const errorMessage =
       error && typeof error === 'object' && 'message' in error
         ? (error as { message?: string }).message
         : 'Internal Server Error';
+
     return NextResponse.json({ error: errorMessage || 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -65,12 +71,16 @@ export async function POST(request: NextRequest) {
     const response = await postApi.createPost({ createPostRequest: body });
 
     return NextResponse.json(response.data);
-  } catch (error: unknown) {
-    console.error('[POST] /api/feedback/posts error:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'Error creating feedback:', error.response?.data);
+    }
+
     const errorMessage =
       error && typeof error === 'object' && 'message' in error
         ? (error as { message?: string }).message
         : 'Internal Server Error';
+
     return NextResponse.json({ error: errorMessage || 'Internal Server Error' }, { status: 500 });
   }
 }

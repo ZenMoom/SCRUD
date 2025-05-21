@@ -1,6 +1,8 @@
+import { formatToKST } from '@/util/dayjs';
 import { PostApiFactory, PostApiUpdatePostStatusRequest } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { PostStatusEnumDto } from '@generated/model';
+import axios from 'axios';
 import { cookies } from 'next/headers';
 import { type NextRequest, NextResponse } from 'next/server';
 
@@ -34,7 +36,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const data = response.data;
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error updating post status:', error);
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'Error updating post status:', error.response?.data);
+    }
+
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

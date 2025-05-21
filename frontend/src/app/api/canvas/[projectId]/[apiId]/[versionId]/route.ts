@@ -1,5 +1,7 @@
+import { formatToKST } from '@/util/dayjs';
 import { CanvasApi } from '@generated/api';
 import { Configuration } from '@generated/configuration';
+import axios from 'axios';
 import { NextRequest, NextResponse } from 'next/server';
 
 // 쿼리 파라미터를 사용하도록 수정된 GET 함수
@@ -60,8 +62,10 @@ export async function GET(req: NextRequest) {
     // 응답 데이터를 JSON 형태로 반환
     return NextResponse.json(response.data);
   } catch (error) {
-    // 에러 처리
-    console.error('다이어그램 데이터 가져오기 실패:', error);
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), '다이어그램 데이터 가져오기 오류:', error.response?.data);
+    }
+
     return NextResponse.json({ error: '다이어그램 데이터를 가져오는 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }

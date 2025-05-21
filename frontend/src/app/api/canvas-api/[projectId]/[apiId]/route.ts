@@ -1,6 +1,8 @@
+import { formatToKST } from '@/util/dayjs';
 import { ScrudApiApi } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import type { ApiProcessStateRequest } from '@generated/model';
+import axios from 'axios';
 import { type NextRequest, NextResponse } from 'next/server';
 
 // PUT 요청 핸들러 - API 처리 상태 변경
@@ -21,7 +23,7 @@ export async function PUT(request: NextRequest) {
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
     // const apiUrl = "http://host.docker.internal:8000"
     if (!apiUrl) {
-      console.error('API_BASE_URL 환경 변수가 설정되지 않았습니다.');
+      console.error(formatToKST(new Date().toISOString()), 'API_BASE_URL 환경 변수가 설정되지 않았습니다.');
       return NextResponse.json({ error: 'API 서버 구성 오류' }, { status: 500 });
     }
     // 요청 헤더에서 인증 토큰 추출
@@ -57,8 +59,12 @@ export async function PUT(request: NextRequest) {
     // 응답 데이터 그대로 반환 (content 프로퍼티가 없는 것으로 보임)
     return NextResponse.json(response.data);
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'API 처리 상태 변경 오류:', error.response?.data);
+    }
+
     const apiError = error as Error;
-    console.error('API 처리 상태 변경 실패:', apiError);
+    console.error(formatToKST(new Date().toISOString()), 'API 처리 상태 변경 실패:', apiError);
     return NextResponse.json(
       { error: 'API 처리 상태 변경 중 오류가 발생했습니다: ' + apiError.message },
       { status: 500 }

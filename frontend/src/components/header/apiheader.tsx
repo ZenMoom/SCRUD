@@ -1,5 +1,6 @@
 'use client';
 
+import { formatToKST } from '@/util/dayjs';
 import { Pencil } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -64,7 +65,7 @@ export default function ApiHeader({ project }: ApiHeaderProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('API 에러 응답:', errorData);
+        console.error(formatToKST(new Date().toISOString()), 'API 에러 응답:', errorData);
         throw new Error(errorData.message || '프로젝트 정보 수정에 실패했습니다.');
       }
 
@@ -75,7 +76,7 @@ export default function ApiHeader({ project }: ApiHeaderProps) {
       setShowModal(false);
       window.location.reload();
     } catch (error) {
-      console.error('프로젝트 정보 수정 중 오류 발생:', error);
+      console.error(formatToKST(new Date().toISOString()), '프로젝트 정보 수정 중 오류 발생:', error);
       alert('프로젝트 정보 수정에 실패했습니다. 다시 시도해주세요.');
     }
   };

@@ -1,6 +1,8 @@
+import { formatToKST } from '@/util/dayjs';
 import { PostApiFactory } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { UpdatePostRequest } from '@generated/model';
+import axios from 'axios';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -21,7 +23,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
     return NextResponse.json(response.data);
   } catch (error) {
-    console.error('Error fetching feedback:', error);
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'Error fetching feedback:', error.response?.data);
+    }
+
     return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
   }
 }
@@ -53,7 +58,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     return NextResponse.json(response.data);
   } catch (error) {
-    console.error('Error updating feedback:', error);
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'Error updating feedback:', error.response?.data);
+    }
     return NextResponse.json({ error: 'Failed to update feedback' }, { status: 500 });
   }
 }
@@ -83,7 +90,10 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 
     return NextResponse.json({ message: 'Feedback deleted successfully' });
   } catch (error) {
-    console.error('Error deleting feedback:', error);
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'Error deleting feedback:', error.response?.data);
+    }
+
     return NextResponse.json({ error: 'Failed to delete feedback' }, { status: 500 });
   }
 }

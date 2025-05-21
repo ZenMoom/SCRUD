@@ -1,3 +1,4 @@
+import { formatToKST } from '@/util/dayjs';
 import { getApiBaseUrl } from '@/util/serverUtil';
 import {
   CreatePostRequest,
@@ -53,7 +54,7 @@ export async function fetchPosts(
 
     return await response.json();
   } catch (error) {
-    console.error('Failed to fetch posts:', error);
+    console.error(formatToKST(new Date().toISOString()), 'Failed to fetch posts:', error);
     // 에러 발생 시 빈 응답 반환
     return { content: [], pageable: { totalPages: 0, totalElements: 0 } };
   }
@@ -81,7 +82,7 @@ export async function fetchPostDetail(postId: string): Promise<PostDetailRespons
 
     return await response.json();
   } catch (error) {
-    console.error(`Failed to fetch post detail for ID ${postId}:`, error);
+    console.error(formatToKST(new Date().toISOString()), `Failed to fetch post detail for ID ${postId}:`, error);
     throw error;
   }
 }
@@ -133,7 +134,7 @@ export async function createPost(postData: CreatePostRequest): Promise<PostDetai
 
     return await response.json();
   } catch (error) {
-    console.error('Failed to create post:', error);
+    console.error(formatToKST(new Date().toISOString()), 'Failed to create post:', error);
     throw error;
   }
 }
@@ -157,7 +158,7 @@ export async function deletePost(postId: number): Promise<void> {
       throw new Error(`Error deleting post: ${response.status}`);
     }
   } catch (error) {
-    console.error(`Failed to delete post ID ${postId}:`, error);
+    console.error(formatToKST(new Date().toISOString()), `Failed to delete post ID ${postId}:`, error);
     throw error;
   }
 }
@@ -184,7 +185,7 @@ export async function updatePost(postId: number, postData: UpdatePostRequest): P
 
     return await response.json();
   } catch (error) {
-    console.error(`Failed to update post ID ${postId}:`, error);
+    console.error(formatToKST(new Date().toISOString()), `Failed to update post ID ${postId}:`, error);
     throw error;
   }
 }
@@ -209,7 +210,7 @@ export async function updatePostStatus(postId: number, status: string): Promise<
       throw new Error(`Error updating post status: ${response.status}`);
     }
   } catch (error) {
-    console.error(`Failed to update post ID ${postId} status:`, error);
+    console.error(formatToKST(new Date().toISOString()), `Failed to update post ID ${postId} status:`, error);
     throw error;
   }
 }

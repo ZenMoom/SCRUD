@@ -1,7 +1,8 @@
+import { formatToKST } from '@/util/dayjs';
 import { ApiSpecApi } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { ApiSpecVersionCreateRequest, ApiSpecVersionCreateRequestHttpMethodEnum } from '@generated/model';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { NextRequest, NextResponse } from 'next/server';
 
 // API 스펙 생성
@@ -58,8 +59,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(response.data);
-  } catch (error: unknown) {
-    console.error('API 스펙 생성 오류:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'API 스펙 생성 오류:', error.response?.data);
+    }
 
     // 오류 처리
     const errorMessage = error instanceof Error ? error.message : 'API 스펙 생성 중 오류가 발생했습니다.';

@@ -3,6 +3,7 @@
 import useAuthStore from '@/app/store/useAuthStore';
 import { updatePostStatus } from '@/lib/feedback-api';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
+import { formatToKST } from '@/util/dayjs';
 import { PostStatusEnumDto } from '@generated/model';
 import { Check, Loader2 } from 'lucide-react';
 import { useState } from 'react';
@@ -67,7 +68,7 @@ export default function FeedbackStatusChanger() {
       updatePostStatusInStore(newStatus as PostStatusEnumDto);
       toast.success('피드백 상태가 업데이트되었습니다.');
     } catch (error) {
-      console.error('Failed to update status:', error);
+      console.error(formatToKST(new Date().toISOString()), 'Failed to update status:', error);
       toast.error('상태 업데이트에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsUpdating(false);

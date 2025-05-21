@@ -1,7 +1,8 @@
+import { formatToKST } from '@/util/dayjs';
 import { ApiSpecApi } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { ApiSpecVersionStatusRequest, ApiSpecVersionStatusRequestApiSpecStatusEnum } from '@generated/model';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { NextRequest, NextResponse } from 'next/server';
 
 // API 스펙 상태 업데이트
@@ -48,11 +49,13 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ a
     const response = await apiSpecApi.updateApiSpecStatus(requestParameters);
     return NextResponse.json(response.data);
   } catch (error: unknown) {
-    console.error('API 스펙 상태 업데이트 오류:', error);
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'API 스펙 상태 업데이트 오류:', error.response?.data);
+    }
 
     // 오류 상세 정보 로깅
     if (error instanceof Error) {
-      console.error('Error details:', {
+      console.error(formatToKST(new Date().toISOString()), 'Error details:', {
         name: error.name,
         message: error.message,
         stack: error.stack,

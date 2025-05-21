@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useGitHubTokenStore } from '@/store/githubTokenStore';
+import { formatToKST } from '@/util/dayjs';
 import { Check, ChevronLeft, FileIcon, Folder, Github, X } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -115,7 +116,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
 
         if (!response.ok) {
           // 토큰이 유효하지 않은 경우 (401 등)
-          console.error('GitHub 토큰이 유효하지 않음, 재인증 요청');
+          console.error(formatToKST(new Date().toISOString()), 'GitHub 토큰이 유효하지 않음, 재인증 요청');
 
           // 토큰 삭제
           localStorage.removeItem('github-token-direct');
@@ -138,7 +139,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
         return;
       }
     } catch (error) {
-      console.error('GitHub 토큰 검증 중 오류 발생:', error);
+      console.error(formatToKST(new Date().toISOString()), 'GitHub 토큰 검증 중 오류 발생:', error);
       // 오류 발생시 토큰 삭제 후 재인증
       localStorage.removeItem('github-token-direct');
 
@@ -175,7 +176,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
           setIsLoading(false);
         })
         .catch((error) => {
-          console.error('레포지토리 목록 가져오기 실패:', error);
+          console.error(formatToKST(new Date().toISOString()), '레포지토리 목록 가져오기 실패:', error);
           setError('레포지토리를 불러오는데 실패했습니다.');
           setIsLoading(false);
         });
@@ -244,7 +245,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
           setIsLoading(false);
         })
         .catch((error) => {
-          console.error('컨텐츠 가져오기 실패:', error);
+          console.error(formatToKST(new Date().toISOString()), '컨텐츠 가져오기 실패:', error);
           setError('폴더 내용을 불러오는데 실패했습니다.');
           setIsLoading(false);
         });
@@ -285,7 +286,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
           setIsLoading(false);
         })
         .catch((error) => {
-          console.error('컨텐츠 가져오기 실패:', error);
+          console.error(formatToKST(new Date().toISOString()), '컨텐츠 가져오기 실패:', error);
           setError('폴더 내용을 불러오는데 실패했습니다.');
           setIsLoading(false);
         });
@@ -328,7 +329,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
           setIsLoading(false);
         })
         .catch((error) => {
-          console.error('컨텐츠 가져오기 실패:', error);
+          console.error(formatToKST(new Date().toISOString()), '컨텐츠 가져오기 실패:', error);
           setError('폴더 내용을 불러오는데 실패했습니다.');
           setIsLoading(false);
         });
@@ -436,7 +437,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
 
       setSelectedItems([newSelectedItem]);
     } catch (error) {
-      console.error('레포지토리 전체 구조 가져오기 실패:', error);
+      console.error(formatToKST(new Date().toISOString()), '레포지토리 전체 구조 가져오기 실패:', error);
       setError('레포지토리 전체 구조를 가져오는데 실패했습니다.');
     } finally {
       setIsLoadingFullRepo(false);
@@ -485,7 +486,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
             },
           ]);
         } catch (error) {
-          console.error('파일 내용 가져오기 실패:', error);
+          console.error(formatToKST(new Date().toISOString()), '파일 내용 가져오기 실패:', error);
           setError('파일 내용을 가져오는데 실패했습니다.');
         }
       }
@@ -560,7 +561,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
         onSelect(processedFiles);
         onClose();
       } catch (error) {
-        console.error('파일 처리 중 오류 발생:', error);
+        console.error(formatToKST(new Date().toISOString()), '파일 처리 중 오류 발생:', error);
         setError('파일 처리 중 오류가 발생했습니다.');
       }
     }

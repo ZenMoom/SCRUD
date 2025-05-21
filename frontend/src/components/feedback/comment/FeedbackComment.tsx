@@ -6,6 +6,7 @@ import useAuthStore from '@/app/store/useAuthStore';
 import AlertLogin from '@/components/alert/AlertLogin';
 import { createComment, getComments } from '@/lib/comment-api';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
+import { formatToKST } from '@/util/dayjs';
 import type { CommentResponse } from '@generated/model';
 import { useEffect, useState } from 'react';
 import FeedbackCommentForm from './FeedbackCommentForm';
@@ -78,7 +79,7 @@ export default function FeedbackComment() {
       setCommentText('');
       setReplyTo(null);
     } catch (error) {
-      console.error('댓글 작성 실패:', error);
+      console.error(formatToKST(new Date().toISOString()), '댓글 작성 실패:', error);
       alert('댓글을 작성하는 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);

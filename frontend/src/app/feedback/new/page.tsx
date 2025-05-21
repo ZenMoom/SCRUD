@@ -4,6 +4,7 @@ import type React from 'react';
 
 import FeedbackBackButton from '@/components/feedback/FeedbackBackButton';
 import { createPost } from '@/lib/feedback-api';
+import { formatToKST } from '@/util/dayjs';
 import type { CreatePostRequest, PostStatusEnumDto } from '@generated/model';
 import { Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -96,7 +97,7 @@ export default function NewFeedbackPage() {
       // 피드백 목록 페이지로 이동
       router.push(`/feedback/${res.postId}`);
     } catch (error) {
-      console.error('피드백 등록 중 오류 발생:', error);
+      console.error(formatToKST(new Date().toISOString()), '피드백 등록 중 오류 발생:', error);
       alert('피드백 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);

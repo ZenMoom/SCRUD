@@ -5,6 +5,7 @@ import type React from 'react';
 import useAuthStore from '@/app/store/useAuthStore';
 import { fetchPosts } from '@/lib/feedback-api';
 import { numberToCategoryMap } from '@/types/feedback';
+import { formatToKST } from '@/util/dayjs';
 import {
   type GetPostListResponse,
   PostOrderEnumDto,
@@ -136,7 +137,7 @@ export default function FeedbackBoard({ postsData }: { postsData: GetPostListRes
       setTotalPages(data.pageable?.totalPages || 1);
       setTotalElements(data.pageable?.totalElements || 0);
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error(formatToKST(new Date().toISOString()), 'Error refreshing data:', error);
     } finally {
       setLoading(false);
     }
