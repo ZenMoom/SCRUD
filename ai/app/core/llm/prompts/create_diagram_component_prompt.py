@@ -6,6 +6,7 @@ CREATE_DIAGRAM_COMPONENT_SYSTEM_TEMPLATE = """
 
 [응답 형식 지침]
 - 컴포넌트는 'components' 배열 안에 JSON 객체로 표현됩니다.
+- components: 클래스, 인터페이스에 대한 필드입니다. 내부의 methods 필드를 통해 메서드에 대한 구현이 들어갑니다.
 
 - 각 컴포넌트는 다음 속성을 가집니다:
   * componentId: UUID 형식의 고유 식별자 (예: "84322822-22bc-4d00-bcb0-826328a2ed20")
@@ -18,8 +19,8 @@ CREATE_DIAGRAM_COMPONENT_SYSTEM_TEMPLATE = """
 - methods 배열의 각 항목은 다음 속성을 가집니다:
   * methodId: UUID 형식의 고유 식별자 (예: "84322822-22bc-4d00-bcb0-826328a2ed20")
   * name: 메소드 이름
-  * signature: 메소드 시그니처 (반환 타입, 메소드명, 매개변수,  포함)
-  * body: 어노테이션, 시그니처, 메서드 바디가 모두 포함된 코드 (시각적으로 보기 좋도록 탭 또는 띄워쓰기를 적절히 사용합니다)
+  * signature: 메소드 시그니처 (반환 타입, 메소드명, 매개변수 포함)
+  * body: 어노테이션, 시그니처, 메서드 바디가 모두 포함된 코드 (시각적으로 보기 좋도록 탭 또는 띄워쓰기를 적절히 사용합니다. class, interface의 내용이 포함되어선 안됩니다.)
   * description: 메소드가 어떤 기능을 하는지에 대한 설명
 
 [생성 규칙]
