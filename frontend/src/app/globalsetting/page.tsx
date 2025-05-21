@@ -19,6 +19,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 interface FileWithContent {
   name: string;
   content: string;
+  source?: 'upload' | 'spring';
 }
 
 // 선택형 입력을 위한 타입 추가
@@ -49,8 +50,8 @@ interface ProjectSettings {
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
   dependencySelections: string[]; // 선택지용
-  dependencyFiles: { name: string; content: string }[]; // 파일 첨부용
-  dependencyFile: { name: string; content: string }[]; // <- 추가: 항상 최종 합쳐진 값
+  dependencyFiles: { name: string; content: string; source?: string } | null; // Spring 메타데이터
+  dependencyFile: { name: string; content: string; source?: string }[]; // 업로드한 파일 리스트
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue | FileWithContent[];
@@ -98,7 +99,7 @@ export default function GlobalSettingPage() {
     requirementSpec: [] as FileWithContent[],
     erd: [] as FileWithContent[],
     dependencySelections: [],
-    dependencyFiles: [],
+    dependencyFiles: null,
     dependencyFile: [],
     utilityClass: [] as FileWithContent[],
     errorCode: [] as FileWithContent[],
@@ -106,6 +107,12 @@ export default function GlobalSettingPage() {
     codeConvention: [] as FileWithContent[],
     architectureStructure: { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A' },
   });
+
+  useEffect(() => {
+    console.log('dependencySelections:', settings.dependencySelections);
+    console.log('dependencyFiles:', settings.dependencyFiles);
+    console.log('dependencyFile:', settings.dependencyFile);
+  }, [settings]);
 
   // 각 설정 항목의 완료 상태를 관리
   const [completed, setCompleted] = useState<Record<SettingKey, boolean>>({
@@ -201,10 +208,16 @@ export default function GlobalSettingPage() {
       | FileWithContent
       | FileWithContent[]
       | SelectionValue
-      | { name: string; content: string }
-      | { name: string; content: string }[]
+      | { name: string; content: string; source?: string }
+      | { name: string; content: string; source?: string }[]
       | string[]
+      | null // null 타입 추가
   ) => {
+    // 이전 값과 동일한지 확인하여 불필요한 업데이트 방지
+    if (JSON.stringify(settings[key as keyof ProjectSettings]) === JSON.stringify(value)) {
+      return; // 값이 변경되지 않았으면 업데이트 하지 않음
+    }
+
     setSettings((prev) => {
       const newSettings = { ...prev };
       switch (key) {
@@ -212,7 +225,10 @@ export default function GlobalSettingPage() {
           newSettings.dependencySelections = value as string[];
           break;
         case 'dependencyFiles':
-          newSettings.dependencyFiles = value as { name: string; content: string }[];
+          newSettings.dependencyFiles = value as { name: string; content: string; source?: string } | null;
+          break;
+        case 'dependencyFile':
+          newSettings.dependencyFile = value as { name: string; content: string; source?: string }[];
           break;
         case 'title':
         case 'description':
@@ -245,18 +261,6 @@ export default function GlobalSettingPage() {
           }
           break;
       }
-      // 항상 dependencyFile을 최신화
-      const depFiles = newSettings.dependencyFiles || [];
-      let depSelections: { name: string; content: string }[] = [];
-      if (newSettings.dependencySelections && newSettings.dependencySelections.length > 0) {
-        depSelections = [
-          {
-            name: 'dependency.txt',
-            content: newSettings.dependencySelections.join('\n'),
-          },
-        ];
-      }
-      newSettings.dependencyFile = [...depFiles, ...depSelections];
       return newSettings;
     });
 
@@ -292,6 +296,43 @@ export default function GlobalSettingPage() {
             isCompleted = value.length > 0;
           }
           break;
+        case 'dependencyFile':
+          // 의존성 파일 완료 상태 업데이트 로직 추가
+          if (Array.isArray(value)) {
+            // 업로드된 파일이 있거나
+            isCompleted = value.length > 0;
+          } else {
+            isCompleted = false;
+          }
+          break;
+        case 'dependencySelections':
+          // 의존성 선택 완료 상태 업데이트 로직 추가
+          if (Array.isArray(value)) {
+            // 선택된 의존성이 있으면 완료
+            isCompleted = value.length > 0;
+            // dependencyFile 완료 상태도 함께 업데이트
+            newCompleted.dependencyFile =
+              isCompleted || (settings.dependencyFile && settings.dependencyFile.length > 0);
+          }
+          break;
+        case 'dependencyFiles':
+          // Spring 의존성 파일 완료 상태 업데이트 로직 추가
+          if (value && typeof value === 'object' && 'content' in value) {
+            // 내용이 있으면 완료
+            isCompleted = value.content.trim().length > 0;
+            // dependencyFile 완료 상태도 함께 업데이트
+            newCompleted.dependencyFile =
+              isCompleted || (settings.dependencyFile && settings.dependencyFile.length > 0);
+          } else {
+            // dependencyFiles가 null이면 dependencyFile의 상태만 확인
+            newCompleted.dependencyFile = settings.dependencyFile && settings.dependencyFile.length > 0;
+          }
+          break;
+      }
+
+      // 이전 값과 동일하면 업데이트하지 않음
+      if (prev[key as SettingKey] === isCompleted) {
+        return prev;
       }
 
       newCompleted[key as SettingKey] = isCompleted;
@@ -320,14 +361,34 @@ export default function GlobalSettingPage() {
     setError(null);
 
     try {
-      // dependencyFile은 항상 최신 상태로 settings에 있음
+      // 최종 데이터 준비
+      const finalSettings = { ...settings };
+
+      // Spring 메타데이터가 있으면 dependencyFile에 추가
+      if (finalSettings.dependencyFiles && finalSettings.dependencySelections.length > 0) {
+        finalSettings.dependencyFile = [...finalSettings.dependencyFile, finalSettings.dependencyFiles];
+      }
+
+      // dependencySelections에서 dependency.txt 파일 생성
+      if (finalSettings.dependencySelections && finalSettings.dependencySelections.length > 0) {
+        const depSelectionsFile = {
+          name: 'dependency-selections.txt',
+          content: finalSettings.dependencySelections.join('\n'),
+          source: 'spring-selections',
+        };
+        finalSettings.dependencyFile = [...finalSettings.dependencyFile, depSelectionsFile];
+      }
+
+      // 서버로 보낼 페이로드 준비
       const payloadObj: Record<string, unknown> = {
-        ...settings,
+        ...finalSettings,
         architectureStructure: architectureStructureRef.current,
       };
-      // 중복 방지: 서버로 보낼 때 불필요한 배열 제거
+
+      // 중복 방지: 서버로 보낼 때 불필요한 필드 제거
       delete payloadObj.dependencyFiles;
       delete payloadObj.dependencySelections;
+
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {

@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
+import type { FileWithContent, SelectionValue } from '@/store/types/project';
 import type React from 'react';
 import { useCallback } from 'react';
 import FormItem from './Form';
@@ -13,21 +14,11 @@ import RequirementSpecForm from './form/RequirementSpecForm';
 import SecuritySettingForm from './form/SecuritySettingForm';
 import UtilityClassForm from './form/UtilityClassForm';
 
-// 파일 객체 타입 정의 (다른 컴포넌트와 일치시킴)
-interface FileWithContent {
-  name: string;
-  content: string;
-}
-
-// 선택형 입력을 위한 타입 추가
-interface SelectionValue {
-  type: string; // enum 값
-  label: string; // 표시 텍스트
-}
-
+// 의존성 파일 타입 정의
 interface DependencyFile {
   name: string;
   content: string;
+  source?: string; // string 타입으로 변경 (더 넓은 타입)
 }
 
 // 프로젝트 설정 타입 정의
@@ -37,13 +28,13 @@ interface ProjectSettings {
   serverUrl: string;
   requirementSpec: FileWithContent[];
   erd: FileWithContent[];
-  dependencyFile: DependencyFile[];
+  dependencyFile: DependencyFile[]; // 업로드한 파일 리스트
   utilityClass: FileWithContent[];
   errorCode: FileWithContent[];
   securitySetting: SelectionValue | FileWithContent[];
   codeConvention: FileWithContent[];
   architectureStructure: SelectionValue | FileWithContent[];
-  dependencyFiles: DependencyFile[];
+  dependencyFiles: DependencyFile | null; // Spring 메타데이터 (단일 객체)
   dependencySelections: string[];
 }
 
@@ -59,9 +50,10 @@ interface ContentAreaProps {
       | FileWithContent
       | FileWithContent[]
       | SelectionValue
-      | { name: string; content: string }
-      | { name: string; content: string }[]
+      | { name: string; content: string; source?: string }
+      | { name: string; content: string; source?: string }[]
       | string[]
+      | null
   ) => void;
   refs: {
     title: React.RefObject<HTMLDivElement | null>;
@@ -109,11 +101,21 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
       | FileWithContent
       | FileWithContent[]
       | SelectionValue
-      | { name: string; content: string }
-      | { name: string; content: string }[]
+      | { name: string; content: string; source?: string }
+      | { name: string; content: string; source?: string }[]
       | string[]
+      | null
   ) => {
     onSettingChange(key, value);
+  };
+
+  // 파일 삭제 처리 함수
+  const handleFileDelete = (fileName: string) => {
+    // 기존 파일 목록에서 해당 파일 제거
+    if (settings.dependencyFile && settings.dependencyFile.length > 0) {
+      const newFiles = settings.dependencyFile.filter((file) => file.name !== fileName);
+      handleSettingChange('dependencyFile', newFiles);
+    }
   };
 
   return (
@@ -198,12 +200,50 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
                   <DependencyFileForm
                     title='의존성 파일'
                     onFileSelect={(file) => {
-                      // 파일 업로드 시 기존 배열에 추가
-                      const newFiles = Array.isArray(settings.dependencyFiles)
-                        ? [...settings.dependencyFiles, file]
-                        : [file];
-                      handleSettingChange('dependencyFiles', newFiles);
+                      if (file.source === 'upload') {
+                        // 업로드된 파일은 dependencyFile에 저장
+                        // DELETE_THIS_FILE 내용이 있는 파일은 무시
+                        if (file.content === 'DELETE_THIS_FILE') return;
+
+                        // 이미 같은 이름의 파일이 있는지 확인
+                        const existingFileIndex = settings.dependencyFile.findIndex((f) => f.name === file.name);
+
+                        let newFiles;
+                        if (existingFileIndex >= 0) {
+                          // 기존 파일 업데이트
+                          newFiles = [...settings.dependencyFile];
+                          newFiles[existingFileIndex] = file;
+                        } else {
+                          // 새 파일 추가
+                          newFiles = [...settings.dependencyFile, file];
+                        }
+
+                        handleSettingChange('dependencyFile', newFiles);
+                      } else if (file.source === 'spring') {
+                        // 특수 플래그로 삭제 표시된 경우 null로 설정
+                        if (file.content === 'DELETE_DEPENDENCY_FILES') {
+                          handleSettingChange('dependencyFiles', null);
+                          handleSettingChange('dependencySelections', []);
+                          return;
+                        }
+
+                        // Spring 의존성은 dependencyFiles에 저장 (단일 객체)
+                        const springDependencyFile = {
+                          name: file.name || 'spring-dependencies.txt',
+                          content: file.content || '',
+                          source: 'spring',
+                        };
+
+                        // 의존성 ID 목록도 저장
+                        if (file.dependencySelections) {
+                          handleSettingChange('dependencySelections', file.dependencySelections);
+                        }
+
+                        // dependencyFiles 업데이트 (빈 내용이어도 객체는 유지)
+                        handleSettingChange('dependencyFiles', springDependencyFile);
+                      }
                     }}
+                    onFileDelete={handleFileDelete}
                     onFocus={useCallback(() => handleItemFocus('dependencyFile'), [handleItemFocus])}
                   />
                 </div>

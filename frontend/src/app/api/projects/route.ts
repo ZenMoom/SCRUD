@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const settings = await request.json();
     let authorization = request.headers.get('Authorization');
 
-    // 인증 토큰이 없으면 401 에러 반환
+    // 인증 토큰이 없으면 401 에러 ��환
     if (!authorization) {
       return NextResponse.json({ message: '인증 정보가 필요합니다.' }, { status: 401 });
     }
