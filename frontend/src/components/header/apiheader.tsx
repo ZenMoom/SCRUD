@@ -122,7 +122,7 @@ export default function ApiHeader({ project }: ApiHeaderProps) {
 
   return (
     <>
-      <header className='top-1 h-[60px] bg-blue-50 sticky z-50 w-full'>
+      <header className='h-[60px] bg-blue-50 sticky z-50 w-full'>
         <div className='flex items-center justify-between w-full h-full px-4'>
           {/* 로고 및 프로젝트명 영역 */}
           <div className='flex items-center gap-4'>

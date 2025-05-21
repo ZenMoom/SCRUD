@@ -79,26 +79,26 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
   const [isLoadingFullRepo, setIsLoadingFullRepo] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
+  // ESC 키 처리를 위한 이벤트 리스너
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (isOpen && event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscKey);
+    return () => {
+      window.removeEventListener('keydown', handleEscKey);
+    };
+  }, [isOpen, onClose]);
+
   // GitHub 인증 확인 및 처리
   useEffect(() => {
     if (isOpen) {
       checkGitHubAuth();
     }
   }, [isOpen]);
-
-  // 외부 클릭 감지를 위한 이벤트 리스너
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isOpen && modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose]);
 
   // GitHub 인증 확인하는 함수
   const checkGitHubAuth = async () => {
@@ -569,27 +569,32 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className='bg-black/50 fixed inset-0 z-50 flex items-center justify-center'>
+    <div
+      className='bg-black/50 fixed inset-0 z-50 flex items-center justify-center'
+      onClick={(e) => e.stopPropagation()}
+    >
       <Card
         ref={modalRef}
-        className='max-h-[80vh] flex flex-col w-full max-w-4xl overflow-hidden'
+        className='max-h-[95vh] flex flex-col w-full max-w-4xl overflow-hidden'
       >
-        <CardHeader className='pb-2'>
-          <CardTitle className='flex items-center'>
-            <Github
-              size={20}
-              className='mr-2'
-            />
-            {isArchitecture ? 'GitHub에서 아키텍처 구조도 가져오기' : 'GitHub에서 파일 추가'}
-          </CardTitle>
-          <p className='text-muted-foreground text-sm'>
-            {isArchitecture
-              ? '아키텍처 구조도로 사용할 레포지토리를 선택한 후 확정 버튼을 클릭하세요'
-              : '전역 설정에 추가할 파일을 선택하세요'}
-          </p>
+        <CardHeader className='flex items-start justify-between pb-2'>
+          <div>
+            <CardTitle className='flex items-center'>
+              <Github
+                size={20}
+                className='mr-2'
+              />
+              {isArchitecture ? 'GitHub에서 아키텍처 구조도 가져오기' : 'GitHub에서 파일 추가'}
+            </CardTitle>
+            <p className='text-muted-foreground text-sm'>
+              {isArchitecture
+                ? '아키텍처 구조도로 사용할 레포지토리를 선택한 후 확정 버튼을 클릭하세요'
+                : '전역 설정에 추가할 파일을 선택하세요'}
+            </p>
+          </div>
         </CardHeader>
 
-        <CardContent className='space-y-4 overflow-auto'>
+        <CardContent className='flex-1 space-y-4 overflow-auto'>
           <div className='flex space-x-2'>
             <Select
               onValueChange={handleRepoSelect}
@@ -643,7 +648,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
 
           {/* 일반 모드일 때만 파일 탐색기 표시 */}
           {!isArchitecture && (
-            <div className='max-h-[calc(100vh-400px)] flex flex-col flex-1'>
+            <div className='max-h-[calc(100vh-300px)] flex flex-col flex-1'>
               {/* 파일 탐색기 헤더 */}
               {selectedRepo && (
                 <div className='flex items-center p-2 mb-2 bg-gray-100 rounded'>
@@ -664,7 +669,7 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
               )}
 
               {/* 파일 목록 영역 */}
-              <div className='flex-1 min-h-0 mb-4 overflow-y-auto border rounded'>
+              <div className='min-h-[300px] flex-1 mb-4 overflow-y-auto border rounded'>
                 {isLoading ? (
                   <div className='flex items-center justify-center h-full'>
                     <p className='text-gray-500'>로딩 중...</p>
@@ -747,38 +752,6 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
                   </ul>
                 )}
               </div>
-
-              {/* 선택된 항목 목록 */}
-              <div className='mb-4'>
-                <p className='mb-2 text-sm font-medium'>선택된 항목: {selectedItems.length}개</p>
-                {selectedItems.length > 0 && (
-                  <div className='whitespace-nowrap p-2 overflow-x-auto text-sm border rounded'>
-                    <div className='flex flex-wrap gap-2'>
-                      {selectedItems.map((item, index) => (
-                        <div
-                          key={index}
-                          className='inline-flex items-center px-3 py-1 text-gray-800 bg-gray-100 rounded-full'
-                        >
-                          <span className='max-w-[200px] truncate'>
-                            {item.type === 'directory' ? `📁 ${item.path}` : item.path}
-                          </span>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            className='hover:bg-gray-200 w-5 h-5 p-0 ml-1 rounded-full'
-                            onClick={() => setSelectedItems((items) => items.filter((_, i) => i !== index))}
-                          >
-                            <X
-                              size={12}
-                              className='text-gray-500'
-                            />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -786,24 +759,61 @@ const GitHubRepoBrowser: React.FC<GitHubRepoBrowserProps> = ({
           {error && <div className='bg-red-50 p-2 text-sm text-red-600 border border-red-100 rounded'>{error}</div>}
         </CardContent>
 
-        <CardFooter className='flex justify-end p-4 space-x-2 border-t'>
-          <Button
-            variant='outline'
-            onClick={onClose}
-          >
-            취소
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={
-              isArchitecture
-                ? selectedItems.length === 0 || (isLoadingFullRepo && !selectedItems[0]?.content)
-                : selectedItems.length === 0
-            }
-            variant='default'
-          >
-            {isArchitecture && isLoadingFullRepo ? '불러오는 중...' : '추가'}
-          </Button>
+        <CardFooter className='flex flex-col p-4 border-t'>
+          {/* 선택된 항목 목록 */}
+          {selectedItems.length > 0 && (
+            <div className='w-full mb-4'>
+              <div className='flex items-center justify-between mb-2'>
+                <p className='text-sm font-medium'>선택된 항목: {selectedItems.length}개</p>
+              </div>
+              <div className='whitespace-nowrap bg-gray-50 h-[50px] flex items-center p-2 overflow-x-auto text-sm border rounded'>
+                <div className='flex-nowrap flex gap-2'>
+                  {selectedItems.map((item, index) => (
+                    <div
+                      key={index}
+                      className='inline-flex items-center flex-shrink-0 px-3 py-1 text-gray-800 bg-white border border-gray-200 rounded-full shadow-sm'
+                    >
+                      <span className='max-w-[200px] truncate'>
+                        {item.type === 'directory' ? `📁 ${item.path}` : item.path}
+                      </span>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='hover:bg-gray-200 w-5 h-5 p-0 ml-1 rounded-full'
+                        onClick={() => setSelectedItems((items) => items.filter((_, i) => i !== index))}
+                      >
+                        <X
+                          size={12}
+                          className='text-gray-500'
+                        />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 버튼 영역 */}
+          <div className='flex justify-end w-full space-x-2'>
+            <Button
+              variant='outline'
+              onClick={onClose}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleConfirm}
+              disabled={
+                isArchitecture
+                  ? selectedItems.length === 0 || (isLoadingFullRepo && !selectedItems[0]?.content)
+                  : selectedItems.length === 0
+              }
+              variant='default'
+            >
+              {isArchitecture && isLoadingFullRepo ? '불러오는 중...' : '추가'}
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>
