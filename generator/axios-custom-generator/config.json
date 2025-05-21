@@ -1,0 +1,12 @@
+{
+    "supportsES6": true,
+    "withSeparateModelsAndApi": true,
+    "withInterfaces": true,
+    "withoutPrefixEnums": false,
+    "useSingleRequestParameter": true,
+    "enumPropertyNaming": "UPPERCASE",
+    "modelPropertyNaming": "camelCase",
+    "apiPackage": "api",
+    "modelPackage": "model",
+    "prefixParameterInterfaces": false
+  }

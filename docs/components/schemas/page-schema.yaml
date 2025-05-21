@@ -1,0 +1,56 @@
+Page:
+  name: page
+  in: query
+  description: '요청할 페이지 번호 (기본값: 0)'
+  required: false
+  schema:
+    type: integer
+    default: 0
+    minimum: 0
+
+Size:
+  name: size
+  in: query
+  description: '페이지당 항목 수 (기본값: 10)'
+  required: false
+  schema:
+    type: integer
+    default: 10
+    minimum: 1
+    maximum: 100 # 최대 페이지 크기 제한 (선택 사항)
+
+PostSort:
+  name: sort
+  in: query
+  description: 정렬 기준 필드
+  required: false
+  schema:
+    $ref: '../schemas/post-schema.yaml#/PostSortEnumDto'
+
+PostOrder:
+  name: order
+  in: query
+  description: 정렬 방향
+  required: false
+  schema:
+    $ref: '../schemas/post-schema.yaml#/PostOrderEnumDto'
+
+PageDto:
+  type: object
+  properties:
+    listSize:
+      type: integer
+      description: 현재 페이지의 데이터 개수
+    isFirstPage:
+      type: boolean
+      description: 현재 페이지가 첫 번째 페이지인지 여부
+    isLastPage:
+      type: boolean
+      description: 현재 페이지가 마지막 페이지인지 여부
+    totalPages:
+      type: integer
+      description: 총 페이지 수
+    totalElements:
+      type: integer
+      description: 총 데이터 개수
+

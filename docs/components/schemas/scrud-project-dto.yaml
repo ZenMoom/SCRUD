@@ -1,0 +1,98 @@
+FileTypeEnumDto:
+  type: string
+  enum:
+    [
+      REQUIREMENTS,
+      ERD,
+      UTIL,
+      CONVENTION,
+      CONVENTION_DEFAULT,
+      DEPENDENCY,
+      ERROR_CODE,
+      SECURITY,
+      SECURITY_DEFAULT_JWT,
+      SECURITY_DEFAULT_SESSION,
+      SECURITY_DEFAULT_NONE,
+      ARCHITECTURE_GITHUB,
+      ARCHITECTURE_DEFAULT_LAYERED_A,
+      ARCHITECTURE_DEFAULT_LAYERED_B,
+      ARCHITECTURE_DEFAULT_CLEAN,
+      ARCHITECTURE_DEFAULT_MSA,
+      ARCHITECTURE_DEFAULT_HEX
+    ]
+
+ScrudProjectDto:
+  description: "프로젝트 기본 정보"
+  type: object
+  properties:
+    scrudProjectId:
+      type: integer
+      format: int64
+      description: "프로젝트 ID"
+    title:
+      type: string
+      description: "프로젝트 제목"
+    description:
+      type: string
+      description: "프로젝트 설명"
+    serverUrl:
+      type: string
+      description: "serverUrl"
+    updatedAt:
+      type: string
+      format: date-time
+      description: "프로젝트 수정 날짜"
+    isDeleted:
+      type: boolean
+      description: "프로젝트 삭제 여부"
+
+ScrudProjectPageDto:
+  x-spring-paginated: true
+  description: "프로젝트 목록"
+  type: object
+  properties:
+    content:
+      type: array
+      items:
+        $ref: "#/ScrudProjectDto"
+    pageable:
+      $ref: "../schemas/page-schema.yaml#/PageDto"
+  required:
+    - content
+    - pageable
+
+GlobalFileListDto:
+  description: "전체 전역설정 파일 목록"
+  type: object
+  properties:
+    project:
+      $ref: "#/ScrudProjectDto"
+    content:
+      type: array
+      items:
+        $ref: "#/GlobalFileDto"
+
+GlobalFileDto:
+  description: "전역설정 파일 목록"
+  type: object
+  properties:
+    globalFileId:
+      type: integer
+      format: int64
+    fileName:
+      type: string
+    fileType:
+      $ref: "#/FileTypeEnumDto"
+    fileContent:
+      type: string
+
+CreateProjectRequest:
+  description: "프로젝트 생성에 필요한 기본 정보 & 전역 설정"
+  type: object
+  properties:
+    scrudProjectDto:
+      $ref: "#/ScrudProjectDto"
+    globalFiles:
+      type: array
+      items:
+        $ref: "#/GlobalFileDto"

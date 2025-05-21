@@ -1,0 +1,225 @@
+ApiSpecVersionResponse:
+  type: object
+  properties:
+    apiSpecVersionId:
+      type: integer
+      format: int64
+      example: 101
+    endpoint:
+      type: string
+      example: /api/v1/examples/{id}
+    apiGroup:
+      type: string
+      example: example
+    version:
+      type: integer
+      example: 1
+    summary:
+      type: string
+      example: '예시 스펙입니다.'
+    description:
+      type: string
+      example: '이 API는 예시 데이터를 처리합니다.'
+    httpMethod:
+      type: string
+      enum: [ GET, POST, PUT, PATCH, DELETE ]
+      description: HTTP 메서드 (GET, POST, PUT, PATCH, DELETE)
+    requestBody:
+      type: string
+      example: '{"name":"홍길동"}'
+    queryParameters:
+      type: string
+      example: '[{"name": "id", "type": "integer", "required": true}]'
+    pathParameters:
+      type: string
+      example: '[{"name": "exampleId", "type": "string", "required": true}]'
+    response:
+      type: string
+      example: '{"message":"성공"}'
+
+ApiSpecResponse:
+  type: object
+  properties:
+    apiSpecId:
+      type: integer
+      format: int64
+      example: 10
+    apiSpecVersionId:
+      type: integer
+      format: int64
+      example: 101
+    endpoint:
+      type: string
+      example: /api/v1/examples/{id}
+    apiGroup:
+      type: string
+      example: example
+    version:
+      type: integer
+      example: 1
+    summary:
+      type: string
+      example: '예시 스펙입니다.'
+    description:
+      type: string
+      example: '이 API는 예시 데이터를 처리합니다.'
+    apiSpecStatus:
+      type: string
+      enum: [ AI_GENERATED, AI_VISUALIZED, USER_COMPLETED ]
+      example: AI_GENERATED
+    httpMethod:
+      type: string
+      enum: [ GET, POST, PUT, PATCH, DELETE ]
+      description: HTTP 메서드 (GET, POST, PUT, PATCH, DELETE)
+    requestBody:
+      type: string
+      example: '{"name":"홍길동"}'
+    queryParameters:
+      type: string
+      example: '[{"name": "id", "type": "integer", "required": true}]'
+    pathParameters:
+      type: string
+      example: '[{"name": "exampleId", "type": "string", "required": true}]'
+    response:
+      type: string
+      example: '{"message":"성공"}'
+
+ApiFieldDto:
+  type: object
+  properties:
+    field_type:
+      type: string
+      enum: [ path, query, request_body ]
+    name:
+      type: string
+    data_type:
+      type: string
+      example: string
+    required:
+      type: boolean
+    description:
+      type: string
+    example:
+      type: string
+    location_path:
+      type: string
+
+ApiSpecVersionCreateRequest:
+  type: object
+  required:
+    - endpoint
+    - httpMethod
+  properties:
+    scrudProjectId:
+      type: integer
+      format: int64
+      example: 101
+    endpoint:
+      type: string
+      example: /api/v1/examples/{id}
+      description: API 엔드포인트 경로
+    summary:
+      type: string
+      example: 예시 스펙입니다.
+      description: API에 대한 간단한 설명
+    description:
+      type: string
+      example: 이 API는 예시 데이터를 처리합니다.
+      description: API 상세 설명
+    response:
+      type: string
+      example: JSON 응답 예시 문자열
+      description: 응답 예시(JSON 형태의 문자열)
+    httpMethod:
+      type: string
+      enum: [ GET, POST, PUT, PATCH, DELETE ]
+      example: POST
+      description: HTTP 메서드
+    requestBody:
+      type: string
+      format: json
+      example: '{ "name": "홍길동" }'
+      description: 요청 바디 (JSON 형식 문자열)
+    queryParameters:
+      type: string
+      format: json
+      example: '{ "page": "1", "size": "10" }'
+      description: 쿼리 파라미터 (JSON 형식 문자열)
+    pathParameters:
+      type: string
+      format: json
+      example: '{ "id": "123" }'
+      description: 경로 파라미터 (JSON 형식 문자열)
+
+ApiSpecVersionCreatedResponse:
+  type: object
+  properties:
+    apiSpecVersionId:
+      type: integer
+      format: int64
+      example: 101
+
+ApiSpecVersionUpdateRequest:
+  type: object
+  required:
+    - endpoint
+    - httpMethod
+  properties:
+    scrudProjectId:
+      type: integer
+      format: int64
+      example: 101
+    endpoint:
+      type: string
+      example: /api/v1/examples/{id}
+      description: API 엔드포인트 경로
+    summary:
+      type: string
+      example: 예시 스펙입니다.
+      description: API에 대한 간단한 설명
+    description:
+      type: string
+      example: 이 API는 예시 데이터를 처리합니다.
+      description: API 상세 설명
+    response:
+      type: string
+      example: JSON 응답 예시 문자열
+      description: 응답 예시(JSON 형태의 문자열)
+    httpMethod:
+      type: string
+      enum: [ GET, POST, PUT, PATCH, DELETE ]
+      example: POST
+      description: HTTP 메서드
+    requestBody:
+      type: string
+      format: json
+      example: '{ "name": "홍길동" }'
+      description: 요청 바디 (JSON 형식 문자열)
+    queryParameters:
+      type: string
+      format: json
+      example: '{ "page": "1", "size": "10" }'
+      description: 쿼리 파라미터 (JSON 형식 문자열)
+    pathParameters:
+      type: string
+      format: json
+      example: '{ "id": "123" }'
+      description: 경로 파라미터 (JSON 형식 문자열)
+
+ApiSpecListResponse:
+  type: object
+  properties:
+    content:
+      type: array
+      items:
+        $ref: '#/ApiSpecResponse'
+
+ApiSpecVersionStatusRequest:
+  type: object
+  properties:
+    apiSpecStatus:
+        type: string
+        enum: [ AI_GENERATED, AI_VISUALIZED, USER_COMPLETED ]
+        example: AI_GENERATED
+        description: API 스펙 상태 (AI_GENERATED, AI_VISUALIZED, USER_COMPLETED)
+

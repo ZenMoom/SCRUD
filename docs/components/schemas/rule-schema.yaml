@@ -1,0 +1,116 @@
+RuleResponse:
+  type: object
+  properties:
+    service_spec_version_id:
+      type: integer
+      example: 1
+    spec_version:
+      $ref: '#/SpecVersionOut'
+    scrud_version:
+      type: string
+    status:
+      type: string
+    description:
+      type: string
+    operation_field_rules:
+      type: array
+      items:
+        $ref: '#/OperationFieldRuleOut'
+  required:
+    - service_spec_version_id
+    - spec_version
+    - scrud_version
+    - status
+    - operation_field_rules
+
+SpecVersionOut:
+  type: object
+  properties:
+    spec_version_id:
+      type: integer
+    open_api_version:
+      $ref: '#/OpenApiVersion'
+    description:
+      type: string
+  required:
+    - spec_version_id
+    - open_api_version
+
+OpenApiVersion:
+  type: string
+  example: "3.0.1"
+
+OperationFieldRuleOut:
+  type: object
+  properties:
+    operation_field_rule_id:
+      type: integer
+    field_name:
+      type: string
+    is_editable:
+      type: boolean
+    editable_sub_fields:
+      type: string
+    parameter_rules:
+      type: array
+      items:
+        $ref: '#/ParameterRule'
+    request_rules:
+      type: array
+      items:
+        $ref: '#/RequestRule'
+    response_rules:
+      type: array
+      items:
+        $ref: '#/ResponseRule'
+  required:
+    - operation_field_rule_id
+    - field_name
+    - is_editable
+
+ParameterRule:
+  type: object
+  properties:
+    in_type:
+      type: string
+    data_type:
+      type: string
+    is_editable:
+      type: boolean
+    is_required:
+      type: boolean
+    supports_enum:
+      type: boolean
+    supports_array:
+      type: boolean
+
+RequestRule:
+  type: object
+  properties:
+    is_required:
+      type: boolean
+    body_type:
+      type: string
+    content_type:
+      type: string
+    supports_file:
+      type: boolean
+
+ResponseRule:
+  type: object
+  properties:
+    is_error:
+      type: boolean
+    description:
+      type: string
+    schema_type:
+      type: string
+      nullable: true
+    status_code:
+      type: string
+    content_type:
+      type: string
+      nullable: true
+    ref_component:
+      type: string
+      nullable: true
