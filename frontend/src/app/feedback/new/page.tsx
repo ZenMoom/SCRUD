@@ -4,7 +4,7 @@ import type React from 'react';
 
 import FeedbackBackButton from '@/components/feedback/FeedbackBackButton';
 import { createPost } from '@/lib/feedback-api';
-import { CreatePostRequest } from '@generated/model';
+import type { CreatePostRequest, PostStatusEnumDto } from '@generated/model';
 import { Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -16,11 +16,13 @@ const categoryOptions = [
   { id: 2, value: 'bug', label: '버그 리포트', description: '발견한 오류나 문제점을 알려주세요.' },
   { id: 3, value: 'improvement', label: '개선 제안', description: '기존 기능의 개선 아이디어를 공유합니다.' },
   { id: 4, value: 'question', label: '질문', description: '서비스 이용 중 궁금한 점을 물어보세요.' },
+  { id: 5, value: 'notice', label: '공지사항', description: '중요한 안내사항을 공유합니다.' },
 ];
 
 export default function NewFeedbackPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
+  const isAdmin = user?.role === ('ADMIN' as PostStatusEnumDto);
 
   // 폼 상태
   const [title, setTitle] = useState('');
@@ -74,6 +76,12 @@ export default function NewFeedbackPage() {
       return;
     }
 
+    // 공지사항은 ADMIN만 작성 가능 (추가 보안 검증)
+    if (category === 5 && !isAdmin) {
+      setErrors({ category: '공지사항은 관리자만 작성할 수 있습니다.' });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -118,19 +126,29 @@ export default function NewFeedbackPage() {
             <div className='mb-6'>
               <label className='block mb-2 font-medium text-gray-700'>카테고리</label>
               <div className='sm:grid-cols-2 grid grid-cols-1 gap-3'>
-                {categoryOptions.map((option) => (
-                  <div
-                    key={option.value}
-                    className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                      category === option.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => setCategory(option.id)}
-                  >
-                    <div className='font-medium text-gray-800'>{option.label}</div>
-                    <div className='mt-1 text-sm text-gray-500'>{option.description}</div>
-                  </div>
-                ))}
+                {categoryOptions
+                  .filter((option) => !(option.value === 'notice' && !isAdmin))
+                  .map((option) => (
+                    <div
+                      key={option.value}
+                      className={`border rounded-lg p-3 transition-colors ${
+                        category === option.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                      } cursor-pointer`}
+                      onClick={() => setCategory(option.id)}
+                    >
+                      <div className='font-medium text-gray-800'>
+                        {option.label}
+                        {option.value === 'notice' && (
+                          <span className='py-0.5 px-2 ml-2 text-xs text-yellow-800 bg-yellow-100 rounded-full'>
+                            관리자 전용
+                          </span>
+                        )}
+                      </div>
+                      <div className='mt-1 text-sm text-gray-500'>{option.description}</div>
+                    </div>
+                  ))}
               </div>
+              {errors.category && <p className='mt-1 text-sm text-red-500'>{errors.category}</p>}
             </div>
 
             {/* 제목 입력 */}
