@@ -8,7 +8,8 @@ INSERT INTO `category` (`category_id`, `name`)
 VALUES (1, 'feature'),
        (2, 'bug'),
        (3, 'improvement'),
-       (4, 'question');
+       (4, 'question'),
+       (5, 'notice');
 
 -- 트랜잭션 커밋
 COMMIT;
