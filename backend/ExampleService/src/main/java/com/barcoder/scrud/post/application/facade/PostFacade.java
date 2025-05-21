@@ -1,10 +1,16 @@
 package com.barcoder.scrud.post.application.facade;
 
+import com.barcoder.scrud.global.common.error.ErrorStatus;
+import com.barcoder.scrud.global.common.exception.ExceptionHandler;
+import com.barcoder.scrud.post.application.dto.in.CreatePostIn;
+import com.barcoder.scrud.post.application.dto.out.CreatePostOut;
 import com.barcoder.scrud.post.application.dto.out.GetPostOut;
 import com.barcoder.scrud.post.application.dto.out.PostOut;
 import com.barcoder.scrud.post.application.service.PostGetService;
+import com.barcoder.scrud.post.application.service.PostService;
 import com.barcoder.scrud.user.application.dto.out.UserOut;
 import com.barcoder.scrud.user.application.usecase.UserUseCase;
+import com.barcoder.scrud.user.domain.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -15,9 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @RequiredArgsConstructor
 @Slf4j
-public class PostGetFacade {
+public class PostFacade {
 
     private final PostGetService postGetService;
+    private final PostService postService;
     private final UserUseCase userUseCase;
     private final ModelMapper modelMapper;
 
@@ -40,5 +47,27 @@ public class PostGetFacade {
                 .post(postOut)
                 .author(userOut)
                 .build();
+    }
+
+    /**
+     * 게시글 생성
+     *
+     * @param inDto 게시글 생성 요청 DTO
+     * @return CreatePostOut 게시글 생성 응답 DTO
+     */
+    public CreatePostOut createPost(CreatePostIn inDto) {
+
+        // 유저 확인
+        UserOut userOut = userUseCase.getUserById(inDto.getUserId());
+
+        // 관리자가 아니면 공지사항 작성 불가(categoryId 5)
+        if (inDto.getCategoryId() == 5 && userOut.getRole().equals(UserRole.USER)) {
+            throw new ExceptionHandler(ErrorStatus.USER_NOT_ADMIN);
+        }
+
+        // 게시글 생성
+        CreatePostOut post = postService.createPost(inDto);
+
+        return post;
     }
 }
