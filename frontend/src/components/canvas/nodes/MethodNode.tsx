@@ -67,8 +67,6 @@ export const MethodNode = memo(({ id, data, selected }: NodeProps<MethodNodeData
     e.stopPropagation()
     e.preventDefault()
 
-    console.log("토글 버튼 클릭:", id, "현재 상태:", isExpanded)
-
     // 커스텀 이벤트 생성 및 발송
     const event = new CustomEvent("toggleMethodExpand", {
       detail: { nodeId: id },

@@ -494,10 +494,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   // 데이터로부터 노드와 엣지 생성
   useEffect(() => {
-    // 컴포넌트 마운트 시 한 번만 실행되는 초기화 로직
-    console.log("DiagramContainer 마운트됨")
-
-    // 언마운트 시 정리 작업
     return () => {
       console.log("DiagramContainer 언마운트됨")
     }
@@ -505,23 +501,18 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   useEffect(() => {
     if (!diagramData) {
-      console.log("다이어그램 데이터가 없습니다:", diagramData)
       return
     }
 
     if (!isDiagramDto(diagramData)) {
-      console.error("다이어그램 데이터 형식이 올바르지 않습니다:", diagramData)
       return
     }
 
     if (!diagramData.components || !Array.isArray(diagramData.components) || diagramData.components.length === 0) {
-      console.log("다이어그램 컴포넌트 데이터가 없습니다:", diagramData)
       return
     }
 
     try {
-      console.log("다이어그램 데이터 처리 시작:", diagramData)
-
       // 컴포넌트 배열 필터링 (유효한 컴포넌트만 사용)
       const validComponents = diagramData.components.filter(isComponentDto)
 
@@ -534,8 +525,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         }
         return acc
       }, [])
-
-      console.log(`총 ${validComponents.length}개의 컴포넌트 중 ${uniqueComponents.length}개의 고유 컴포넌트 처리`)
 
       // 노드 레이아웃 계산 (초기 위치 전달)
       const { newNodes, methodIdToNodeId, updatedPositions } = calculateLayout(uniqueComponents, expandedNodes, initialNodePositions)
@@ -572,9 +561,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
         })
       }
 
-      console.log("생성된 노드:", newNodes)
-      console.log("생성된 엣지:", newEdges)
-
       setNodes(newNodes)
       setEdges(newEdges)
 
@@ -598,8 +584,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
   // 메서드 확장/축소 토글 핸들러
   const toggleMethodExpand = useCallback((nodeId: string) => {
-    console.log("토글 메서드 확장:", nodeId)
-
     setExpandedNodes((prev) => {
       const newSet = new Set(prev)
       if (newSet.has(nodeId)) {
@@ -615,7 +599,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
   useEffect(() => {
     const handleToggleExpand = (e: Event) => {
       const customEvent = e as CustomEvent
-      console.log("이벤트 수신:", customEvent.detail)
       if (customEvent.detail && customEvent.detail.nodeId) {
         toggleMethodExpand(customEvent.detail.nodeId)
       }
@@ -623,7 +606,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
 
     const handleRemoveTarget = (e: Event) => {
       const customEvent = e as CustomEvent
-      console.log("타겟 제거 이벤트 수신:", customEvent.detail)
       if (customEvent.detail && customEvent.detail.nodeId) {
         removeTargetNode(customEvent.detail.nodeId)
       }
@@ -632,7 +614,6 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
     // 코드 모달 이벤트 핸들러 추가
     const handleOpenCodeModal = (e: Event) => {
       const customEvent = e as CustomEvent
-      console.log("코드 모달 이벤트 수신:", customEvent.detail)
       if (customEvent.detail) {
         setCodeModalContent({
           title: customEvent.detail.title || "",
@@ -854,7 +835,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
               {targetNodes.length > 0 ? (
                 targetNodes.map((target) => (
                   <div key={target.id} className="relative group">
-                    <div className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs max-w-[150px] overflow-hidden">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs max-w-[130px] overflow-hidden">
                       <span className="truncate">
                         {target.type === "class" && "클래스: "}
                         {target.type === "interface" && "인터페이스: "}
@@ -898,7 +879,7 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
             <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-md shadow-sm hover:bg-gray-50 transition-colors">
               <div className="flex flex-col items-start">
                 <span className="text-md font-bold">V {currentVersion}</span>
-                {currentVersionInfo && <span className="text-xs text-gray-500 w-24 inline-block overflow-hidden text-ellipsis whitespace-nowrap">{currentVersionInfo.description}</span>}
+                {currentVersionInfo && <span className="text-xs text-gray-500 w-24 inline-block overflow-hidden text-ellipsis whitespace-nowrap text-left">{currentVersionInfo.description}</span>}
               </div>
               <ChevronDown size={16} className={`text-gray-600 transition-transform ${showVersions ? "rotate-180" : ""}`} />
             </button>
@@ -915,8 +896,8 @@ export default function DiagramContainer({ diagramData, loading, error, onSelect
                     >
                       <div className="flex items-center justify-between">
                         <div className="w-32 pr-1">
-                          <span className={`text-sm block ${version.versionId === currentVersion ? "font-medium text-blue-700" : "text-gray-700"}`}>버전 {version.versionId}</span>
-                          <span className="text-xs text-gray-500 block w-full overflow-hidden text-ellipsis whitespace-nowrap" title={version.description}>
+                          <span className={`text-sm block text-left ${version.versionId === currentVersion ? "font-medium text-blue-700" : "text-gray-700"}`}>버전 {version.versionId}</span>
+                          <span className="text-xs text-gray-500 block w-full overflow-hidden text-ellipsis whitespace-nowrap text-left" title={version.description}>
                             {version.description}
                           </span>
                         </div>
