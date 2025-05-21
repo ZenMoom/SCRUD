@@ -171,13 +171,13 @@ function IntroductionStep() {
     <div>
       <h2 className='mb-4 text-2xl font-bold text-gray-800'>SCRUD 서비스 소개</h2>
       <div className='mb-6'>
-        <div className='aspect-video relative mb-4 overflow-hidden bg-gray-100 rounded-lg'>
+        <div className='aspect-video relative flex items-center justify-center mb-4 overflow-hidden bg-gray-100 rounded-lg'>
           <Image
             src='/tutorial/scrud-dashboard-overview.png'
             alt='SCRUD 서비스 대시보드 개요'
             width={800}
             height={400}
-            className='object-cover'
+            className='object-contain max-w-full max-h-full'
           />
         </div>
         <p className='mb-4 text-gray-600'>
@@ -315,13 +315,13 @@ function ProjectConfigStep() {
       <h2 className='mb-4 text-2xl font-bold text-gray-800'>프로젝트 설정하기</h2>
 
       <div className='mb-6'>
-        <div className='aspect-video relative mb-4 overflow-hidden bg-gray-100 rounded-lg'>
+        <div className='aspect-video relative flex items-center justify-center mb-4 overflow-hidden bg-gray-100 rounded-lg'>
           <Image
             src='/tutorial/scrud-project-config.png'
             alt='프로젝트 설정 화면'
             width={800}
             height={400}
-            className='object-cover'
+            className='object-contain max-w-full max-h-full'
           />
         </div>
         <p className='mb-4 text-gray-600'>
@@ -907,13 +907,13 @@ function ConclusionStep() {
       <h2 className='mb-4 text-2xl font-bold text-gray-800'>SCRUD 활용 마무리</h2>
 
       <div className='mb-6'>
-        <div className='aspect-video relative mb-4 overflow-hidden bg-gray-100 rounded-lg'>
+        <div className='aspect-video relative flex items-center justify-center mb-4 overflow-hidden bg-gray-100 rounded-lg'>
           <Image
             src='/tutorial/scrud-completion-summary.png'
             alt='생성된 Spring 코드로 작업하는 개발자'
             width={800}
             height={400}
-            className='object-cover'
+            className='object-contain max-w-full max-h-full'
           />
         </div>
         <p className='mb-4 text-gray-600'>
