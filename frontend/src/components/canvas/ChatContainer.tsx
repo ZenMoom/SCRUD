@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Clock, Send, RefreshCw, X, Info } from "lucide-react"
+import { Clock, ArrowUp, RefreshCw, X, Info } from "lucide-react"
 import type { ChatHistoryResponse } from "@generated/model"
 import type { TargetNode } from "./DiagramContainer"
 import axios from "axios"
@@ -95,7 +95,6 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
 
   // SSE 연결 해제 함수
   const disconnectSSE = useCallback(() => {
-    console.log("🔌 SSE 연결 해제")
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
       reconnectTimeoutRef.current = null
@@ -117,9 +116,6 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
   const handleSSEMessage = useCallback(
     (event: MessageEvent) => {
       try {
-        // 원본 이벤트 데이터 로깅 (항상 기록)
-        console.log("🔍 SSE 원본 데이터:", event.data)
-
         if (currentMessageCompleted && !activeSSEIdRef.current) {
           return
         }
@@ -1153,7 +1149,7 @@ export default function ChatContainer({ projectId, apiId, versionId, chatData, l
                 sending || !newMessage.trim() || sseConnected || isConnecting || isSubmitting ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-gray-700 text-white hover:bg-gray-800"
               }`}
             >
-              {sending || isConnecting ? <div className="animate-spin border-t-transparent w-5 h-5 border-2 border-white rounded-full"></div> : <Send size={18} />}
+              {sending || isConnecting ? <div className="animate-spin border-t-transparent w-5 h-5 border-2 border-white rounded-full"></div> : <ArrowUp size={16} />}
             </button>
           </div>
         </div>
