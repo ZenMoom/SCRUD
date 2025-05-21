@@ -108,12 +108,6 @@ export default function GlobalSettingPage() {
     architectureStructure: { type: 'ARCHITECTURE_DEFAULT_LAYERED_A', label: '레이어드 아키텍처 A' },
   });
 
-  useEffect(() => {
-    console.log('dependencySelections:', settings.dependencySelections);
-    console.log('dependencyFiles:', settings.dependencyFiles);
-    console.log('dependencyFile:', settings.dependencyFile);
-  }, [settings]);
-
   // 각 설정 항목의 완료 상태를 관리
   const [completed, setCompleted] = useState<Record<SettingKey, boolean>>({
     title: false,

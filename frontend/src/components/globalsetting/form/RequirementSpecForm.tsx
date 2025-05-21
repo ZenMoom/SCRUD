@@ -108,6 +108,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
         '.java',
         '.py',
         '.c',
+        '.csv',
         '.cpp',
         '.h',
         '.cs',

@@ -340,6 +340,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
         '.py',
         '.c',
         '.cpp',
+        '.csv',
         '.h',
         '.cs',
         '.php',

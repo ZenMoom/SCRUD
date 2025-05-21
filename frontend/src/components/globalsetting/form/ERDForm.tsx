@@ -106,6 +106,7 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(({ title, value, onChan
       '.cpp',
       '.h',
       '.cs',
+      '.csv',
       '.php',
       '.rb',
       '.go',

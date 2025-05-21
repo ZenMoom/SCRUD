@@ -108,6 +108,7 @@ const CodeConventionForm = forwardRef<HTMLDivElement, CodeConventionFormProps>(
         '.cpp',
         '.h',
         '.cs',
+        '.csv',
         '.php',
         '.rb',
         '.go',
