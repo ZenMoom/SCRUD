@@ -156,6 +156,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
         '.cpp',
         '.h',
         '.cs',
+        '.csv',
         '.php',
         '.rb',
         '.go',

@@ -107,6 +107,7 @@ const ErrorCodeForm = forwardRef<HTMLDivElement, ErrorCodeFormProps>(
         '.cpp',
         '.h',
         '.cs',
+        '.csv',
         '.php',
         '.rb',
         '.go',

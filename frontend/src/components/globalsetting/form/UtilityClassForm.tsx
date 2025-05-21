@@ -112,6 +112,7 @@ const UtilityClassForm = forwardRef<HTMLDivElement, UtilityClassFormProps>(
         '.cpp',
         '.h',
         '.cs',
+        '.csv',
         '.php',
         '.rb',
         '.go',

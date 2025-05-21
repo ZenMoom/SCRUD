@@ -11,7 +11,8 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'SCRUD',
-  description: 'Next.js와 TypeScript로 만든 프로젝트입니다.',
+  description:
+    'SCRUD는 Spring과 JPA 기반 프로젝트에서 반복적인 CRUD API 작성을 획기적으로 자동화하는 AI 기반 코드 생성 플랫폼입니다.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
