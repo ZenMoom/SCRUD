@@ -1,6 +1,6 @@
 import { categoryConfig } from '@/types/feedback';
 import { formatToKST } from '@/util/dayjs';
-import { PostSummaryResponse } from '@generated/model';
+import type { PostSummaryResponse } from '@generated/model';
 import { MessageSquare, ThumbsUp } from 'lucide-react';
 import Link from 'next/link';
 import { statusConfig } from './FeedbackBoard';
@@ -10,7 +10,9 @@ export default function FeedbackListItem({ feedback }: { feedback: PostSummaryRe
     <>
       <li
         key={feedback.postId}
-        className='group hover:bg-gray-50 transition-colors'
+        className={`group hover:bg-gray-50 transition-colors ${
+          feedback.category === 'notice' ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''
+        }`}
       >
         <Link
           href={`/feedback/${feedback.postId}`}
@@ -20,7 +22,14 @@ export default function FeedbackListItem({ feedback }: { feedback: PostSummaryRe
             <div className='sm:mb-0 sm:pr-6 mb-3'>
               {/* 피드백 제목 및 카테고리 */}
               <div className='flex flex-wrap items-center gap-2 mb-2'>
-                <h3 className='group-hover:text-blue-600 text-lg font-medium text-gray-900'>{feedback.title}</h3>
+                {feedback.category === 'notice' && <span className='mr-1 font-medium text-yellow-600'>📢</span>}
+                <h3
+                  className={`group-hover:text-blue-600 text-lg font-medium ${
+                    feedback.category === 'notice' ? 'text-yellow-800' : 'text-gray-900'
+                  }`}
+                >
+                  {feedback.title}
+                </h3>
                 {feedback.category && categoryConfig[feedback.category as keyof typeof categoryConfig] && (
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -31,7 +40,7 @@ export default function FeedbackListItem({ feedback }: { feedback: PostSummaryRe
                   </span>
                 )}
                 {/* 상태 표시 */}
-                {feedback.status && statusConfig[feedback.status] && (
+                {feedback.status && statusConfig[feedback.status] && feedback.category !== 'notice' && (
                   <span
                     className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       statusConfig[feedback.status].bgColor

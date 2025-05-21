@@ -26,7 +26,7 @@ import com.barcoder.scrud.post.application.dto.out.GetPostOut;
 import com.barcoder.scrud.post.application.dto.out.PostListOut;
 import com.barcoder.scrud.post.application.dto.out.PostVoteOut;
 import com.barcoder.scrud.post.application.facade.PostAdminFacade;
-import com.barcoder.scrud.post.application.facade.PostGetFacade;
+import com.barcoder.scrud.post.application.facade.PostFacade;
 import com.barcoder.scrud.post.application.service.PostGetService;
 import com.barcoder.scrud.post.application.service.PostService;
 import com.barcoder.scrud.post.domain.enums.PostOrder;
@@ -49,7 +49,7 @@ public class PostController implements PostApi {
     private final ModelMapper modelMapper;
     private final PostService postService;
     private final PostGetService postGetService;
-    private final PostGetFacade postGetFacade;
+    private final PostFacade postFacade;
     private final SecurityUtil securityUtil;
     private final PostAdminFacade postAdminFacade;
 
@@ -71,7 +71,7 @@ public class PostController implements PostApi {
                 .build();
 
         // 게시글 생성
-        CreatePostOut outDto = postService.createPost(inDto);
+        CreatePostOut outDto = postFacade.createPost(inDto);
 
         // response 변환
         CreatePostResponse response = modelMapper.map(outDto, CreatePostResponse.class);
@@ -107,7 +107,7 @@ public class PostController implements PostApi {
     public ResponseEntity<PostDetailResponse> getPostById(Long postId) {
 
         // 게시글 상세 조회
-        GetPostOut outDto = postGetFacade.getPostById(postId);
+        GetPostOut outDto = postFacade.getPostById(postId);
 
         // author 변환
         UserResponse author = modelMapper.map(outDto.getAuthor(), UserResponse.class);

@@ -1,5 +1,5 @@
 // 피드백 카테고리 타입
-export type FeedbackCategory = 'feature' | 'bug' | 'improvement' | 'question';
+export type FeedbackCategory = 'feature' | 'bug' | 'improvement' | 'question' | 'notice';
 
 // 피드백 상태 타입
 export type FeedbackStatus = 'pending' | 'reviewing' | 'inprogress' | 'completed' | 'rejected';
@@ -28,6 +28,7 @@ export const categoryConfig: Record<string, { label: string; color: string; numb
   bug: { label: '버그 리포트', color: 'bg-red-100 text-red-800', number: '2' },
   improvement: { label: '개선 제안', color: 'bg-green-100 text-green-800', number: '3' },
   question: { label: '질문', color: 'bg-purple-100 text-purple-800', number: '4' },
+  notice: { label: '공지사항', color: 'bg-yellow-100 text-yellow-800', number: '5' },
 };
 
 // 숫자로 카테고리 조회를 위한 매핑
@@ -36,4 +37,5 @@ export const numberToCategoryMap: Record<string, string> = {
   '2': 'bug',
   '3': 'improvement',
   '4': 'question',
+  '5': 'notice',
 };

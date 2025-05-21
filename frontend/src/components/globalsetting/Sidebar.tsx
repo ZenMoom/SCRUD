@@ -1,58 +1,74 @@
-"use client"
+'use client';
 
-import { XCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
-  activeItem: string
-  onItemClick: (item: string) => void
-  isMobile?: boolean
-  toggleSidebar?: () => void
+  activeItem: string;
+  onItemClick: (item: string) => void;
+  completed?: Record<string, boolean>;
 }
 
-export default function Sidebar({ activeItem, onItemClick, isMobile, toggleSidebar }: SidebarProps) {
+export default function Sidebar({ activeItem, onItemClick, completed = {} }: SidebarProps) {
+  // Reordered items to move security settings and architecture structure to the end
   const items = [
-    { id: "title", label: "프로젝트명", required: true },
-    { id: "description", label: "프로젝트 설명", required: true },
-    { id: "serverUrl", label: "Server URL", required: true },
-    { id: "requirementSpec", label: "요구사항 명세서", required: true },
-    { id: "erd", label: "ERD", required: true },
-    { id: "dependencyFile", label: "의존성 파일", required: false },
-    { id: "utilityClass", label: "유틸 클래스", required: false },
-    { id: "errorCode", label: "에러 코드", required: false },
-    { id: "securitySetting", label: "보안 설정", required: false },
-    { id: "codeConvention", label: "코드 컨벤션", required: false },
-    { id: "architectureStructure", label: "아키텍처 구조", required: false },
-  ]
+    { id: 'title', label: '프로젝트명', required: true },
+    { id: 'description', label: '프로젝트 설명', required: true },
+    { id: 'serverUrl', label: 'Server URL', required: true },
+    { id: 'requirementSpec', label: '요구사항 명세서', required: true },
+    { id: 'erd', label: 'ERD', required: true },
+    { id: 'dependencyFile', label: '의존성 파일', required: false },
+    { id: 'utilityClass', label: '유틸 클래스', required: false },
+    { id: 'errorCode', label: '에러 코드', required: false },
+    { id: 'codeConvention', label: '코드 컨벤션', required: false },
+    { id: 'securitySetting', label: '보안 설정', required: false },
+    { id: 'architectureStructure', label: '아키텍처 구조', required: false },
+  ];
 
   return (
-    <div className="w-[300px] h-full bg-white rounded-lg shadow-md transition-all duration-300 ease-in-out md:block hidden">
-      {isMobile && (
-        <button 
-          className="absolute top-2 right-2 p-2 rounded-full bg-gray-100 hover:bg-gray-200 md:hidden"
-          onClick={toggleSidebar}
-        >
-          <XCircle size={20} />
-        </button>
+    <aside
+      className={cn(
+        'bg-white rounded-lg shadow-sm overflow-hidden h-full transition-all duration-300',
+        'md:w-64 md:flex-shrink-0 md:static',
+        'hidden md:block'
       )}
-      
-      
-      <div className="overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ height: "calc(100vh - 105px)" }}>
-      <ul className="px-2 py-2 flex flex-col justify-between h-full">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className={`flex items-center py-4 px-4 rounded-lg cursor-pointer transition-colors duration-200 hover:bg-gray-100 
-              ${activeItem === item.id ? 'bg-gray-100 font-medium' : ''}`}
-              onClick={() => onItemClick(item.id)}
-            >
-              <span className="text-base flex items-center gap-1">
-                {item.label}
-                {item.required && <span className="text-red-500">*</span>}
-              </span>
-            </li>
-          ))}
-        </ul>
+    >
+      <div className='h-full overflow-y-auto'>
+        <nav className='p-4'>
+          <ul className='space-y-1'>
+            {items.map((item) => {
+              const isCompleted = completed[item.id];
+              const isActive = activeItem === item.id;
+
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => onItemClick(item.id)}
+                    className={cn(
+                      'w-full text-left px-4 py-3 rounded-md transition-all duration-200',
+                      'hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200',
+                      isActive ? 'bg-gray-100 font-medium border-l-4 border-blue-500' : 'border-l-4 border-transparent',
+                      isCompleted && !isActive && 'border-l-4 border-green-500 bg-green-50'
+                    )}
+                  >
+                    <span className='flex items-center justify-between'>
+                      <span className='flex items-center gap-1'>
+                        {item.label}
+                        {item.required && <span className='ml-1 text-red-500'>*</span>}
+                      </span>
+                      {isCompleted && (
+                        <span
+                          className='w-2 h-2 bg-green-500 rounded-full'
+                          aria-hidden='true'
+                        />
+                      )}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
       </div>
-    </div>
-  )
+    </aside>
+  );
 }
