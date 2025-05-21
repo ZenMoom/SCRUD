@@ -1,6 +1,8 @@
+import { formatToKST } from '@/util/dayjs';
 import { ApiSpecApi } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { ApiSpecVersionUpdateRequest } from '@generated/model';
+import axios from 'axios';
 import { NextRequest, NextResponse } from 'next/server';
 
 // API 스펙 상세 조회
@@ -37,8 +39,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ api
 
     const response = await apiSpecApi.getApiSpecById(requestParameters);
     return NextResponse.json(response.data);
-  } catch (error: unknown) {
-    console.error('API 스펙 조회 오류:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'API 스펙 상세 조회 오류:', error.response?.data);
+    }
 
     const errorMessage = error instanceof Error ? error.message : 'API 스펙 조회 중 오류가 발생했습니다.';
 
@@ -110,11 +114,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ api
     const response = await apiSpecApi.updateApiSpec(requestParameters);
     return NextResponse.json(response.data);
   } catch (error: unknown) {
-    console.error('API 스펙 수정 오류:', error);
+    console.error(formatToKST(new Date().toISOString()), 'API 스펙 수정 오류:', error);
 
     // 오류 상세 정보 로깅
     if (error instanceof Error) {
-      console.error('Error details:', {
+      console.error(formatToKST(new Date().toISOString()), 'Error details:', {
         name: error.name,
         message: error.message,
         stack: error.stack,
@@ -161,8 +165,10 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 
     const response = await apiSpecApi.deleteApiSpec(requestParameters);
     return NextResponse.json(response.data);
-  } catch (error: unknown) {
-    console.error('API 스펙 삭제 오류:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'API 스펙 삭제 오류:', error.response?.data);
+    }
 
     const errorMessage = error instanceof Error ? error.message : 'API 스펙 삭제 중 오류가 발생했습니다.';
 

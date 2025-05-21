@@ -1,6 +1,8 @@
+import { formatToKST } from '@/util/dayjs';
 import { CommentApiCreateCommentRequest, CommentApiFactory } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { CreateCommentRequest, UpdateCommentRequest } from '@generated/model';
+import axios from 'axios';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
     return NextResponse.json(response.data.content);
   } catch (error) {
-    console.error('Error fetching comments:', error);
+    console.error(formatToKST(new Date().toISOString()), 'Error fetching comments:', error);
     if (typeof error === 'object' && error !== null && 'response' in error) {
       console.log('error response:', error.response);
     }
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     return NextResponse.json(response.data);
   } catch (error) {
-    console.error('Error creating comment:', error);
+    console.error(formatToKST(new Date().toISOString()), 'Error creating comment:', error);
     return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
   }
 }
@@ -111,7 +113,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 
     return NextResponse.json({ message: 'Comment deleted successfully' });
   } catch (error) {
-    console.error('Error deleting comment:', error);
+    console.error(formatToKST(new Date().toISOString()), 'Error deleting comment:', error);
     return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
   }
 }
@@ -148,7 +150,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     });
     return NextResponse.json(response.data);
   } catch (error) {
-    console.error('Error updating comment:', error);
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'Error updating comment:', error.response?.data);
+    }
+
     return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 });
   }
 }

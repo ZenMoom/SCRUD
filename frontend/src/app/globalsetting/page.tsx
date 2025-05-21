@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useGitHubTokenStore } from '@/store/githubTokenStore';
 import { useProjectTempStore } from '@/store/projectTempStore';
+import { formatToKST } from '@/util/dayjs';
 import { AlertCircle, Menu } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
@@ -349,7 +350,7 @@ export default function GlobalSettingPage() {
       clearTempData();
       router.push(`/project/${responseText}/api`);
     } catch (err) {
-      console.error('프로젝트 생성 오류:', err);
+      console.error(formatToKST(new Date().toISOString()), '프로젝트 생성 오류:', err);
       setError(err instanceof Error ? err.message : '프로젝트 생성 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);

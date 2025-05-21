@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { deletePost } from '@/lib/feedback-api';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
+import { formatToKST } from '@/util/dayjs';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -47,7 +48,7 @@ export default function FeedbackActions() {
       router.push('/feedback');
       router.refresh();
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error(formatToKST(new Date().toISOString()), 'Error deleting post:', error);
       alert('피드백 삭제 중 오류가 발생했습니다.');
     } finally {
       setIsDeleting(false);

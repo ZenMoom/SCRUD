@@ -2,6 +2,7 @@
 
 import useAuthStore from '@/app/store/useAuthStore';
 import EmojiPicker from '@/components/project-card/emoji-picker';
+import { formatToKST } from '@/util/dayjs';
 import { ApiProcessStateEnumDto } from '@generated/model';
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
@@ -158,7 +159,10 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
         if (selectedEndpointId === endpointId) {
           setSelectedEndpointId(null);
         }
-      } catch {
+      } catch (e) {
+        if (axios.isAxiosError(e)) {
+          console.error(formatToKST(new Date().toISOString()), 'API 엔드포인트 삭제 오류:', e.response?.data);
+        }
         alert('API 스펙 삭제 중 오류가 발생했습니다.');
       }
     }
@@ -186,7 +190,10 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
               // 백엔드 API 호출하여 실제 데이터 삭제
               await axios.delete(`/api/api-specs/${endpoint.apiSpecVersionId}`, { headers });
               return true;
-            } catch {
+            } catch (e) {
+              if (axios.isAxiosError(e)) {
+                console.error(formatToKST(new Date().toISOString()), 'API 엔드포인트 삭제 오류:', e.response?.data);
+              }
               alert(`API 엔드포인트 ${endpoint.path} 삭제 중 오류가 발생했습니다.`);
               return false;
             }
@@ -408,7 +415,10 @@ export default function MiddleContainer({ onApiSelect, apiGroups, setApiGroups, 
           },
         }
       );
-    } catch {
+    } catch (e) {
+      if (axios.isAxiosError(e)) {
+        console.error(formatToKST(new Date().toISOString()), 'API 상태 업데이트 오류:', e.response?.data);
+      }
       alert('API 상태 업데이트 중 오류 발생:');
 
       // 요청 실패 시 UI 롤백

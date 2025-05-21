@@ -3,6 +3,7 @@
 import useAuthStore from '@/app/store/useAuthStore';
 import { deleteComment, getComments, updateComment } from '@/lib/comment-api';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
+import { formatToKST } from '@/util/dayjs';
 import type { CommentResponse } from '@generated/model';
 import dayjs from 'dayjs';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -56,7 +57,7 @@ export default function FeedbackCommentItem({
         setComments(updatedComments);
       }
     } catch (error) {
-      console.error('댓글 삭제 실패:', error);
+      console.error(formatToKST(new Date().toISOString()), '댓글 삭제 실패:', error);
       alert('댓글을 삭제하는 중 오류가 발생했습니다.');
     } finally {
       setIsDeleting(false);
@@ -95,7 +96,7 @@ export default function FeedbackCommentItem({
       }
       setIsEditing(false);
     } catch (error) {
-      console.error('댓글 수정 실패:', error);
+      console.error(formatToKST(new Date().toISOString()), '댓글 수정 실패:', error);
       alert('댓글을 수정하는 중 오류가 발생했습니다.');
     } finally {
       setIsSubmittingEdit(false);

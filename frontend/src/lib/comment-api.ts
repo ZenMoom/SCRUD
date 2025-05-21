@@ -1,3 +1,4 @@
+import { formatToKST } from '@/util/dayjs';
 import { getApiBaseUrl } from '@/util/serverUtil';
 import { CommentResponse } from '@generated/model';
 
@@ -17,7 +18,7 @@ export async function getComments(postId: string): Promise<CommentResponse[]> {
   });
 
   if (!response.ok) {
-    console.error(`Failed to fetch comments for post ID ${postId}`);
+    console.error(formatToKST(new Date().toISOString()), `Failed to fetch comments for post ID ${postId}`);
     return [] as CommentResponse[]; // 에러 발생 시 빈 배열 반환
   }
 
@@ -58,7 +59,7 @@ export async function createComment({
 
     return await response.json();
   } catch (error) {
-    console.error('Failed to create comment:', error);
+    console.error(formatToKST(new Date().toISOString()), 'Failed to create comment:', error);
     throw error;
   }
 }

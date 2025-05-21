@@ -1,3 +1,5 @@
+import { formatToKST } from '@/util/dayjs';
+import axios from 'axios';
 import { type NextRequest, NextResponse } from 'next/server';
 
 // GET 요청 핸들러 - API 목록 조회
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
     // API URL 가져오기
     const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
     if (!apiUrl) {
-      console.error('API_BASE_URL 환경 변수가 설정되지 않았습니다.');
+      console.error(formatToKST(new Date().toISOString()), 'API_BASE_URL 환경 변수가 설정되지 않았습니다.');
       return NextResponse.json({ error: 'API 서버 구성 오류' }, { status: 500 });
     }
 
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
       const data = await fetchResponse.json();
       return NextResponse.json(data);
     } catch (fetchError) {
-      console.error('API 호출 오류:', fetchError);
+      console.error(formatToKST(new Date().toISOString()), 'API 호출 오류:', fetchError);
 
       // 대체 방법: 직접 URL 문자열 구성
       try {
@@ -66,13 +68,17 @@ export async function GET(request: NextRequest) {
         const alternativeData = await alternativeResponse.json();
         return NextResponse.json(alternativeData);
       } catch (alternativeError) {
-        console.error('대체 API 호출 오류:', alternativeError);
+        console.error(formatToKST(new Date().toISOString()), '대체 API 호출 오류:', alternativeError);
         throw new Error('모든 API 호출 방법이 실패했습니다');
       }
     }
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'API 목록 조회 오류:', error.response?.data);
+    }
+
     const apiError = error as Error;
-    console.error('API 목록 조회 실패:', apiError);
+    console.error(formatToKST(new Date().toISOString()), 'API 목록 조회 실패:', apiError);
 
     return NextResponse.json(
       { error: 'API 목록을 불러오는 중 오류가 발생했습니다: ' + apiError.message },

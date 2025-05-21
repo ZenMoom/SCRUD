@@ -2,6 +2,7 @@
 
 import useAuthStore from '@/app/store/useAuthStore';
 import { updatePost } from '@/lib/feedback-api';
+import { formatToKST } from '@/util/dayjs';
 import { PostDetailResponse } from '@generated/model';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -55,7 +56,7 @@ export default function FeedbackEditForm({ post }: FeedbackEditFormProps) {
       router.push(`/feedback/${post.postId}`);
       router.refresh(); // 캐시된 데이터 갱신
     } catch (err) {
-      console.error('Failed to update feedback:', err);
+      console.error(formatToKST(new Date().toISOString()), 'Failed to update feedback:', err);
       setError('피드백 수정 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);

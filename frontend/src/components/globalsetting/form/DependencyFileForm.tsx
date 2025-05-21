@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useProjectTempStore } from '@/store/projectTempStore';
+import { formatToKST } from '@/util/dayjs';
 import {
   AlertCircle,
   Check,
@@ -170,7 +171,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
         console.log('Spring Initializr 메타데이터:', data);
         setSpringMetadata(data);
       } catch (error) {
-        console.error('Spring 메타데이터 로드 오류:', error);
+        console.error(formatToKST(new Date().toISOString()), 'Spring 메타데이터 로드 오류:', error);
         setMetadataError('Spring Initializr 메타데이터를 가져오는데 실패했습니다.');
       } finally {
         setLoadingMetadata(false);

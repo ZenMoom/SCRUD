@@ -1,4 +1,5 @@
 import useAuthStore from '@/app/store/useAuthStore';
+import { formatToKST } from '@/util/dayjs';
 import { ApiSpecVersionCreatedResponse, ApiSpecVersionResponse } from '@generated/model';
 import axios, { AxiosError } from 'axios';
 import { Dispatch, SetStateAction } from 'react';
@@ -266,6 +267,7 @@ export const useApiSpec = ({
     } catch (error) {
       // Axios 에러에서 더 자세한 정보 추출
       if (axios.isAxiosError(error) && error.response) {
+        console.error(formatToKST(new Date().toISOString()), 'API 요청 오류:', error.response.data);
         setApiResponse({
           status: error.response.status,
           error: error.response.data?.error || 'API 생성/수정 중 오류가 발생했습니다.',
@@ -336,6 +338,7 @@ export const useApiSpec = ({
       const err = error as Error | AxiosError;
 
       if (axios.isAxiosError(err) && err.response) {
+        console.error(formatToKST(new Date().toISOString()), 'API 삭제 오류:', err.response.data);
         setApiResponse({
           status: err.response.status,
           error: err.response.data?.error || 'API 삭제 중 오류가 발생했습니다.',

@@ -1,5 +1,7 @@
+import { formatToKST } from '@/util/dayjs';
 import { ApiSpecApi } from '@generated/api';
 import { Configuration } from '@generated/configuration';
+import axios from 'axios';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest, context: { params: Promise<{ scrudProjectId: string }> }) {
@@ -32,8 +34,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ scr
     });
 
     return NextResponse.json(response.data);
-  } catch (error: unknown) {
-    console.error('API 스펙 목록 조회 오류:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'API 스펙 목록 조회 오류:', error.response?.data);
+    }
 
     const errorMessage = error instanceof Error ? error.message : 'API 스펙 목록 조회 중 오류가 발생했습니다.';
 

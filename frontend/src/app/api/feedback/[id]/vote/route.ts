@@ -1,7 +1,8 @@
+import { formatToKST } from '@/util/dayjs';
 import { PostApiFactory } from '@generated/api';
 import { Configuration } from '@generated/configuration';
 import { PostVoteRequest } from '@generated/model';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -30,8 +31,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       } as PostVoteRequest,
     });
     return NextResponse.json(response.data);
-  } catch (error: unknown) {
-    console.error('Error creating comment:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), 'Error creating comment:', error.response?.data);
+    }
 
     const axiosError = error as AxiosError<{ message: string }>;
     const message = axiosError.response?.data?.message ?? 'An error occurred';

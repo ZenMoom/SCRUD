@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ExampleApi, ScrudProjectApi } from "@generated/api";
-import { Configuration } from "@generated/configuration";
+import { formatToKST } from '@/util/dayjs';
+import { ExampleApi, ScrudProjectApi } from '@generated/api';
+import { Configuration } from '@generated/configuration';
+import axios from 'axios';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
@@ -9,7 +11,7 @@ export async function GET() {
     basePath: apiUrl,
   });
   const exampleApi = new ExampleApi(config);
-  
+
   const response = await exampleApi.getExamplesWithPagination({
     page: 1,
     size: 5,
@@ -26,10 +28,7 @@ export async function DELETE(
     const { projectId, globalFileId } = await context.params;
 
     if (!projectId || !globalFileId) {
-      return NextResponse.json(
-        { message: "프로젝트 ID와 전역 파일 ID가 필요합니다." },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: '프로젝트 ID와 전역 파일 ID가 필요합니다.' }, { status: 400 });
     }
 
     // API 기본 URL 설정
@@ -40,10 +39,7 @@ export async function DELETE(
 
     // 인증 토큰이 없으면 401 에러 반환
     if (!authorization) {
-      return NextResponse.json(
-        { message: '인증 정보가 필요합니다.' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: '인증 정보가 필요합니다.' }, { status: 401 });
     }
 
     // "Bearer " 접두사 확인 및 필요시 추가
@@ -56,10 +52,10 @@ export async function DELETE(
       basePath: apiUrl,
       baseOptions: {
         headers: {
-          'Authorization': authorization,
-          'Content-Type': 'application/json'
-        }
-      }
+          Authorization: authorization,
+          'Content-Type': 'application/json',
+        },
+      },
     });
 
     // ScrudProjectApi 인스턴스 생성
@@ -68,25 +64,26 @@ export async function DELETE(
     // API 호출 - 전역 파일 삭제
     await scrudProjectApi.deleteGlobalFile({
       projectId: parseInt(projectId),
-      globalFileId: parseInt(globalFileId)
+      globalFileId: parseInt(globalFileId),
     });
 
     // 성공적으로 처리되면 204 상태 코드 반환
     return new NextResponse(null, { status: 204 });
-
-  } catch (error: unknown) {
-    console.error('전역 파일 삭제 API 오류:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), '전역 파일 삭제 API 오류:', error.response?.data);
+    }
 
     let status = 500;
     let message = '서버 오류가 발생했습니다.';
 
     if (error instanceof Error) {
-      console.error('에러 상세 정보:', error);
+      console.error(formatToKST(new Date().toISOString()), '에러 상세 정보:', error);
       // @ts-expect-error - Error 타입에 status 속성이 없지만 런타임에는 존재할 수 있음
       if (error.status) {
         // @ts-expect-error - status 속성에 접근하기 위한 타입 오류 무시
         status = error.status;
-      // @ts-expect-error - Error 타입에 response 속성이 없지만 axios 오류는 이 속성을 가짐
+        // @ts-expect-error - Error 타입에 response 속성이 없지만 axios 오류는 이 속성을 가짐
       } else if (error.response?.status) {
         // @ts-expect-error - response.status 속성에 접근하기 위한 타입 오류 무시
         status = error.response.status;

@@ -1,5 +1,7 @@
+import { formatToKST } from '@/util/dayjs';
 import { ScrudProjectApi } from '@generated/api';
 import { Configuration } from '@generated/configuration';
+import axios from 'axios';
 import { NextRequest, NextResponse } from 'next/server';
 
 // 파일 타입 정의
@@ -174,15 +176,6 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // 모든 파일의 fileType 값 콘솔 출력
-    const allFileTypes = globalFiles.map((f) => f.fileType);
-    console.log('route.ts 모든 globalFiles fileType 값:', allFileTypes);
-    console.log('route.ts globalFiles 전체:', JSON.stringify(globalFiles, null, 2));
-
-    // 의존성 파일만 필터링해서 콘솔 출력
-    const dependencyFiles = globalFiles.filter((f) => f.fileType === 'DEPENDENCY');
-    console.log('route.ts 받은 DEPENDENCY 파일 목록:', JSON.stringify(dependencyFiles, null, 2));
-
     // 프로젝트 데이터 구성
     const projectData = {
       scrudProjectDto: {
@@ -213,14 +206,16 @@ export async function POST(request: NextRequest) {
       const response = await scrudProjectApi.createProject({ createProjectRequest: projectData });
       return NextResponse.json(response.data, { status: 201 });
     } catch (apiError) {
-      console.error('API 호출 중 에러:', apiError);
+      if (axios.isAxiosError(apiError)) {
+        console.error(formatToKST(new Date().toISOString()), 'API 호출 오류:', apiError.response?.data);
+      }
       throw apiError;
     }
   } catch (error: unknown) {
-    console.error('프로젝트 생성 API 오류:', error);
+    console.error(formatToKST(new Date().toISOString()), '프로젝트 생성 API 오류:', error);
 
     if (error instanceof Error) {
-      console.error('에러 상세 정보:', error);
+      console.error(formatToKST(new Date().toISOString()), '에러 상세 정보:', error);
     }
 
     let status = 500;
@@ -283,14 +278,16 @@ export async function GET(request: NextRequest) {
     const response = await scrudProjectApi.getAllProjects();
 
     return NextResponse.json(response.data);
-  } catch (error: unknown) {
-    console.error('프로젝트 조회 API 오류:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), '프로젝트 조회 API 오류:', error.response?.data);
+    }
 
     let status = 500;
     let message = '서버 오류가 발생했습니다.';
 
     if (error instanceof Error) {
-      console.error('에러 상세 정보:', error);
+      console.error(formatToKST(new Date().toISOString()), '에러 상세 정보:', error);
       // @ts-expect-error - Error 타입에 status 속성이 없지만 런타임에는 존재할 수 있음
       if (error.status) {
         // @ts-expect-error - status 속성에 접근하기 위한 타입 오류 무시
@@ -356,14 +353,16 @@ export async function PATCH(request: NextRequest) {
     });
 
     return NextResponse.json(response.data);
-  } catch (error: unknown) {
-    console.error('프로젝트 수정 API 오류:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(formatToKST(new Date().toISOString()), '프로젝트 수정 API 오류:', error.response?.data);
+    }
 
     let status = 500;
     let message = '서버 오류가 발생했습니다.';
 
     if (error instanceof Error) {
-      console.error('에러 상세 정보:', error);
+      console.error(formatToKST(new Date().toISOString()), '에러 상세 정보:', error);
       // @ts-expect-error - Error 타입에 status 속성이 없지만 런타임에는 존재할 수 있음
       if (error.status) {
         // @ts-expect-error - status 속성에 접근하기 위한 타입 오류 무시
