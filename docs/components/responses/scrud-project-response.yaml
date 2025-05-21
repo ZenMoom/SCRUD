@@ -1,0 +1,20 @@
+ScrudProjectListResponse:
+  description: "프로젝트 목록"
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/scrud-project-dto.yaml#/ScrudProjectPageDto"
+
+GlobalFileListResponse:
+  description: "전체 전역설정 파일 목록"
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/scrud-project-dto.yaml#/GlobalFileListDto"
+
+ScrudProjectResponse:
+  description: "프로젝트 설정"
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/scrud-project-dto.yaml#/ScrudProjectDto"

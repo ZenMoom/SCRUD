@@ -1,0 +1,12 @@
+ExampleRequest:
+  description: "예시 업데이트 입력값입니다."
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/example-schema.yaml#/ExampleDto'
+      examples:
+        case1:
+          $ref: '../examples/example-schema.yaml#/ExampleDtoCase1'
+        case2:
+          $ref: '../examples/example-schema.yaml#/ExampleDtoCase2'

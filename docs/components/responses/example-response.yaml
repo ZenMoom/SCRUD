@@ -1,0 +1,19 @@
+ExampleResponse:
+  description: 조회 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/example-schema.yaml#/ExampleDto'
+      examples:
+        case1:
+          $ref: '../examples/example-schema.yaml#/ExampleDtoCase1'
+
+ExamplePageResponse:
+  description: 페이지 조회 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/example-schema.yaml#/ExamplePageDto'
+      examples:
+        case1:
+          $ref: '../examples/example-schema.yaml#/ExamplePageDtoCase1'

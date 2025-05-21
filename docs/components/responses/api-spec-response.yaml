@@ -1,0 +1,28 @@
+ApiSpecResponse:
+  description: 단일 API 스펙 조회 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionResponse'
+
+ApiSpecCreatedResponse:
+  description: API 스펙 생성 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionCreatedResponse'
+
+
+ApiSpecUpdateResponse:
+  description: API 스펙 수정 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionResponse'
+
+ApiSpecListResponse:
+  description: API 스펙 목록 조회 성공
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecListResponse'

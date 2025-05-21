@@ -1,0 +1,206 @@
+stages:
+  - prepare
+  - build
+  - build-and-push
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HUB_USERNAME: $DOCKER_HUB_USERNAME
+  DOCKER_HUB_PASSWORD: $DOCKER_HUB_PASSWORD
+  DOCKER_REGISTRY: docker.io
+  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
+  SERVER_HOST: k12e105.p.ssafy.io
+  PEM_FILE: K12E105T.pem
+  PROJECT_NAME: scrud
+
+# Common configuration for Docker services
+.docker:
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+
+# Generate OpenAPI code for both frontend and backend
+prepare_job:
+  extends: .docker
+  stage: prepare
+  before_script:
+    - ls -al
+  script:
+    - docker-compose -f ./infra/docker/docker-compose.yaml --project-directory . up api-compiler spring-generator axios-generator --build
+
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      allow_failure: false
+      changes:
+        - backend/**/*
+        - frontend/**/*
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      allow_failure: false
+  tags:
+    - ec2
+
+# Build and push backend image
+build_backend:
+  extends: .docker
+  stage: build
+  needs:
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  script:
+    - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
+
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - backend/**/*
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
+
+# Build and push frontend image
+build_frontend:
+  extends: .docker
+  stage: build
+  needs:
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  script:
+    - docker build -f ./frontend/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner ./frontend
+
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - frontend/**/*
+      when: on_success
+      allow_failure: false
+
+  tags:
+    - ec2
+
+build_and_push_backend:
+  extends: .docker
+  stage: build-and-push
+  needs:
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  before_script:
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+  script:
+    - docker build -f ./backend/ExampleService/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest --target runner ./backend
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-spring:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
+
+build_and_push_frontend:
+  extends: .docker
+  stage: build-and-push
+  needs:
+    - job: prepare_job
+  artifacts:
+    paths:
+      - backend/generated/
+      - frontend/generated/
+  before_script:
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+  script:
+    - docker build -f ./frontend/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest --target runner ./frontend
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-next:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
+    
+# Build and push AI server image
+build_ai:
+  extends: .docker
+  stage: build
+  script:
+    - docker build -f ./ai/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-ai:latest --target production ./ai
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      changes:
+        - ai/**/*
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
+
+build_and_push_ai:
+  extends: .docker
+  stage: build-and-push
+  before_script:
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+  script:
+    - docker build -f ./ai/Dockerfile -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-ai:latest --target production ./ai
+    - docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-ai:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2
+
+# Deploy to production server
+deploy:
+  stage: deploy
+  needs:
+    - job: build_and_push_backend
+      optional: true
+    - job: build_and_push_frontend
+      optional: true
+    - job: build_and_push_ai
+      optional: true
+
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" > $PEM_FILE
+    - chmod 400 $PEM_FILE
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SERVER_HOST >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "Deploying to $SERVER_HOST..."
+    - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "mkdir -p /home/ubuntu/${PROJECT_NAME}"
+    - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "mkdir -p /home/ubuntu/${PROJECT_NAME}/infra/env"
+    # ubuntu 사용자를 docker 그룹에 추가하는 명령을 실행
+    - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "sudo usermod -aG docker ubuntu && newgrp docker"
+    - ssh -i $PEM_FILE ubuntu@$SERVER_HOST "
+      cd /home/ubuntu/${PROJECT_NAME} &&
+      echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin &&
+      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-spring:latest &&
+      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-next:latest &&
+      docker pull $DOCKER_HUB_USERNAME/${PROJECT_NAME}-ai:latest &&
+      docker-compose -f docker-compose.prod.yaml down &&
+      docker-compose -f docker-compose.prod.yaml up -d"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: on_success
+      allow_failure: false
+  tags:
+    - ec2

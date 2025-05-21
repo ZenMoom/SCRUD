@@ -1,0 +1,262 @@
+[
+  {
+    "summary": "회원가입",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/signup",
+    "queryParameters": null,
+    "requestBody": "{ \"name\": \"string\", \"phone_number\": \"string\", \"ssn\": \"string\", \"terms\": { \"privacy_policy\": true, \"terms_of_service\": true, \"financial_info\": true }, \"authentication\": { \"method\": \"string\" }, \"simple_password\": \"string\", \"biometric_enabled\": true, \"linked_card\": { \"card_number\": \"string\", \"bank_account\": \"string\" }, \"auto_login\": true }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 이름, 전화번호, 주민등록번호 앞 7자리, 약관 동의, 본인 인증, 간편 비밀번호 설정 및 카드, 통장 연동 후 회원가입을 진행합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "로그인",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/login",
+    "queryParameters": null,
+    "requestBody": "{ \"simple_password\": \"string\", \"biometric\": true }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 간편 비밀번호 또는 생체 인식을 통해 로그인합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "로그아웃",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/logout",
+    "queryParameters": null,
+    "requestBody": null,
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 로그아웃을 진행합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "간편 비밀번호 재설정",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/reset-password",
+    "queryParameters": null,
+    "requestBody": "{ \"authentication\": { \"method\": \"string\" }, \"new_simple_password\": \"string\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 본인 인증 후 새로운 간편 비밀번호를 입력하여 재설정합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "본인 인증",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/authentication",
+    "queryParameters": null,
+    "requestBody": "{ \"phone_number\": \"string\", \"verification_code\": \"string\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 본인 인증을 진행합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "전화번호 수정",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/update-phone",
+    "queryParameters": null,
+    "requestBody": "{ \"simple_password\": \"string\", \"new_phone_number\": \"string\", \"authentication\": { \"method\": \"string\" } }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 자신의 전화번호를 수정합니다.",
+    "httpMethod": "PUT"
+  },
+  {
+    "summary": "회원 탈퇴",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/delete",
+    "queryParameters": null,
+    "requestBody": "{ \"authentication\": { \"method\": \"string\" } }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 본인 인증 후 회원 탈퇴를 진행합니다.",
+    "httpMethod": "DELETE"
+  },
+  {
+    "summary": "알림 설정",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/notifications",
+    "queryParameters": null,
+    "requestBody": "{ \"notification_settings\": { \"item\": \"boolean\" } }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 푸시 기반 알림 옵션을 설정합니다.",
+    "httpMethod": "PUT"
+  },
+  {
+    "summary": "내 계좌 / 카드 확인",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/accounts",
+    "queryParameters": null,
+    "requestBody": null,
+    "response": "{ \"accounts\": [ { \"account_no\": \"string\", \"balance\": \"number\" } ], \"cards\": [ { \"card_name\": \"string\", \"card_type\": \"string\" } ] }",
+    "description": "서비스에 연결된 사용자의 계좌와 카드 정보를 확인합니다.",
+    "httpMethod": "GET"
+  },
+  {
+    "summary": "계좌 / 카드 추가 연결",
+    "pathParameters": null,
+    "endpoint": "/api/v1/users/accounts/add",
+    "queryParameters": null,
+    "requestBody": "{ \"account_no\": \"string\", \"card_id\": \"string\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 추가적으로 연결할 계좌나 카드를 선택합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "예산 설정",
+    "pathParameters": null,
+    "endpoint": "/api/v1/budgets",
+    "queryParameters": null,
+    "requestBody": "{ \"start_date\": \"string\", \"total_budget\": \"number\", \"categories\": [ { \"category_name\": \"string\", \"amount\": \"number\" } ] }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 예산을 설정하고 카테고리 별로 예산을 분배합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "예산 수정",
+    "pathParameters": null,
+    "endpoint": "/api/v1/budgets/{budget_id}",
+    "queryParameters": null,
+    "requestBody": "{ \"start_date\": \"string\", \"total_budget\": \"number\", \"categories\": [ { \"category_name\": \"string\", \"amount\": \"number\" } ] }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "설정한 예산을 수정합니다.",
+    "httpMethod": "PUT"
+  },
+  {
+    "summary": "총 예산 확인",
+    "pathParameters": null,
+    "endpoint": "/api/v1/budgets/summary",
+    "queryParameters": null,
+    "requestBody": null,
+    "response": "{ \"total_budget\": \"number\", \"used_budget\": \"number\", \"remaining_budget\": \"number\", \"recommended_usage\": \"number\" }",
+    "description": "총 예산의 현황을 확인합니다.",
+    "httpMethod": "GET"
+  },
+  {
+    "summary": "송금하기",
+    "pathParameters": null,
+    "endpoint": "/api/v1/transfer",
+    "queryParameters": null,
+    "requestBody": "{ \"to_account_no\": \"string\", \"amount\": \"number\", \"simple_password\": \"string\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 송금을 진행합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "계좌 입/출금 내역 확인",
+    "pathParameters": null,
+    "endpoint": "/api/v1/accounts/{account_no}/transactions",
+    "queryParameters": null,
+    "requestBody": null,
+    "response": "{ \"transactions\": [ { \"transaction_id\": \"string\", \"amount\": \"number\", \"date\": \"string\" } ] }",
+    "description": "해당 계좌의 입/출금 내역을 확인합니다.",
+    "httpMethod": "GET"
+  },
+  {
+    "summary": "세이빙박스 시작",
+    "pathParameters": null,
+    "endpoint": "/api/v1/saving-box/start",
+    "queryParameters": null,
+    "requestBody": "{ \"account_id\": \"string\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "세이빙박스 서비스를 시작하고 연결할 계좌를 선택합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "세이빙박스 저축",
+    "pathParameters": null,
+    "endpoint": "/api/v1/saving-box/save",
+    "queryParameters": null,
+    "requestBody": "{ \"amount\": \"number\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "예산 기간이 끝나면 절약한 금액 만큼을 자동 저축합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "세이빙박스 폭파",
+    "pathParameters": null,
+    "endpoint": "/api/v1/saving-box/explode",
+    "queryParameters": null,
+    "requestBody": "{ \"amount\": \"number\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "사용자가 원하는 시기나 최대 금액 도달 시 세이빙박스의 금액을 연결된 계좌로 다시 이체합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "주별 소비 분석",
+    "pathParameters": null,
+    "endpoint": "/api/v1/analysis/weekly",
+    "queryParameters": null,
+    "requestBody": null,
+    "response": "{ \"analysis\": { \"total_budget\": \"number\", \"spent\": \"number\", \"categories\": [ { \"category_name\": \"string\", \"spent\": \"number\" } ] } }",
+    "description": "한 주 동안 소비 분석 결과를 확인합니다.",
+    "httpMethod": "GET"
+  },
+  {
+    "summary": "예산 소비 분석",
+    "pathParameters": null,
+    "endpoint": "/api/v1/analysis/budget",
+    "queryParameters": null,
+    "requestBody": null,
+    "response": "{ \"analysis\": { \"total_budget\": \"number\", \"spent\": \"number\", \"categories\": [ { \"category_name\": \"string\", \"spent\": \"number\" } ] } }",
+    "description": "예산 기간이 끝나면 해당 예산에 대한 소비 분석 결과를 확인합니다.",
+    "httpMethod": "GET"
+  },
+  {
+    "summary": "카드 리스트 확인",
+    "pathParameters": null,
+    "endpoint": "/api/v1/cards",
+    "queryParameters": null,
+    "requestBody": null,
+    "response": "{ \"cards\": [ { \"card_name\": \"string\", \"benefits\": \"string\" } ] }",
+    "description": "내가 가지고 있는 카드 리스트를 확인합니다.",
+    "httpMethod": "GET"
+  },
+  {
+    "summary": "카드 정보 상세 확인",
+    "pathParameters": "{ \"card_id\": \"string\" }",
+    "endpoint": "/api/v1/cards/{card_id}",
+    "queryParameters": null,
+    "requestBody": null,
+    "response": "{ \"card_details\": { \"card_name\": \"string\", \"benefits\": \"string\", \"expiry_date\": \"string\" } }",
+    "description": "카드에 대한 상세 정보를 확인합니다.",
+    "httpMethod": "GET"
+  },
+  {
+    "summary": "결제 설정",
+    "pathParameters": null,
+    "endpoint": "/api/v1/cards/settings",
+    "queryParameters": null,
+    "requestBody": "{ \"settings\": { \"priority_categories\": [ \"string\" ], \"excluded_categories\": [ \"string\" ] } }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "카드의 결제 시 특정 카테고리에서 카드가 우선 고려되도록 설정합니다.",
+    "httpMethod": "PUT"
+  },
+  {
+    "summary": "결제하기",
+    "pathParameters": null,
+    "endpoint": "/api/v1/payments",
+    "queryParameters": null,
+    "requestBody": "{ \"card_id\": \"string\", \"amount\": \"number\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "선택한 카드로 결제를 실행합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "결제 제한",
+    "pathParameters": null,
+    "endpoint": "/api/v1/payments/restrict",
+    "queryParameters": null,
+    "requestBody": "{ \"amount\": \"number\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "결제가 해당 카테고리의 예산을 초과하면 결제를 제한합니다.",
+    "httpMethod": "POST"
+  },
+  {
+    "summary": "온라인 결제",
+    "pathParameters": null,
+    "endpoint": "/api/v1/payments/online",
+    "queryParameters": null,
+    "requestBody": "{ \"card_id\": \"string\", \"amount\": \"number\" }",
+    "response": "{ \"status\": \"string\", \"message\": \"string\" }",
+    "description": "온라인으로 결제 페이 서비스를 진행합니다.",
+    "httpMethod": "POST"
+  }
+]

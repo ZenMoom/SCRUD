@@ -1,0 +1,85 @@
+ExampleId:
+  name: exampleId
+  in: path
+  required: true
+  description: 업데이트할 예시의 ID
+  schema:
+    type: integer
+
+ExamplePageDto:
+  allOf:
+    - type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/ExampleDto"
+    - $ref: "./page-schema.yaml#/PageDto"
+        
+
+ExampleDto:
+  type: object
+  properties:
+    exampleEnum:
+      type: string
+      enum: [ONE, TWO, THREE]
+      description: '예시 열거형입니다.'
+    exampleString:
+      type: string
+      description: '예시 스트링 입니다.'
+      maxLength: 255
+    exampleInteger:
+      type: integer
+      format: int32
+      description: '예시 정수 입니다.'
+      minimum: 0
+      maximum: 100
+    exampleBoolean:
+      type: boolean
+      description: '예시 불리언 입니다.'
+    exampleArray:
+      type: array
+      description: '예시 배열입니다.'
+      items:
+        type: string
+    exampleObject:
+      $ref: '#/ExampleObject'
+    exampleDate:
+      type: string
+      format: date
+      description: '예시 날짜입니다.'
+  required:
+    - exampleEnum
+    - exampleString
+    - exampleInteger
+
+ExampleObject:
+  type: object
+  description: '예시 중첩 객체입니다.'
+  properties:
+    nestedProperty:
+      type: string
+      description: '중첩된 속성입니다.'
+
+ExampleCreateDto:
+  type: object
+  properties:
+    exampleEnum:
+      type: string
+      enum: [ ONE, TWO, THREE ]
+      description: '예시 열거형입니다.'
+    exampleString:
+      type: string
+      description: '예시 스트링 입니다.'
+      maxLength: 255
+    exampleInteger:
+      type: integer
+      format: int32
+      description: '예시 정수 입니다.'
+      minimum: 0
+      maximum: 100
+
+  required:
+    - exampleEnum
+    - exampleString
+    - exampleInteger

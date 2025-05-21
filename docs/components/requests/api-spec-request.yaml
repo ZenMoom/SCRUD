@@ -1,0 +1,23 @@
+ApiSpecCreateRequest:
+  description: 단일 API 스펙과 필드를 전체 생성합니다.
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionCreateRequest'
+
+ApiSpecUpdateRequest:
+  description: 단일 API 스펙과 필드를 전체 생성합니다.
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionUpdateRequest'
+
+ApiSpecStatusRequest:
+  description: API 스펙 상태 변경
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/api-spec-schema.yaml#/ApiSpecVersionStatusRequest'
