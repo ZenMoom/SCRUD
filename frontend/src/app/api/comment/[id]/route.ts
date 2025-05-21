@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   if (!id) {
     return NextResponse.json({ error: 'Post ID is required' }, { status: 400 });
   }
-  console.log('comment의 post id:', id);
+
   const authToken = (await cookies()).get('access_token')?.value;
   try {
     const config = new Configuration({
@@ -29,9 +29,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     const commentApi = CommentApiFactory(config);
 
     const response = await commentApi.getCommentList({ postId: Number(id) });
-    console.log('comment res:', response);
 
-    return NextResponse.json(response.data.content);
+    return NextResponse.json(response.data);
   } catch (error) {
     console.error(formatToKST(new Date().toISOString()), 'Error fetching comments:', error);
     if (typeof error === 'object' && error !== null && 'response' in error) {

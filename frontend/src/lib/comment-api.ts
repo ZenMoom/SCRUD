@@ -22,7 +22,8 @@ export async function getComments(postId: string): Promise<CommentResponse[]> {
     return [] as CommentResponse[]; // 에러 발생 시 빈 배열 반환
   }
 
-  return await response.json();
+  const data = await response.json();
+  return data.content;
 }
 
 /**

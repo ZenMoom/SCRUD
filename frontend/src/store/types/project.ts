@@ -2,15 +2,45 @@ export interface ProjectTempData {
   title: string;
   description: string;
   serverUrl: string;
-  requirementSpec: FileData[];
-  erd: FileData[];
-  utilityClass: FileData[];
-  codeConvention: FileData[];
-  dependencyFile: FileData[];
+  requirementSpec: FileWithContent[];
+  erd: FileWithContent[];
+  utilityClass: FileWithContent[];
+  codeConvention: FileWithContent[];
+  dependencyFile: FileWithContent[]; // 업로드한 파일 리스트
+  dependencyFiles?: { name: string; content: string; source?: string }; // Spring 메타데이터 (단일 객체)
   dependencySelections: string[];
-  errorCode: FileData[];
-  architectureStructure: ArchitectureSettingData;
-  securitySetting: SecuritySettingData;
+  errorCode: FileWithContent[];
+  architectureStructure:
+    | {
+        type: 'selection';
+        selection: SelectionValue;
+      }
+    | {
+        type: 'file';
+        files: FileWithContent[];
+      };
+  securitySetting:
+    | {
+        type: 'selection';
+        selection: SelectionValue;
+      }
+    | {
+        type: 'file';
+        files: FileWithContent[];
+      };
+}
+
+export interface FileWithContent {
+  name: string;
+  content: string;
+  isGitHub?: boolean;
+  source?: string;
+}
+
+export interface SelectionValue {
+  type: string;
+  label: string;
+  imageUrl?: string;
 }
 
 export interface FileData {
@@ -45,4 +75,4 @@ export interface ArchitectureOption {
   type: string;
   label: string;
   imageUrl?: string;
-} 
+}

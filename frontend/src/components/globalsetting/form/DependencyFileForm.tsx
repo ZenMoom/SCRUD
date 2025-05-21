@@ -37,6 +37,8 @@ interface FileData {
   name: string;
   content: string;
   isGitHub?: boolean;
+  source?: string;
+  dependencySelections?: string[];
 }
 
 interface SpringDependency {
@@ -85,11 +87,12 @@ interface SpringMetadata {
 interface DependencyFileFormProps {
   title: string;
   onFileSelect: (file: FileData) => void;
+  onFileDelete?: (fileName: string) => void; // 파일 삭제 콜백 추가
   onFocus?: () => void;
 }
 
 const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
-  ({ title, onFileSelect, onFocus }, ref) => {
+  ({ title, onFileSelect, onFileDelete, onFocus }, ref) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [dragActive, setDragActive] = useState(false);
     const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
@@ -105,7 +108,9 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('spring');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
-    const lastContentRef = useRef<string | null>(null);
+    const springDependenciesRef = useRef<string>('');
+    const lastSelectedDependenciesRef = useRef<SpringDependency[]>([]);
+    const initialLoadRef = useRef(true); // 초기 로드 여부를 추적하는 ref
 
     useEffect(() => {
       fetchSpringMetadata();
@@ -118,7 +123,13 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
 
       if (isFromGithubAuth && isAuthPending && tempData.dependencyFile && tempData.dependencyFile.length > 0) {
         setSelectedFiles(tempData.dependencyFile as FileData[]);
-        tempData.dependencyFile.forEach((file) => onFileSelect(file as FileData));
+        // 업로드된 파일들을 개별적으로 전달
+        tempData.dependencyFile.forEach((file) => {
+          onFileSelect({
+            ...(file as FileData),
+            source: 'upload',
+          });
+        });
       }
     }, [tempData.dependencyFile, onFileSelect]);
 
@@ -141,8 +152,12 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
       };
     }, [dropdownOpen]);
 
+    // 메타데이터 로드 시 의존성 설정 - 한 번만 실행되도록 수정
     useEffect(() => {
       if (!springMetadata) return;
+
+      // 이미 의존성이 설정되어 있으면 다시 설정하지 않음
+      if (lastSelectedDependenciesRef.current.length > 0) return;
 
       const flatDependencies = springMetadata.dependencies.values.flatMap((group) => group.values);
       const savedDependencyIds = tempData.dependencySelections || [];
@@ -151,13 +166,64 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
 
       if (matchedDependencies.length > 0) {
         setSelectedDependencies(matchedDependencies);
-      } else {
+        lastSelectedDependenciesRef.current = [...matchedDependencies];
+      } else if (initialLoadRef.current) {
+        // 초기 로드 시에만 기본값 설정
         const defaultIds = ['web', 'lombok', 'devtools', 'data-jpa', 'mysql', 'validation'];
         const defaults = flatDependencies.filter((dep) => defaultIds.includes(dep.id));
         setSelectedDependencies(defaults);
-        setTempData({ dependencySelections: defaults.map((d) => d.id) });
+        lastSelectedDependenciesRef.current = [...defaults];
+
+        // 초기 로드 시에만 tempData 업데이트
+        if (defaults.length > 0) {
+          setTempData({ dependencySelections: defaults.map((d) => d.id) });
+        }
+        initialLoadRef.current = false; // 초기 로드 완료 표시
       }
-    }, [springMetadata, setTempData, tempData.dependencySelections]);
+      // tempData.dependencySelections 의존성 제거
+    }, [springMetadata, setTempData]);
+
+    // Spring 의존성이 변경될 때마다 dependencyFiles에 저장 - 무한 루프 방지 로직 추가
+    useEffect(() => {
+      // 메타데이터가 로드되지 않았으면 실행하지 않음
+      if (!springMetadata) return;
+
+      // 이전 상태와 현재 상태 비교를 위한 문자열 변환
+      const prevDepsString = JSON.stringify(lastSelectedDependenciesRef.current.map((d) => d.id).sort());
+      const currentDepsString = JSON.stringify(selectedDependencies.map((d) => d.id).sort());
+
+      // 의존성 변경 감지 (문자열 비교로 정확하게 판단)
+      const hasChanged = prevDepsString !== currentDepsString;
+
+      // 변경이 없으면 업데이트하지 않음
+      if (!hasChanged) return;
+
+      // 현재 상태 저장 (이 위치로 이동하여 변경이 있을 때만 업데이트)
+      lastSelectedDependenciesRef.current = [...selectedDependencies];
+
+      // 의존성이 비어있는 경우 빈 내용으로 전달
+      const newContent =
+        selectedDependencies.length > 0
+          ? selectedDependencies.map((dep) => `implementation '${dep.name}'`).join('\n')
+          : '';
+      springDependenciesRef.current = newContent;
+
+      // 의존성 ID 목록 저장
+      const dependencySelections = selectedDependencies.map((dep) => dep.id);
+
+      // 이전 의존성 목록과 현재 의존성 목록이 다를 때만 tempData 업데이트
+      if (hasChanged) {
+        setTempData({ dependencySelections });
+
+        // Spring 의존성을 source 필드와 함께 부모 컴포넌트에 전달
+        onFileSelect({
+          name: 'spring-dependencies.gradle',
+          content: newContent,
+          source: 'spring',
+          dependencySelections,
+        });
+      }
+    }, [selectedDependencies, onFileSelect, setTempData, springMetadata]);
 
     const fetchSpringMetadata = async () => {
       try {
@@ -168,7 +234,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
           throw new Error('메타데이터를 가져오는데 실패했습니다.');
         }
         const data = await response.json();
-        console.log('Spring Initializr 메타데이터:', data);
+
         setSpringMetadata(data);
       } catch (error) {
         console.error(formatToKST(new Date().toISOString()), 'Spring 메타데이터 로드 오류:', error);
@@ -208,11 +274,8 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
     const toggleDependency = (dependency: SpringDependency) => {
       setSelectedDependencies((prev) => {
         const exists = prev.some((dep) => dep.id === dependency.id);
-        if (exists) {
-          return prev.filter((dep) => dep.id !== dependency.id);
-        } else {
-          return [...prev, dependency];
-        }
+        // 이미 존재하면 제거, 없으면 추가
+        return exists ? prev.filter((dep) => dep.id !== dependency.id) : [...prev, dependency];
       });
     };
 
@@ -233,13 +296,18 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
           name: file.path,
           content: file.content,
           isGitHub: true,
+          source: 'upload' as const,
         }));
 
         setSelectedFiles((prev) => [...prev, ...newFiles]);
+
+        // 각 파일을 개별적으로 부모 컴포넌트에 전달
         newFiles.forEach((file) => {
           onFileSelect(file);
         });
-        setTempData({ dependencyFile: newFiles });
+
+        // dependencyFile에 업로드된 파일 저장
+        setTempData({ dependencyFile: [...selectedFiles, ...newFiles] });
       }
       setIsGitHubModalOpen(false);
     };
@@ -310,10 +378,15 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
         const newFile = {
           name: file.name,
           content: content,
+          source: 'upload' as const,
         };
         const newFiles = [...selectedFiles, newFile];
         setSelectedFiles(newFiles);
+
+        // 파일을 개별적으로 부모 컴포넌트에 전달
         onFileSelect(newFile);
+
+        // dependencyFile에 업로드된 파일 저장
         setTempData({ dependencyFile: newFiles });
       }
     };
@@ -328,27 +401,27 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
       setIsGitHubModalOpen(true);
     };
 
-    // 선택된 의존성이 변경될 때마다 파일로 변환하여 부모 컴포넌트에 전달
-    useEffect(() => {
-      if (selectedDependencies.length === 0) return;
+    // 파일 삭제 처리 함수
+    const handleFileDelete = (index: number) => {
+      const fileToDelete = selectedFiles[index];
+      const newFiles = selectedFiles.filter((_, i) => i !== index);
+      setSelectedFiles(newFiles);
 
-      const newContent = selectedDependencies.map((dep) => `implementation '${dep.id}'`).join('\n');
+      // dependencyFile에서 파일 제거
+      setTempData({ dependencyFile: newFiles });
 
-      if (lastContentRef.current === newContent) return;
-      lastContentRef.current = newContent;
-
-      const dependencyFile = {
-        name: 'build.gradle.dependencies',
-        content: newContent,
-      };
-
-      // Save selected dependency IDs to tempData for persistence
-      setTempData({
-        dependencySelections: selectedDependencies.map((dep) => dep.id),
-      });
-
-      onFileSelect(dependencyFile);
-    }, [selectedDependencies, onFileSelect, setTempData]);
+      // 부모 컴포넌트에 파일 삭제 알림
+      if (onFileDelete) {
+        onFileDelete(fileToDelete.name);
+      } else {
+        // 이전 방식: 삭제 표시 파일 전송 (하위 호환성 유지)
+        onFileSelect({
+          name: fileToDelete.name,
+          content: 'DELETE_THIS_FILE',
+          source: 'upload',
+        });
+      }
+    };
 
     // 영어와 한글 카테고리 이름을 모두 지원하는 아이콘 맵
     const ICON_MAP: Record<string, React.ReactNode> = {
@@ -668,10 +741,15 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                     const newFile = {
                       name: file.name,
                       content: content,
+                      source: 'upload' as const,
                     };
                     const newFiles = [...selectedFiles, newFile];
                     setSelectedFiles(newFiles);
+
+                    // 파일을 개별적으로 부모 컴포넌트에 전달
                     onFileSelect(newFile);
+
+                    // dependencyFile에 업로드된 파일 저장
                     setTempData({ dependencyFile: newFiles });
                   }
                 }}
@@ -714,7 +792,19 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                       <Button
                         variant='ghost'
                         size='sm'
-                        onClick={() => setSelectedDependencies([])}
+                        onClick={() => {
+                          // 모든 의존성 제거 시 한 번에 처리
+                          setSelectedDependencies([]);
+                          // 의존성 ID 목록 직접 업데이트
+                          setTempData({ dependencySelections: [] });
+                          // 빈 의존성 파일 직접 전달
+                          onFileSelect({
+                            name: 'spring-dependencies.gradle',
+                            content: '',
+                            source: 'spring',
+                            dependencySelections: [],
+                          });
+                        }}
                         className='hover:text-red-700 text-xs text-red-500'
                       >
                         모두 지우기
@@ -975,11 +1065,7 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
                     variant='ghost'
                     size='sm'
                     className='hover:bg-gray-200 flex-shrink-0 w-6 h-6 p-0 rounded-full'
-                    onClick={() => {
-                      const newFiles = selectedFiles.filter((_, i) => i !== index);
-                      setSelectedFiles(newFiles);
-                      setTempData({ dependencyFile: newFiles });
-                    }}
+                    onClick={() => handleFileDelete(index)}
                   >
                     <X
                       size={14}
@@ -991,23 +1077,22 @@ const DependencyFileForm = forwardRef<HTMLDivElement, DependencyFileFormProps>(
             </div>
           </div>
         )}
-        {selectedFiles.length > 0 && (
-          <div className='mt-4'>
-            <Button
-              variant='outline'
-              onClick={() => {
-                // 파일 페칭 확인 로직
-                const fileNames = selectedFiles.map((file) => file.name).join(', ');
-                alert(`다음 파일들이 성공적으로 로드되었습니다: ${fileNames}`);
-              }}
-              className='w-full'
-            >
-              <Check
-                size={16}
-                className='mr-2'
-              />
-              선택된 파일 확인
-            </Button>
+
+        {/* Spring 의존성 미리보기 */}
+        {selectedDependencies.length > 0 && (
+          <div className='bg-gray-50 p-4 mt-4 border rounded-md'>
+            <div className='flex items-center justify-between mb-2'>
+              <h3 className='text-sm font-medium'>Spring 의존성 미리보기</h3>
+              <Badge
+                variant='outline'
+                className='text-xs'
+              >
+                dependencyFiles에 저장됨
+              </Badge>
+            </div>
+            <div className='p-3 overflow-x-auto font-mono text-xs text-gray-100 bg-gray-900 rounded-md'>
+              <pre>{springDependenciesRef.current}</pre>
+            </div>
           </div>
         )}
 
