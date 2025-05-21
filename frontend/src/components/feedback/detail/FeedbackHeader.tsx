@@ -2,7 +2,7 @@
 
 import { useFeedbackStore } from '@/store/useFeedbackStore';
 import { categoryConfig } from '@/types/feedback';
-import dayjs from '@/util/dayjs';
+import { formatToKST } from '@/util/dayjs';
 import { User } from 'lucide-react';
 
 export function FeedbackHeader() {
@@ -33,7 +33,7 @@ export function FeedbackHeader() {
           <span>{post.author?.nickname}</span>
         </div>
         <span>•</span>
-        <span>{dayjs(post.createdAt).tz().format('YYYY년 MM월 DD일 HH:mm')}</span>
+        <span>{formatToKST(post.createdAt!)}</span>
         <span>•</span>
         <span>조회 {post.viewCount}</span>
       </div>
