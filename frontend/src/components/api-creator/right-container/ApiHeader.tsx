@@ -172,8 +172,11 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
             <div className="px-4 py-3 bg-gray-50 text-right">
               <button
                 onClick={handleViewDiagram}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-blue-700 bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 border border-blue-300 rounded-md hover:from-blue-100 hover:via-blue-200 hover:to-blue-100 hover:border-blue-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                </svg>
                 도식화 보기
               </button>
               <button
@@ -191,21 +194,6 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
         <div className="flex items-center">
           <h2 className="text-lg font-semibold mr-4 hidden sm:block">API 편집기</h2>
           <h2 className="text-lg font-semibold mr-4 sm:hidden">API</h2>
-
-          {/* 도식화 보기 버튼 - API 상태가 AI_VISUALIZED일 때만 표시 */}
-          {apiSpecVersionId && apiStatus === "AI_VISUALIZED" && (
-            <button onClick={handleViewDiagram} className={googleButtonClass} title="도식화 보기">
-              <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                <path
-                  fillRule="evenodd"
-                  d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className={textClass}>도식화 보기</span>
-            </button>
-          )}
         </div>
 
         <div className="flex space-x-2">
@@ -241,6 +229,20 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
                 </>
               )}
               <span className={`${textClass} font-semibold relative z-10`}>도식화 진행</span>
+            </button>
+          )}
+
+          {/* 도식화 보기 버튼 */}
+          {apiSpecVersionId && (apiStatus === "AI_VISUALIZED" || apiStatus === "USER_COMPLETED") && (
+            <button
+              onClick={handleViewDiagram}
+              className={`${googleButtonClass} bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 border-blue-300 text-blue-700 hover:from-blue-100 hover:via-blue-200 hover:to-blue-100 hover:border-blue-400 hover:shadow-md`}
+              title="도식화 보기"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className={`${iconClass} text-blue-600 relative z-10`} viewBox="0 0 20 20" fill="currentColor">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+              </svg>
+              <span className={`${textClass} font-semibold relative z-10`}>도식화 보기</span>
             </button>
           )}
 
