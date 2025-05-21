@@ -1,0 +1,226 @@
+Table users {
+  user_id char(36) [pk]
+  username varchar [unique, not null, note: '사용자 로그인 아이디']
+  nickname varchar
+  profile_img_url varchar [note: '프로필 이미지']
+  is_github_connected boolean
+  created_at datetime [not null, note: '생성된 날짜']
+  updated_at datetime [not null, note: '업데이트 된 날짜']
+}
+
+Table github_account {
+  github_account_id bigint [pk]
+  user_id char(36) [unique, not null, ref: > users.user_id]
+  github_user_id varchar [unique]
+  access_token varchar
+}
+
+Enum FileType {
+  ARCHITECTURE_DEFAULT_CLEAN
+  ARCHITECTURE_DEFAULT_HEX
+  ARCHITECTURE_DEFAULT_LAYERED_A
+  ARCHITECTURE_DEFAULT_LAYERED_B
+  ARCHITECTURE_DEFAULT_MSA
+  ARCHITECTURE_GITHUB
+  CONVENTION
+  CONVENTION_DEFAULT
+  DEPENDENCY
+  ERD
+  ERROR_CODE
+  REQUIREMENTS
+  SECURITY
+  SECURITY_DEFAULT_JWT
+  SECURITY_DEFAULT_NONE
+  SECURITY_DEFAULT_SESSION
+  UTIL
+}
+
+Table global_files {
+  global_file_id bigint [pk]
+  scrud_project_id bigint [ref: > scrud_project.scrud_project_id]
+  file_name varchar
+  file_content text
+  file_type FileType
+  created_at datetime [not null, note: '생성된 날짜']
+  updated_at datetime [not null, note: '업데이트 된 날짜']
+}
+
+Table scrud_project {
+  scrud_project_id bigint [pk]
+  user_id char(36) [ref: > users.user_id]
+  title varchar
+  description varchar
+  server_url varchar
+  created_at datetime [not null, note: '생성된 날짜']
+  updated_at datetime [not null, note: '업데이트 된 날짜']
+}
+
+Enum HttpMethod {
+  GET
+  POST
+  PUT
+  PATCH
+  DELETE
+}
+
+Enum ApiSpecStatus {
+  AI_GENERATED
+  AI_VISUALIZED
+  USER_COMPLETED
+}
+
+Table api_spec_version {
+  api_spec_version_id bigint [pk]
+  version int [not null]
+  user_id binary(16)
+  api_group varchar(255) [not null]
+  description text
+  endpoint varchar(255) [not null]
+  path_parameters text
+  query_parameters text
+  request_body text
+  response text
+  summary varchar(255)
+  http_method HttpMethod [not null]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table api_spec {
+  api_spec_id bigint [pk]
+  api_spec_version_id bigint [ref: > api_spec_version.api_spec_version_id]
+  scrud_project_id bigint [ref: > scrud_project.scrud_project_id]
+  endpoint varchar(255)
+  api_spec_status ApiSpecStatus [not null]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table api_prompt {
+  api_prompt_id bigint [pk]
+  prompt text
+  response text
+}
+
+Table spec_version {
+  spec_version_id bigint [pk]
+  major int
+  minor int
+  patch int
+  description text
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table service_spec_version {
+  service_spec_version_id bigint [pk]
+  spec_version_id bigint [ref: > spec_version.spec_version_id]
+  major int
+  minor int
+  patch int
+  status varchar(200)
+  description text
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table scrud_project_api_spec_version {
+  scrud_project_api_spec_version_id bigint [pk]
+  api_spec_version_id bigint [ref: > api_spec_version.api_spec_version_id]
+}
+
+Table operation_field_rule {
+  operation_field_rule_id bigint [pk]
+  service_spec_version_id bigint [ref: > service_spec_version.service_spec_version_id]
+  field_name varchar(50) [not null]
+  is_editable boolean
+  editable_sub_fields varchar(255)
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table parameter_rule {
+  parameter_rule_id bigint [pk]
+  operation_field_rule_id bigint [ref: > operation_field_rule.operation_field_rule_id]
+  in_type varchar(20)
+  data_type varchar(20)
+  supports_enum boolean
+  supports_array boolean
+  is_required boolean
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table request_rule {
+  request_rule_id bigint [pk]
+  operation_field_rule_id bigint [ref: > operation_field_rule.operation_field_rule_id]
+  content_type varchar(50)
+  body_type varchar(50)
+  is_required boolean
+  supports_file boolean
+  allowed_fields varchar(255)
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table response_rule {
+  response_rule_id bigint [pk]
+  operation_field_rule_id bigint [ref: > operation_field_rule.operation_field_rule_id]
+  status_code varchar(10)
+  description text
+  content_type varchar(50)
+  schema_type varchar(50)
+  ref_component varchar(255)
+  is_error boolean
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table category {
+  category_id bigint [pk]
+  name varchar(255) [not null]
+}
+
+Table post {
+  post_id bigint [pk]
+  user_id binary(16)
+  category_id bigint [ref: > category.category_id]
+  title varchar(255) [not null]
+  content text [not null]
+  comment_count bigint
+  view_count bigint
+  like_count bigint
+  dislike_count bigint
+  is_updated boolean
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table post_vote {
+  post_vote_id bigint [pk]
+  post_id bigint [ref: > post.post_id]
+  user_id binary(16)
+  is_like boolean
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table comment {
+  comment_id bigint [pk]
+  post_id bigint [ref: > post.post_id]
+  parent_comment_id bigint [ref: - comment.comment_id]
+  user_id binary(16)
+  content varchar(255) [not null]
+  like_count bigint
+  dislike_count bigint
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table comment_vote {
+  comment_vote_id bigint [pk]
+  user_id binary(16)
+  is_like boolean
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}

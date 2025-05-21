@@ -1,7 +1,10 @@
 'use client';
 
+import type React from 'react';
+
+import { Button } from '@/components/ui/button';
 import { useProjectTempStore } from '@/store/projectTempStore';
-import { File, Github, Upload } from 'lucide-react';
+import { Database, File, Github, Loader2, Upload } from 'lucide-react';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import GitHubRepoBrowser from '../GitHubRepoBrowser';
 
@@ -23,6 +26,7 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(({ title, value, onChan
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const [fileError, setFileError] = useState<string>('');
@@ -166,6 +170,51 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(({ title, value, onChan
     setIsGitHubModalOpen(true); // 인증 로직 없이 바로 모달 열기
   };
 
+  const handleAddTestData = async () => {
+    try {
+      setIsLoading(true);
+      setFileError('');
+
+      // 파일 경로 설정
+      const filePath = '/data/scrud-erd.txt';
+
+      // 파일 내용 가져오기
+      const response = await fetch(filePath);
+
+      if (!response.ok) {
+        throw new Error(`파일을 불러올 수 없습니다: ${response.status}`);
+      }
+
+      const content = await response.text();
+
+      const testErdData = {
+        name: 'scrud-erd.txt',
+        content: content,
+      };
+
+      let newFiles: FileWithContent[];
+      if (Array.isArray(value)) {
+        // Check if the test file already exists
+        const exists = value.some((file) => file.name === testErdData.name);
+        if (exists) {
+          setFileError('테스트 ERD 파일이 이미 추가되어 있습니다.');
+          return;
+        }
+        newFiles = [...value, testErdData];
+      } else {
+        newFiles = [testErdData];
+      }
+
+      onChange(newFiles);
+      setTempData({ erd: newFiles });
+    } catch (error) {
+      console.error('테스트 데이터 로드 중 오류 발생:', error);
+      setFileError('테스트 데이터를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div
       ref={ref}
@@ -173,10 +222,27 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(({ title, value, onChan
     >
       <div className='flex flex-col mb-4'>
         <div className='flex items-center justify-between'>
-          <div className='flex items-center'>
+          <div className='flex items-center gap-2'>
             <h2 className='m-0 text-xl font-semibold'>
               {title} {isRequired && <span className='text-red-500'>*</span>}
             </h2>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleAddTestData}
+              disabled={isLoading}
+              className='h-7 flex items-center gap-1 text-xs'
+            >
+              {isLoading ? (
+                <Loader2
+                  size={14}
+                  className='animate-spin'
+                />
+              ) : (
+                <Database size={14} />
+              )}
+              테스트 데이터 추가
+            </Button>
           </div>
         </div>
         <p className='mt-2 text-sm text-gray-600'>
