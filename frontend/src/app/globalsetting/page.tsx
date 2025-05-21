@@ -113,11 +113,11 @@ export default function GlobalSettingPage() {
     serverUrl: false,
     requirementSpec: false,
     erd: false,
-    dependencyFile: false,
     utilityClass: false,
     errorCode: false,
-    securitySetting: true,
     codeConvention: false,
+    dependencyFile: true,
+    securitySetting: true,
     architectureStructure: true,
   });
 

@@ -7,7 +7,6 @@ import FormItem from './Form';
 import ArchitectureStructureForm from './form/ArchitectureStructureForm';
 import CodeConventionForm from './form/CodeConventionForm';
 import DependencyFileForm from './form/DependencyFileForm';
-import DependencySelector from './form/DependencySelector';
 import ERDForm from './form/ERDForm';
 import ErrorCodeForm from './form/ErrorCodeForm';
 import RequirementSpecForm from './form/RequirementSpecForm';
@@ -206,24 +205,6 @@ export default function ContentArea({ settings, onSettingChange, refs, setActive
                       handleSettingChange('dependencyFiles', newFiles);
                     }}
                     onFocus={useCallback(() => handleItemFocus('dependencyFile'), [handleItemFocus])}
-                  />
-                </div>
-                <div className='pt-6 border-t'>
-                  <h3 className='mb-4 text-lg font-medium'>Spring 의존성 추가 선택</h3>
-                  <DependencySelector
-                    selectedDependencies={settings.dependencySelections}
-                    onChange={(file) => {
-                      // file.content: "Spring Web (web)\nSpring Data JPA (data-jpa)" 등
-                      // id만 추출해서 배열로 저장
-                      const ids = file.content
-                        .split('\n')
-                        .map((line) => {
-                          const match = line.match(/$$(.*?)$$/);
-                          return match ? match[1] : '';
-                        })
-                        .filter(Boolean);
-                      handleSettingChange('dependencySelections', ids);
-                    }}
                   />
                 </div>
               </CardContent>
