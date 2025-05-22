@@ -178,7 +178,7 @@ const RequirementSpecForm = forwardRef<HTMLDivElement, RequirementSpecFormProps>
         setFileError('');
 
         // 파일 경로 설정
-        const filePath = '/data/scrud-requirements.txt';
+        const filePath = '/data/board-requirements.txt';
 
         // 파일 내용 가져오기
         const response = await fetch(filePath);
