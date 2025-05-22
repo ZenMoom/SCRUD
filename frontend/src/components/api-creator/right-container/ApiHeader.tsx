@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import type React from "react"
 import { Check, X } from "lucide-react"
+import type React from "react"
+import { useEffect, useRef, useState } from "react"
 
 interface ApiHeaderProps {
   scrudProjectId: number
@@ -149,39 +149,39 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
   const textClass = "hidden sm:inline whitespace-nowrap"
 
   return (
-    <div className="p-3 border-b bg-white relative">
+    <div className="relative p-3 bg-white border-b">
       {/* 완료 알림 */}
       {showCompletionAlert && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
-            <div className="bg-blue-50 p-4 flex items-start">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md mx-4 overflow-hidden transition-all transform bg-white rounded-lg shadow-xl">
+            <div className="bg-blue-50 flex items-start p-4">
               <div className="flex-shrink-0">
-                <Check className="h-6 w-6 text-blue-600" />
+                <Check className="w-6 h-6 text-blue-600" />
               </div>
-              <div className="ml-3 flex-1">
+              <div className="flex-1 ml-3">
                 <h3 className="text-lg font-medium text-blue-800">도식화 완료</h3>
                 <div className="mt-2 text-sm text-blue-700">
                   <p>API 도식화가 성공적으로 완료되었습니다.</p>
                   <p className="mt-1">아래 버튼을 클릭하여 도식화 결과를 확인하세요.</p>
                 </div>
               </div>
-              <button onClick={handleCloseAlert} className="flex-shrink-0 ml-4 bg-blue-50 rounded-md inline-flex text-blue-500 hover:text-blue-700 focus:outline-none">
-                <X className="h-5 w-5" />
+              <button onClick={handleCloseAlert} className="bg-blue-50 hover:text-blue-700 focus:outline-none inline-flex flex-shrink-0 ml-4 text-blue-500 rounded-md">
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="px-4 py-3 bg-gray-50 text-right">
+            <div className="bg-gray-50 px-4 py-3 text-right">
               <button
                 onClick={handleViewDiagram}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-blue-700 bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 border border-blue-300 rounded-md hover:from-blue-100 hover:via-blue-200 hover:to-blue-100 hover:border-blue-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 hover:from-blue-100 hover:via-blue-200 hover:to-blue-100 hover:border-blue-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 inline-flex justify-center px-4 py-2 text-sm font-medium text-blue-700 border border-blue-300 rounded-md"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                 </svg>
                 도식화 보기
               </button>
               <button
                 onClick={handleCloseAlert}
-                className="ml-3 inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 inline-flex justify-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md"
               >
                 닫기
               </button>
@@ -192,8 +192,8 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
 
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
-          <h2 className="text-lg font-semibold mr-4 hidden sm:block">API 편집기</h2>
-          <h2 className="text-lg font-semibold mr-4 sm:hidden">API</h2>
+          <h2 className="sm:block hidden mr-4 text-lg font-semibold">API 편집기</h2>
+          <h2 className="sm:hidden mr-4 text-lg font-semibold">API</h2>
         </div>
 
         <div className="flex space-x-2">
@@ -210,17 +210,17 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
               title="도식화 진행"
             >
               {isCreatingDiagram ? (
-                <span className="h-5 w-5 rounded-full border-2 border-blue-400 border-t-transparent animate-spin"></span>
+                <span className="border-t-transparent animate-spin w-5 h-5 border-2 border-blue-400 rounded-full"></span>
               ) : (
                 <>
                   {/* 향상된 그라데이션 효과 */}
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-200 to-transparent opacity-40 animate-shimmer"></span>
+                  <span className="bg-gradient-to-r from-transparent via-blue-200 to-transparent opacity-40 animate-shimmer absolute inset-0"></span>
                   {/* 추가 하이라이트 효과 */}
-                  <span className="absolute inset-0 bg-gradient-to-t from-transparent via-blue-100 to-transparent opacity-30 animate-pulse"></span>
+                  <span className="bg-gradient-to-t from-transparent via-blue-100 to-transparent opacity-30 animate-pulse absolute inset-0"></span>
 
                   {/* 버튼 중앙에 큰 반짝이는 효과 */}
                   <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="h-10 w-10 rounded-full bg-blue-300 opacity-40 animate-ping"></span>
+                    <span className="opacity-40 animate-ping w-10 h-10 bg-blue-300 rounded-full"></span>
                   </span>
 
                   <svg xmlns="http://www.w3.org/2000/svg" className={`${iconClass} text-blue-600 relative z-10`} viewBox="0 0 20 20" fill="currentColor">
@@ -253,7 +253,7 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
             title={apiSpecVersionId ? "수정하기" : "생성하기"}
           >
             {isLoading ? (
-              <span className="h-5 w-5 rounded-full border-2 border-gray-400 border-t-transparent animate-spin"></span>
+              <span className="border-t-transparent animate-spin w-5 h-5 border-2 border-gray-400 rounded-full"></span>
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
                 {apiSpecVersionId ? (
@@ -288,14 +288,14 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
 
       {/* 다이어그램 생성 진행 상태 표시 */}
       {isCreatingDiagram && (
-        <div className="mt-2 bg-blue-50 border border-blue-200 rounded-md p-3 relative">
-          <div className="flex justify-between items-center mb-2">
+        <div className="bg-blue-50 relative p-3 mt-2 border border-blue-200 rounded-md">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center">
-              <span className="inline-block w-3 h-3 bg-blue-500 rounded-full animate-pulse mr-2"></span>
+              <span className="animate-pulse inline-block w-3 h-3 mr-2 bg-blue-500 rounded-full"></span>
               <h3 className="font-medium text-blue-800">다이어그램 생성 중...</h3>
             </div>
             <div className="flex items-center">
-              <span className="text-sm text-blue-600 mr-3">경과 시간: {formatElapsedTime(elapsedTime)}</span>
+              <span className="mr-3 text-sm text-blue-600">경과 시간: {formatElapsedTime(elapsedTime)}</span>
               {handleCancelDiagramCreation && (
                 <button onClick={handleCancelDiagramCreation} className={googleButtonClass} title="취소">
                   <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
@@ -312,11 +312,11 @@ const ApiHeader: React.FC<ApiHeaderProps> = ({
           </div>
 
           {/* 진행 단계 표시 */}
-          {diagramCreationStep && <div className="text-sm text-blue-700 mb-2">{diagramCreationStep}</div>}
+          {diagramCreationStep && <div className="mb-2 text-sm text-blue-700">{diagramCreationStep}</div>}
 
           {/* 진행률 표시 - 부드러운 애니메이션 적용 */}
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-            <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${displayProgress}%` }}></div>
+          <div className="h-2.5 w-full mb-1 bg-gray-200 rounded-full">
+            <div className="h-2.5 transition-all duration-500 ease-out bg-blue-600 rounded-full" style={{ width: `${displayProgress}%` }}></div>
           </div>
 
           <div className="text-xs text-right text-blue-600">{Math.round(displayProgress)}% 완료</div>

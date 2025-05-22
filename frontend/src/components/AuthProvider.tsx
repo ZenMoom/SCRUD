@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import useAuthStore from "@/app/store/useAuthStore"
 import { isTokenExpired } from "@/app/utils/auth"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -42,7 +42,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       }
     }
 
-    // 주기적으로 토큰 만료 확인
+    // 주기���으로 토큰 만료 확인
     const intervalId = setInterval(checkTokenExpiration, validateInterval)
 
     return () => {
@@ -53,8 +53,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   if (isCheckingAuth) {
     // 인증 확인 중 로딩 표시
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin border-t-transparent w-8 h-8 border-4 border-blue-500 rounded-full"></div>
       </div>
     )
   }
