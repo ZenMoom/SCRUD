@@ -182,8 +182,8 @@ function IntroductionStep() {
         </div>
         <p className='mb-4 text-gray-600'>
           <strong className='text-blue-600'>SCRUD</strong>는 API 설계부터 Spring 코드 생성까지 개발 과정을 간소화하는
-          통합 개발 플랫폼입니다. 복잡한 백엔드 개발 과정을 직관적인 인터페이스로 단순화하여 개발자의 생산성을 크게
-          향상시킵니다.
+          통합 개발 플랫폼입니다. 복잡한 백엔드 개발 과정을 직관적인 그래픽 인터페이스로 단순화하여 개발자의 생산성을
+          크게 향상시킵니다.
         </p>
       </div>
 
@@ -228,16 +228,16 @@ function IntroductionStep() {
 }
 
 function ProjectCreationStep() {
-  const projectImages = [
+  const projectCreationImages = [
     {
       src: '/tutorial/scrud-dashboard-new-project.png',
       alt: 'SCRUD 대시보드에서 새 프로젝트 생성하기',
       caption: '대시보드에서 새 프로젝트 생성 버튼을 클릭하여 시작합니다.',
     },
     {
-      src: '/tutorial/scrud-project-create.png',
-      alt: '프로젝트 생성 폼',
-      caption: '프로젝트 이름, 설명, 서버 URL 등 기본 정보를 입력합니다.',
+      src: '/tutorial/scrud-dashboard-new-project2.png',
+      alt: '프로젝트 설정 화면',
+      caption: '프로젝트의 필수 정보를 입력하고 설정합니다.',
     },
   ];
 
@@ -246,7 +246,7 @@ function ProjectCreationStep() {
       <h2 className='mb-4 text-2xl font-bold text-gray-800'>프로젝트 생성하기</h2>
 
       <div className='mb-6'>
-        <ImageSlider images={projectImages} />
+        <ImageSlider images={projectCreationImages} />
         <p className='mt-4 text-gray-600'>
           SCRUD에서 새 프로젝트를 생성하는 것은 간단합니다. 대시보드에서 몇 가지 기본 정보만 입력하면 바로 API 설계를
           시작할 수 있습니다.
@@ -310,20 +310,28 @@ function ProjectCreationStep() {
 }
 
 function ProjectConfigStep() {
+  const projectConfigImages = [{
+    src: '/tutorial/scrud-project-config.png',
+    alt:'프로젝트 설정 화면',
+    caption:'프로젝트의 필수 정보를 입력하고 설정합니다.'
+  },
+  {
+    src: '/tutorial/scrud-project-config2.png',
+    alt:'프로젝트 설정 화면',
+caption:'프로젝트 의 기본 정보를 입력하고 설정합니다.'
+  },
+    {
+      src: '/tutorial/scrud-project-create.png',
+      alt: '프로젝트 생성 폼',
+      caption: '프로젝트 이름, 설명, 서버 URL 등 기본 정보를 입력합니다.',
+    },
+  ];
+
   return (
     <div>
       <h2 className='mb-4 text-2xl font-bold text-gray-800'>프로젝트 설정하기</h2>
-
       <div className='mb-6'>
-        <div className='aspect-video relative flex items-center justify-center mb-4 overflow-hidden bg-gray-100 rounded-lg'>
-          <Image
-            src='/tutorial/scrud-project-config.png'
-            alt='프로젝트 설정 화면'
-            width={800}
-            height={400}
-            className='object-contain max-w-full max-h-full'
-          />
-        </div>
+        <ImageSlider images={projectConfigImages} />
         <p className='mb-4 text-gray-600'>
           프로젝트 설정 단계에서는 API 생성의 기반이 되는 요구사항과 기술적 설정을 정의합니다. 이 단계에서 입력한 정보는
           SCRUD가 최적의 API 구조와 코드를 생성하는 데 활용됩니다.
@@ -549,17 +557,17 @@ function ApiCreationStep() {
 }
 
 function ApiVisualizationStep() {
-  const visualizationImages = [
+  const visualizationImages = [{
+      src: '/tutorial/scrud-api-visualization2.png',
+      alt: 'API 도식화 상세 뷰',
+      caption: 'API 메서드와 속성을 상세하게 분석할 수 있습니다.',
+    },
     {
       src: '/tutorial/scrud-api-visualization.png',
       alt: 'API 도식화 다이어그램',
       caption: 'API 클래스 구조와 관계를 시각적으로 확인합니다.',
     },
-    {
-      src: '/tutorial/scrud-api-visualization2.png',
-      alt: 'API 도식화 상세 뷰',
-      caption: 'API 메서드와 속성을 상세하게 분석할 수 있습니다.',
-    },
+    
   ];
 
   return (
