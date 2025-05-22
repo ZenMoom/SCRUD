@@ -1,0 +1,26 @@
+[Table] users
+- id           : BIGINT          PK, AUTO_INCREMENT
+- username     : VARCHAR(50)     NOT NULL, UNIQUE
+- password     : VARCHAR(255)    NOT NULL
+- email        : VARCHAR(100)    NOT NULL, UNIQUE
+- created_at   : DATETIME        DEFAULT CURRENT_TIMESTAMP
+
+[Table] posts
+- id           : BIGINT          PK, AUTO_INCREMENT
+- title        : VARCHAR(200)    NOT NULL
+- content      : TEXT            NOT NULL
+- user_id      : BIGINT          NOT NULL, FK → users(id)
+- created_at   : DATETIME        DEFAULT CURRENT_TIMESTAMP
+- updated_at   : DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+[Table] comments  (optional)
+- id           : BIGINT          PK, AUTO_INCREMENT
+- post_id      : BIGINT          NOT NULL, FK → posts(id)
+- user_id      : BIGINT          NOT NULL, FK → users(id)
+- content      : TEXT            NOT NULL
+- created_at   : DATETIME        DEFAULT CURRENT_TIMESTAMP
+
+[Relationship]
+- users.id      = posts.user_id      (1:N)
+- users.id      = comments.user_id   (1:N)
+- posts.id      = comments.post_id   (1:N)
