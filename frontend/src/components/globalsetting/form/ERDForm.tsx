@@ -176,7 +176,7 @@ const ERDForm = forwardRef<HTMLDivElement, ERDFormProps>(({ title, value, onChan
       setFileError('');
 
       // 파일 경로 설정
-      const filePath = '/data/scrud-erd.txt';
+      const filePath = '/data/board-erd.txt';
 
       // 파일 내용 가져오기
       const response = await fetch(filePath);

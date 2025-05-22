@@ -892,17 +892,17 @@ function CodeGenerationStep() {
       <p className='mb-4 text-gray-600'>생성된 코드는 다음과 같은 방법으로 다운로드하고 활용할 수 있습니다:</p>
       <ul className='pl-5 mb-4 space-y-1 text-gray-600 list-disc'>
         <li>
-          <strong>ZIP 파일 다운로드</strong>: 전체 프로젝트를 ZIP 파일로 다운로드하여 로컬 개발 환경에서 사용
+          <strong>ZIP 파일 다운로드(예정)</strong>: 전체 프로젝트를 ZIP 파일로 다운로드하여 로컬 개발 환경에서 사용
         </li>
         <li>
-          <strong>GitHub 연동</strong>: GitHub 저장소에 직접 코드를 푸시하여 버전 관리 및 협업 가능
+          <strong>GitHub 연동(예정)</strong>: GitHub 저장소에 직접 코드를 푸시하여 버전 관리 및 협업 가능
         </li>
         <li>
-          <strong>개별 파일 복사</strong>: 필요한 파일만 선택적으로 복사하여 기존 프로젝트에 통합
+          <strong>개별 코드드 복사</strong>: 필요한 코드만 선택적으로 복사하여 기존 프로젝트에 통합
         </li>
       </ul>
       <p className='text-gray-600'>
-        다운로드한 코드는 Spring Boot 프로젝트로 구성되어 있으며, Maven 또는 Gradle을 통해 의존성을 관리합니다.
+        (예정) 다운로드한 코드는 Spring Boot 프로젝트로 구성되어 있으며, Maven 또는 Gradle을 통해 의존성을 관리합니다.
         프로젝트를 로컬 개발 환경에서 실행하면 API가 즉시 작동하는 것을 확인할 수 있습니다.
       </p>
     </div>
@@ -989,7 +989,7 @@ function ConclusionStep() {
         </div>
 
         <div className='pl-4 border-l-4 border-blue-500'>
-          <h4 className='mb-2 font-medium text-gray-800'>2. 테스트 코드 작성</h4>
+          <h4 className='mb-2 font-medium text-gray-800'>2. 테스트 코드 작성(예정)</h4>
           <p className='text-gray-600'>
             생성된 API에 대한 단위 테스트와 통합 테스트를 작성하여 코드의 품질과 안정성을 보장합니다. JUnit, Mockito
             등의 테스트 프레임워크를 활용하여 테스트 자동화를 구현합니다.
@@ -997,7 +997,7 @@ function ConclusionStep() {
         </div>
 
         <div className='pl-4 border-l-4 border-blue-500'>
-          <h4 className='mb-2 font-medium text-gray-800'>3. 프론트엔드 연동</h4>
+          <h4 className='mb-2 font-medium text-gray-800'>3. 프론트엔드 연동(예정)</h4>
           <p className='text-gray-600'>
             생성된 백엔드 API와 프론트엔드 애플리케이션을 연동하여 완전한 웹 애플리케이션을 구축합니다. API 문서를
             참조하여 클라이언트 측 코드를 개발합니다.
@@ -1005,7 +1005,7 @@ function ConclusionStep() {
         </div>
 
         <div className='pl-4 border-l-4 border-blue-500'>
-          <h4 className='mb-2 font-medium text-gray-800'>4. 배포 및 운영</h4>
+          <h4 className='mb-2 font-medium text-gray-800'>4. 배포 및 운영(예정)</h4>
           <p className='text-gray-600'>
             개발된 애플리케이션을 클라우드 환경이나 온프레미스 서버에 배포하고 운영합니다. CI/CD 파이프라인을 구축하여
             지속적인 통합과 배포를 자동화합니다.
