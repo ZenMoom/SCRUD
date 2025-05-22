@@ -100,4 +100,4 @@ SCRUD는 Spring과 JPA 기반 프로젝트에서 반복적인 CRUD API 작성을
 - 조소현 - Frontend
 
 ## 프로젝트 아키텍처
-![프로젝트 아키텍처](./exec/Architecture.png)
+![프로젝트 아키텍처](./exec/ArchitecturePng.png)
