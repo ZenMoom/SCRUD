@@ -1,4 +1,4 @@
-package com.barcoder.scrud.apispec.infrastructure.jpa;
+package com.barcoder.scrud.admin.infrastructure.jpa;
 
 import com.barcoder.scrud.apispec.domain.entity.ApiPrompt;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -33,7 +33,10 @@ public enum ErrorStatus implements BaseErrorCode {
     SCRUDPROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT4001", "존재하지 않는 프로젝트입니다."),
     
     // 전역파일 관련 오류
-    GLOBALFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "GLOBALFILE4001", "존자하지 않는 전역파일입니다.");
+    GLOBALFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "GLOBALFILE4001", "존자하지 않는 전역파일입니다."),
+
+    // API 프롬프트 관련 오류
+    API_PROMPT_NOT_FOUND(HttpStatus.NOT_FOUND, "API_PROMPT4001", "존재하지 않는 API 프롬프트입니다."),;
 
 
     private final HttpStatus httpStatus;

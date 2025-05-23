@@ -289,7 +289,7 @@ const SecuritySettingForm = forwardRef<HTMLDivElement, SecuritySettingFormProps>
                 보안 설정 파일을 드래그해서 추가하거나 <br />
                 <span className='text-blue-500'>업로드하세요</span>
               </p>
-              <div className='mt-2 text-xs text-gray-400'>지원 파일 형식: .txt, .md, .doc, .docx, .pdf 등</div>
+              <div className='mt-2 text-xs text-gray-400'>��원 파일 형식: .txt, .md, .doc, .docx, .pdf 등</div>
             </div>
 
             {/* 드롭다운 메뉴 */}
