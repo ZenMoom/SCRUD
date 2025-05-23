@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const apiUrl = process.env.NEXT_PRIVATE_API_BASE_URL;
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest , context: { params: Promise<{ id: string }> }) {
   try {
     // 인증 토큰 확인 (실제 구현 시 필요)
     const token = (await cookies()).get('access_token')?.value;
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await context.params
 
     // ID로 프롬프트 찾기
     const res = await fetch(`${apiUrl}/api/v1/admin/api-prompts/${id}`, {
