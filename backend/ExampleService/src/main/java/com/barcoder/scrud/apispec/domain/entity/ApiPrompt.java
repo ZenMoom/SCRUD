@@ -1,5 +1,6 @@
 package com.barcoder.scrud.apispec.domain.entity;
 
+import com.barcoder.scrud.global.common.baseentity.BaseTimeEntity;
 import com.barcoder.scrud.global.config.generator.SnowflakeId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
-public class ApiPrompt {
+public class ApiPrompt extends BaseTimeEntity {
 
     @Id
     @SnowflakeId
