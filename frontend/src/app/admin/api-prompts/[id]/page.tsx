@@ -378,9 +378,8 @@ export default function ApiPromptDetailPage() {
 
       try {
         const response = await fetch(`/api/admin/api-prompts/${promptId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          method: "GET",
+          credentials: "include",
         })
 
         if (!response.ok) {

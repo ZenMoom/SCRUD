@@ -1,16 +1,14 @@
 "use client"
 
-import type React from "react"
 
 import useAuthStore from "@/app/store/useAuthStore"
 import GlobalHeader from "@/components/header/globalheader"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { formatToKST } from "@/util/dayjs"
 import type { PostStatusEnumDto } from "@generated/model"
-import { AlertCircle, ArrowLeft, ArrowRight, Search, UserIcon } from "lucide-react"
+import { AlertCircle, ArrowLeft, UserIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -34,12 +32,12 @@ interface User {
 }
 
 // 페이지네이션 타입 정의
-interface Pagination {
-  page: number
-  limit: number
-  totalItems: number
-  totalPages: number
-}
+// interface Pagination {
+//   page: number
+//   limit: number
+//   totalItems: number
+//   totalPages: number
+// }
 
 export default function ApiPromptsPage() {
   const router = useRouter()
@@ -48,13 +46,8 @@ export default function ApiPromptsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [apiPrompts, setApiPrompts] = useState<ApiPrompt[]>([])
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 1,
-    limit: 10,
-    totalItems: 0,
-    totalPages: 0,
-  })
-  const [searchTerm, setSearchTerm] = useState("")
+  
+  // const [searchTerm, setSearchTerm] = useState("")
 
   // 인증 및 권한 확인
   useEffect(() => {
@@ -80,16 +73,15 @@ export default function ApiPromptsPage() {
 
       try {
         const url = new URL("/api/admin/api-prompts", window.location.origin)
-        url.searchParams.append("page", pagination.page.toString())
-        url.searchParams.append("limit", pagination.limit.toString())
-        if (searchTerm) {
-          url.searchParams.append("search", searchTerm)
-        }
+        // url.searchParams.append("page", pagination.page.toString())
+        // url.searchParams.append("limit", pagination.limit.toString())
+        // if (searchTerm) {
+        //   url.searchParams.append("search", searchTerm)
+        // }
 
         const response = await fetch(url.toString(), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          method: "GET",
+          credentials: "include",
         })
 
         if (!response.ok) {
@@ -97,8 +89,8 @@ export default function ApiPromptsPage() {
         }
 
         const data = await response.json()
-        setApiPrompts(data.prompts)
-        setPagination(data.pagination)
+        setApiPrompts(data.content || [])
+        // setPagination(data.pagination)
       } catch (err) {
         console.error(formatToKST(new Date().toISOString()), "API 프롬프트 목록 조회 오류:", err)
         setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다.")
@@ -108,19 +100,19 @@ export default function ApiPromptsPage() {
     }
 
     fetchApiPrompts()
-  }, [isAdmin, token, pagination.page, pagination.limit, searchTerm])
+  }, [isAdmin, token])
 
   // 페이지 변경 핸들러
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > pagination.totalPages) return
-    setPagination((prev) => ({ ...prev, page: newPage }))
-  }
+  // const handlePageChange = (newPage: number) => {
+  //   if (newPage < 1 || newPage > pagination.totalPages) return
+  //   setPagination((prev) => ({ ...prev, page: newPage }))
+  // }
 
   // 검색 핸들러
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setPagination((prev) => ({ ...prev, page: 1 })) // 검색 시 첫 페이지로 이동
-  }
+  // const handleSearch = (e: React.FormEvent) => {
+  //   e.preventDefault()
+  //   setPagination((prev) => ({ ...prev, page: 1 })) // 검색 시 첫 페이지로 이동
+  // }
 
   // 로딩 중 표시
   if (isLoading && apiPrompts.length === 0) {
@@ -161,7 +153,7 @@ export default function ApiPromptsPage() {
         </div>
 
         {/* 검색 폼 */}
-        <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+        {/* <form onSubmit={handleSearch} className="flex gap-2 mb-6">
           <div className="relative flex-grow">
             <Search className="left-2.5 top-2.5 absolute w-4 h-4 text-gray-500" />
             <Input
@@ -173,7 +165,7 @@ export default function ApiPromptsPage() {
             />
           </div>
           <Button type="submit">검색</Button>
-        </form>
+        </form> */}
 
         {/* 에러 표시 */}
         {error && (
@@ -236,7 +228,7 @@ export default function ApiPromptsPage() {
         )}
 
         {/* 페이지네이션 */}
-        {pagination.totalPages > 1 && (
+        {/* {pagination.totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-8">
             <Button
               variant="outline"
@@ -258,7 +250,7 @@ export default function ApiPromptsPage() {
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   )

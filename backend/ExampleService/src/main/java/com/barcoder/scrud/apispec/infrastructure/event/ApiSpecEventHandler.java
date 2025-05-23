@@ -73,8 +73,9 @@ public class ApiSpecEventHandler {
 
         // prompt 저장
         List<CreateApiSpecVersionIn> result = response.getResult();
-        StringBuilder promptResult = new StringBuilder()
-                .append(response.getPrompt());
+
+        StringBuilder promptResult = new StringBuilder();
+
         for (CreateApiSpecVersionIn createApiSpecVersionIn : result) {
             promptResult.append(createApiSpecVersionIn.toString()).append("\n");
         }
