@@ -141,7 +141,7 @@ OPENAI_API_KEY=S12P31E105-faf0249f-8e33-4828-aaa2-94ad2ce24762
 OPENAI_API_BASE=https://gms.p.ssafy.io/gmsapi/api.openai.com/v1
 
 # Claude API 키
-ANTHROPIC_API_KEY=***REMOVED***
+ANTHROPIC_API_KEY=REMOVED
 
 # Ollama URL
 OLLAMA_API_URL=http://host.docker.internal:11434
