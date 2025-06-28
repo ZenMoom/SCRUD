@@ -138,7 +138,7 @@ AI_ENV_MODE=DEVELOPMENT
 OPENAI_API_BASE=https://gms.p.ssafy.io/gmsapi/api.openai.com/v1
 
 # Claude API 키
-ANTHROPIC_API_KEY=REMOVED
+
 
 # Ollama URL
 OLLAMA_API_URL=http://host.docker.internal:11434
